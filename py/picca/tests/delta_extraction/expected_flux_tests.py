@@ -7,7 +7,6 @@ import unittest
 import numpy as np
 from scipy.interpolate import interp1d
 
-from pathlib import Path
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
 from picca.delta_extraction.data_catalogues.desi_healpix import defaults as defaults_desi_healpix
@@ -1133,13 +1132,261 @@ class ExpectedFluxTest(AbstractTest):
             )
         self.compare_error_message(context_manager, expected_message)
 
+    def test_true_continuum_compute_mean_cont_lin_wave_solution(self):
+        """Test method compute_mean_cont for class TrueContinuum using linear wave solution"""
+        # setup Forest variables; case: linear wavelength solution
+        setup_forest("lin", pixel_step=2.4)
+
+        out_file = f"{THIS_DIR}/results/true_mean_cont_lin.txt"
+        test_file = f"{THIS_DIR}/data/true_mean_cont_lin.txt"
+
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_mock_data_kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "num processors": 1,
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        expected_flux.compute_expected_flux(data.forests)
+
+        # save results
+        f = open(out_file, "w")
+        f.write("# log_lambda mean_cont mean_cont_weight\n")
+        for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
+            f.write(f"{log_lambda} {expected_flux.get_mean_cont(log_lambda)} "
+                    f"{expected_flux.get_mean_cont_weight(log_lambda)}\n")
+        f.close()
+
+        # load the expected results
+        expectations = np.genfromtxt(test_file, names=True)
+
+        # compare with obtained results
+        mean_cont = expected_flux.get_mean_cont(expectations["log_lambda"])
+        if not np.allclose(mean_cont, expectations["mean_cont"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
+            print("Difference found in mean_cont")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_cont, expectations["mean_cont"]):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+        self.assertTrue(np.allclose(mean_cont, expectations["mean_cont"]))
+
+        mean_cont_weight = expected_flux.get_mean_cont_weight(expectations["log_lambda"])
+        if not np.allclose(mean_cont_weight, expectations["mean_cont_weight"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
+            print("Difference found in mean_cont")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_cont_weight, expectations["mean_cont_weight"]):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+        self.assertTrue(np.allclose(mean_cont_weight, expectations["mean_cont_weight"]))
+
+    def test_true_continuum_compute_mean_cont_log_wave_solution(self):
+        """Test method compute_mean_cont for class TrueContinuum using logarithmic wave solution"""
+        # setup Forest variables; case: logarithmic wavelength solution
+        setup_forest("log", rebin=3)
+
+        out_file = f"{THIS_DIR}/results/true_mean_cont_log.txt"
+        test_file = f"{THIS_DIR}/data/true_mean_cont_log.txt"
+
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        # compute the expected flux
+        expected_flux.compute_expected_flux(data.forests)
+
+        # save results
+        f = open(out_file, "w")
+        f.write("# log_lambda mean_cont mean_cont_weight\n")
+        for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
+            f.write(f"{log_lambda} {expected_flux.get_mean_cont(log_lambda)} "
+                    f"{expected_flux.get_mean_cont_weight(log_lambda)}\n")
+        f.close()
+
+        # load the expected results
+        expectations = np.genfromtxt(test_file, names=True)
+
+        # compare with obtained results
+        mean_cont = expected_flux.get_mean_cont(expectations["log_lambda"])
+        if not np.allclose(mean_cont, expectations["mean_cont"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
+            print("Difference found in mean_cont")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_cont, expectations["mean_cont"]):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+        self.assertTrue(np.allclose(mean_cont, expectations["mean_cont"]))
+
+        mean_cont_weight = expected_flux.get_mean_cont_weight(expectations["log_lambda"])
+        if not np.allclose(mean_cont_weight, expectations["mean_cont_weight"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
+            print("Difference found in mean_cont")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_cont_weight, expectations["mean_cont_weight"]):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+        self.assertTrue(np.allclose(mean_cont_weight, expectations["mean_cont_weight"]))
+
+    def test_true_continuum_expected_flux(self):
+        """Test method compute expected flux for class TrueContinuum"""
+        # setup Forest variables; case: logarithmic wavelength solution
+        setup_forest("log", rebin=3)
+
+        out_file = f"{THIS_DIR}/results/Log/iter_out_prefix_compute_expected_flux_log.fits.gz"
+        test_file = f"{THIS_DIR}/data/true_iter_out_prefix_compute_expected_flux_log.fits.gz"
+
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        # compute the expected flux
+        expected_flux.compute_expected_flux(data.forests)
+
+        # check the results
+        for iteration in range(1,5):
+            self.compare_fits(
+                str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
+                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
+        self.compare_fits(test_file, out_file)
+
+        # setup Forest variables; case: linear wavelength solution
+        setup_forest("lin", pixel_step=2.4)
+
+        out_file = f"{THIS_DIR}/results/Log/iter_out_prefix_compute_expected_flux_log.fits.gz"
+        test_file = f"{THIS_DIR}/data/true_iter_out_prefix_compute_expected_flux_log_lin.fits.gz"
+
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_mock_data_kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "num processors": 1,
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        expected_flux.compute_expected_flux(data.forests)
+
+        # check the results
+        for iteration in range(1,5):
+            self.compare_fits(
+                str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
+                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
+        self.compare_fits(test_file, out_file)
+
+    def test_true_continuum_populate_los_ids(self):
+        """Test method populate_los_ids for class TrueContinuum"""
+        # setup Forest variables; case: logarithmic wavelength solution
+        setup_forest("log", rebin=3)
+
+        data_dir = f"{THIS_DIR}/data"
+
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        # compute the forest continua
+        for forest in data.forests:
+            expected_flux.read_true_continuum(forest)
+
+        # save iter_out_prefix for iteration 0
+        expected_flux.populate_los_ids(data.forests)
+
+        for i, key in enumerate(("mean expected flux", "weights", "continuum")):
+            self.assertTrue(np.allclose(
+                expected_flux.los_ids[59152][key],
+                np.loadtxt(f"{data_dir}/los_ids_{i}.txt")
+            ))
+
     def test_true_continuum_read_raw_statistics(self):
         """Test reading raw statistics files"""
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        results_dir = Path(THIS_DIR) / "results"
-        data_dir = Path(THIS_DIR) / "data"
+        results_dir = f"{THIS_DIR}/results"
+        data_dir = f"{THIS_DIR}/data"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1162,14 +1409,14 @@ class ExpectedFluxTest(AbstractTest):
                 config["data"][key] = str(value)
         expected_flux = TrueContinuum(config["expected flux"])
 
-        log_lambda_grid = np.loadtxt(data_dir / "true_log_lambda_grid.txt")
+        log_lambda_grid = np.loadtxt(f"{data_dir}/true_log_lambda_grid.txt")
         var_lss = expected_flux.get_var_lss(log_lambda_grid)
         mean_flux = expected_flux.get_mean_flux(log_lambda_grid)
 
-        np.savetxt(results_dir / "true_var_lss.txt", var_lss)
-        np.savetxt(results_dir / "true_mean_flux.txt", mean_flux)
-        var_lss_target =   np.loadtxt(data_dir / "true_var_lss.txt")
-        mean_flux_target = np.loadtxt(data_dir / "true_mean_flux.txt")
+        np.savetxt(f"{results_dir}/true_var_lss.txt", var_lss)
+        np.savetxt(f"{results_dir}/true_mean_flux.txt", mean_flux)
+        var_lss_target =   np.loadtxt(f"{data_dir}/true_var_lss.txt")
+        mean_flux_target = np.loadtxt(f"{data_dir}/true_mean_flux.txt")
         if not np.allclose(var_lss, var_lss_target):
             filename = "true_var_lss.txt"
             print(f"\nOriginal file: {data_dir / filename}")
@@ -1219,14 +1466,14 @@ class ExpectedFluxTest(AbstractTest):
         var_lss = expected_flux.get_var_lss(log_lambda_)
         mean_flux = expected_flux.get_mean_flux(log_lambda_)
 
-        np.savetxt(results_dir / "true_var_lss_log.txt", var_lss)
-        np.savetxt(results_dir / "true_mean_flux_log.txt", mean_flux)
-        var_lss_target =   np.loadtxt(data_dir / "true_var_lss_log.txt")
-        mean_flux_target = np.loadtxt(data_dir / "true_mean_flux_log.txt")
+        np.savetxt(f"{results_dir}/true_var_lss_log.txt", var_lss)
+        np.savetxt(f"{results_dir}/true_mean_flux_log.txt", mean_flux)
+        var_lss_target =   np.loadtxt(f"{data_dir}/true_var_lss_log.txt")
+        mean_flux_target = np.loadtxt(f"{data_dir}/true_mean_flux_log.txt")
         if not np.allclose(var_lss, var_lss_target):
             filename = "true_var_lss_log.txt"
-            print(f"\nOriginal file: {data_dir / filename}")
-            print(f"New file: {results_dir / filename}")
+            print(f"\nOriginal file: {data_dir}/{filename}")
+            print(f"New file: {results_dir}/{filename}")
             print("Difference found in var_lss")
             print(f"result test are_close result-test")
             for i1, i2 in zip(var_lss, var_lss_target):
@@ -1235,8 +1482,8 @@ class ExpectedFluxTest(AbstractTest):
 
         if not np.allclose(mean_flux, mean_flux_target):
             filename = "true_mean_flux.txt"
-            print(f"\nOriginal file: {data_dir / filename}")
-            print(f"New file: {results_dir / filename}")
+            print(f"\nOriginal file: {data_dir}/{filename}")
+            print(f"New file: {results_dir}/{filename}")
             print("Difference found in mean_flux")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_flux, mean_flux_target):
@@ -1249,8 +1496,8 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        results_dir = Path(THIS_DIR) / "results"
-        data_dir = Path(THIS_DIR) / "data"
+        results_dir = f"{THIS_DIR}/results"
+        data_dir = f"{THIS_DIR}/data"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1274,7 +1521,7 @@ class ExpectedFluxTest(AbstractTest):
         data = DesisimMocks(config["data"])
         expected_flux = TrueContinuum(config["expected flux"])
 
-        out_file = results_dir / "continua_true_lin.txt"
+        out_file = f"{results_dir}/continua_true_lin.txt"
         # save the results
         f = open(out_file, "w")
         f.write("# thingid cont[0] ... cont[N]\n")
@@ -1287,7 +1534,7 @@ class ExpectedFluxTest(AbstractTest):
             f.write("\n")
         f.close()
 
-        test_file = data_dir / "continua_true_lin.txt"
+        test_file = f"{data_dir}/continua_true_lin.txt"
         continua = {}
         f = open(test_file)
         for line in f.readlines():
@@ -1330,7 +1577,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: log wavelength solution
         setup_forest("log", rebin=3)
 
-        data_dir = Path(THIS_DIR) / "data"
+        data_dir = f"{THIS_DIR}/data"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1354,7 +1601,7 @@ class ExpectedFluxTest(AbstractTest):
         data = DesisimMocks(config["data"])
         expected_flux = TrueContinuum(config["expected flux"])
 
-        out_file = results_dir / "continua_true_log.txt"
+        out_file = f"{results_dir}/continua_true_log.txt"
         # save the results
         f = open(out_file, "w")
         f.write("# thingid cont[0] ... cont[N]\n")
@@ -1367,7 +1614,7 @@ class ExpectedFluxTest(AbstractTest):
             f.write("\n")
         f.close()
 
-        test_file = data_dir / "continua_true_log.txt"
+        test_file = f"{data_dir}/continua_true_log.txt"
         continua = {}
         f = open(test_file)
         for line in f.readlines():
@@ -1406,253 +1653,6 @@ class ExpectedFluxTest(AbstractTest):
 
         # check that we loaded all quasars
         self.assertTrue(correct_forests == len(continua))
-
-    def test_true_continuum_expected_flux(self):
-        """Test method compute expected flux for class TrueContinuum"""
-        # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("log", rebin=3)
-
-        results_dir = Path(THIS_DIR) / "results"
-        data_dir = Path(THIS_DIR) / "data"
-
-        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"
-        test_file = data_dir / "true_iter_out_prefix_compute_expected_flux_log.fits.gz"
-
-        # initialize Data and Dr16ExpectedFlux instances
-        config = ConfigParser()
-        config.read_dict({
-            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
-            "expected flux": {
-                "type": "TrueContinuum",
-                "input directory": f"{THIS_DIR}/data",
-                "iter out prefix": "iter_out_prefix",
-                "out dir": f"{THIS_DIR}/results/",
-                "num processors": 1,
-            },
-        })
-
-        for key, value in defaults_true_continuum.items():
-            if key not in config["expected flux"]:
-                config["expected flux"][key] = str(value)
-        for key, value in defaults_desisim_data.items():
-            if key not in config["data"]:
-                config["data"][key] = str(value)
-        data = DesisimMocks(config["data"])
-        expected_flux = TrueContinuum(config["expected flux"])
-
-        # compute the expected flux
-        expected_flux.compute_expected_flux(data.forests)
-
-        # check the results
-        for iteration in range(1,5):
-            self.compare_fits(
-                str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
-                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
-        self.compare_fits(test_file, out_file)
-
-        # setup Forest variables; case: linear wavelength solution
-        setup_forest("lin", pixel_step=2.4)
-
-        data_dir = Path(THIS_DIR) / "data"
-
-        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"
-        test_file = data_dir / "true_iter_out_prefix_compute_expected_flux_log_lin.fits.gz"
-
-        # initialize Data and Dr16ExpectedFlux instances
-        config = ConfigParser()
-        config.read_dict({
-            "data": desi_mock_data_kwargs,
-            "expected flux": {
-                "type": "TrueContinuum",
-                "input directory": f"{THIS_DIR}/data",
-                "iter out prefix": "iter_out_prefix",
-                "num processors": 1,
-                "out dir": f"{THIS_DIR}/results/",
-            },
-        })
-
-        for key, value in defaults_true_continuum.items():
-            if key not in config["expected flux"]:
-                config["expected flux"][key] = str(value)
-        for key, value in defaults_desisim_data.items():
-            if key not in config["data"]:
-                config["data"][key] = str(value)
-        data = DesisimMocks(config["data"])
-        expected_flux = TrueContinuum(config["expected flux"])
-
-        expected_flux.compute_expected_flux(data.forests)
-
-        # check the results
-        for iteration in range(1,5):
-            self.compare_fits(
-                str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
-                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
-        self.compare_fits(test_file, out_file)
-
-    def test_true_cont_compute_mean_cont_linear_wave_solution(self):
-        """Test method compute_mean_cont for class TrueContinuum using linear wave solution"""
-        # setup Forest variables; case: linear wavelength solution
-        setup_forest("lin", pixel_step=2.4)
-
-        results_dir = Path(THIS_DIR) / "results"
-        data_dir = Path(THIS_DIR) / "data"
-
-        # initialize Data and Dr16ExpectedFlux instances
-        config = ConfigParser()
-        config.read_dict({
-            "data": desi_mock_data_kwargs,
-            "expected flux": {
-                "type": "TrueContinuum",
-                "input directory": f"{THIS_DIR}/data",
-                "iter out prefix": "iter_out_prefix",
-                "num processors": 1,
-                "out dir": f"{THIS_DIR}/results/",
-            },
-        })
-
-        for key, value in defaults_true_continuum.items():
-            if key not in config["expected flux"]:
-                config["expected flux"][key] = str(value)
-        for key, value in defaults_desisim_data.items():
-            if key not in config["data"]:
-                config["data"][key] = str(value)
-        data = DesisimMocks(config["data"])
-        expected_flux = TrueContinuum(config["expected flux"])
-
-        expected_flux.compute_expected_flux(data.forests)
-
-        log_lambda_grid = np.loadtxt(data_dir / "true_log_lambda_rest_grid.txt")
-        mean_cont = expected_flux.get_mean_cont(log_lambda_grid)
-        mean_cont_weight = expected_flux.get_mean_cont(log_lambda_grid)
-
-        np.savetxt(results_dir / "true_mean_cont_lin.txt", mean_cont)
-        np.savetxt(results_dir / "true_mean_cont_weight_lin.txt", mean_cont_weight)
-        mean_cont_target =   np.loadtxt(data_dir / "true_mean_cont_lin.txt")
-        mean_cont_weight_target = np.loadtxt(data_dir / "true_mean_cont_weight_lin.txt")
-        if not np.allclose(mean_cont, mean_cont_target):
-            filename = "true_mean_cont_lin.txt"
-            print(f"\nOriginal file: {data_dir / filename}")
-            print(f"New file: {results_dir / filename}")
-            print("Difference found in mean cont")
-            print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont, mean_cont_target):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
-            self.assertTrue(np.allclose(mean_cont_target, mean_cont_target))
-
-        if not np.allclose(mean_cont_weight, mean_cont_weight_target):
-            filename = "true_mean_cont_weight_lin.txt"
-            print(f"\nOriginal file: {data_dir / filename}")
-            print(f"New file: {results_dir / filename}")
-            print("Difference found in mean cont weight")
-            print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont_weight, mean_cont_weight_target):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
-            self.assertTrue(np.allclose(mean_cont_weight_target, mean_cont_weight_target))
-
-
-    def test_true_cont_compute_mean_cont_log_wave_solution(self):
-        """Test method compute_mean_cont for class TrueContinuum using logarithmic wave solution"""
-        # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("log", rebin=3)
-
-        results_dir = Path(THIS_DIR) / "results"
-        data_dir = Path(THIS_DIR) / "data"
-
-        # initialize Data and Dr16ExpectedFlux instances
-        config = ConfigParser()
-        config.read_dict({
-            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
-            "expected flux": {
-                "type": "TrueContinuum",
-                "input directory": f"{THIS_DIR}/data",
-                "iter out prefix": "iter_out_prefix",
-                "out dir": f"{THIS_DIR}/results/",
-                "num processors": 1,
-            },
-        })
-
-        for key, value in defaults_true_continuum.items():
-            if key not in config["expected flux"]:
-                config["expected flux"][key] = str(value)
-        for key, value in defaults_desisim_data.items():
-            if key not in config["data"]:
-                config["data"][key] = str(value)
-        data = DesisimMocks(config["data"])
-        expected_flux = TrueContinuum(config["expected flux"])
-
-        # compute the expected flux
-        expected_flux.compute_expected_flux(data.forests)
-
-        log_lambda_grid = np.loadtxt(data_dir / "true_log_lambda_rest_grid_log.txt")
-        mean_cont = expected_flux.get_mean_cont(log_lambda_grid)
-        mean_cont_weight = expected_flux.get_mean_cont(log_lambda_grid)
-
-        np.savetxt(results_dir / "true_mean_cont_log.txt", mean_cont)
-        np.savetxt(results_dir / "true_mean_cont_weight_log.txt", mean_cont_weight)
-        mean_cont_target =   np.loadtxt(data_dir / "true_mean_cont_log.txt")
-        mean_cont_weight_target = np.loadtxt(data_dir / "true_mean_cont_weight_log.txt")
-        if not np.allclose(mean_cont, mean_cont_target):
-            filename = "true_mean_cont_log.txt"
-            print(f"\nOriginal file: {data_dir / filename}")
-            print(f"New file: {results_dir / filename}")
-            print("Difference found in mean cont")
-            print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont, mean_cont_target):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
-            self.assertTrue(np.allclose(mean_cont_target, mean_cont_target))
-
-        if not np.allclose(mean_cont_weight, mean_cont_weight_target):
-            filename = "true_mean_cont_weight_log.txt"
-            print(f"\nOriginal file: {data_dir / filename}")
-            print(f"New file: {results_dir / filename}")
-            print("Difference found in mean cont weight")
-            print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont_weight, mean_cont_weight_target):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
-            self.assertTrue(np.allclose(mean_cont_weight_target, mean_cont_weight_target))
-
-
-    def test_true_continuum_populate_los_ids(self):
-        """Test method populate_los_ids for class TrueContinuum"""
-        # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("log", rebin=3)
-
-        data_dir = Path(THIS_DIR) / "data"
-
-        # initialize Data and Dr16ExpectedFlux instances
-        config = ConfigParser()
-        config.read_dict({
-            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
-            "expected flux": {
-                "type": "TrueContinuum",
-                "input directory": f"{THIS_DIR}/data",
-                "iter out prefix": "iter_out_prefix",
-                "out dir": f"{THIS_DIR}/results/",
-                "num processors": 1,
-            },
-        })
-
-        for key, value in defaults_true_continuum.items():
-            if key not in config["expected flux"]:
-                config["expected flux"][key] = str(value)
-        for key, value in defaults_desisim_data.items():
-            if key not in config["data"]:
-                config["data"][key] = str(value)
-        data = DesisimMocks(config["data"])
-        expected_flux = TrueContinuum(config["expected flux"])
-
-        # compute the forest continua
-        for forest in data.forests:
-            expected_flux.read_true_continuum(forest)
-
-        # save iter_out_prefix for iteration 0
-        expected_flux.populate_los_ids(data.forests)
-
-        for i, key in enumerate(("mean expected flux", "weights", "continuum")):
-            self.assertTrue(np.allclose(
-                expected_flux.los_ids[59152][key],
-                np.loadtxt( data_dir / f"los_ids_{i}.txt")
-            ))
 
 if __name__ == '__main__':
     unittest.main()

@@ -16,14 +16,13 @@ from picca.delta_extraction.utils import find_bins
 
 accepted_options = [
     "input directory", "iter out prefix", "num processors", "out dir",
-    "num iterations", "raw statistics file", "use constant weight"
+    "raw statistics file", "use constant weight"
 ]
 
 defaults = {
     "iter out prefix": "delta_attributes",
     "raw statistics file": "",
     "use constant weight": False,
-    "num iterations": 1,
 }
 
 
@@ -138,7 +137,6 @@ class TrueContinuum(ExpectedFlux):
                 "'iter out prefix' should not incude folders. "
                 f"Found: {self.iter_out_prefix}")
 
-        self.num_iterations = config.getint("num iterations")
         self.use_constant_weight = config.getboolean("use constant weight")
         self.raw_statistics_filename = config.get("raw statistics file")
 
@@ -162,23 +160,16 @@ class TrueContinuum(ExpectedFlux):
         forests = pool.map(self.read_true_continuum, forests)
         pool.close()
 
-        for iteration in range(self.num_iterations):
-            self.logger.progress(
-                f"True continuum: starting iteration {iteration} of "
-                f"{self.num_iterations}"
-            )
-            self.compute_mean_cont(forests)
-            self.compute_var_lss(forests)
+        # the might be some small changes in the var_lss compared to the read
+        # values due to some smoothing of the forests
+        # thus, we recompute it from the actual deltas
+        self.compute_var_lss(forests)
+        # note that this does not change the output deltas but might slightly
+        # affect the mean continuum so we have to compute it after updating
+        # var_lss
+        self.compute_mean_cont(forests)
 
-            if iteration == self.num_iterations - 1:
-                # Final iteration has a different saving procedure
-                self.save_iteration_step(-1)
-            else:
-                self.save_iteration_step(iteration)
-
-            self.logger.progress(
-                f"Continuum fitting: ending iteration {iteration} of "
-                f"{self.num_iterations}")
+        self.save_iteration_step()
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
@@ -480,19 +471,9 @@ class TrueContinuum(ExpectedFlux):
                       ],
                       extname='VAR_FUNC')
 
-    def save_iteration_step(self, iteration):
-        """Save the staatistical properties of deltas at a given iteration
-        step
-
-        Arguments
-        ---------
-        iteration: int
-        Iteration number. -1 for final iteration
-        """
-        if iteration == -1:
-            iter_out_file = self.iter_out_prefix + ".fits.gz"
-        else:
-            iter_out_file = self.iter_out_prefix + f"_iteration{iteration+1}.fits.gz"
+    def save_iteration_step(self):
+        """Save the statistical properties of deltas"""
+        iter_out_file = self.iter_out_prefix + ".fits.gz"
 
         with fitsio.FITS(self.out_dir + iter_out_file, 'rw',
                          clobber=True) as results:
