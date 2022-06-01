@@ -632,6 +632,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         error_var_lss = np.zeros(self.num_bins_variance)
         error_fudge = np.zeros(self.num_bins_variance)
         num_pixels = np.zeros(self.num_bins_variance)
+        num_qso = np.zeros(self.num_bins_variance)
         valid_fit = np.zeros(self.num_bins_variance)
 
         # define an array to contain the possible values of pipeline variances
@@ -650,7 +651,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         mean_delta = np.zeros(self.num_bins_variance * num_var_bins)
         var2_delta = np.zeros(self.num_bins_variance * num_var_bins)
         count = np.zeros(self.num_bins_variance * num_var_bins)
-        num_qso = np.zeros(self.num_bins_variance * num_var_bins)
+        count_qso = np.zeros(self.num_bins_variance * num_var_bins)
 
         # compute delta statistics, binning the variance according to 'ivar'
         for forest in forests:
@@ -690,7 +691,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             rebin = np.bincount(bins)
             count[:len(rebin)] += rebin
-            num_qso[np.unique(bins)] += 1
+            count_qso[np.unique(bins)] += 1
 
         # normalise and finish the computation of delta statistics
         w = count > 0
@@ -707,7 +708,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         self.logger.progress(" Mean quantities in observer-frame")
         self.logger.progress(
-            " loglam    eta      var_lss  fudge    chi2     num_pix valid_fit")
+            " loglam    eta      var_lss  fudge    chi2     num_pix  num_qso  valid_fit")
         for index in range(self.num_bins_variance):
             # pylint: disable-msg=cell-var-from-loop
             # this function is defined differntly at each step of the loop
@@ -760,8 +761,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     variance)
                 weights = var2_delta[index * num_var_bins:(index + 1) *
                                      num_var_bins]
-                w = num_qso[index * num_var_bins:(index + 1) *
-                            num_var_bins] > 100
+                w = count_qso[index * num_var_bins:(index + 1) *
+                            num_var_bins] > 0
                 return np.sum(chi2_contribution[w]**2 / weights[w])
 
             minimizer = iminuit.Minuit(chi2,
@@ -798,12 +799,15 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 valid_fit[index] = False
             num_pixels[index] = count[index * num_var_bins:(index + 1) *
                                       num_var_bins].sum()
+            num_qso[index] = count_qso[index * num_var_bins:(index + 1) *
+                                       num_var_bins].sum()
             chi2_in_bin[index] = minimizer.fval
 
             self.logger.progress(
                 f" {self.log_lambda_var_func_grid[index]:.3e} "
-                f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} " +
-                f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} {valid_fit[index]}"
+                f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "
+                f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} "
+                f"{num_qso[index]:.2e} {valid_fit[index]}"
             )
 
         w = num_pixels > 0

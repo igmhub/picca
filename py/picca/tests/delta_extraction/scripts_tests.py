@@ -126,7 +126,7 @@ class ScriptsTest(AbstractTest):
         """End-to-end test using 'LYA' setup without corrections or masking,
         for desi mocks"""
         config_file = "{}/data/delta_lya_desi_mocks.ini".format(THIS_DIR)
-        out_dir = "{}/results/delta_extraction_desi_mocks_lya".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_lya_desi_mocks".format(THIS_DIR)
         test_dir = "{}/data/delta_extraction_lya_desi_mocks".format(THIS_DIR)
 
         self.run_delta_extraction(config_file, out_dir, test_dir)
