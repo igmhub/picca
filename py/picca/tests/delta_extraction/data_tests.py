@@ -9,11 +9,13 @@ import numpy as np
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
+from picca.delta_extraction.config import default_config
 from picca.delta_extraction.data import Data
 from picca.delta_extraction.data import defaults as defaults_data
 from picca.delta_extraction.data import accepted_analysis_type
 from picca.delta_extraction.data_catalogues.desi_data import DesiData
 from picca.delta_extraction.data_catalogues.desi_data import defaults as defaults_desi_data
+from picca.delta_extraction.data_catalogues.desi_data import accepted_options as accepted_options_desi_data
 from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix, DesiHealpixFileHandler
 from picca.delta_extraction.data_catalogues.desi_healpix import defaults as defaults_desi_healpix
 from picca.delta_extraction.data_catalogues.desi_tile import DesiTile
@@ -591,6 +593,7 @@ class DataTest(AbstractTest):
             "keep surveys": "all special",
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
         }})
         for key, value in defaults_desi_data.items():
             if key not in config["data"]:
@@ -632,10 +635,23 @@ class DataTest(AbstractTest):
             data._DesiData__parse_config(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
+        # run __parse_config with missing num_processors
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "blinding": "none",
+                        }})
+        expected_message = (
+            "Missing argument 'num processors' required by DesiData"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            data._DesiData__parse_config(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
         # run __parse_config with missing 'use_non_coadded_spectra'
         config = ConfigParser()
         config.read_dict({"data": {
             "blinding": "none",
+            "num processors": 1,
                         }})
         expected_message = (
             "Missing argument 'use non-coadded spectra' required by DesiData"
@@ -650,6 +666,9 @@ class DataTest(AbstractTest):
                         }})
         for key, value in defaults_desi_data.items():
             if key not in config["data"]:
+                config["data"][key] = str(value)
+        for key, value in default_config.get("general").items():
+            if key in accepted_options_desi_data and key not in config["data"]:
                 config["data"][key] = str(value)
         data._DesiData__parse_config(config["data"])
 
@@ -816,21 +835,6 @@ class DataTest(AbstractTest):
 
     def test_desi_healpix_parse_config(self):
         """Test method __parse_config from DesiHealpix"""
-        # create a DesiHealpix with missing num_processors
-        config = ConfigParser()
-        config.read_dict({"data": {
-            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-            "keep surveys": "all",
-            "input directory": f"{THIS_DIR}/data/",
-            "out dir": f"{THIS_DIR}/results/",
-            "use non-coadded spectra": False,
-        }})
-        expected_message = (
-            "Missing argument 'num processors' required by DesiHealpix"
-        )
-        with self.assertRaises(DataError) as context_manager:
-            DesiHealpix(config["data"])
-        self.compare_error_message(context_manager, expected_message)
 
         # create a DesiHealpix with missing Data options
         config = ConfigParser()
@@ -1116,7 +1120,8 @@ class DataTest(AbstractTest):
             "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
             "input directory": f"{THIS_DIR}/data/tile/cumulative",
             "out dir": f"{THIS_DIR}/results/",
-            "use non-coadded spectra": "False",
+            "use non-coadded spectra": False,
+            "num processors": 1,
         }})
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:
@@ -1144,6 +1149,107 @@ class DataTest(AbstractTest):
         with self.assertRaises(DataError) as context_manager:
             DesiTile(config["data"])
         self.compare_error_message(context_manager, expected_message)
+
+    def test_desi_tile_read_data(self):
+        """Test method read_data from DesiTile"""
+        # run with one processor; case: using coadds
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 10)
+
+        # run with 0 processors; case: using coadds
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 0,
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 10)
+
+        # run with 2 processors; case: using coadds
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 2,
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 10)
+
+        # run with one processor; case: using individual spectra
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": False,
+            "num processors": 1,
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 10)
+
+        # run with 0 processors; case: using individual spectra
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": False,
+            "num processors": 0,
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 10)
+
+        # run with 2 processors; case: using individual spectra
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": False,
+            "num processors": 2,
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 10)
 
     def test_desisim_mocks(self):
         """Test DesisimMocks"""
