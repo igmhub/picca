@@ -300,10 +300,9 @@ def main(cmdargs):
             diff = diff_grid
         else:
             # Interpolate the blinding template on the regular grid
-            rt_grid, rp_grid = np.meshgrid(rt_interp_grid, rp_interp_grid)
             interp = scipy.interpolate.RectBivariateSpline(
-                    rp_grid, rt_grid,
-                    diff_grid.reshape(num_bins_r_par, num_bins_r_trans), kx=3, ky=3)
+                    rp_interp_grid, rt_interp_grid,
+                    diff_grid.reshape(len(rp_interp_grid), len(rt_interp_grid)), kx=3, ky=3)
             diff = interp.ev(r_par, r_trans)
 
         # Check that the shapes match
