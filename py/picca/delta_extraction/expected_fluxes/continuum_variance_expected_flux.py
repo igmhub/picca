@@ -49,10 +49,6 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
         ---------
         config: configparser.SectionProxy
         Parsed options to initialize class
-
-        Raise
-        -----
-        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         self.logger = logging.getLogger(__name__)
 
@@ -172,13 +168,13 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
             log_lambda_bins = find_bins(
                 forest.log_lambda,
                 self.log_lambda_var_func_grid,
-                "lin",
+                Forest.wave_solution,
             )[w]
 
             log_lambda_rest_bins = find_bins(
                 forest.log_lambda - np.log10(1 + forest.z),
                 Forest.log_lambda_rest_frame_grid,
-                "lin",
+                Forest.wave_solution,
             )[w]
 
             # compute deltas
