@@ -15,7 +15,7 @@ from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.utils import find_bins
 
 accepted_options = [
-    "input directory", "iter out prefix", "num processors", "out dir", 
+    "input directory", "iter out prefix", "num processors", "out dir",
     "raw statistics file", "use constant weight", "num bins variance"
 ]
 
@@ -101,8 +101,7 @@ class TrueContinuum(ExpectedFlux):
         except AstronomicalObjectError as error:
             raise ExpectedFluxError(
                 "Forest class variables need to be set "
-                "before initializing variables here."
-            ) from error
+                "before initializing variables here.") from error
 
         # read large scale structure variance and mean flux
         self.get_var_lss = None
@@ -176,7 +175,7 @@ class TrueContinuum(ExpectedFlux):
             raise ExpectedFluxError(
                 "Missing argument 'num bins variance' required by Dr16ExpectedFlux"
             )
-            
+
         self.use_constant_weight = config.getboolean("use constant weight")
         self.raw_statistics_filename = config.get("raw statistics file")
 
@@ -215,7 +214,7 @@ class TrueContinuum(ExpectedFlux):
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
-    
+
     def compute_forest_variance(self, forest, continuum):
         """Compute the forest variance
         
@@ -297,7 +296,8 @@ class TrueContinuum(ExpectedFlux):
             forest_info = {
                 "mean expected flux": mean_expected_flux,
                 "weights": weights,
-                "continuum": forest.continuum,}
+                "continuum": forest.continuum,
+            }
             if isinstance(forest, Pk1dForest):
                 ivar = forest.ivar * mean_expected_flux**2
 
@@ -334,7 +334,8 @@ class TrueContinuum(ExpectedFlux):
         lambda_min = header["WMIN"]
         lambda_max = header["WMAX"]
         delta_lambda = header["DWAVE"]
-        lambda_ = np.arange(lambda_min, lambda_max + delta_lambda, delta_lambda)
+        lambda_ = np.arange(lambda_min, lambda_max + delta_lambda,
+                            delta_lambda)
         true_cont = hdul["TRUE_CONT"].read()
         indx = np.where(true_cont["TARGETID"] == forest.targetid)
         true_continuum = interp1d(lambda_, true_cont["TRUE_CONT"][indx])
@@ -373,8 +374,7 @@ class TrueContinuum(ExpectedFlux):
             else:
                 raise ExpectedFluxError(
                     "Couldn't find compatible raw satistics file. Provide a "
-                    "custom one using 'raw statistics file' field."
-                )
+                    "custom one using 'raw statistics file' field.")
         self.logger.info(
             f'Reading raw statistics var_lss and mean_flux from file: {filename}'
         )
@@ -395,13 +395,14 @@ class TrueContinuum(ExpectedFlux):
                 0] - pixel_step / 2
             log_lambda_rest_max = Forest.log_lambda_rest_frame_grid[-1]
             if (header['LINEAR'] or not np.isclose(
-                    header['L_MIN'], 10**log_lambda_min, rtol=1e-3) or
-                    not np.isclose(
-                        header['L_MAX'], 10**log_lambda_max, rtol=1e-3) or
-                    not np.isclose(
-                        header['LR_MIN'], 10**log_lambda_rest_min, rtol=1e-3) or
-                    not np.isclose(
-                        header['LR_MAX'], 10**log_lambda_rest_max, rtol=1e-3) or
+                    header['L_MIN'], 10**log_lambda_min, rtol=1e-3)
+                    or not np.isclose(
+                        header['L_MAX'], 10**log_lambda_max, rtol=1e-3)
+                    or not np.isclose(
+                        header['LR_MIN'], 10**log_lambda_rest_min, rtol=1e-3)
+                    or not np.isclose(
+                        header['LR_MAX'], 10**log_lambda_rest_max, rtol=1e-3)
+                    or
                     not np.isclose(header['DEL_LL'], pixel_step, rtol=1e-3)):
                 raise ExpectedFluxError(
                     "raw statistics file pixelization scheme does not match "
@@ -412,8 +413,7 @@ class TrueContinuum(ExpectedFlux):
                     f"input\t{log_lambda_min}\t{log_lambda_max}\t"
                     f"{log_lambda_rest_min}\t{log_lambda_rest_max}"
                     "provide a custom file in 'raw statistics file' field "
-                    "matching input pixelization scheme"
-                )
+                    "matching input pixelization scheme")
             log_lambda = hdul[1]['LAMBDA'][:]
         elif Forest.wave_solution == "lin":
             pixel_step = 10**Forest.log_lambda_grid[
@@ -423,12 +423,13 @@ class TrueContinuum(ExpectedFlux):
             lambda_rest_min = 10**Forest.log_lambda_rest_frame_grid[
                 0] - pixel_step / 2
             lambda_rest_max = 10**Forest.log_lambda_rest_frame_grid[-1]
-            if (not header['LINEAR'] or
-                    not np.isclose(header['L_MIN'], lambda_min, rtol=1e-3) or
-                    not np.isclose(header['L_MAX'], lambda_max, rtol=1e-3) or
-                    not np.isclose(header['LR_MIN'], lambda_rest_min, rtol=1e-3)
-                    or
-                    not np.isclose(header['LR_MAX'], lambda_rest_max, rtol=1e-3)
+            if (not header['LINEAR']
+                    or not np.isclose(header['L_MIN'], lambda_min, rtol=1e-3)
+                    or not np.isclose(header['L_MAX'], lambda_max, rtol=1e-3)
+                    or not np.isclose(
+                        header['LR_MIN'], lambda_rest_min, rtol=1e-3)
+                    or not np.isclose(
+                        header['LR_MAX'], lambda_rest_max, rtol=1e-3)
                     or not np.isclose(header['DEL_L'],
                                       10**Forest.log_lambda_grid[1] -
                                       10**Forest.log_lambda_grid[0],
@@ -473,12 +474,11 @@ class TrueContinuum(ExpectedFlux):
         counts = np.zeros_like(Forest.log_lambda_grid)
 
         for forest in forests:
-            log_lambda_bins = find_bins(
-                forest.log_lambda,
-                Forest.log_lambda_grid,
-                Forest.wave_solution)
+            log_lambda_bins = find_bins(forest.log_lambda,
+                                        Forest.log_lambda_grid,
+                                        Forest.wave_solution)
             var_pipe = 1. / forest.ivar / forest.continuum**2
-            deltas = forest.flux/forest.continuum - 1
+            deltas = forest.flux / forest.continuum - 1
             var_lss[log_lambda_bins] += deltas**2 - var_pipe
             counts[log_lambda_bins] += 1
 
