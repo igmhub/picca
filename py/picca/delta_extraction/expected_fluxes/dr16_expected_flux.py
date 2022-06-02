@@ -344,7 +344,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.min_num_qso_in_fit = config.getint("min num qso in fit")
         if self.min_num_qso_in_fit is None:
             raise ExpectedFluxError(
-                "Missing argument 'min qso in fit' required by Dr16ExpectedFlux"
+                "Missing argument 'min num qso in fit' required by Dr16ExpectedFlux"
             )
 
         self.num_bins_variance = config.getint("num bins variance")

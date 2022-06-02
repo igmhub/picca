@@ -735,11 +735,28 @@ class ExpectedFluxTest(AbstractTest):
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
+        # create a Dr16ExpectedFlux with missing min_qso_in_fit
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "limit eta": "0.0, 1.90",
+            "limit var lss": "0.0, 1.90",
+        }})
+        expected_message = (
+            "Missing argument 'min num qso in fit' required by Dr16ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            Dr16ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
         # create a Dr16ExpectedFlux with missing num_bins_vairance
         config = ConfigParser()
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "min num qso in fit": 0,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -756,6 +773,7 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "min num qso in fit": 0,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -773,6 +791,7 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "min num qso in fit": 0,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -791,6 +810,7 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "min num qso in fit": 0,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -810,6 +830,7 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "min num qso in fit": 0,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -832,6 +853,7 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "min num qso in fit": 0,
             "num processors": 1,
             "limit eta": "(0.0, 1.90)",
             "limit var lss": "(0.5, 1.40)",
@@ -850,6 +872,7 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "min num qso in fit": 0,
             "num processors": 1,
             "limit eta": "[0.0, 1.90]",
             "limit var lss": "[0.5, 1.40]",
@@ -869,6 +892,7 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "min num qso in fit": 0,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.5, 1.40",
