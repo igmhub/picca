@@ -17,8 +17,8 @@ from picca.delta_extraction.least_squares.least_squares_var_stats import (
 from picca.delta_extraction.utils import find_bins
 
 accepted_options = [
-    "iter out prefix", "limit eta", "limit var lss", "num bins variance",
-    "num iterations", "num processors", "order", "out dir",
+    "iter out prefix", "limit eta", "limit var lss", "min num qso in fit",
+    "num bins variance", "num iterations", "num processors", "order", "out dir",
     "use constant weight", "use ivar as weight"
 ]
 
@@ -28,6 +28,7 @@ defaults = {
     "limit var lss": (0., 0.3),
     "num bins variance": 20,
     "num iterations": 5,
+    "min num qso in fit": 100,
     "order": 1,
     "use constant weight": False,
     "use ivar as weight": False,
@@ -131,6 +132,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
     logger: logging.Logger
     Logger object
 
+    min_num_qso_in_fit: int
+    Minimum number of quasars contributing to a bin of wavelength and pipeline
+    variance in order to consider it in the fit. This is passed to
+    LeastsSquaresVarStats.
+
     num_bins_variance: int
     Number of bins to be used to compute variance functions and statistics as
     a function of wavelength.
@@ -168,6 +174,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.iter_out_prefix = None
         self.limit_eta = None
         self.limit_var_lss = None
+        self.min_num_qso_in_fit = None
         self.num_bins_variance = None
         self.num_iterations = None
         self.order = None
@@ -402,6 +409,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
         else:
             var_lss_max = float(limit_var_lss[1])
         self.limit_var_lss = (var_lss_min, var_lss_max)
+
+        self.min_num_qso_in_fit = config.getint("min num qso in fit")
+        if self.min_num_qso_in_fit is None:
+            raise ExpectedFluxError(
+                "Missing argument 'min qso in fit' required by Dr16ExpectedFlux"
+            )
 
         self.num_bins_variance = config.getint("num bins variance")
         if self.num_bins_variance is None:
