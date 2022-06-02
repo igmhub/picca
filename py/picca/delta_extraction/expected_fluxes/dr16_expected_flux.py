@@ -568,6 +568,52 @@ class Dr16ExpectedFlux(ExpectedFlux):
             fill_value=0.0,
             bounds_error=False)
 
+    def compute_expected_flux(self, forests):
+        """Compute the mean expected flux of the forests.
+        This includes the quasar continua and the mean transimission. It is
+        computed iteratively following as explained in du Mas des Bourboux et
+        al. (2020)
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+        """
+        context = multiprocessing.get_context('fork')
+        for iteration in range(self.num_iterations):
+            self.logger.progress(
+                f"Continuum fitting: starting iteration {iteration} of {self.num_iterations}"
+            )
+            if self.num_processors > 1:
+                with context.Pool(processes=self.num_processors) as pool:
+                    forests = pool.map(self.compute_continuum, forests)
+            else:
+                forests = [self.compute_continuum(f) for f in forests]
+
+            if iteration < self.num_iterations - 1:
+                # Compute mean continuum (stack in rest-frame)
+                self.compute_mean_cont(forests)
+
+                # Compute observer-frame mean quantities (var_lss, eta, fudge)
+                if not (self.use_ivar_as_weight or self.use_constant_weight):
+                    self.compute_var_stats(forests)
+
+            # compute the mean deltas
+            self.compute_delta_stack(forests)
+
+            # Save the iteration step
+            if iteration == self.num_iterations - 1:
+                self.save_iteration_step(-1)
+            else:
+                self.save_iteration_step(iteration)
+
+            self.logger.progress(
+                f"Continuum fitting: ending iteration {iteration} of "
+                f"{self.num_iterations}")
+
+        # now loop over forests to populate los_ids
+        self.populate_los_ids(forests)
+        
     def compute_forest_variance(self, forest, continuum):
         """Compute the forest variance following Du Mas 2020
 
@@ -644,52 +690,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                              mean_cont_weight[w],
                                              fill_value=0.0,
                                              bounds_error=False)
-
-    def compute_expected_flux(self, forests):
-        """Compute the mean expected flux of the forests.
-        This includes the quasar continua and the mean transimission. It is
-        computed iteratively following as explained in du Mas des Bourboux et
-        al. (2020)
-
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-        """
-        context = multiprocessing.get_context('fork')
-        for iteration in range(self.num_iterations):
-            self.logger.progress(
-                f"Continuum fitting: starting iteration {iteration} of {self.num_iterations}"
-            )
-            if self.num_processors > 1:
-                with context.Pool(processes=self.num_processors) as pool:
-                    forests = pool.map(self.compute_continuum, forests)
-            else:
-                forests = [self.compute_continuum(f) for f in forests]
-
-            if iteration < self.num_iterations - 1:
-                # Compute mean continuum (stack in rest-frame)
-                self.compute_mean_cont(forests)
-
-                # Compute observer-frame mean quantities (var_lss, eta, fudge)
-                if not (self.use_ivar_as_weight or self.use_constant_weight):
-                    self.compute_var_stats(forests)
-
-            # compute the mean deltas
-            self.compute_delta_stack(forests)
-
-            # Save the iteration step
-            if iteration == self.num_iterations - 1:
-                self.save_iteration_step(-1)
-            else:
-                self.save_iteration_step(iteration)
-
-            self.logger.progress(
-                f"Continuum fitting: ending iteration {iteration} of "
-                f"{self.num_iterations}")
-
-        # now loop over forests to populate los_ids
-        self.populate_los_ids(forests)
 
     def compute_var_stats(self, forests):
         """Compute variance functions and statistics
