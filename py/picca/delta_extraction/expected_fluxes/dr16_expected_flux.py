@@ -389,9 +389,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
         limit_var_lss_string = config.get("limit var lss")
         if limit_var_lss_string is None:
             raise ExpectedFluxError(
-                "Missing argument 'limit var lss' required by Dr16ExpectedFlux")
+                "Missing argument 'limit var lss' required by Dr16ExpectedFlux"
+            )
         limit_var_lss = limit_var_lss_string.split(",")
-        if limit_var_lss[0].startswith("(") or limit_var_lss[0].startswith("["):
+        if limit_var_lss[0].startswith("(") or limit_var_lss[0].startswith(
+                "["):
             var_lss_min = float(limit_var_lss[0][1:])
         else:
             var_lss_min = float(limit_var_lss[0])
@@ -519,55 +521,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         return forest
 
-    def compute_delta_stack(self, forests, stack_from_deltas=False):
-        """Compute a stack of the delta field as a function of wavelength
-
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-
-        stack_from_deltas: bool - default: False
-        Flag to determine whether to stack from deltas or compute them
-        """
-        stack_delta = np.zeros_like(Forest.log_lambda_grid)
-        stack_weight = np.zeros_like(Forest.log_lambda_grid)
-
-        for forest in forests:
-            if stack_from_deltas:
-                delta = forest.delta
-                weights = forest.weights
-            else:
-                # ignore forest if continuum could not be computed
-                if forest.continuum is None:
-                    continue
-                delta = forest.flux / forest.continuum
-                variance = self.compute_forest_variance(forest,
-                                                        forest.continuum)
-                weights = 1. / variance
-
-            bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
-                             Forest.wave_solution)
-            rebin = np.bincount(bins, weights=delta * weights)
-            stack_delta[:len(rebin)] += rebin
-            rebin = np.bincount(bins, weights=weights)
-            stack_weight[:len(rebin)] += rebin
-
-        w = stack_weight > 0
-        stack_delta[w] /= stack_weight[w]
-
-        self.get_stack_delta = interp1d(
-            Forest.log_lambda_grid[stack_weight > 0.],
-            stack_delta[stack_weight > 0.],
-            kind="nearest",
-            fill_value="extrapolate")
-        self.get_stack_delta_weights = interp1d(
-            Forest.log_lambda_grid[stack_weight > 0.],
-            stack_weight[stack_weight > 0.],
-            kind="nearest",
-            fill_value=0.0,
-            bounds_error=False)
-
     def compute_expected_flux(self, forests):
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
@@ -613,7 +566,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
-        
+
     def compute_forest_variance(self, forest, continuum):
         """Compute the forest variance following Du Mas 2020
 
@@ -670,7 +623,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             weights = 1.0 / self.compute_forest_variance(
                 forest, forest.continuum)
             cont = np.bincount(bins,
-                               weights=forest.flux / forest.continuum * weights)
+                               weights=forest.flux / forest.continuum *
+                               weights)
             mean_cont[:len(cont)] += cont
             cont = np.bincount(bins, weights=weights)
             mean_cont_weight[:len(cont)] += cont
@@ -878,64 +832,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         return weights
 
-    def hdu_cont(self, results):
-        """Add to the results file an HDU with the continuum information
-
-        Arguments
-        ---------
-        results: fitsio.FITS
-        The open fits file
-        """
-        results.write([
-            Forest.log_lambda_rest_frame_grid,
-            self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
-            self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
-        ],
-                      names=['loglam_rest', 'mean_cont', 'weight'],
-                      extname='CONT')
-
-    def hdu_stack_deltas(self, results):
-        """Add to the results file an HDU with the delta stack
-
-        Arguments
-        ---------
-        results: fitsio.FITS
-        The open fits file
-        """
-        header = {}
-        header["FITORDER"] = self.order
-
-        results.write([
-            Forest.log_lambda_grid,
-            self.get_stack_delta(Forest.log_lambda_grid),
-            self.get_stack_delta_weights(Forest.log_lambda_grid)
-        ],
-                      names=['loglam', 'stack', 'weight'],
-                      header=header,
-                      extname='STACK_DELTAS')
-
-    def hdu_var_func(self, results):
-        """Add to the results file an HDU with the variance functions
-
-        Arguments
-        ---------
-        results: fitsio.FITS
-        The open fits file
-        """
-        results.write([
-            self.log_lambda_var_func_grid,
-            self.get_eta(self.log_lambda_var_func_grid),
-            self.get_var_lss(self.log_lambda_var_func_grid),
-            self.get_fudge(self.log_lambda_var_func_grid),
-            self.get_num_pixels(self.log_lambda_var_func_grid),
-            self.get_valid_fit(self.log_lambda_var_func_grid)
-        ],
-                      names=[
-                          'loglam', 'eta', 'var_lss', 'fudge', 'num_pixels',
-                          'valid_fit'
-                      ],
-                      extname='VAR_FUNC')
-
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
         and inverse variance arrays for each line-of-sight.
@@ -967,23 +863,3 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
                 forest_info["ivar"] = ivar
             self.los_ids[forest.los_id] = forest_info
-
-    def save_iteration_step(self, iteration):
-        """Save the statistical properties of deltas at a given iteration
-        step
-
-        Arguments
-        ---------
-        iteration: int
-        Iteration number. -1 for final iteration
-        """
-        if iteration == -1:
-            iter_out_file = self.iter_out_prefix + ".fits.gz"
-        else:
-            iter_out_file = self.iter_out_prefix + f"_iteration{iteration+1}.fits.gz"
-
-        with fitsio.FITS(self.out_dir + iter_out_file, 'rw',
-                         clobber=True) as results:
-            self.hdu_stack_deltas(results)
-            self.hdu_var_func(results)
-            self.hdu_cont(results)

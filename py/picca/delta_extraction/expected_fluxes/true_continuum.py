@@ -15,13 +15,14 @@ from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.utils import find_bins
 
 accepted_options = [
-    "input directory", "iter out prefix", "num processors", "out dir",
-    "raw statistics file", "use constant weight"
+    "input directory", "iter out prefix", "num processors", "out dir", 
+    "raw statistics file", "use constant weight", "num bins variance"
 ]
 
 defaults = {
     "iter out prefix": "delta_attributes",
     "raw statistics file": "",
+    "num bins variance": 20,
     "use constant weight": False,
 }
 
@@ -67,6 +68,10 @@ class TrueContinuum(ExpectedFlux):
     of deltas at a given iteration step. Intermediate files will add
     '_iteration{num}.fits.gz' to the prefix for intermediate steps and '.fits.gz'
     for the final results.
+
+    num_bins_variance: int
+    Number of bins to be used to compute variance functions and statistics as
+    a function of wavelength.
     """
 
     def __init__(self, config):
@@ -87,6 +92,7 @@ class TrueContinuum(ExpectedFlux):
         # load variables from config
         self.input_directory = None
         self.iter_out_prefix = None
+        self.num_bins_variance = None
         self.__parse_config(config)
 
         # check that Forest class variables are set
@@ -107,6 +113,34 @@ class TrueContinuum(ExpectedFlux):
         self.get_mean_cont = None
         self.get_mean_cont_weight = None
 
+        # initialize wavelength array for variance functions
+        self.log_lambda_var_func_grid = None
+        self._initialize_variance_wavelength_array()
+
+    def _initialize_variance_wavelength_array(self):
+        """Initialize the wavelength array where variance functions will be
+        computed
+        The initialized arrays are:
+        - self.log_lambda_var_func_grid
+        """
+        # initialize the variance-related variables (see equation 4 of
+        # du Mas des Bourboux et al. 2020 for details on these variables)
+        if Forest.wave_solution == "log":
+            self.log_lambda_var_func_grid = (
+                Forest.log_lambda_grid[0] +
+                (np.arange(self.num_bins_variance) + .5) *
+                (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
+                self.num_bins_variance)
+        # TODO: this is related with the todo in check the effect of finding
+        # the nearest bin in log_lambda space versus lambda space infunction
+        # find_bins in utils.py. Once we understand that we can remove
+        # the dependence from Forest from here too.
+        elif Forest.wave_solution == "lin":
+            self.log_lambda_var_func_grid = np.log10(
+                10**Forest.log_lambda_grid[0] +
+                (np.arange(self.num_bins_variance) + .5) *
+                (10**Forest.log_lambda_grid[-1] -
+                 10**Forest.log_lambda_grid[0]) / self.num_bins_variance)
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -137,6 +171,12 @@ class TrueContinuum(ExpectedFlux):
                 "'iter out prefix' should not incude folders. "
                 f"Found: {self.iter_out_prefix}")
 
+        self.num_bins_variance = config.getint("num bins variance")
+        if self.num_bins_variance is None:
+            raise ExpectedFluxError(
+                "Missing argument 'num bins variance' required by Dr16ExpectedFlux"
+            )
+            
         self.use_constant_weight = config.getboolean("use constant weight")
         self.raw_statistics_filename = config.get("raw statistics file")
 
@@ -169,10 +209,27 @@ class TrueContinuum(ExpectedFlux):
         # var_lss
         self.compute_mean_cont(forests)
 
-        self.save_iteration_step()
+        self.compute_delta_stack(forests)
+
+        self.save_iteration_step(iteration=-1)
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
+    
+    def compute_forest_variance(self, forest, continuum):
+        """Compute the forest variance
+        
+        Arguments
+        ---------
+        forest: Forest
+        A forest instance where the variance will be computed
+        
+        var_pipe: float
+        Pipeline variances that will be used to compute the full variance
+        """
+        var_pipe = 1. / forest.ivar / forest.continuum**2
+        var_lss = self.get_var_lss(forest.log_lambda)
+        return var_lss + var_pipe
 
     def compute_mean_cont(self, forests):
         """Compute the mean quasar continuum over the whole sample.
@@ -196,10 +253,8 @@ class TrueContinuum(ExpectedFlux):
             if self.use_constant_weight:
                 weights = np.ones_like(forest.log_lambda)
             else:
-                var_lss = self.get_var_lss(forest.log_lambda)
-                var_pipe = 1. / forest.ivar / forest.continuum**2
-                variance = var_lss + var_pipe
-                weights = 1 / variance
+                weights = 1. / self.compute_forest_variance(
+                    forest, forest.continuum)
             cont = np.bincount(bins, weights=forest.continuum * weights)
             mean_cont[:len(cont)] += cont
             cont_weight = np.bincount(bins, weights=weights)
@@ -235,12 +290,9 @@ class TrueContinuum(ExpectedFlux):
                 weights = np.ones_like(forest.log_lambda)
                 mean_expected_flux = forest.continuum
             else:
-                var_lss = self.get_var_lss(forest.log_lambda)
-
                 mean_expected_flux = forest.continuum
-                var_pipe = 1. / forest.ivar / forest.continuum**2
-                variance = var_lss + var_pipe
-                weights = 1. / variance
+                weights = 1. / self.compute_forest_variance(
+                    forest, forest.continuum)
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,
@@ -436,46 +488,3 @@ class TrueContinuum(ExpectedFlux):
                                     var_lss[w],
                                     fill_value='extrapolate',
                                     kind='nearest')
-
-
-    def hdu_cont(self, results):
-        """Add to the results file an HDU with the continuum information
-
-        Arguments
-        ---------
-        results: fitsio.FITS
-        The open fits file
-        """
-        results.write([
-            Forest.log_lambda_rest_frame_grid,
-            self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
-            self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
-        ],
-                      names=['loglam_rest', 'mean_cont', 'weight'],
-                      extname='CONT')
-
-    def hdu_var_func(self, results):
-        """Add to the results file an HDU with the variance functions
-
-        Arguments
-        ---------
-        results: fitsio.FITS
-        The open fits file
-        """
-        results.write([
-            Forest.log_lambda_grid,
-            self.get_var_lss(Forest.log_lambda_grid),
-        ],
-                      names=[
-                          'loglam', 'var_lss',
-                      ],
-                      extname='VAR_FUNC')
-
-    def save_iteration_step(self):
-        """Save the statistical properties of deltas"""
-        iter_out_file = self.iter_out_prefix + ".fits.gz"
-
-        with fitsio.FITS(self.out_dir + iter_out_file, 'rw',
-                         clobber=True) as results:
-            self.hdu_var_func(results)
-            self.hdu_cont(results)
