@@ -150,7 +150,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.iter_out_prefix = None
         self.limit_eta = None
         self.limit_var_lss = None
-        self.min_qso_in_fit = None
+        self.min_num_qso_in_fit = None
         self.num_bins_variance = None
         self.num_iterations = None
         self.order = None
@@ -341,8 +341,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             var_lss_max = float(limit_var_lss[1])
         self.limit_var_lss = (var_lss_min, var_lss_max)
 
-        self.min_qso_in_fit = config.getint("min qso in fit")
-        if self.min_qso_in_fit is None:
+        self.min_num_qso_in_fit = config.getint("min num qso in fit")
+        if self.min_num_qso_in_fit is None:
             raise ExpectedFluxError(
                 "Missing argument 'min qso in fit' required by Dr16ExpectedFlux"
             )
@@ -769,7 +769,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 weights = var2_delta[index * num_var_bins:(index + 1) *
                                      num_var_bins]
                 w = num_qso[index * num_var_bins:(index + 1) *
-                            num_var_bins] > self.min_qso_in_fit
+                            num_var_bins] > self.min_num_qso_in_fit
                 return np.sum(chi2_contribution[w]**2 / weights[w])
 
             minimizer = iminuit.Minuit(chi2,
