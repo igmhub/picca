@@ -25,7 +25,7 @@ defaults = {
     "limit var lss": (0., 0.3),
     "num bins variance": 20,
     "num iterations": 5,
-    "min num qso in fit": 100,
+    "min num qso in fit": 0,
     "order": 1,
     "use constant weight": False,
     "use ivar as weight": False,
