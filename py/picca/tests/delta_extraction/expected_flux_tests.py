@@ -1143,7 +1143,7 @@ class ExpectedFluxTest(AbstractTest):
             "data": desi_mock_data_kwargs,
             "expected flux": {
                 "type": "TrueContinuum",
-                "input directory": f"{THIS_DIR}/data/data",
+                "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
                 "num processors": 1,
@@ -1204,7 +1204,7 @@ class ExpectedFluxTest(AbstractTest):
             "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
             "expected flux": {
                 "type": "TrueContinuum",
-                "input directory": f"{THIS_DIR}/data/data",
+                "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
                 "num processors": 1,
                 "out dir": f"{THIS_DIR}/results/",
