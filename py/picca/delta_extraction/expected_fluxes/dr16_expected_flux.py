@@ -696,6 +696,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.num_bins_variance,
             forests,
             self.log_lambda_var_func_grid,
+            self.min_num_qso_in_fit,
         )
 
         self.logger.progress(" Mean quantities in observer-frame")
