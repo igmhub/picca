@@ -1637,18 +1637,15 @@ def read_objects(filename,
         userprint("{} of {}".format(index, len(unique_healpix)))
         w = healpixs == healpix
         if 'desi' in mode:
-            if 'TILEID' in catalog.colnames:
-                objs[healpix] = [
-                    QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
-                    entry['TILEID'], entry[nightcol], entry['FIBER'])
-                    for entry in catalog[w]
-                ]
+            if 'FIBER' in catalog.colnames:
+                fibercol = "FIBER"
             else:
-                objs[healpix] = [
-                    QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
-                    entry['TARGETID'], entry[nightcol], entry['TARGETID'])
-                    for entry in catalog[w]
-                ]
+                fibercol = "TARGETID"
+            objs[healpix] = [
+                QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
+                entry['TARGETID'], entry[nightcol], entry[fibercol])
+                for entry in catalog[w]
+            ]
         else:
             objs[healpix] = [
                 QSO(entry['THING_ID'], entry['RA'], entry['DEC'], entry['Z'],
