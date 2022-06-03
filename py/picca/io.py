@@ -1621,7 +1621,7 @@ def read_objects(filename,
 
     if mode == 'desi_mocks':
         nightcol='TARGETID'
-    elif 'desi_' in mode:
+    elif 'desi' in mode:
         if 'LAST_NIGHT' in catalog.colnames:
             nightcol='LAST_NIGHT'
         elif 'NIGHT' in catalog.colnames:
