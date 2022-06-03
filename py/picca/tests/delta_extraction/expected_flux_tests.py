@@ -386,7 +386,7 @@ class ExpectedFluxTest(AbstractTest):
 
         # check the results
         for iteration in range(1, 5):
-            selfite.compare_fits(
+            self.compare_fits(
                 test_file.replace(".fits", f"_iteration{iteration}.fits"),
                 out_file.replace(".fits", f"_iteration{iteration}.fits"))
         self.compare_fits(test_file, out_file)        # setup Forest variables; case: linear wavelength solution
@@ -589,7 +589,7 @@ class ExpectedFluxTest(AbstractTest):
         eta = expected_flux.get_eta(expectations["log_lambda"])
         var_lss = expected_flux.get_var_lss(expectations["log_lambda"])
         fudge = expected_flux.get_fudge(expectations["log_lambda"])
-        nudem_pixels = expected_flux.get_num_pixels(expectations["log_lambda"])
+        num_pixels = expected_flux.get_num_pixels(expectations["log_lambda"])
         valid_fdit = expected_flux.get_valid_fit(expectations["log_lambda"])
         self.assertTrue(np.allclose(eta, expectations["eta"]))
         self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
