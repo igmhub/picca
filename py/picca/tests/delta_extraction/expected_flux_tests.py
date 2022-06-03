@@ -590,7 +590,7 @@ class ExpectedFluxTest(AbstractTest):
         var_lss = expected_flux.get_var_lss(expectations["log_lambda"])
         fudge = expected_flux.get_fudge(expectations["log_lambda"])
         num_pixels = expected_flux.get_num_pixels(expectations["log_lambda"])
-        valid_fdit = expected_flux.get_valid_fit(expectations["log_lambda"])
+        valid_fit = expected_flux.get_valid_fit(expectations["log_lambda"])
         self.assertTrue(np.allclose(eta, expectations["eta"]))
         self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
         self.assertTrue(np.allclose(fudge, expectations["fudge"]))
