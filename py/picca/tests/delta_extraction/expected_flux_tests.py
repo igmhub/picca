@@ -31,7 +31,6 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class ExpectedFluxTest(AbstractTest):
     """Test class ExpectedFlux and its childs.
-
     Methods
     -------
     compare_ascii (from AbstractTest)
@@ -51,7 +50,6 @@ class ExpectedFluxTest(AbstractTest):
     """
     def test_dr16_expected_flux(self):
         """Test constructor for class Dr16ExpectedFlux
-
         Load an Dr16ExpectedFlux instance.
         """
         config = ConfigParser()
@@ -204,8 +202,6 @@ class ExpectedFluxTest(AbstractTest):
                     f.write(f"{item} ")
             f.write("\n")
         f.close()
-
-        #self.compare_ascii(test_file, out_file)
 
         # load expected forest continua
         continua = {}
@@ -661,46 +657,18 @@ class ExpectedFluxTest(AbstractTest):
 
     def test_dr16_expected_flux_parse_config(self):
         """Test method __parse_config for class Dr16ExpectedFlux"""
+        # Forest variables need to be initialize to finish ExpectedFlux.__init__
+        setup_forest("log", rebin=3)
+
         # create a Dr16ExpectedFlux with missing ExpectedFlux Options
         config = ConfigParser()
         config.read_dict({"expected_flux": {
         }})
         expected_message = (
-            "Missing argument 'out dir' required by ExpectedFlux"
+            "Missing argument 'iter out prefix' required by ExpectedFlux"
         )
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
-        self.compare_error_message(context_manager, expected_message)
-
-        # create a Dr16ExpectedFlux with missing iter_out_prefix
-        config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "out dir": f"{THIS_DIR}/results/",
-            "num processors": 1
-        }})
-        expected_message = (
-            "Missing argument 'iter out prefix' required by Dr16ExpectedFlux"
-        )
-        with self.assertRaises(ExpectedFluxError) as context_manager:
-            Dr16ExpectedFlux(config["expected_flux"])
-        self.compare_error_message(context_manager, expected_message)
-
-        # create a Dr16ExpectedFlux with invalid iter_out_prefix
-        config = ConfigParser()
-        config.read_dict(
-            {"expected flux": {
-                "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
-                "out dir": f"{THIS_DIR}/results/",
-                "num processors": 1
-            }})
-        for key, value in defaults_dr16_expected_flux.items():
-            if key not in config["expected flux"]:
-                config["expected flux"][key] = str(value)
-        expected_message = (
-            "Error constructing Dr16ExpectedFlux. 'iter out prefix' should not "
-            f"incude folders. Found: {THIS_DIR}/results/iter_out_prefix")
-        with self.assertRaises(ExpectedFluxError) as context_manager:
-            Dr16ExpectedFlux(config["expected flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Dr16ExpectedFlux with missing 'limit eta'
@@ -708,6 +676,7 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "num bins variance": 20,
             "num processors": 1
         }})
         expected_message = (
@@ -722,6 +691,7 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "num bins variance": 20,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
         }})
@@ -732,17 +702,18 @@ class ExpectedFluxTest(AbstractTest):
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
-        # create a Dr16ExpectedFlux with missing num_bins_vairance
+        # create a Dr16ExpectedFlux with missing num_iterations
         config = ConfigParser()
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "num bins variance": 20,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
         }})
         expected_message = (
-            "Missing argument 'num bins variance' required by Dr16ExpectedFlux"
+            "Missing argument 'min qso in fit' required by Dr16ExpectedFlux"
         )
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
@@ -753,10 +724,11 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "num bins variance": 20,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
-            "num bins variance": 20,
+            "min num qso in fit": 100,
         }})
         expected_message = (
             "Missing argument 'num iterations' required by Dr16ExpectedFlux"
@@ -770,10 +742,11 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "num bins variance": 20,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
-            "num bins variance": 20,
+            "min num qso in fit": 100,
             "num iterations": 5,
         }})
         expected_message = (
@@ -788,10 +761,11 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "num bins variance": 20,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
-            "num bins variance": 20,
+            "min num qso in fit": 100,
             "num iterations": 5,
             "order": 1,
         }})
@@ -807,10 +781,11 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "num bins variance": 20,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
-            "num bins variance": 20,
+            "min num qso in fit": 100,
             "num iterations": 5,
             "order": 1,
             "use constant weight": False,
@@ -822,17 +797,16 @@ class ExpectedFluxTest(AbstractTest):
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
-
-        setup_forest("log", rebin=3)
         # create a Dr16ExpectedFlux instance; case: limit eta and limit var_lss with ()
         config = ConfigParser()
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "num bins variance": 20,
             "num processors": 1,
             "limit eta": "(0.0, 1.90)",
             "limit var lss": "(0.5, 1.40)",
-            "num bins variance": 20,
+            "min num qso in fit": 100,
             "num iterations": 5,
             "order": 1,
             "use constant weight": False,
@@ -847,10 +821,11 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "num bins variance": 20,
             "num processors": 1,
             "limit eta": "[0.0, 1.90]",
             "limit var lss": "[0.5, 1.40]",
-            "num bins variance": 20,
+            "min num qso in fit": 100,
             "num iterations": 5,
             "order": 1,
             "use constant weight": False,
@@ -866,10 +841,11 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({"expected_flux": {
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
+            "num bins variance": 20,
             "num processors": 1,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.5, 1.40",
-            "num bins variance": 20,
+            "min num qso in fit": 100,
             "num iterations": 5,
             "order": 1,
             "use constant weight": False,
@@ -1002,17 +978,28 @@ class ExpectedFluxTest(AbstractTest):
 
     def test_expected_flux(self):
         """Test Abstract class ExpectedFlux
-
         Load an ExpectedFlux instance.
         """
         # initialize ExpectedFlux instance
         config = ConfigParser()
         config.read_dict({
             "expected flux": {
+                "iter out prefix": "delta_attributes",
                 "out dir": f"{THIS_DIR}/results/",
-                "num processors": 1
+                "num bins variance": 20,
+                "num processors": 1,
             },
         })
+        # this should raise an error as Forest variables are not defined
+        expected_message = (
+            "Forest class variables need to be set before initializing "
+            "variables here.")
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            expected_flux = ExpectedFlux(config["expected flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # setup Forest variables; case: logarithmic wavelength solution
+        setup_forest("log", rebin=3)
         expected_flux = ExpectedFlux(config["expected flux"])
 
         # compute_expected_flux should not be defined
@@ -1039,14 +1026,41 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.extract_deltas(forest)
         self.assertTrue(all(forest.deltas == np.zeros_like(forest1.flux)))
 
-    def test_dr16_expected_flux_parse_config(self):
+    def test_expected_flux_parse_config(self):
         """Test method __parse_config for class Dr16ExpectedFlux"""
-        # create a ExpectedFlux with missing out_dir
+        # create a ExpectedFlux with missing iter_out_prefix
         config = ConfigParser()
         config.read_dict({"expected_flux": {
         }})
         expected_message = (
-            "Missing argument 'out dir' required by ExpectedFlux"
+            "Missing argument 'iter out prefix' required by ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a ExpectedFlux with invalid iter_out_prefix
+        config = ConfigParser()
+        config.read_dict({"expected flux": {
+            "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
+        }})
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        expected_message = (
+            "Error constructing ExpectedFlux. 'iter out prefix' should not "
+            f"incude folders. Found: {THIS_DIR}/results/iter_out_prefix")
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            ExpectedFlux(config["expected flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a ExpectedFlux with missing num_bins_variance
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out Prefix": f"delta_attributes",
+        }})
+        expected_message = (
+            "Missing argument 'num bins variance' required by ExpectedFlux"
         )
         with self.assertRaises(ExpectedFluxError) as context_manager:
             ExpectedFlux(config["expected_flux"])
@@ -1055,7 +1069,8 @@ class ExpectedFluxTest(AbstractTest):
         # create a ExpectedFlux with missing num_processors
         config = ConfigParser()
         config.read_dict({"expected_flux": {
-            "out dir": f"{THIS_DIR}/results/",
+            "iter out Prefix": f"delta_attributes",
+            "num bins variance": 20,
         }})
         expected_message = (
             "Missing argument 'num processors' required by ExpectedFlux"
@@ -1064,31 +1079,25 @@ class ExpectedFluxTest(AbstractTest):
             ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
+        # create a ExpectedFlux with missing out_dir
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out Prefix": f"delta_attributes",
+            "num bins variance": 20,
+            "num processors": 1,
+        }})
+        expected_message = (
+            "Missing argument 'out dir' required by ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+
     def test_true_continuum(self):
         """Test constructor for class TrueContinuum
-
         Load a TrueContinuum instance.
         """
-        config = ConfigParser()
-        config.read_dict({
-                "expected flux": {
-                     "input directory": f"{THIS_DIR}/data",
-                     "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
-                     "out dir": f"{THIS_DIR}/results",
-                     "num processors": 1,
-                }})
-        for key, value in defaults_true_continuum.items():
-            if key not in config["expected flux"]:
-                config["expected flux"][key] = str(value)
-        # this should raise an error as iter out prefix should not have a folder
-        with self.assertRaises(ExpectedFluxError) as context_manager:
-            expected_flux = TrueContinuum(config["expected flux"])
-        expected_message = (
-            "Error constructing TrueContinuum. 'iter out prefix' should not incude folders. Found: "
-            )
-        self.compare_error_message(context_manager, expected_message, startswith=True)
-
-
         config = ConfigParser()
         config.read_dict(
             {"expected flux": {
@@ -1132,13 +1141,13 @@ class ExpectedFluxTest(AbstractTest):
             )
         self.compare_error_message(context_manager, expected_message)
 
-    def test_true_continuum_compute_mean_cont_lin_wave_solution(self):
+    def test_true_continuum_compute_mean_cont_lin(self):
         """Test method compute_mean_cont for class TrueContinuum using linear wave solution"""
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        out_file = f"{THIS_DIR}/results/true_mean_cont_lin.txt"
-        test_file = f"{THIS_DIR}/data/true_mean_cont_lin.txt"
+        out_file = f"{THIS_DIR}/results/true_continuum_mean_cont_lin.txt"
+        test_file = f"{THIS_DIR}/data/true_continuum_mean_cont_lin.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1175,7 +1184,7 @@ class ExpectedFluxTest(AbstractTest):
         # load the expected results
         expectations = np.genfromtxt(test_file, names=True)
 
-        # compare with obtained results
+        # compare mean_cont data with obtained results
         mean_cont = expected_flux.get_mean_cont(expectations["log_lambda"])
         if not np.allclose(mean_cont, expectations["mean_cont"]):
             print(f"\nOriginal file: {test_file}")
@@ -1186,23 +1195,24 @@ class ExpectedFluxTest(AbstractTest):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(mean_cont, expectations["mean_cont"]))
 
+        # compare mean_flux data with obtained results
         mean_cont_weight = expected_flux.get_mean_cont_weight(expectations["log_lambda"])
         if not np.allclose(mean_cont_weight, expectations["mean_cont_weight"]):
             print(f"\nOriginal file: {test_file}")
             print(f"New file: {out_file}")
-            print("Difference found in mean_cont")
+            print("Difference found in mean_cont_weight")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_cont_weight, expectations["mean_cont_weight"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(mean_cont_weight, expectations["mean_cont_weight"]))
 
-    def test_true_continuum_compute_mean_cont_log_wave_solution(self):
+    def test_true_continuum_compute_mean_cont_log(self):
         """Test method compute_mean_cont for class TrueContinuum using logarithmic wave solution"""
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
-        out_file = f"{THIS_DIR}/results/true_mean_cont_log.txt"
-        test_file = f"{THIS_DIR}/data/true_mean_cont_log.txt"
+        out_file = f"{THIS_DIR}/results/true_continuum_mean_cont_log.txt"
+        test_file = f"{THIS_DIR}/data/true_continuum_mean_cont_log.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1240,7 +1250,7 @@ class ExpectedFluxTest(AbstractTest):
         # load the expected results
         expectations = np.genfromtxt(test_file, names=True)
 
-        # compare with obtained results
+        # compare mean_cont data with obtained results
         mean_cont = expected_flux.get_mean_cont(expectations["log_lambda"])
         if not np.allclose(mean_cont, expectations["mean_cont"]):
             print(f"\nOriginal file: {test_file}")
@@ -1251,11 +1261,12 @@ class ExpectedFluxTest(AbstractTest):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(mean_cont, expectations["mean_cont"]))
 
+        # compare mean_flux data with obtained results
         mean_cont_weight = expected_flux.get_mean_cont_weight(expectations["log_lambda"])
         if not np.allclose(mean_cont_weight, expectations["mean_cont_weight"]):
             print(f"\nOriginal file: {test_file}")
             print(f"New file: {out_file}")
-            print("Difference found in mean_cont")
+            print("Difference found in mean_cont_weight")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_cont_weight, expectations["mean_cont_weight"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
@@ -1266,7 +1277,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
-        out_file = f"{THIS_DIR}/results/Log/iter_out_prefix_compute_expected_flux_log.fits.gz"
+        out_file = f"{THIS_DIR}/results/Log/true_iter_out_prefix_compute_expected_flux_log.fits.gz"
         test_file = f"{THIS_DIR}/data/true_iter_out_prefix_compute_expected_flux_log.fits.gz"
 
         # initialize Data and Dr16ExpectedFlux instances
@@ -1276,7 +1287,7 @@ class ExpectedFluxTest(AbstractTest):
             "expected flux": {
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data",
-                "iter out prefix": "iter_out_prefix",
+                "iter out prefix": "true_iter_out_prefix_compute_expected_flux_log",
                 "out dir": f"{THIS_DIR}/results/",
                 "num processors": 1,
             },
@@ -1295,17 +1306,13 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.compute_expected_flux(data.forests)
 
         # check the results
-        for iteration in range(1,5):
-            self.compare_fits(
-                str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
-                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
         self.compare_fits(test_file, out_file)
 
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        out_file = f"{THIS_DIR}/results/Log/iter_out_prefix_compute_expected_flux_log.fits.gz"
-        test_file = f"{THIS_DIR}/data/true_iter_out_prefix_compute_expected_flux_log_lin.fits.gz"
+        out_file = f"{THIS_DIR}/results/Log/true_iter_out_prefix_compute_expected_flux_lin.fits.gz"
+        test_file = f"{THIS_DIR}/data/true_iter_out_prefix_compute_expected_flux_lin.fits.gz"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1314,7 +1321,7 @@ class ExpectedFluxTest(AbstractTest):
             "expected flux": {
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data",
-                "iter out prefix": "iter_out_prefix",
+                "iter out prefix": "true_iter_out_prefix_compute_expected_flux_lin",
                 "num processors": 1,
                 "out dir": f"{THIS_DIR}/results/",
             },
@@ -1332,18 +1339,45 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.compute_expected_flux(data.forests)
 
         # check the results
-        for iteration in range(1,5):
-            self.compare_fits(
-                str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
-                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
         self.compare_fits(test_file, out_file)
+
+    def test_true_continuum_parse_config(self):
+        """Test method __parse_config for class TrueContinuum"""
+        # Forest variables need to be initialize to finish ExpectedFlux.__init__
+        setup_forest("log", rebin=3)
+
+        # create a TrueContinuum with missing ExpectedFlux Options
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+        }})
+        expected_message = (
+            "Missing argument 'iter out prefix' required by ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            TrueContinuum(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a TrueContinuum with missing 'input directory'
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num bins variance": 20,
+            "num processors": 1
+        }})
+        expected_message = (
+            "Missing argument 'input directory' required by TrueContinuum"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            TrueContinuum(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
 
     def test_true_continuum_populate_los_ids(self):
         """Test method populate_los_ids for class TrueContinuum"""
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
-        data_dir = f"{THIS_DIR}/data"
+        test_folder = f"{THIS_DIR}/data"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1371,22 +1405,21 @@ class ExpectedFluxTest(AbstractTest):
         for forest in data.forests:
             expected_flux.read_true_continuum(forest)
 
-        # save iter_out_prefix for iteration 0
+        # run populate_los_ids
         expected_flux.populate_los_ids(data.forests)
 
         for i, key in enumerate(("mean expected flux", "weights", "continuum")):
             self.assertTrue(np.allclose(
                 expected_flux.los_ids[59152][key],
-                np.loadtxt(f"{data_dir}/los_ids_{i}.txt")
+                np.loadtxt(f"{test_folder}/los_ids_{i}.txt")
             ))
-
     def test_true_continuum_read_raw_statistics(self):
         """Test reading raw statistics files"""
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        results_dir = f"{THIS_DIR}/results"
-        data_dir = f"{THIS_DIR}/data"
+        out_file = f"{THIS_DIR}/results/true_continuum_raw_stats_lin.txt"
+        test_file = f"{THIS_DIR}/data/true_continuum_raw_stats_lin.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1394,7 +1427,7 @@ class ExpectedFluxTest(AbstractTest):
             "data": desi_mock_data_kwargs,
             "expected flux": {
                 "type": "TrueContinuum",
-                "input directory": f"{THIS_DIR}/data/data",
+                "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
                 "num processors": 1,
@@ -1409,37 +1442,45 @@ class ExpectedFluxTest(AbstractTest):
                 config["data"][key] = str(value)
         expected_flux = TrueContinuum(config["expected flux"])
 
-        log_lambda_grid = np.loadtxt(f"{data_dir}/true_log_lambda_grid.txt")
-        var_lss = expected_flux.get_var_lss(log_lambda_grid)
-        mean_flux = expected_flux.get_mean_flux(log_lambda_grid)
+        # save results
+        f = open(out_file, "w")
+        f.write("# log_lambda var_lss mean_flux\n")
+        for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
+            f.write(f"{log_lambda} {expected_flux.get_var_lss(log_lambda)} "
+                    f"{expected_flux.get_mean_flux(log_lambda)}\n")
+        f.close()
 
-        np.savetxt(f"{results_dir}/true_var_lss.txt", var_lss)
-        np.savetxt(f"{results_dir}/true_mean_flux.txt", mean_flux)
-        var_lss_target =   np.loadtxt(f"{data_dir}/true_var_lss.txt")
-        mean_flux_target = np.loadtxt(f"{data_dir}/true_mean_flux.txt")
-        if not np.allclose(var_lss, var_lss_target):
-            filename = "true_var_lss.txt"
-            print(f"\nOriginal file: {data_dir / filename}")
-            print(f"New file: {results_dir / filename}")
+        # load the expected results
+        expectations = np.genfromtxt(test_file, names=True)
+
+        # compare var_lss data with obtained results
+        var_lss = expected_flux.get_var_lss(expectations["log_lambda"])
+        if not np.allclose(var_lss, expectations["var_lss"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
             print("Difference found in var_lss")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(var_lss, var_lss_target):
+            for i1, i2 in zip(mean_cont, expectations["var_lss"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
-            self.assertTrue(np.allclose(var_lss, var_lss_target))
+        self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
 
-        if not np.allclose(mean_flux, mean_flux_target):
-            filename = "true_mean_flux.txt"
-            print(f"\nOriginal file: {data_dir / filename}")
-            print(f"New file: {results_dir / filename}")
+        # compare mean_flux data with obtained results
+        mean_flux = expected_flux.get_mean_flux(expectations["log_lambda"])
+        if not np.allclose(mean_flux, expectations["mean_flux"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
             print("Difference found in mean_flux")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_flux, mean_flux_target):
+            for i1, i2 in zip(mean_cont, expectations["mean_flux"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
-            self.assertTrue(np.allclose(mean_flux, mean_flux_target))
+        self.assertTrue(np.allclose(mean_flux, expectations["mean_flux"]))
 
         # setup Forest variables; case: log wavelength solution
         reset_forest()
         setup_forest("log", rebin=3)
+
+        out_file = f"{THIS_DIR}/results/true_continuum_raw_stats_log.txt"
+        test_file = f"{THIS_DIR}/data/true_continuum_raw_stats_log.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1447,7 +1488,7 @@ class ExpectedFluxTest(AbstractTest):
             "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
             "expected flux": {
                 "type": "TrueContinuum",
-                "input directory": f"{THIS_DIR}/data/data",
+                "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
                 "num processors": 1,
                 "out dir": f"{THIS_DIR}/results/",
@@ -1462,33 +1503,38 @@ class ExpectedFluxTest(AbstractTest):
                 config["data"][key] = str(value)
         expected_flux = TrueContinuum(config["expected flux"])
 
-        log_lambda_ = np.arange(3.5563025007672873, 3.7403626894942437, 0.0003)
-        var_lss = expected_flux.get_var_lss(log_lambda_)
-        mean_flux = expected_flux.get_mean_flux(log_lambda_)
+        # save results
+        f = open(out_file, "w")
+        f.write("# log_lambda var_lss mean_flux\n")
+        for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
+            f.write(f"{log_lambda} {expected_flux.get_var_lss(log_lambda)} "
+                    f"{expected_flux.get_mean_flux(log_lambda)}\n")
+        f.close()
 
-        np.savetxt(f"{results_dir}/true_var_lss_log.txt", var_lss)
-        np.savetxt(f"{results_dir}/true_mean_flux_log.txt", mean_flux)
-        var_lss_target =   np.loadtxt(f"{data_dir}/true_var_lss_log.txt")
-        mean_flux_target = np.loadtxt(f"{data_dir}/true_mean_flux_log.txt")
-        if not np.allclose(var_lss, var_lss_target):
-            filename = "true_var_lss_log.txt"
-            print(f"\nOriginal file: {data_dir}/{filename}")
-            print(f"New file: {results_dir}/{filename}")
+        # load the expected results
+        expectations = np.genfromtxt(test_file, names=True)
+
+        # compare var_lss data with obtained results
+        var_lss = expected_flux.get_var_lss(expectations["log_lambda"])
+        if not np.allclose(var_lss, expectations["var_lss"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
             print("Difference found in var_lss")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(var_lss, var_lss_target):
+            for i1, i2 in zip(mean_cont, expectations["var_lss"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
-            self.assertTrue(np.allclose(var_lss, var_lss_target))
+        self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
 
-        if not np.allclose(mean_flux, mean_flux_target):
-            filename = "true_mean_flux.txt"
-            print(f"\nOriginal file: {data_dir}/{filename}")
-            print(f"New file: {results_dir}/{filename}")
+        # compare mean_flux data with obtained results
+        mean_flux = expected_flux.get_mean_flux(expectations["log_lambda"])
+        if not np.allclose(mean_flux, expectations["mean_flux"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
             print("Difference found in mean_flux")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_flux, mean_flux_target):
+            for i1, i2 in zip(mean_cont, expectations["mean_flux"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
-            self.assertTrue(np.allclose(mean_flux, mean_flux_target))
+        self.assertTrue(np.allclose(mean_flux, expectations["mean_flux"]))
 
 
     def test_true_continuum_read_true_continuum(self):
@@ -1496,8 +1542,8 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        results_dir = f"{THIS_DIR}/results"
-        data_dir = f"{THIS_DIR}/data"
+        out_file = f"{THIS_DIR}/results/continua_true_lin.txt"
+        test_file = f"{THIS_DIR}/data/continua_true_lin.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1521,7 +1567,6 @@ class ExpectedFluxTest(AbstractTest):
         data = DesisimMocks(config["data"])
         expected_flux = TrueContinuum(config["expected flux"])
 
-        out_file = f"{results_dir}/continua_true_lin.txt"
         # save the results
         f = open(out_file, "w")
         f.write("# thingid cont[0] ... cont[N]\n")
@@ -1534,7 +1579,7 @@ class ExpectedFluxTest(AbstractTest):
             f.write("\n")
         f.close()
 
-        test_file = f"{data_dir}/continua_true_lin.txt"
+        # load test results
         continua = {}
         f = open(test_file)
         for line in f.readlines():
@@ -1577,7 +1622,8 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: log wavelength solution
         setup_forest("log", rebin=3)
 
-        data_dir = f"{THIS_DIR}/data"
+        out_file = f"{THIS_DIR}/results/continua_true_log.txt"
+        test_file = f"{THIS_DIR}/data/continua_true_log.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1601,7 +1647,6 @@ class ExpectedFluxTest(AbstractTest):
         data = DesisimMocks(config["data"])
         expected_flux = TrueContinuum(config["expected flux"])
 
-        out_file = f"{results_dir}/continua_true_log.txt"
         # save the results
         f = open(out_file, "w")
         f.write("# thingid cont[0] ... cont[N]\n")
@@ -1614,7 +1659,7 @@ class ExpectedFluxTest(AbstractTest):
             f.write("\n")
         f.close()
 
-        test_file = f"{data_dir}/continua_true_log.txt"
+        # load the test results
         continua = {}
         f = open(test_file)
         for line in f.readlines():

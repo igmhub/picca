@@ -302,7 +302,7 @@ def update_default_options(default_options, new_options):
                     "found to have values with different type: "
                     f"{type(default_value)} and {type(value)}. "
                     "Revise your recent changes or contact picca developpers.")
-            elif default_value != value:
+            if default_value != value:
                 raise DeltaExtractionError(
                     f"Incompatible defaults are being added. Key {key} "
                     f"found to have two default values: '{value}' and '{default_value}' "

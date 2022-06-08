@@ -61,6 +61,7 @@ class LeastsSquaresVarStats:
         num_bins_variance,
         forests,
         log_lambda_var_func_grid,
+        min_num_qso_in_fit,
     ):
         """Initialize class instances
 
@@ -75,9 +76,14 @@ class LeastsSquaresVarStats:
 
         log_lambda_var_func_grid: array of float
         Wavelength array where variance functions will be computed.
+
+        min_num_qso_in_fit: int
+        Minimum number of quasars contributing to a bin of wavelength and pipeline
+        variance in order to consider it in the fit
         """
         self.num_bins_variance = num_bins_variance
         self.log_lambda_var_func_grid = log_lambda_var_func_grid
+        self.min_num_qso_in_fit = min_num_qso_in_fit
 
         # define an array to contain the possible values of pipeline variances
         # the measured pipeline variance of the deltas will be averaged using the
@@ -122,7 +128,8 @@ class LeastsSquaresVarStats:
             self.var_delta[self.running_indexs[0]:self.running_indexs[1]] -
             variance)
         weights = self.var2_delta[self.running_indexs[0]:self.running_indexs[1]]
-        w = self.num_qso[self.running_indexs[0]:self.running_indexs[1]] > 100
+        w = self.num_qso[self.running_indexs[0]:
+                         self.running_indexs[1]] > self.min_num_qso_in_fit
         return np.sum(chi2_contribution[w]**2 / weights[w])
 
     def initialize_delta_arrays(self, forests):

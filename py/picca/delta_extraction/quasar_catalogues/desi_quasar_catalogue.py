@@ -147,8 +147,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             keep_columns += ['TILEID', 'PETAL_LOC']
         if 'NIGHT' in catalogue.colnames:
             keep_columns += ['NIGHT']
-        if 'LASTNIGHT' in catalogue.colnames:
-            keep_columns += ['LASTNIGHT']
+        if 'LAST_NIGHT' in catalogue.colnames:
+            keep_columns += ['LAST_NIGHT']
         if 'SURVEY' in catalogue.colnames:
             keep_columns += ['SURVEY']
         if 'DESI_TARGET' in catalogue.colnames:

@@ -2,36 +2,35 @@
 import logging
 import multiprocessing
 
-import fitsio
 import iminuit
 import numpy as np
 from scipy.interpolate import interp1d
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
-from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
-from picca.delta_extraction.expected_flux import ExpectedFlux
+from picca.delta_extraction.errors import ExpectedFluxError
+from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
 from picca.delta_extraction.least_squares.least_squares_cont_model import LeastsSquaresContModel
 from picca.delta_extraction.least_squares.least_squares_var_stats import (
     LeastsSquaresVarStats, FUDGE_REF)
-from picca.delta_extraction.utils import find_bins
+from picca.delta_extraction.utils import (find_bins, update_accepted_options,
+                                          update_default_options)
 
-accepted_options = [
-    "iter out prefix", "limit eta", "limit var lss", "num bins variance",
-    "num iterations", "num processors", "order", "out dir",
-    "use constant weight", "use ivar as weight"
-]
+accepted_options = update_accepted_options(accepted_options, [
+    "limit eta", "limit var lss", "min num qso in fit", "num iterations",
+    "order", "use constant weight", "use ivar as weight"
+])
 
-defaults = {
-    "iter out prefix": "delta_attributes",
-    "limit eta": (0.5, 1.5),
-    "limit var lss": (0., 0.3),
-    "num bins variance": 20,
-    "num iterations": 5,
-    "order": 1,
-    "use constant weight": False,
-    "use ivar as weight": False,
-}
+defaults = update_default_options(
+    defaults, {
+        "limit eta": (0.5, 1.5),
+        "limit var lss": (0., 0.3),
+        "num iterations": 5,
+        "min num qso in fit": 100,
+        "order": 1,
+        "use constant weight": False,
+        "use ivar as weight": False,
+    })
 
 FUDGE_FIT_START = FUDGE_REF
 ETA_FIT_START = 1.
@@ -131,6 +130,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
     logger: logging.Logger
     Logger object
 
+    min_num_qso_in_fit: int
+    Minimum number of quasars contributing to a bin of wavelength and pipeline
+    variance in order to consider it in the fit. This is passed to
+    LeastsSquaresVarStats.
+
     num_bins_variance: int
     Number of bins to be used to compute variance functions and statistics as
     a function of wavelength.
@@ -165,33 +169,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
         super().__init__(config)
 
         # load variables from config
-        self.iter_out_prefix = None
         self.limit_eta = None
         self.limit_var_lss = None
-        self.num_bins_variance = None
+        self.min_num_qso_in_fit = None
         self.num_iterations = None
         self.order = None
         self.use_constant_weight = None
         self.use_ivar_as_weight = None
         self.__parse_config(config)
-
-        # check that Forest class variables are set
-        # these are required in order to initialize the arrays
-        try:
-            Forest.class_variable_check()
-        except AstronomicalObjectError as error:
-            raise ExpectedFluxError(
-                "Forest class variables need to be set "
-                "before initializing variables here.") from error
-
-        # initialize mean continuum
-        self.get_mean_cont = None
-        self.get_mean_cont_weight = None
-        self._initialize_mean_continuum_arrays()
-
-        # initialize wavelength array for variance functions
-        self.log_lambda_var_func_grid = None
-        self._initialize_variance_wavelength_array()
 
         # initialize variance functions
         self.get_eta = None
@@ -203,9 +188,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self._initialize_variance_functions()
 
         self.continuum_fit_parameters = None
-
-        self.get_stack_delta = None
-        self.get_stack_delta_weights = None
 
     def _initialize_get_eta(self):
         """Initialiaze function get_eta"""
@@ -220,6 +202,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             eta = np.ones(self.num_bins_variance)
             # this bit is what is actually freeing eta for the fit
             self.fit_variance_functions.append("eta")
+
         self.get_eta = interp1d(self.log_lambda_var_func_grid,
                                 eta,
                                 fill_value='extrapolate',
@@ -256,58 +239,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                     var_lss,
                                     fill_value='extrapolate',
                                     kind='nearest')
-
-    def _initialize_mean_continuum_arrays(self):
-        """Initialize mean continuum arrays
-        The initialized arrays are:
-        - self.get_mean_cont
-        - self.get_mean_cont_weight
-        """
-        # initialize the mean quasar continuum
-        # TODO: maybe we can drop this and compute first the mean quasar
-        # continuum on compute_expected_flux
-        self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
-                                      np.ones_like(
-                                          Forest.log_lambda_rest_frame_grid),
-                                      fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(
-            Forest.log_lambda_rest_frame_grid,
-            np.zeros_like(Forest.log_lambda_rest_frame_grid),
-            fill_value="extrapolate")
-
-    def _initialize_variance_wavelength_array(self):
-        """Initialize the wavelength array where variance functions will be
-        computed
-        The initialized arrays are:
-        - self.log_lambda_var_func_grid
-        """
-        # initialize the variance-related variables (see equation 4 of
-        # du Mas des Bourboux et al. 2020 for details on these variables)
-        if Forest.wave_solution == "log":
-            self.log_lambda_var_func_grid = (
-                Forest.log_lambda_grid[0] +
-                (np.arange(self.num_bins_variance) + .5) *
-                (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
-                self.num_bins_variance)
-        # TODO: this is related with the todo in check the effect of finding
-        # the nearest bin in log_lambda space versus lambda space infunction
-        # find_bins in utils.py. Once we understand that we can remove
-        # the dependence from Forest from here too.
-        elif Forest.wave_solution == "lin":
-            self.log_lambda_var_func_grid = np.log10(
-                10**Forest.log_lambda_grid[0] +
-                (np.arange(self.num_bins_variance) + .5) *
-                (10**Forest.log_lambda_grid[-1] -
-                 10**Forest.log_lambda_grid[0]) / self.num_bins_variance)
-
-        # TODO: Replace the if/else block above by something like the commented
-        # block below. We need to check the impact of doing this on the final
-        # deltas first (eta, var_lss and fudge will be differently sampled).
-        #start of commented block
-        #resize = len(Forest.log_lambda_grid)/self.num_bins_variance
-        #print(resize)
-        #self.log_lambda_var_func_grid = Forest.log_lambda_grid[::int(resize)]
-        #end of commented block
 
     def _initialize_variance_functions(self):
         """Initialize variance functions
@@ -358,19 +289,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         Raises
         ------
-        ExpectedFluxError if iter out prefix is not valid
+        ExpectedFluxError if variables are not valid
         """
-        self.iter_out_prefix = config.get("iter out prefix")
-        if self.iter_out_prefix is None:
-            raise ExpectedFluxError(
-                "Missing argument 'iter out prefix' required "
-                "by Dr16ExpectedFlux")
-        if "/" in self.iter_out_prefix:
-            raise ExpectedFluxError(
-                "Error constructing Dr16ExpectedFlux. "
-                "'iter out prefix' should not incude folders. "
-                f"Found: {self.iter_out_prefix}")
-
         limit_eta_string = config.get("limit eta")
         if limit_eta_string is None:
             raise ExpectedFluxError(
@@ -401,10 +321,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
             var_lss_max = float(limit_var_lss[1])
         self.limit_var_lss = (var_lss_min, var_lss_max)
 
-        self.num_bins_variance = config.getint("num bins variance")
-        if self.num_bins_variance is None:
+        self.min_num_qso_in_fit = config.getint("min num qso in fit")
+        if self.min_num_qso_in_fit is None:
             raise ExpectedFluxError(
-                "Missing argument 'num bins variance' required by Dr16ExpectedFlux"
+                "Missing argument 'min qso in fit' required by Dr16ExpectedFlux"
             )
 
         self.num_iterations = config.getint("num iterations")
@@ -519,55 +439,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         return forest
 
-    def compute_delta_stack(self, forests, stack_from_deltas=False):
-        """Compute a stack of the delta field as a function of wavelength
-
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-
-        stack_from_deltas: bool - default: False
-        Flag to determine whether to stack from deltas or compute them
-        """
-        stack_delta = np.zeros_like(Forest.log_lambda_grid)
-        stack_weight = np.zeros_like(Forest.log_lambda_grid)
-
-        for forest in forests:
-            if stack_from_deltas:
-                delta = forest.delta
-                weights = forest.weights
-            else:
-                # ignore forest if continuum could not be computed
-                if forest.continuum is None:
-                    continue
-                delta = forest.flux / forest.continuum
-                variance = self.compute_forest_variance(forest,
-                                                        forest.continuum)
-                weights = 1. / variance
-
-            bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
-                             Forest.wave_solution)
-            rebin = np.bincount(bins, weights=delta * weights)
-            stack_delta[:len(rebin)] += rebin
-            rebin = np.bincount(bins, weights=weights)
-            stack_weight[:len(rebin)] += rebin
-
-        w = stack_weight > 0
-        stack_delta[w] /= stack_weight[w]
-
-        self.get_stack_delta = interp1d(
-            Forest.log_lambda_grid[stack_weight > 0.],
-            stack_delta[stack_weight > 0.],
-            kind="nearest",
-            fill_value="extrapolate")
-        self.get_stack_delta_weights = interp1d(
-            Forest.log_lambda_grid[stack_weight > 0.],
-            stack_weight[stack_weight > 0.],
-            kind="nearest",
-            fill_value=0.0,
-            bounds_error=False)
-
     def compute_expected_flux(self, forests):
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
@@ -613,7 +484,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
-        
+
     def compute_forest_variance(self, forest, continuum):
         """Compute the forest variance following Du Mas 2020
 
@@ -622,8 +493,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         forest: Forest
         A forest instance where the variance will be computed
 
-        var_pipe: float
-        Pipeline variances that will be used to compute the full variance
+        continuum: array of float
+        Quasar continuum associated with the forest
         """
         var_pipe = 1. / forest.ivar / continuum**2
         var_lss = self.get_var_lss(forest.log_lambda)
@@ -729,6 +600,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.num_bins_variance,
             forests,
             self.log_lambda_var_func_grid,
+            self.min_num_qso_in_fit,
         )
 
         self.logger.progress(" Mean quantities in observer-frame")
@@ -878,42 +750,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         return weights
 
-    def hdu_cont(self, results):
-        """Add to the results file an HDU with the continuum information
-
-        Arguments
-        ---------
-        results: fitsio.FITS
-        The open fits file
-        """
-        results.write([
-            Forest.log_lambda_rest_frame_grid,
-            self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
-            self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
-        ],
-                      names=['loglam_rest', 'mean_cont', 'weight'],
-                      extname='CONT')
-
-    def hdu_stack_deltas(self, results):
-        """Add to the results file an HDU with the delta stack
-
-        Arguments
-        ---------
-        results: fitsio.FITS
-        The open fits file
-        """
-        header = {}
-        header["FITORDER"] = self.order
-
-        results.write([
-            Forest.log_lambda_grid,
-            self.get_stack_delta(Forest.log_lambda_grid),
-            self.get_stack_delta_weights(Forest.log_lambda_grid)
-        ],
-                      names=['loglam', 'stack', 'weight'],
-                      header=header,
-                      extname='STACK_DELTAS')
-
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
 
@@ -922,19 +758,24 @@ class Dr16ExpectedFlux(ExpectedFlux):
         results: fitsio.FITS
         The open fits file
         """
-        results.write([
+        values = [
             self.log_lambda_var_func_grid,
             self.get_eta(self.log_lambda_var_func_grid),
             self.get_var_lss(self.log_lambda_var_func_grid),
             self.get_fudge(self.log_lambda_var_func_grid),
             self.get_num_pixels(self.log_lambda_var_func_grid),
             self.get_valid_fit(self.log_lambda_var_func_grid)
-        ],
-                      names=[
-                          'loglam', 'eta', 'var_lss', 'fudge', 'num_pixels',
-                          'valid_fit'
-                      ],
-                      extname='VAR_FUNC')
+        ]
+        names = [
+            "loglam",
+            "eta",
+            "var_lss",
+            "fudge",
+            "num_pixels",
+            "valid_fit",
+        ]
+
+        results.write(values, names=names, extname='VAR_FUNC')
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
@@ -967,23 +808,3 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
                 forest_info["ivar"] = ivar
             self.los_ids[forest.los_id] = forest_info
-
-    def save_iteration_step(self, iteration):
-        """Save the statistical properties of deltas at a given iteration
-        step
-
-        Arguments
-        ---------
-        iteration: int
-        Iteration number. -1 for final iteration
-        """
-        if iteration == -1:
-            iter_out_file = self.iter_out_prefix + ".fits.gz"
-        else:
-            iter_out_file = self.iter_out_prefix + f"_iteration{iteration+1}.fits.gz"
-
-        with fitsio.FITS(self.out_dir + iter_out_file, 'rw',
-                         clobber=True) as results:
-            self.hdu_stack_deltas(results)
-            self.hdu_var_func(results)
-            self.hdu_cont(results)

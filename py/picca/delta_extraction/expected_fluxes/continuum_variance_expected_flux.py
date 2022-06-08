@@ -71,9 +71,9 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
         self._initialize_get_eta()
         self._initialize_get_var_lss()
         self.get_var_cont = interp1d(Forest.log_lambda_rest_frame_grid,
-                                    var_cont,
-                                    fill_value='extrapolate',
-                                    kind='nearest')
+                                     var_cont,
+                                     fill_value='extrapolate',
+                                     kind='nearest')
         self.get_num_pixels = interp1d(self.log_lambda_var_func_grid,
                                        num_pixels,
                                        fill_value="extrapolate",
@@ -121,8 +121,8 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
         forest: Forest
         A forest instance where the variance will be computed
 
-        var_pipe: float
-        Pipeline variances that will be used to compute the full variance
+        continuum: array of float
+        Quasar continuum associated with the forest
         """
         var_pipe = 1. / forest.ivar / continuum**2
         var_lss = self.get_var_lss(forest.log_lambda)
@@ -219,9 +219,9 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
         var_cont_mean[w] /= var_cont_count[w]
 
         self.get_var_cont = interp1d(Forest.log_lambda_rest_frame_grid[w],
-                                    var_cont_mean[w],
-                                    fill_value='extrapolate',
-                                    kind='nearest')
+                                     var_cont_mean[w],
+                                     fill_value='extrapolate',
+                                     kind='nearest')
 
     def hdu_cont(self, results):
         """Add to the results file an HDU with the continuum information
