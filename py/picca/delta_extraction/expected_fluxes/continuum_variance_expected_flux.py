@@ -121,8 +121,8 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
         forest: Forest
         A forest instance where the variance will be computed
 
-        var_pipe: float
-        Pipeline variances that will be used to compute the full variance
+        continuum: array of float
+        Quasar continuum associated with the forest
         """
         var_pipe = 1. / forest.ivar / continuum**2
         var_lss = self.get_var_lss(forest.log_lambda)

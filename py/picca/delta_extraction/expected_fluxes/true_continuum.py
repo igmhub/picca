@@ -10,21 +10,21 @@ from pkg_resources import resource_filename
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
-from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
-from picca.delta_extraction.expected_flux import ExpectedFlux
-from picca.delta_extraction.utils import find_bins
+from picca.delta_extraction.errors import ExpectedFluxError
+from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
+from picca.delta_extraction.utils import (
+    find_bins, update_accepted_options, update_default_options)
 
-accepted_options = [
-    "input directory", "iter out prefix", "num processors", "out dir",
-    "raw statistics file", "use constant weight", "num bins variance"
-]
 
-defaults = {
-    "iter out prefix": "delta_attributes",
+accepted_options = update_accepted_options(
+    accepted_options,
+    ["input directory", "raw statistics file", "use constant weight",
+     "num bins variance"])
+
+defaults = update_default_options(defaults, {
     "raw statistics file": "",
-    "num bins variance": 20,
     "use constant weight": False,
-}
+})
 
 
 class TrueContinuum(ExpectedFlux):
@@ -91,55 +91,12 @@ class TrueContinuum(ExpectedFlux):
 
         # load variables from config
         self.input_directory = None
-        self.iter_out_prefix = None
-        self.num_bins_variance = None
         self.__parse_config(config)
-
-        # check that Forest class variables are set
-        try:
-            Forest.class_variable_check()
-        except AstronomicalObjectError as error:
-            raise ExpectedFluxError(
-                "Forest class variables need to be set "
-                "before initializing variables here.") from error
 
         # read large scale structure variance and mean flux
         self.get_var_lss = None
         self.get_mean_flux = None
         self.read_raw_statistics()
-
-        # functions to store mean continuum and weights
-        self.get_mean_cont = None
-        self.get_mean_cont_weight = None
-
-        # initialize wavelength array for variance functions
-        self.log_lambda_var_func_grid = None
-        self._initialize_variance_wavelength_array()
-
-    def _initialize_variance_wavelength_array(self):
-        """Initialize the wavelength array where variance functions will be
-        computed
-        The initialized arrays are:
-        - self.log_lambda_var_func_grid
-        """
-        # initialize the variance-related variables (see equation 4 of
-        # du Mas des Bourboux et al. 2020 for details on these variables)
-        if Forest.wave_solution == "log":
-            self.log_lambda_var_func_grid = (
-                Forest.log_lambda_grid[0] +
-                (np.arange(self.num_bins_variance) + .5) *
-                (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
-                self.num_bins_variance)
-        # TODO: this is related with the todo in check the effect of finding
-        # the nearest bin in log_lambda space versus lambda space infunction
-        # find_bins in utils.py. Once we understand that we can remove
-        # the dependence from Forest from here too.
-        elif Forest.wave_solution == "lin":
-            self.log_lambda_var_func_grid = np.log10(
-                10**Forest.log_lambda_grid[0] +
-                (np.arange(self.num_bins_variance) + .5) *
-                (10**Forest.log_lambda_grid[-1] -
-                 10**Forest.log_lambda_grid[0]) / self.num_bins_variance)
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -151,30 +108,13 @@ class TrueContinuum(ExpectedFlux):
 
         Raises
         ------
-        ExpectedFluxError if iter out prefix is not valid
+        ExpectedFluxError if variables are not valid
         """
         self.input_directory = config.get("input directory")
         if self.input_directory is None:
             raise ExpectedFluxError(
                 "Missing argument 'input directory' required "
                 "by TrueContinuum")
-
-        self.iter_out_prefix = config.get("iter out prefix")
-        if self.iter_out_prefix is None:
-            raise ExpectedFluxError(
-                "Missing argument 'iter out prefix' required "
-                "by TrueContinuum")
-        if "/" in self.iter_out_prefix:
-            raise ExpectedFluxError(
-                "Error constructing TrueContinuum. "
-                "'iter out prefix' should not incude folders. "
-                f"Found: {self.iter_out_prefix}")
-
-        self.num_bins_variance = config.getint("num bins variance")
-        if self.num_bins_variance is None:
-            raise ExpectedFluxError(
-                "Missing argument 'num bins variance' required by Dr16ExpectedFlux"
-            )
 
         self.use_constant_weight = config.getboolean("use constant weight")
         self.raw_statistics_filename = config.get("raw statistics file")
@@ -217,14 +157,14 @@ class TrueContinuum(ExpectedFlux):
 
     def compute_forest_variance(self, forest, continuum):
         """Compute the forest variance
-        
+
         Arguments
         ---------
         forest: Forest
         A forest instance where the variance will be computed
-        
-        var_pipe: float
-        Pipeline variances that will be used to compute the full variance
+
+        continuum: array of float
+        Quasar continuum associated with the forest
         """
         var_pipe = 1. / forest.ivar / forest.continuum**2
         var_lss = self.get_var_lss(forest.log_lambda)
@@ -271,6 +211,25 @@ class TrueContinuum(ExpectedFlux):
                                              mean_cont_weight[w],
                                              fill_value=0.0,
                                              bounds_error=False)
+
+    def hdu_var_func(self, results):
+        """Add to the results file an HDU with the variance functions
+
+        Arguments
+        ---------
+        results: fitsio.FITS
+        The open fits file
+        """
+        values = [
+            self.log_lambda_var_func_grid,
+            self.get_var_lss(self.log_lambda_var_func_grid),
+        ]
+        names = [
+            "loglam",
+            "var_lss",
+        ]
+
+        results.write(values, names=names, extname='VAR_FUNC')
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
