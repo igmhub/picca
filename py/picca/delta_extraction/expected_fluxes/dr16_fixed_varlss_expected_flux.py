@@ -64,11 +64,12 @@ class Dr16FixedVarlssExpectedFlux(Dr16ExpectedFlux):
                 ".fits.gz"):
             hdu = fitsio.read(self.var_lss_value, ext="VAR_FUNC")
             self.get_var_lss = interp1d(hdu["loglam"],
-                                    hdu["var_lss"],
-                                    fill_value='extrapolate',
-                                    kind='nearest')
+                                        hdu["var_lss"],
+                                        fill_value='extrapolate',
+                                        kind='nearest')
         else:
-            var_lss = np.ones(self.num_bins_variance) * float(self.var_lss_value)
+            var_lss = np.ones(self.num_bins_variance) * float(
+                self.var_lss_value)
             self.get_var_lss = interp1d(self.log_lambda_var_func_grid,
                                         var_lss,
                                         fill_value='extrapolate',

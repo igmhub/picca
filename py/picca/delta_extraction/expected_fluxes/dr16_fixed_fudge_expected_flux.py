@@ -13,8 +13,7 @@ from picca.delta_extraction.utils import update_accepted_options, update_default
 
 accepted_options = update_accepted_options(accepted_options, ["fudge value"])
 accepted_options = update_accepted_options(
-    accepted_options,
-    ["use constant weight", "use ivar as weight"],
+    accepted_options, ["use constant weight", "use ivar as weight"],
     remove=True)
 
 defaults = update_default_options(defaults, {

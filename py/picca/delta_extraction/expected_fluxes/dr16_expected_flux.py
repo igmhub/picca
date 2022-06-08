@@ -13,24 +13,24 @@ from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepte
 from picca.delta_extraction.least_squares.least_squares_cont_model import LeastsSquaresContModel
 from picca.delta_extraction.least_squares.least_squares_var_stats import (
     LeastsSquaresVarStats, FUDGE_REF)
-from picca.delta_extraction.utils import (
-    find_bins, update_accepted_options, update_default_options)
+from picca.delta_extraction.utils import (find_bins, update_accepted_options,
+                                          update_default_options)
 
-accepted_options = update_accepted_options(
-    accepted_options,
-    ["limit eta", "limit var lss", "min num qso in fit",
-     "num iterations", "order", "use constant weight",
-     "use ivar as weight"])
+accepted_options = update_accepted_options(accepted_options, [
+    "limit eta", "limit var lss", "min num qso in fit", "num iterations",
+    "order", "use constant weight", "use ivar as weight"
+])
 
-defaults = update_default_options(defaults, {
-    "limit eta": (0.5, 1.5),
-    "limit var lss": (0., 0.3),
-    "num iterations": 5,
-    "min num qso in fit": 100,
-    "order": 1,
-    "use constant weight": False,
-    "use ivar as weight": False,
-})
+defaults = update_default_options(
+    defaults, {
+        "limit eta": (0.5, 1.5),
+        "limit var lss": (0., 0.3),
+        "num iterations": 5,
+        "min num qso in fit": 100,
+        "order": 1,
+        "use constant weight": False,
+        "use ivar as weight": False,
+    })
 
 FUDGE_FIT_START = FUDGE_REF
 ETA_FIT_START = 1.
@@ -309,11 +309,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         limit_var_lss_string = config.get("limit var lss")
         if limit_var_lss_string is None:
             raise ExpectedFluxError(
-                "Missing argument 'limit var lss' required by Dr16ExpectedFlux"
-            )
+                "Missing argument 'limit var lss' required by Dr16ExpectedFlux")
         limit_var_lss = limit_var_lss_string.split(",")
-        if limit_var_lss[0].startswith("(") or limit_var_lss[0].startswith(
-                "["):
+        if limit_var_lss[0].startswith("(") or limit_var_lss[0].startswith("["):
             var_lss_min = float(limit_var_lss[0][1:])
         else:
             var_lss_min = float(limit_var_lss[0])
@@ -543,8 +541,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             weights = 1.0 / self.compute_forest_variance(
                 forest, forest.continuum)
             cont = np.bincount(bins,
-                               weights=forest.flux / forest.continuum *
-                               weights)
+                               weights=forest.flux / forest.continuum * weights)
             mean_cont[:len(cont)] += cont
             cont = np.bincount(bins, weights=weights)
             mean_cont_weight[:len(cont)] += cont

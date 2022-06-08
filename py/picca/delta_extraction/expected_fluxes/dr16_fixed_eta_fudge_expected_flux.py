@@ -17,6 +17,7 @@ accepted_options = update_accepted_options(
 
 defaults = update_default_options(defaults, defaults2)
 
+
 class Dr16FixedEtaFudgeExpectedFlux(Dr16FixedEtaExpectedFlux,
                                     Dr16FixedFudgeExpectedFlux):
     """Class to the expected flux similar to Dr16ExpectedFlux but fixing both

@@ -23,6 +23,7 @@ defaults = {
     "num processors": 0,
 }
 
+
 class ExpectedFlux:
     """Abstract class from which all classes computing the expected flux
     must inherit. Classes that inherit from this should be initialized using
@@ -53,6 +54,7 @@ class ExpectedFlux:
     out_dir: str (from ExpectedFlux)
     Directory where logs will be saved.
     """
+
     def __init__(self, config):
         """Initialize class instance"""
         self.los_ids = {}
@@ -164,8 +166,7 @@ class ExpectedFlux:
         self.num_bins_variance = config.getint("num bins variance")
         if self.num_bins_variance is None:
             raise ExpectedFluxError(
-                "Missing argument 'num bins variance' required by ExpectedFlux"
-            )
+                "Missing argument 'num bins variance' required by ExpectedFlux")
 
         self.num_processors = config.getint("num processors")
         if self.num_processors is None:
@@ -203,8 +204,8 @@ class ExpectedFlux:
                 if forest.continuum is None:
                     continue
                 delta = forest.flux / forest.continuum
-                variance = self.compute_forest_variance(
-                    forest, forest.continuum)
+                variance = self.compute_forest_variance(forest,
+                                                        forest.continuum)
                 weights = 1. / variance
 
             bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
@@ -230,7 +231,7 @@ class ExpectedFlux:
             bounds_error=False)
 
     # this method should use self in child classes
-    def compute_expected_flux(self, forests): # pylint: disable=no-self-use
+    def compute_expected_flux(self, forests):  # pylint: disable=no-self-use
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
         computed iteratively following as explained in du Mas des Bourboux et
@@ -249,7 +250,7 @@ class ExpectedFlux:
                                 "overloaded by child class")
 
     # this method should use self in child classes
-    def compute_forest_variance(self, forest, continuum): # pylint: disable=no-self-use
+    def compute_forest_variance(self, forest, continuum):  # pylint: disable=no-self-use
         """Compute the forest variance
 
         Arguments
@@ -324,7 +325,7 @@ class ExpectedFlux:
                       extname='STACK_DELTAS')
 
     # this method should use self in child classes
-    def hdu_var_func(self, results): # pylint: disable=no-self-use
+    def hdu_var_func(self, results):  # pylint: disable=no-self-use
         """Add to the results file an HDU with the variance functions
 
         This function is a placeholder here and should be overloaded by child

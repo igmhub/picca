@@ -12,14 +12,13 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
-from picca.delta_extraction.utils import (
-    find_bins, update_accepted_options, update_default_options)
+from picca.delta_extraction.utils import (find_bins, update_accepted_options,
+                                          update_default_options)
 
-
-accepted_options = update_accepted_options(
-    accepted_options,
-    ["input directory", "raw statistics file", "use constant weight",
-     "num bins variance"])
+accepted_options = update_accepted_options(accepted_options, [
+    "input directory", "raw statistics file", "use constant weight",
+    "num bins variance"
+])
 
 defaults = update_default_options(defaults, {
     "raw statistics file": "",
@@ -293,8 +292,7 @@ class TrueContinuum(ExpectedFlux):
         lambda_min = header["WMIN"]
         lambda_max = header["WMAX"]
         delta_lambda = header["DWAVE"]
-        lambda_ = np.arange(lambda_min, lambda_max + delta_lambda,
-                            delta_lambda)
+        lambda_ = np.arange(lambda_min, lambda_max + delta_lambda, delta_lambda)
         true_cont = hdul["TRUE_CONT"].read()
         indx = np.where(true_cont["TARGETID"] == forest.targetid)
         true_continuum = interp1d(lambda_, true_cont["TRUE_CONT"][indx])
@@ -342,8 +340,7 @@ class TrueContinuum(ExpectedFlux):
             hdul = fitsio.FITS(filename)
         except IOError as error:
             raise ExpectedFluxError(
-                f"raw statistics file {filename} couldn't be loaded"
-            ) from error
+                f"raw statistics file {filename} couldn't be loaded") from error
 
         header = hdul[1].read_header()
         if Forest.wave_solution == "log":
@@ -354,14 +351,13 @@ class TrueContinuum(ExpectedFlux):
                 0] - pixel_step / 2
             log_lambda_rest_max = Forest.log_lambda_rest_frame_grid[-1]
             if (header['LINEAR'] or not np.isclose(
-                    header['L_MIN'], 10**log_lambda_min, rtol=1e-3)
-                    or not np.isclose(
-                        header['L_MAX'], 10**log_lambda_max, rtol=1e-3)
-                    or not np.isclose(
-                        header['LR_MIN'], 10**log_lambda_rest_min, rtol=1e-3)
-                    or not np.isclose(
-                        header['LR_MAX'], 10**log_lambda_rest_max, rtol=1e-3)
-                    or
+                    header['L_MIN'], 10**log_lambda_min, rtol=1e-3) or
+                    not np.isclose(
+                        header['L_MAX'], 10**log_lambda_max, rtol=1e-3) or
+                    not np.isclose(
+                        header['LR_MIN'], 10**log_lambda_rest_min, rtol=1e-3) or
+                    not np.isclose(
+                        header['LR_MAX'], 10**log_lambda_rest_max, rtol=1e-3) or
                     not np.isclose(header['DEL_LL'], pixel_step, rtol=1e-3)):
                 raise ExpectedFluxError(
                     "raw statistics file pixelization scheme does not match "
@@ -382,13 +378,12 @@ class TrueContinuum(ExpectedFlux):
             lambda_rest_min = 10**Forest.log_lambda_rest_frame_grid[
                 0] - pixel_step / 2
             lambda_rest_max = 10**Forest.log_lambda_rest_frame_grid[-1]
-            if (not header['LINEAR']
-                    or not np.isclose(header['L_MIN'], lambda_min, rtol=1e-3)
-                    or not np.isclose(header['L_MAX'], lambda_max, rtol=1e-3)
-                    or not np.isclose(
-                        header['LR_MIN'], lambda_rest_min, rtol=1e-3)
-                    or not np.isclose(
-                        header['LR_MAX'], lambda_rest_max, rtol=1e-3)
+            if (not header['LINEAR'] or
+                    not np.isclose(header['L_MIN'], lambda_min, rtol=1e-3) or
+                    not np.isclose(header['L_MAX'], lambda_max, rtol=1e-3) or
+                    not np.isclose(header['LR_MIN'], lambda_rest_min, rtol=1e-3)
+                    or
+                    not np.isclose(header['LR_MAX'], lambda_rest_max, rtol=1e-3)
                     or not np.isclose(header['DEL_L'],
                                       10**Forest.log_lambda_grid[1] -
                                       10**Forest.log_lambda_grid[0],
@@ -401,8 +396,7 @@ class TrueContinuum(ExpectedFlux):
                     f"{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_L']}"
                     f"input\t{lambda_min}\t{lambda_max}\t{lambda_rest_min}\t"
                     f"{lambda_rest_max} provide a custom file in 'raw "
-                    "statistics file' field matching input pixelization scheme"
-                )
+                    "statistics file' field matching input pixelization scheme")
             log_lambda = np.log10(hdul[1]['LAMBDA'][:])
 
         flux_variance = hdul[1]['VAR'][:]
