@@ -146,14 +146,14 @@ class AbstractTest(unittest.TestCase):
                 for key in orig_header:
                     self.assertTrue(key in new_header)
                     if not key in ["CHECKSUM", "DATASUM"]:
-                        if (orig_header[key] != new_header[key] and not np.isclose(orig_header[key], new_header[key])):
+                        if (orig_header[key] != new_header[key] and not np.isclose(orig_header[key], new_header[key], rtol=1e-4)):
                             print(f"\nOriginal file: {orig_file}")
                             print(f"New file: {new_file}")
                             print(f"\n For header {orig_header['EXTNAME']}")
                             print(f"Different values found for key {key}: "
                                   f"orig: {orig_header[key]}, new: {new_header[key]}")
                         self.assertTrue((orig_header[key] == new_header[key]) or
-                                        (np.isclose(orig_header[key], new_header[key])))
+                                        (np.isclose(orig_header[key], new_header[key], rtol=1e-4)))
                 for key in new_header:
                     if key not in orig_header:
                         print(f"\nOriginal file: {orig_file}")
@@ -177,7 +177,8 @@ class AbstractTest(unittest.TestCase):
                         self.assertTrue(col in new_data.dtype.names)
                         if not np.allclose(orig_data[col],
                                      new_data[col],
-                                     equal_nan=True):
+                                     equal_nan=True,
+                                     rtol=1e-4):
                             print(f"\nOriginal file: {orig_file}")
                             print(f"New file: {new_file}")
                             print(f"Different values found for column {col} in "
@@ -189,7 +190,8 @@ class AbstractTest(unittest.TestCase):
                                       f"{orig-new}")
                         self.assertTrue(np.allclose(orig_data[col],
                                                     new_data[col],
-                                                    equal_nan=True))
+                                                    equal_nan=True,
+                                                    rtol=1e-4))
                     for col in new_data.dtype.names:
                         if col not in orig_data.dtype.names:
                             print(f"Column {col} missing in orig header")
