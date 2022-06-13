@@ -24,16 +24,10 @@ add to your bashrc
 export PICCA_BASE=<path to your picca>
 ```
 
-then make sure you have all required modules by running
-```bash
-pip install -r requirements.txt --user
-```
-
 and finally run
 ```bash
-python setup.py install --user
+pip install -e .
 ```
-(assuming you run as user; for a system-wide install omit `--user` option).
 
 Alternatively, you can just add `picca/py/` to your `PYTHONPATH`.
 
