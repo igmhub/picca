@@ -128,7 +128,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     else:
         raise AstronomicalObjectError("Error in Forest.rebin(). "
                                       "Class variable 'wave_solution' "
-                                      "must be either 'lin' or 'log'. ")
+                                      "must be either 'lin' or 'log'.")
 
     log_lambda = log_lambda[w1]
     flux = flux[w1]

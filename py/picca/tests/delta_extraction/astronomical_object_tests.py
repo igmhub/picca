@@ -1410,7 +1410,7 @@ class AstronomicalObjectTest(AbstractTest):
         reset_forest()
         expected_message = (
             "Error in Forest.rebin(). Class variable 'wave_solution' "
-            "must be either 'lin' or 'log'. Found: 'None'"
+            "must be either 'lin' or 'log'."
         )
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.rebin()
