@@ -3,7 +3,6 @@ objects representing a forest must inherit from
 """
 import logging
 import numpy as np
-import numba
 from numba import njit
 from numba.types import bool_
 
