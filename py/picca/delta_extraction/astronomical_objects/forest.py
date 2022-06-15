@@ -14,6 +14,7 @@ defaults = {
     "mask fields": ["flux", "ivar", "transmission_correction", "log_lambda"],
 }
 
+
 @njit()
 def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
           log_lambda_grid, log_lambda_rest_frame_grid):
@@ -97,32 +98,30 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
         pixel_step = log_lambda_grid[1] - log_lambda_grid[0]
         half_pixel_step = pixel_step / 2.
 
-        half_pixel_step_rest_frame = (
-            log_lambda_rest_frame_grid[1] -
-            log_lambda_rest_frame_grid[0]) / 2.
+        half_pixel_step_rest_frame = (log_lambda_rest_frame_grid[1] -
+                                      log_lambda_rest_frame_grid[0]) / 2.
 
         w1 &= log_lambda >= log_lambda_grid[0] - half_pixel_step
         w1 &= log_lambda < log_lambda_grid[-1] + half_pixel_step
-        w1 &= (log_lambda - np.log10(1. + z) >= log_lambda_rest_frame_grid[0] -
-               half_pixel_step_rest_frame)
-        w1 &= (log_lambda - np.log10(1. + z) < log_lambda_rest_frame_grid[-1] +
-               half_pixel_step_rest_frame)
+        w1 &= (log_lambda - np.log10(1. + z) >=
+               log_lambda_rest_frame_grid[0] - half_pixel_step_rest_frame)
+        w1 &= (log_lambda - np.log10(1. + z) <
+               log_lambda_rest_frame_grid[-1] + half_pixel_step_rest_frame)
         w1 &= (ivar > 0.)
 
     elif wave_solution == "lin":
         pixel_step = 10**log_lambda_grid[1] - 10**log_lambda_grid[0]
         half_pixel_step = pixel_step / 2.
 
-        half_pixel_step_rest_frame = (
-            10**log_lambda_rest_frame_grid[1] -
-            10**log_lambda_rest_frame_grid[0]) / 2.
+        half_pixel_step_rest_frame = (10**log_lambda_rest_frame_grid[1] -
+                                      10**log_lambda_rest_frame_grid[0]) / 2.
         lambda_ = 10**log_lambda
         w1 &= (lambda_ >= 10**log_lambda_grid[0] - half_pixel_step)
         w1 &= (lambda_ < 10**log_lambda_grid[-1] + half_pixel_step)
-        w1 &= (lambda_ / (1. + z) >= 10**log_lambda_rest_frame_grid[0] -
-               half_pixel_step_rest_frame)
-        w1 &= (lambda_ /(1. + z) < 10**log_lambda_rest_frame_grid[-1] +
-               half_pixel_step_rest_frame)
+        w1 &= (lambda_ / (1. + z) >=
+               10**log_lambda_rest_frame_grid[0] - half_pixel_step_rest_frame)
+        w1 &= (lambda_ / (1. + z) <
+               10**log_lambda_rest_frame_grid[-1] + half_pixel_step_rest_frame)
         w1 &= (ivar > 0.)
     else:
         raise AstronomicalObjectError("Error in Forest.rebin(). "
@@ -158,9 +157,8 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
         bins, weights=(ivar * transmission_correction))
     rebin_ivar_aux = np.bincount(bins, weights=ivar)
     rebin_flux[:len(rebin_flux_aux)] += rebin_flux_aux
-    rebin_transmission_correction[:
-                                  len(rebin_transmission_correction_aux
-                                     )] += rebin_transmission_correction_aux
+    rebin_transmission_correction[:len(rebin_transmission_correction_aux
+                                      )] += rebin_transmission_correction_aux
     rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
 
     # this condition should always be non-zero for at least one pixel
@@ -189,6 +187,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     # required
     return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
             rebin_ivar, orig_ivar, w1, w2)
+
 
 class Forest(AstronomicalObject):
     """Forest Object
@@ -571,23 +570,11 @@ class Forest(AstronomicalObject):
         AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         AstronomicalObjectError if ivar only has zeros
         """
-        (self.log_lambda,
-         self.flux,
-         self.ivar,
-         self.transmission_correction,
-         self.mean_snr,
-         bins,
-         rebin_ivar,
-         orig_ivar,
-         w1,
-         w2) = rebin(self.log_lambda,
-                     self.flux,
-                     self.ivar,
-                     self.transmission_correction,
-                     self.z,
-                     Forest.wave_solution,
-                     Forest.log_lambda_grid,
-                     Forest.log_lambda_rest_frame_grid)
+        (self.log_lambda, self.flux, self.ivar, self.transmission_correction,
+         self.mean_snr, bins, rebin_ivar, orig_ivar, w1,
+         w2) = rebin(self.log_lambda, self.flux, self.ivar,
+                     self.transmission_correction, self.z, Forest.wave_solution,
+                     Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid)
 
         # return weights and binning solution to be used by child classes if
         # required
