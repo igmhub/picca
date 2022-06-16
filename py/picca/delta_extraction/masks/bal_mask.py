@@ -88,7 +88,15 @@ class BalMask(Mask):
         if los_id_name == "THING_ID":
             ext_name = 'BALCAT'
         elif los_id_name == "TARGETID":
-            ext_name = 'ZCATALOG'
+            extnames = [ext.get_extname() for ext in fitsio.FITS(filename)]
+            if "QSO_CAT" in extnames:
+                ext_name = "QSO_CAT"
+            elif "ZCATALOG" in extnames:
+                ext_name = "ZCATALOG"
+            else:
+                raise MaskError(
+                    "Could not find valid quasar catalog extension in fits "
+                    f"file: {filename}")
         else:
             raise MaskError(
                 "Unrecognized los_id name. Expected one of 'THING_ID' "

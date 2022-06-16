@@ -1,6 +1,8 @@
 """This module defines the class DesiData to load DESI data
 """
 import logging
+import multiprocessing
+import time
 import numpy as np
 
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
@@ -18,8 +20,10 @@ from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff
 
 accepted_options = sorted(
     list(
-        set(accepted_options + accepted_options_quasar_catalogue +
-            ["blinding", "use non-coadded spectra", "wave solution"])))
+        set(accepted_options + accepted_options_quasar_catalogue + [
+            "blinding", "num processors", "use non-coadded spectra",
+            "wave solution"
+        ])))
 
 defaults = defaults.copy()
 defaults.update({
@@ -46,7 +50,8 @@ def merge_new_forest(forests_by_targetid, new_forests_by_targetid):
     forests_by_targetid
     """
     parent_targetids = set(forests_by_targetid.keys())
-    existing_targetids = parent_targetids.intersection(new_forests_by_targetid.keys())
+    existing_targetids = parent_targetids.intersection(
+        new_forests_by_targetid.keys())
     new_targetids = new_forests_by_targetid.keys() - existing_targetids
 
     # Does not fail if existing_targetids is empty
@@ -102,14 +107,23 @@ class DesiData(Data):
 
         # load variables from config
         self.blinding = None
+        self.num_processors = None
         self.use_non_coadded_spectra = None
         self.__parse_config(config)
 
         # load z_truth catalogue
+        t0 = time.time()
+        self.logger.progress("Reading quasar catalogue")
         self.catalogue = DesiQuasarCatalogue(config).catalogue
+        t1 = time.time()
+        self.logger.progress(f"Time spent reading quasar catalogue: {t1-t0}")
 
         # read data
+        t0 = time.time()
+        self.logger.progress("Reading data")
         is_mock, is_sv = self.read_data()
+        t1 = time.time()
+        self.logger.progress(f"Time spent reading data: {t1-t0}")
 
         # set blinding
         self.set_blinding(is_mock, is_sv)
@@ -135,6 +149,13 @@ class DesiData(Data):
                 "Unrecognized blinding strategy. Accepted strategies "
                 f"are {ACCEPTED_BLINDING_STRATEGIES}. "
                 f"Found '{self.blinding}'")
+
+        self.num_processors = config.getint("num processors")
+        if self.num_processors is None:
+            raise DataError(
+                "Missing argument 'num processors' required by DesiData")
+        if self.num_processors == 0:
+            self.num_processors = (multiprocessing.cpu_count() // 2)
 
         self.use_non_coadded_spectra = config.getboolean(
             "use non-coadded spectra")
