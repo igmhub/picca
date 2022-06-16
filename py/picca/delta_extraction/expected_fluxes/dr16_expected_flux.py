@@ -481,6 +481,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 var = 1. / forest.ivar / forest.continuum**2
                 variance = eta * var + var_lss + fudge / var
                 weights = 1. / variance
+                # The line below does not work for some reason?
+                # weights = self.get_continuum_weights(forest, forest.continuum)
 
             bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
                              Forest.wave_solution)
@@ -665,7 +667,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
             # ignore forest if continuum could not be computed
             if forest.continuum is None:
                 continue
-            var_pipe = 1 / forest.ivar / forest.continuum**2
+
+            w =  forest.ivar > 0
+            var_pipe = np.empty_like(forest.log_lambda)
+            var_pipe[w]  = 1 / forest.ivar[w] / forest.continuum[w]**2
+            var_pipe[~w] = 1e8
+
             w = ((np.log10(var_pipe) > var_pipe_min) &
                  (np.log10(var_pipe) < var_pipe_max))
 
@@ -906,23 +913,26 @@ class Dr16ExpectedFlux(ExpectedFlux):
         weights: array of float
         The continuum model weights
         """
+        # Assign 0 weight to pixels with ivar==0
+        w = forest.ivar > 0
+        weights = np.zeros_like(forest.log_lambda)
         # force weights=1 when use-constant-weight
         if self.use_constant_weight:
-            weights = np.ones_like(forest.flux)
+            weights[w] = 1
         else:
             # pixel variance due to the Large Scale Strucure
-            var_lss = self.get_var_lss(forest.log_lambda)
+            var_lss = self.get_var_lss(forest.log_lambda[w])
             # correction factor to the contribution of the pipeline
             # estimate of the instrumental noise to the variance.
-            eta = self.get_eta(forest.log_lambda)
+            eta = self.get_eta(forest.log_lambda[w])
             # fudge contribution to the variance
-            fudge = self.get_fudge(forest.log_lambda)
+            fudge = self.get_fudge(forest.log_lambda[w])
 
-            var_pipe = 1. / forest.ivar / cont_model**2
+            var_pipe = 1. / forest.ivar[w] / cont_model[w]**2
             ## prep_del.variance is the variance of delta
             ## we want here the weights = ivar(flux)
             variance = eta * var_pipe + var_lss + fudge / var_pipe
-            weights = 1.0 / cont_model**2 / variance
+            weights[w] = 1.0 / cont_model[w]**2 / variance
 
         return weights
 
@@ -1097,6 +1107,7 @@ class LeastsSquaresContModel:
 
         weights = self.expected_flux.get_continuum_weights(
             self.forest, cont_model, **self.weights_kwargs)
+        w = weights>0
 
         chi2_contribution = (self.forest.flux - cont_model)**2 * weights
-        return chi2_contribution.sum() - np.log(weights).sum()
+        return chi2_contribution.sum() - np.log(weights[w]).sum()

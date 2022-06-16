@@ -186,13 +186,8 @@ class TrueContinuum(ExpectedFlux):
                              Forest.log_lambda_rest_frame_grid,
                              Forest.wave_solution)
 
-            if self.use_constant_weight:
-                weights = np.ones_like(forest.log_lambda)
-            else:
-                var_lss = self.get_var_lss(forest.log_lambda)
-                var_pipe = 1. / forest.ivar / forest.continuum**2
-                variance = var_lss + var_pipe
-                weights = 1 / variance
+            weights = self.get_weights(forest)
+
             cont = np.bincount(bins, weights=forest.continuum * weights)
             mean_cont[:len(cont)] += cont
             cont_weight = np.bincount(bins, weights=weights)
@@ -223,17 +218,10 @@ class TrueContinuum(ExpectedFlux):
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
-            # get the variance functions
-            if self.use_constant_weight:
-                weights = np.ones_like(forest.log_lambda)
-                mean_expected_flux = forest.continuum
-            else:
-                var_lss = self.get_var_lss(forest.log_lambda)
 
-                mean_expected_flux = forest.continuum
-                var_pipe = 1. / forest.ivar / forest.continuum**2
-                variance = var_lss + var_pipe
-                weights = 1. / variance
+            # get the variance functions
+            mean_expected_flux = forest.continuum
+            weights = self.get_weights(forest)
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,
@@ -423,3 +411,29 @@ class TrueContinuum(ExpectedFlux):
                           names=['loglam_rest', 'mean_cont', 'weight'],
                           extname='CONT',
                           header=header)
+
+    def get_weights(self, forest):
+        """Get weights while setting weight[ivar=0]=0
+
+        Arguments
+        ---------
+        forest: Forest
+        The forest instance we want the model from
+
+        Return
+        ------
+        weights: array of float
+        The weights
+        """
+        w = forest.ivar > 0
+        weights = np.zeros_like(forest.log_lambda)
+
+        if self.use_constant_weight:
+            weights[w] = 1
+        else:
+            var_lss = self.get_var_lss(forest.log_lambda[w])
+            ivar_pipe = forest.ivar * forest.continuum**2
+            variance = var_lss + 1/ivar_pipe[w]
+            weights[w] = 1 / variance
+
+        return weights

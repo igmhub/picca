@@ -91,3 +91,5 @@ class ExpectedFlux:
                 forest.exposures_diff /= expected_flux
 
             forest.continuum = self.los_ids.get(forest.los_id).get("continuum")
+
+    
