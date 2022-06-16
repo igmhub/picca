@@ -35,7 +35,7 @@ class AbsorberMask(Mask):
     logger: logging.Logger
     Logger object
     """
-    def __init__(self, config):
+    def __init__(self, config, keep_masked_pixels=False):
         """Initialize class instance.
 
         Arguments
@@ -45,7 +45,7 @@ class AbsorberMask(Mask):
         """
         self.logger = logging.getLogger(__name__)
 
-        super().__init__()
+        super().__init__(keep_masked_pixels)
 
         # first load the absorbers catalogue
         filename = config.get("filename")
@@ -119,7 +119,4 @@ class AbsorberMask(Mask):
 
             # do the actual masking
             for param in Forest.mask_fields:
-                if param in ['resolution_matrix']:
-                    setattr(forest, param, getattr(forest, param)[:, w])
-                else:
-                    setattr(forest, param, getattr(forest, param)[w])
+                self._masker(forest, param, w)

@@ -30,7 +30,7 @@ accepted_data_options = ["type", "module name"]
 accepted_expected_flux_options = ["type", "module name"]
 accepted_general_options = ["overwrite", "logging level console",
                             "logging level file", "log", "out dir", "num processors"]
-accepted_masks_options = ["num masks", "type {int}", "module name {int}"]
+accepted_masks_options = ["num masks", "keep pixels", "type {int}", "module name {int}"]
 
 default_config = {
     "general": {
@@ -157,6 +157,7 @@ class Config:
         self.__format_corrections_section()
         self.masks = None
         self.num_masks = None
+        self.keep_masked_pixels = False
         self.__format_masks_section()
         self.data = None
         self.__format_data_section()
@@ -486,6 +487,8 @@ class Config:
         if self.num_masks < 0:
             raise ConfigError("In section [masks], variable 'num masks' "
                               "must be a non-negative integer")
+
+        self.keep_masked_pixels = section.getboolean("keep pixels", fallback=False)
 
         # check that arguments are valid
         for key in section.keys():

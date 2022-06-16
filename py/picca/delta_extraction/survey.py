@@ -189,7 +189,7 @@ class Survey:
         self.logger.info(f"Reading masks. There are {num_masks} masks")
 
         for MaskType, mask_arguments in self.config.masks:
-            mask = MaskType(mask_arguments)
+            mask = MaskType(mask_arguments, self.config.keep_masked_pixels)
             self.masks.append(mask)
 
         t1 = time.time()

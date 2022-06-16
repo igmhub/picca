@@ -452,8 +452,9 @@ class ConfigTest(AbstractTest):
         # firt check masks section
         in_file = f"{prefix}_masks.ini"
         expected_message = (
-            "Unrecognised option in section [masks]. Found: 'name 0'. Accepted "
-            "options are ['num masks', 'type {int}', 'module name {int}']"
+            "Unrecognised option in section [masks]. Found: 'name 0'. "
+            "Accepted options are "
+            f"{accepted_masks_options}"
         )
         self.check_error(in_file, expected_message)
 
