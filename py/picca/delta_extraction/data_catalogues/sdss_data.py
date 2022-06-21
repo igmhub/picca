@@ -136,10 +136,10 @@ class SdssData(Data):
                 continue
             self.logger.progress(f"Read {filename}")
 
-            log_lambda = np.array(hdul[1]["loglam"][:], dtype=np.float32)
-            flux = np.array(hdul[1]["flux"][:], dtype=np.float32)
-            ivar = (np.array(hdul[1]["ivar"][:], dtype=np.float32) *
-                    np.array(hdul[1]["and_mask"][:], dtype=np.float32) == 0)
+            log_lambda = np.array(hdul[1]["loglam"][:], dtype=np.float64)
+            flux = np.array(hdul[1]["flux"][:], dtype=np.float64)
+            ivar = (np.array(hdul[1]["ivar"][:], dtype=np.float64) *
+                    hdul[1]["and_mask"][:] == 0)
 
             if self.analysis_type == "BAO 3D":
                 forest = SdssForest(

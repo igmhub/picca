@@ -46,7 +46,9 @@ def main():
         print(func.__name__)
 
         start = time()
-        func(np.zeros((1, 1)), np.zeros((1, 1)), "lin")
+        func(LOG_LAMBDA[:2],
+             Forest.log_lambda_rest_frame_grid[:2],
+             Forest.wave_solution)
         end = time()
         print(f"   Compilation: {(end - start):.06f}s")
 

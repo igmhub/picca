@@ -165,14 +165,16 @@ def find_bins(original_array, grid_array, wave_solution):
             "expected wavelength solution to be either 'log' or 'lin'. ")
     original_array_size = original_array.size
     grid_array_size = grid_array.size
-    found_bin = np.zeros(original_array_size, dtype=np.int16)
+    found_bin = np.zeros(original_array_size, dtype=np.int64)
     for index1 in range(original_array_size):
-        min_dist = 1000 * (grid_array[1] - grid_array[0])
+        min_dist = np.finfo(np.float64).max
         for index2 in range(grid_array_size):
             dist = np.abs(grid_array[index2] - original_array[index1])
             if dist < min_dist:
                 min_dist = dist
                 found_bin[index1] = index2
+            else:
+                break
     return found_bin
 
 

@@ -138,7 +138,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
         ivar = np.zeros(log_lambda.size)
         transmission_correction = np.zeros(log_lambda.size)
         mean_snr = 0.0
-        bins = np.zeros(log_lambda.size, dtype=np.int16)
+        bins = np.zeros(log_lambda.size, dtype=np.int64)
         rebin_ivar = np.zeros(log_lambda.size)
         w1 = np.zeros(log_lambda.size, dtype=bool_)
         w2 = np.zeros(log_lambda.size, dtype=bool_)
