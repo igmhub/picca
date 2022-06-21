@@ -181,7 +181,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
 
     # finally update control variables
     snr = flux * np.sqrt(ivar)
-    mean_snr = sum(snr) / float(len(snr))
+    mean_snr = np.sum(snr) / float(snr.size)
 
     # return weights and binning solution to be used by child classes if
     # required
