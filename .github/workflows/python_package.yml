@@ -57,8 +57,8 @@ jobs:
 
     # the following bit will save results tests as an artifact if [ci save] has been in the commit msg
     - name: Archive test results
-      if: |
-        always() && ${{ contains(github.event.head_commit.message, '[ci save]') }}
+      if: failure()
+      # && ${{ contains(github.event.head_commit.message, '[ci save]') }}
       uses: actions/upload-artifact@v3
       with:
         name: test-results_v${{ matrix.python-version }}
