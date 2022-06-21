@@ -49,14 +49,14 @@ jobs:
 
     # allow connecting to the github action run via ssh if [ci debug] has been in the commit msg
     - name: Debug with tmate
-      if: ${{ contains(github.event.head_commit.message, '[ci debug]') }}
+      if: "contains(github.event.head_commit.message, '[ci debug]')"
       uses: mxschmitt/action-tmate@v3
       with:
         limit-access-to-actor: true
 
     # the following bit will save results tests as an artifact if [ci save] has been in the commit msg
     - name: Archive test results
-      if: ${{ contains(github.event.head_commit.message, '[ci save]') }}
+      if: "contains(github.event.head_commit.message, '[ci save]')"
       uses: actions/upload-artifact@v1
       with:
         name: test-results_v${{ matrix.python-version }}
