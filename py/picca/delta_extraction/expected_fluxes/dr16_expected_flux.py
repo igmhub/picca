@@ -555,8 +555,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             # are better
             if not self.use_constant_weight:
                 weights *= forest.continuum**2
-            
-            mean_cont += np.bincount(bins, weights=forest.flux / (forest.continuum+1e-16) * weights, 
+
+            mean_cont += np.bincount(bins, weights=forest.flux / (forest.continuum+1e-16) * weights,
                 minlength=mean_cont.size)
             mean_cont_weight += np.bincount(bins, weights=weights, minlength=mean_cont.size)
 
@@ -701,7 +701,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             mean_delta += np.bincount(bins, weights=delta, minlength=mean_delta.size)
             var_delta += np.bincount(bins, weights=delta**2, minlength=mean_delta.size)
             var2_delta += np.bincount(bins, weights=delta**4, minlength=mean_delta.size)
- 
+
             count += np.bincount(bins, minlength=mean_delta.size)
             num_qso[np.unique(bins)] += 1
 

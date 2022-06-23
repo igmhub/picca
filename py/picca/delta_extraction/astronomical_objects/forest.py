@@ -448,7 +448,8 @@ class Forest(AstronomicalObject):
             self.flux = np.array([])
             self.ivar = np.array([])
             self.transmission_correction = np.array([])
-            return [], [], [], [], []
+            return [], [], [], [], np.array([])
+
         self.log_lambda = self.log_lambda[w1]
         self.flux = self.flux[w1]
         self.ivar = self.ivar[w1]

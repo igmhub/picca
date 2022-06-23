@@ -242,7 +242,7 @@ class Pk1dForest(Forest):
             self.exposures_diff = np.array([])
             self.reso = np.array([])
             self.reso_pix = np.array([])
-            return [], [], [], [], []
+            return [], [], [], [], np.array([])
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
@@ -259,7 +259,8 @@ class Pk1dForest(Forest):
         rebin_exposures_diff = np.bincount(bins,
             weights=orig_ivar[w1] * self.exposures_diff, minlength=binned_arr_size)
         rebin_reso = np.bincount(bins, weights=orig_ivar[w1] * self.reso, minlength=binned_arr_size)
-        rebin_reso_pix = np.bincount(bins, weights=orig_ivar[w1] * self.reso_pix, minlength=binned_arr_size)
+        rebin_reso_pix = np.bincount(bins, weights=orig_ivar[w1] * self.reso_pix,
+                                     minlength=binned_arr_size)
 
         # Remove empty bins but not ivar
         w2_ = (rebin_ivar > 0.) & wnonempty_bins

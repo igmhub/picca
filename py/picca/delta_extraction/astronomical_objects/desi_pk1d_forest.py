@@ -199,11 +199,11 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         bins, rebin_ivar, orig_ivar, w1, w2 = super().rebin()
         if len(rebin_ivar) == 0 or np.sum(w2) == 0:
             self.resolution_matrix = np.array([[]])
-            return [], [], [], [], []
+            return [], [], [], [], np.array([])
 
         # apply mask due to cuts in bin
         self.resolution_matrix = self.resolution_matrix[:, w1]
-        
+
         # Find non-empty bins
         binned_arr_size = bins.max() + 1
         bincounts = np.bincount(bins, minlength=binned_arr_size)
