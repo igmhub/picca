@@ -474,34 +474,39 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 # ignore forest if continuum could not be computed
                 if forest.continuum is None:
                     continue
-                delta = forest.flux / forest.continuum
-                var_lss = self.get_var_lss(forest.log_lambda)
-                eta = self.get_eta(forest.log_lambda)
-                fudge = self.get_fudge(forest.log_lambda)
-                var = 1. / forest.ivar / forest.continuum**2
+
+                w = forest.ivar > 0
+                delta = np.zeros_like(forest.log_lambda)
+                weights = np.zeros_like(forest.log_lambda)
+
+                delta[w] = forest.flux[w] / forest.continuum[w]
+
+                var_lss = self.get_var_lss(forest.log_lambda[w])
+                eta = self.get_eta(forest.log_lambda[w])
+                fudge = self.get_fudge(forest.log_lambda[w])
+
+                var = 1. / forest.ivar[w] / forest.continuum[w]**2
                 variance = eta * var + var_lss + fudge / var
-                weights = 1. / variance
+                weights[w] = 1. / variance
                 # The line below does not work for some reason?
                 # weights = self.get_continuum_weights(forest, forest.continuum)
 
             bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
                              Forest.wave_solution)
-            rebin = np.bincount(bins, weights=delta * weights)
-            stack_delta[:len(rebin)] += rebin
-            rebin = np.bincount(bins, weights=weights)
-            stack_weight[:len(rebin)] += rebin
+            stack_delta += np.bincount(bins, weights=delta * weights, minlength=stack_delta.size)
+            stack_weight += np.bincount(bins, weights=weights, minlength=stack_delta.size)
 
         w = stack_weight > 0
         stack_delta[w] /= stack_weight[w]
 
         self.get_stack_delta = interp1d(
-            Forest.log_lambda_grid[stack_weight > 0.],
-            stack_delta[stack_weight > 0.],
+            Forest.log_lambda_grid[w],
+            stack_delta[w],
             kind="nearest",
             fill_value="extrapolate")
         self.get_stack_delta_weights = interp1d(
-            Forest.log_lambda_grid[stack_weight > 0.],
-            stack_weight[stack_weight > 0.],
+            Forest.log_lambda_grid[w],
+            stack_weight[w],
             kind="nearest",
             fill_value=0.0,
             bounds_error=False)
@@ -550,15 +555,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
             # are better
             if not self.use_constant_weight:
                 weights *= forest.continuum**2
-            cont = np.bincount(bins,
-                               weights=forest.flux / forest.continuum * weights)
-            mean_cont[:len(cont)] += cont
-            cont = np.bincount(bins, weights=weights)
-            mean_cont_weight[:len(cont)] += cont
+            
+            mean_cont += np.bincount(bins, weights=forest.flux / (forest.continuum+1e-16) * weights, 
+                minlength=mean_cont.size)
+            mean_cont_weight += np.bincount(bins, weights=weights, minlength=mean_cont.size)
 
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
-        mean_cont /= mean_cont.mean()
+        mean_cont /= mean_cont[w].mean()
         log_lambda_cont = Forest.log_lambda_rest_frame_grid[w]
 
         # the new mean continuum is multiplied by the previous one to recover
@@ -690,21 +694,15 @@ class Dr16ExpectedFlux(ExpectedFlux):
             bins = var_pipe_bins + num_var_bins * log_lambda_bins
 
             # compute deltas
-            delta = (forest.flux / forest.continuum - 1)
+            delta = forest.flux / (forest.continuum+1e-16) - 1
             delta = delta[w]
 
             # add contributions to delta statistics
-            rebin = np.bincount(bins, weights=delta)
-            mean_delta[:len(rebin)] += rebin
-
-            rebin = np.bincount(bins, weights=delta**2)
-            var_delta[:len(rebin)] += rebin
-
-            rebin = np.bincount(bins, weights=delta**4)
-            var2_delta[:len(rebin)] += rebin
-
-            rebin = np.bincount(bins)
-            count[:len(rebin)] += rebin
+            mean_delta += np.bincount(bins, weights=delta, minlength=mean_delta.size)
+            var_delta += np.bincount(bins, weights=delta**2, minlength=mean_delta.size)
+            var2_delta += np.bincount(bins, weights=delta**4, minlength=mean_delta.size)
+ 
+            count += np.bincount(bins, minlength=mean_delta.size)
             num_qso[np.unique(bins)] += 1
 
         # normalise and finish the computation of delta statistics
