@@ -50,7 +50,7 @@ This is cleaner than directly adding the commands to the bashrc file, and avoids
 
 If you want to compute models for the correlations computed with picca, or you want to fit these correlations, see https://github.com/andreicuceu/vega.
 
-If you are running MPI code (only needed for some tasks in fitter2), see https://docs.nersc.gov/development/languages/python/parallel-python/#mpi4py-in-your-custom-conda-environment. If want to run the PolyChord sampler for fitter2, see https://github.com/andreicuceu/fitter2_tutorial.
+If you are running MPI code (only needed for some tasks in fitter2), see https://docs.nersc.gov/development/languages/python/parallel-python/#mpi4py-in-your-custom-conda-environment. If want to run the PolyChord sampler for fitter2, see https://github.com/andreicuceu/fitter2_tutorial. Note that fitter2 is deprecated, and will be removed in the future.
 
 If you need to run the "picca_compute_pk_pksb.py" script you will also need to install the following packages:
 ```
