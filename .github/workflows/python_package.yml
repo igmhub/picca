@@ -62,6 +62,14 @@ jobs:
         name: test-results_v${{ matrix.python-version }}
         path: /tmp/last_run_picca_test
         
+        
+    - name: Archive test results delta_extraction
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v1
+      with:
+        name: test-results-de_v${{ matrix.python-version }}
+        path: /home/runner/work/picca/picca/py/picca/tests/delta_extraction/results
+        
     - name: Coveralls
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
