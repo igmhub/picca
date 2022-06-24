@@ -329,7 +329,7 @@ class Config:
 
         # add output directory
         section["out dir"] = self.out_dir
-        if "num processors" in accepted_options:
+        if "num processors" in accepted_options and "num processors" not in section:
             section["num processors"] = self.num_processors
 
         # finally add the information to self.data
@@ -395,7 +395,7 @@ class Config:
         # "num processors" but that might not always be the case
         if "out dir" in accepted_options: # pragma: no branch
             section["out dir"] = self.out_dir
-        if "num processors" in accepted_options: # pragma: no branch
+        if "num processors" in accepted_options and "num processors" not in section: # pragma: no branch
             section["num processors"] = self.num_processors
         # finally add the information to self.continua
         self.expected_flux = (ExpectedFluxType, section)

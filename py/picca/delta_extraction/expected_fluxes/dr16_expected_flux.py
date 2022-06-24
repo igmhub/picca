@@ -376,6 +376,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 "Missing argument 'use ivar as weight' required by Dr16ExpectedFlux"
             )
 
+    # this should be a read-only function as it is called in a parallelized way
+    # TODO: consider making this not a function to minimize future bugs
     def compute_continuum(self, forest):
         """Compute the forest continuum.
 
@@ -393,8 +395,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         forest: Forest
         The modified forest instance
         """
-        self.continuum_fit_parameters = {}
-
         # get mean continuum
         mean_cont = self.get_mean_cont(forest.log_lambda -
                                        np.log10(1 + forest.z))
@@ -430,26 +430,26 @@ class Dr16ExpectedFlux(ExpectedFlux):
         minimizer.fixed["slope"] = self.order == 0
         minimizer.migrad()
 
-        forest.bad_continuum_reason = None
-        temp_cont_model = self.get_continuum_model(
-            forest, minimizer.values["zero_point"], minimizer.values["slope"],
-            **mean_cont_kwargs)
+        bad_continuum_reason = None
+        cont_model = self.get_continuum_model(forest,
+                                              minimizer.values["zero_point"],
+                                              minimizer.values["slope"],
+                                              **mean_cont_kwargs)
         if not minimizer.valid:
-            forest.bad_continuum_reason = "minuit didn't converge"
-        if np.any(temp_cont_model < 0):
-            forest.bad_continuum_reason = "negative continuum"
+            bad_continuum_reason = "minuit didn't converge"
+        if np.any(cont_model < 0):
+            bad_continuum_reason = "negative continuum"
 
-        if forest.bad_continuum_reason is None:
-            forest.continuum = temp_cont_model
-            self.continuum_fit_parameters[forest.los_id] = (
-                minimizer.values["zero_point"], minimizer.values["slope"])
+        if bad_continuum_reason is None:
+            continuum_fit_parameters = (minimizer.values["zero_point"],
+                                        minimizer.values["slope"])
         ## if the continuum is negative or minuit didn't converge, then
         ## set it to None
         else:
-            forest.continuum = None
-            self.continuum_fit_parameters[forest.los_id] = (np.nan, np.nan)
+            cont_model = None
+            continuum_fit_parameters = (np.nan, np.nan)
 
-        return forest
+        return cont_model, bad_continuum_reason, continuum_fit_parameters
 
     def compute_delta_stack(self, forests, stack_from_deltas=False):
         """Compute a stack of the delta field as a function of wavelength
@@ -588,9 +588,19 @@ class Dr16ExpectedFlux(ExpectedFlux):
             )
             if self.num_processors > 1:
                 with context.Pool(processes=self.num_processors) as pool:
-                    forests = pool.map(self.compute_continuum, forests)
+                    imap_it = pool.imap(self.compute_continuum, forests)
+                    for forest, (cont_model, bad_continuum_reason,
+                                 continuum_fit_parameters) in zip(
+                                     forests, imap_it):
+                        forest.bad_continuum_reason = bad_continuum_reason
+                        forest.continuum = cont_model
             else:
-                forests = [self.compute_continuum(f) for f in forests]
+                for forest in forests:
+                    cont_model, bad_continuum_reason, continuum_fit_parameters = self.compute_continuum(
+                        forest)
+                    forest.bad_continuum_reason = bad_continuum_reason
+                    forest.continuum = cont_model
+                #forests = [self.compute_continuum(f) for f in forests]
 
             if iteration < self.num_iterations - 1:
                 # Compute mean continuum (stack in rest-frame)
@@ -954,7 +964,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             forest_info = {
                 "mean expected flux": mean_expected_flux,
                 "weights": weights,
-                "continuum": forest.continuum,}
+                "continuum": forest.continuum,
+            }
             if isinstance(forest, Pk1dForest):
                 ivar = forest.ivar / (eta +
                                       (eta == 0)) * (mean_expected_flux**2)
@@ -1039,6 +1050,7 @@ class LeastsSquaresContModel:
     weights_kwargs: dict
     kwargs passed to expected_flux.get_continuum_weights
     """
+
     def __init__(self,
                  forest,
                  expected_flux,
