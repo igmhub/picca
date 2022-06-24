@@ -49,7 +49,7 @@ jobs:
 
     # allow connecting to the github action run via ssh if [ci debug] has been in the commit msg
     - name: Debug with tmate
-      if: ${{ always() && contains(github.event.head_commit.message, '[ci debug]'))
+      if: ${{ always() && contains(github.event.head_commit.message, '[ci debug]') }}
       uses: mxschmitt/action-tmate@v3
       with:
         limit-access-to-actor: true
