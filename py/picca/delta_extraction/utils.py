@@ -4,7 +4,7 @@ import importlib
 import logging
 import os
 
-from numba import prange, njit
+from numba import njit
 import numpy as np
 from scipy.constants import speed_of_light as speed_light
 
