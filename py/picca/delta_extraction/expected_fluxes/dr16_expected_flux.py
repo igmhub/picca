@@ -25,7 +25,9 @@ defaults = {
     "limit var lss": (0., 0.3),
     "num bins variance": 20,
     "num iterations": 5,
-    "min num qso in fit": 100,
+    # to reproduce eBOSS DR16 we should now use 99 as we have added the equality
+    # in the comparison
+    "min num qso in fit": 1,
     "order": 1,
     "use constant weight": False,
     "use ivar as weight": False,
@@ -785,7 +787,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 weights = var2_delta[index * num_var_bins:(index + 1) *
                                      num_var_bins]
                 w = num_qso[index * num_var_bins:(index + 1) *
-                            num_var_bins] > self.min_num_qso_in_fit
+                            num_var_bins] >= self.min_num_qso_in_fit
                 return np.sum(chi2_contribution[w]**2 / weights[w])
 
             minimizer = iminuit.Minuit(chi2,
