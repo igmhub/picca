@@ -589,17 +589,23 @@ class Dr16ExpectedFlux(ExpectedFlux):
             if self.num_processors > 1:
                 with context.Pool(processes=self.num_processors) as pool:
                     imap_it = pool.imap(self.compute_continuum, forests)
+
+                    self.continuum_fit_parameters = {}
                     for forest, (cont_model, bad_continuum_reason,
                                  continuum_fit_parameters) in zip(
                                      forests, imap_it):
                         forest.bad_continuum_reason = bad_continuum_reason
                         forest.continuum = cont_model
+                        self.continuum_fit_parameters[forest.los_id] = continuum_fit_parameters
+
             else:
+                self.continuum_fit_parameters = {}
                 for forest in forests:
-                    cont_model, bad_continuum_reason, continuum_fit_parameters = self.compute_continuum(
-                        forest)
+                    (cont_model, bad_continuum_reason,
+                     continuum_fit_parameters) = self.compute_continuum(forest)
                     forest.bad_continuum_reason = bad_continuum_reason
                     forest.continuum = cont_model
+                    self.continuum_fit_parameters[forest.los_id] = continuum_fit_parameters
                 #forests = [self.compute_continuum(f) for f in forests]
 
             if iteration < self.num_iterations - 1:
