@@ -122,7 +122,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.compute_continuum(forest)
+            cont_model, bad_continuum_reason, continuum_fit_parameters = expected_flux.compute_continuum(forest)
+            forest.bad_continuum_reason = bad_continuum_reason
+            forest.continuum = cont_model
 
         # save the results
         f = open(out_file, "w")
@@ -133,8 +135,6 @@ class ExpectedFluxTest(AbstractTest):
                 f.write(f"{item} ")
             f.write("\n")
         f.close()
-
-        #self.compare_ascii(test_file, out_file)
 
         # load expected forest continua
         continua = {}
@@ -192,7 +192,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.compute_continuum(forest)
+            cont_model, bad_continuum_reason, continuum_fit_parameters = expected_flux.compute_continuum(forest)
+            forest.bad_continuum_reason = bad_continuum_reason
+            forest.continuum = cont_model
 
         # save the results
         f = open(out_file, "w")
@@ -274,7 +276,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.compute_continuum(forest)
+            cont_model, bad_continuum_reason, continuum_fit_parameters = expected_flux.compute_continuum(forest)
+            forest.bad_continuum_reason = bad_continuum_reason
+            forest.continuum = cont_model
 
         # compute variance functions and statistics
         expected_flux.compute_delta_stack(data.forests)
@@ -328,7 +332,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.compute_continuum(forest)
+            cont_model, bad_continuum_reason, continuum_fit_parameters = expected_flux.compute_continuum(forest)
+            forest.bad_continuum_reason = bad_continuum_reason
+            forest.continuum = cont_model
 
         # compute variance functions and statistics
         expected_flux.compute_delta_stack(data.forests)
@@ -454,7 +460,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.compute_continuum(forest)
+            cont_model, bad_continuum_reason, continuum_fit_parameters = expected_flux.compute_continuum(forest)
+            forest.bad_continuum_reason = bad_continuum_reason
+            forest.continuum = cont_model
 
         # compute mean quasar continuum
         expected_flux.compute_mean_cont(data.forests)
@@ -509,7 +517,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.compute_continuum(forest)
+            cont_model, bad_continuum_reason, continuum_fit_parameters = expected_flux.compute_continuum(forest)
+            forest.bad_continuum_reason = bad_continuum_reason
+            forest.continuum = cont_model
 
         # compute mean quasar continuum
         expected_flux.compute_mean_cont(data.forests)
@@ -564,7 +574,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.compute_continuum(forest)
+            cont_model, bad_continuum_reason, continuum_fit_parameters = expected_flux.compute_continuum(forest)
+            forest.bad_continuum_reason = bad_continuum_reason
+            forest.continuum = cont_model
 
         # compute variance functions and statistics
         expected_flux.compute_var_stats(data.forests)
@@ -624,7 +636,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.compute_continuum(forest)
+            cont_model, bad_continuum_reason, continuum_fit_parameters = expected_flux.compute_continuum(forest)
+            forest.bad_continuum_reason = bad_continuum_reason
+            forest.continuum = cont_model
 
         # compute variance functions and statistics
         expected_flux.compute_var_stats(data.forests)
@@ -903,7 +917,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.compute_continuum(forest)
+            cont_model, bad_continuum_reason, continuum_fit_parameters = expected_flux.compute_continuum(forest)
+            forest.bad_continuum_reason = bad_continuum_reason
+            forest.continuum = cont_model
 
         # compute variance functions and statistics
         expected_flux.compute_delta_stack(data.forests)
@@ -942,7 +958,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.compute_continuum(forest)
+            cont_model, bad_continuum_reason, continuum_fit_parameters = expected_flux.compute_continuum(forest)
+            forest.bad_continuum_reason = bad_continuum_reason
+            forest.continuum = cont_model
 
         # compute variance functions and statistics
         expected_flux.compute_delta_stack(data.forests)
@@ -985,7 +1003,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.compute_continuum(forest)
+            cont_model, bad_continuum_reason, continuum_fit_parameters = expected_flux.compute_continuum(forest)
+            forest.bad_continuum_reason = bad_continuum_reason
+            forest.continuum = cont_model
 
         # compute variance functions and statistics
         expected_flux.compute_delta_stack(data.forests)
