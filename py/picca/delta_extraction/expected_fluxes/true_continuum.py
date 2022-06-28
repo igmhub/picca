@@ -152,13 +152,30 @@ class TrueContinuum(ExpectedFlux):
         -----
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
-        context = multiprocessing.get_context('fork')
-        pool = context.Pool(processes=self.num_processors)
+        in_nside = 16
+        healpixes = np.array([healpy.ang2pix(in_nside,
+                                 np.pi / 2 - forest.dec,
+                                 forest.ra,
+                                 nest=True)
+                              for forest in forests], dtype=int)
+
+        unique_healpixes = np.unique(healpixes)
+        # grouped_forests is a list of lists,
+        # where each sublist corresponds to a healpix
+        grouped_forests = []
+        for healpix in unique_healpixes:
+            this_idx = np.nonzero(healpix == healpixes)[0]
+            grouped_forests.append([forests[i] for i in this_idx])
+
         self.logger.progress(
             f"Reading continum with {self.num_processors} processors")
 
-        forests = pool.map(self.read_true_continuum, forests)
-        pool.close()
+        context = multiprocessing.get_context('fork')
+        with context.Pool(processes=self.num_processors) as pool:
+            grouped_forests = pool.map(self.read_true_continuum, grouped_forests)
+
+        # Flatten out list of lists
+        forests = [forest for sublist in grouped_forests for forest in sublist]
 
         self.compute_mean_cont(forests)
 
@@ -245,18 +262,18 @@ class TrueContinuum(ExpectedFlux):
                 forest_info["ivar"] = ivar
             self.los_ids[forest.los_id] = forest_info
 
-    def read_true_continuum(self, forest):
+    def read_true_continuum(self, forests):
         """Read the forest continuum and insert it into
 
         Arguments
         ---------
-        forest: Forest
-        A forest instance where the continuum will be computed
+        forests: List of Forest
+        A list of forest instances where the continuum will be computed
 
         Return
         ------
-        forest: Forest
-        The modified forest instance
+        forests: List of Forest
+        The modified forest instances
 
         Raise
         -----
@@ -264,8 +281,8 @@ class TrueContinuum(ExpectedFlux):
         """
         in_nside = 16
         healpix = healpy.ang2pix(in_nside,
-                                 np.pi / 2 - forest.dec,
-                                 forest.ra,
+                                 np.pi / 2 - forests[0].dec,
+                                 forests[0].ra,
                                  nest=True)
         filename_truth = (
             f"{self.input_directory}/{healpix//100}/{healpix}/truth-{in_nside}-"
@@ -277,13 +294,15 @@ class TrueContinuum(ExpectedFlux):
         delta_lambda = header["DWAVE"]
         lambda_ = np.arange(lambda_min, lambda_max + delta_lambda, delta_lambda)
         true_cont = hdul["TRUE_CONT"].read()
-        indx = np.where(true_cont["TARGETID"] == forest.targetid)
-        true_continuum = interp1d(lambda_, true_cont["TRUE_CONT"][indx])
+        for forest in forests:
+            indx = np.nonzero(true_cont["TARGETID"] == forest.targetid)[0][0]
+            true_continuum = interp1d(lambda_, true_cont["TRUE_CONT"][indx])
 
-        forest.continuum = true_continuum(10**forest.log_lambda)[0]
-        forest.continuum *= self.get_mean_flux(forest.log_lambda)
+            forest.continuum = true_continuum(10**forest.log_lambda)
+            forest.continuum *= self.get_mean_flux(forest.log_lambda)
 
-        return forest
+        hdul.close()
+        return forests
 
     def read_raw_statistics(self):
         """Read the LSS delta variance and mean transmitted flux from files

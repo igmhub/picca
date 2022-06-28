@@ -1307,7 +1307,7 @@ class ExpectedFluxTest(AbstractTest):
         f = open(out_file, "w")
         f.write("# thingid cont[0] ... cont[N]\n")
         for forest in data.forests:
-            expected_flux.read_true_continuum(forest)
+            expected_flux.read_true_continuum([forest])
             f.write(f"{forest.los_id} ")
             if forest.continuum is not None:
                 for item in forest.continuum:
@@ -1387,7 +1387,7 @@ class ExpectedFluxTest(AbstractTest):
         f = open(out_file, "w")
         f.write("# thingid cont[0] ... cont[N]\n")
         for forest in data.forests:
-            expected_flux.read_true_continuum(forest)
+            expected_flux.read_true_continuum([forest])
             f.write(f"{forest.los_id} ")
             if forest.continuum is not None:
                 for item in forest.continuum:
@@ -1667,7 +1667,7 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute the forest continua
         for forest in data.forests:
-            expected_flux.read_true_continuum(forest)
+            expected_flux.read_true_continuum([forest])
 
         # run populate_los_ids
         expected_flux.populate_los_ids(data.forests)
