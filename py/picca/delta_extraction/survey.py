@@ -132,7 +132,8 @@ class Survey:
             chunksize = int(len(self.data.forests)/self.num_processors/3)
             chunksize = max(1, chunksize)
             with context.Pool(processes=self.num_processors) as pool:
-                self.data.forests = pool.map(MaskHandler(self.masks), self.data.forests)
+                self.data.forests = pool.map(MaskHandler(self.masks),
+                    self.data.forests, chunksize=chunksize)
         else:
             mask_handler = MaskHandler(self.masks)
             for forest_index, _ in enumerate(self.data.forests):
