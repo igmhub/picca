@@ -15,6 +15,12 @@ from picca.delta_extraction.errors import DeltaExtractionError
 # create logger
 module_logger = logging.getLogger(__name__)
 
+def _apply_mask(self, args):
+    masks, forest = args
+    for mask in masks:
+        mask.apply_mask(forest)
+    return forest
+
 class Survey:
     """Class to manage the computation of deltas
 
@@ -78,24 +84,20 @@ class Survey:
         t1 = time.time()
         self.logger.info(f"Time spent applying corrections: {t1-t0}")
 
-    def _apply_mask(self, forest):
-        for mask in self.masks:
-            mask.apply_mask(forest)
-        return forest
-
     def apply_masks(self):
         """Apply the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
         self.logger.info("Applying masks")
 
+        args = [(self.masks, forest) for forest in self.data.forests]
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
             with context.Pool(processes=self.num_processors) as pool:
-                self.data.forests = pool.map(self._apply_mask, self.data.forests)
+                self.data.forests = pool.map(_apply_mask, args)
         else:
             for forest_index, _ in enumerate(self.data.forests):
-                self.data.forests[forest_index] = self._apply_mask(
-                    self.data.forests[forest_index])
+                self.data.forests[forest_index] = _apply_mask(
+                    args[forest_index])
 
         t1 = time.time()
         self.logger.info(f"Time spent applying masks: {t1-t0}")
