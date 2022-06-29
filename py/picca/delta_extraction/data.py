@@ -437,7 +437,7 @@ class Data:
 
         if num_processors > 1:
             context = multiprocessing.get_context('fork')
-            with context.Pool(processes=self.num_processors) as pool:
+            with context.Pool(processes=num_processors) as pool:
                 header_n_sizes = pool.starmap(_save_deltas_healpix, arguments)
         else:
             header_n_sizes = []
