@@ -73,11 +73,16 @@ class DesiHealpix(DesiData):
         is_mock: bool
         False, as we are reading DESI data
         """
-        input_directory = f'{self.input_directory}/{survey}/dark'
+        if survey.lower().startswith("sv"):
+            input_directory = self.input_directory.replace("guadalupe", "fuji")
+        else:
+            input_directory = self.input_directory
+        input_directory = f'{input_directory}/{survey}/dark'
         coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
         filename = (
             f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
             f"dark-{healpix}.fits")
+            
         # TODO: not sure if we want the dark survey to be hard coded
         # in here, probably won't run on anything else, but still
         return filename, False
