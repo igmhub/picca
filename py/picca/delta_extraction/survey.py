@@ -15,11 +15,47 @@ from picca.delta_extraction.errors import DeltaExtractionError
 # create logger
 module_logger = logging.getLogger(__name__)
 
-def _apply_mask(self, args):
-    masks, forest = args
-    for mask in masks:
-        mask.apply_mask(forest)
-    return forest
+class MaskHandler():
+    """ Simple class to parallelize masking in Survey.apply_masks()
+
+    Methods
+    -------
+    __init__
+    __call__
+
+    Attributes
+    ----------
+    masks: list of Mask
+    Mask corrections to be applied to individual spectra. Constructed
+    from a Survey instance.
+    """
+    def __init__(self, masks):
+        """Initialize MaskHandler
+
+        Arguments
+        ---------
+        masks: list of Mask
+        Mask corrections to be applied to individual spectra.
+        """
+        self.masks = masks
+
+    def __call__(self, forest):
+        """Call method for each forest.
+
+        Arguments
+        ---------
+        forest: Forest
+        A Forest instance to which all masks are applied.
+
+        Returns:
+        ---------
+        forest: Forest
+        Masked Forest instance.
+        """
+        for mask in self.masks:
+            mask.apply_mask(forest)
+
+        return forest
 
 class Survey:
     """Class to manage the computation of deltas
@@ -89,15 +125,19 @@ class Survey:
         t0 = time.time()
         self.logger.info("Applying masks")
 
-        args = [(self.masks, forest) for forest in self.data.forests]
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
+            # Pick a large chunk size such that masks are
+            # copied as few times as possible
+            chunksize = int(len(self.data.forests)/self.num_processors/3)
+            chunksize = max(1, chunksize)
             with context.Pool(processes=self.num_processors) as pool:
-                self.data.forests = pool.map(_apply_mask, args)
+                self.data.forests = pool.map(MaskHandler(self.masks), self.data.forests)
         else:
+            mask_handler = MaskHandler(self.masks)
             for forest_index, _ in enumerate(self.data.forests):
-                self.data.forests[forest_index] = _apply_mask(
-                    args[forest_index])
+                self.data.forests[forest_index] = mask_handler(
+                    self.data.forests[forest_index])
 
         t1 = time.time()
         self.logger.info(f"Time spent applying masks: {t1-t0}")
@@ -204,7 +244,7 @@ class Survey:
         self.logger.info(f"Reading masks. There are {num_masks} masks")
 
         for MaskType, mask_arguments in self.config.masks:
-            mask = MaskType(mask_arguments)
+            mask = MaskType(mask_arguments, self.config.keep_masked_pixels)
             self.masks.append(mask)
 
         t1 = time.time()
