@@ -2,6 +2,7 @@
 classes loading data must inherit
 """
 import logging
+import multiprocessing
 
 import numpy as np
 import fitsio
@@ -49,6 +50,29 @@ defaults = {
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
 
+def _save_deltas_healpix(out_dir, healpix, forests):
+    results = fitsio.FITS(
+        f"{out_dir}/Delta/delta-{healpix}.fits.gz",
+        'rw',
+        clobber=True)
+
+    header_n_size = []
+    for forest in forests:
+        header = forest.get_header()
+        cols, names, units, comments = forest.get_data()
+        results.write(cols,
+                      names=names,
+                      header=header,
+                      comment=comments,
+                      units=units,
+                      extname=str(forest.los_id))
+
+        # store information for logs
+        header_n_size.append((header, forest.flux.size))
+        # self.add_to_rejection_log(header, forest.flux.size, "accepted")
+    results.close()
+
+    return header_n_size
 
 class Data:
     """Abstract class from which all classes loading data must inherit.
@@ -400,34 +424,30 @@ class Data:
         for forest, healpix in zip(self.forests, healpixs):
             forest.healpix = healpix
 
-    def save_deltas(self):
+    def save_deltas(self, num_processors=1):
         """Save the deltas."""
         healpixs = np.array([forest.healpix for forest in self.forests])
         unique_healpixs = np.unique(healpixs)
-        healpixs_indexs = {
-            healpix: np.where(healpixs == healpix)[0]
-            for healpix in unique_healpixs
-        }
 
-        for healpix, indexs in sorted(healpixs_indexs.items()):
-            results = fitsio.FITS(
-                f"{self.out_dir}/Delta/delta-{healpix}.fits.gz",
-                'rw',
-                clobber=True)
-            for index in indexs:
-                forest = self.forests[index]
-                header = forest.get_header()
-                cols, names, units, comments = forest.get_data()
-                results.write(cols,
-                              names=names,
-                              header=header,
-                              comment=comments,
-                              units=units,
-                              extname=str(forest.los_id))
+        arguments = []
+        for healpix in unique_healpixs:
+            this_idx = np.nonzero(healpix == healpixs)[0]
+            grouped_forests = [self.forests[i] for i in this_idx]
+            arguments.append((self.out_dir, healpix, grouped_forests))
 
-                # store information for logs
-                self.add_to_rejection_log(header, forest.flux.size, "accepted")
-            results.close()
+        if num_processors > 1:
+            context = multiprocessing.get_context('fork')
+            with context.Pool(processes=self.num_processors) as pool:
+                header_n_sizes = pool.starmap(_save_deltas_healpix, arguments)
+        else:
+            header_n_sizes = []
+            for args in arguments:
+                header_n_sizes.append(_save_deltas_healpix(*args))
+
+        # store information for logs
+        for header_n_size in header_n_sizes:
+            for header, size in header_n_size:
+                self.add_to_rejection_log(header, size, "accepted")
 
         self.save_rejection_log()
 
