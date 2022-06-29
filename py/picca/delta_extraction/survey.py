@@ -5,6 +5,7 @@ objects.
 """
 import time
 import logging
+import multiprocessing
 from numba import prange#, jit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -63,6 +64,7 @@ class Survey:
         self.masks = None
         self.data = None
         self.expected_flux = None
+        self.num_processors = None
 
     def apply_corrections(self):
         """Apply the corrections. To be run after self.read_corrections()"""
@@ -76,14 +78,24 @@ class Survey:
         t1 = time.time()
         self.logger.info(f"Time spent applying corrections: {t1-t0}")
 
+    def _apply_mask(self, forest):
+        for mask in self.masks:
+            mask.apply_mask(forest)
+        return forest
+
     def apply_masks(self):
         """Apply the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
         self.logger.info("Applying masks")
 
-        for forest_index, _ in enumerate(self.data.forests):
-            for mask_index, _ in enumerate(self.masks):
-                self.masks[mask_index].apply_mask(self.data.forests[forest_index])
+        if self.num_processors > 1:
+            context = multiprocessing.get_context('fork')
+            with context.Pool(processes=self.num_processors) as pool:
+                self.data.forests = pool.map(self._apply_mask, self.data.forests)
+        else:
+            for forest_index, _ in enumerate(self.data.forests):
+                self.data.forests[forest_index] = self._apply_mask(
+                    self.data.forests[forest_index])
 
         t1 = time.time()
         self.logger.info(f"Time spent applying masks: {t1-t0}")
@@ -139,6 +151,7 @@ class Survey:
         """
         # load configuration
         self.config = Config(config_file)
+        self.num_processors = int(self.config.num_processors)
 
     def read_corrections(self):
         """Read the spectral corrections."""
