@@ -97,6 +97,9 @@ class Survey:
     masks: list of Mask
     Mask corrections to be applied to individual spectra. This includes things
     like absorber mask, DLA mask, ...
+
+    num_processors: int
+    Number of processors to use in parallelization
     """
     def __init__(self):
         """Initialize class instance"""
