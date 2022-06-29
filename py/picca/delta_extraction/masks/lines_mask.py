@@ -79,13 +79,18 @@ class LinesMask(Mask):
         """
         # find masking array
         w = np.ones(forest.log_lambda.size, dtype=bool)
-        for mask_range in self.mask_obs_frame:
-            w &= ((forest.log_lambda < mask_range['log_wave_min']) |
-                  (forest.log_lambda > mask_range['log_wave_max']))
+        idx1s, idx2s = np.searchsorted(forest.log_lambda,
+            [self.mask_obs_frame['log_wave_min'],
+            self.mask_obs_frame['log_wave_max']])
+        for idx1, idx2 in zip(idx1s, idx2s):
+            w[idx1:idx2] = 0
+
         log_lambda_rest_frame = forest.log_lambda - np.log10(1.0 + forest.z)
-        for mask_range in self.mask_rest_frame:
-            w &= ((log_lambda_rest_frame < mask_range['log_wave_min']) |
-                  (log_lambda_rest_frame > mask_range['log_wave_max']))
+        idx1s, idx2s = np.searchsorted(log_lambda_rest_frame,
+            [self.mask_rest_frame['log_wave_min'],
+            self.mask_rest_frame['log_wave_max']])
+        for idx1, idx2 in zip(idx1s, idx2s):
+            w[idx1:idx2] = 0
 
         # do the actual masking
         for param in Forest.mask_fields:
