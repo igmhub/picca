@@ -24,6 +24,7 @@ defaults = {
     "raw statistics file": "",
     "use constant weight": False,
 }
+IN_NSIDE = 16
 
 
 class TrueContinuum(ExpectedFlux):
@@ -152,30 +153,7 @@ class TrueContinuum(ExpectedFlux):
         -----
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
-        in_nside = 16
-        healpixes = np.array([healpy.ang2pix(in_nside,
-                                 np.pi / 2 - forest.dec,
-                                 forest.ra,
-                                 nest=True)
-                              for forest in forests], dtype=int)
-
-        unique_healpixes = np.unique(healpixes)
-        # grouped_forests is a list of lists,
-        # where each sublist corresponds to a healpix
-        grouped_forests = []
-        for healpix in unique_healpixes:
-            this_idx = np.nonzero(healpix == healpixes)[0]
-            grouped_forests.append([forests[i] for i in this_idx])
-
-        self.logger.progress(
-            f"Reading continum with {self.num_processors} processors")
-
-        context = multiprocessing.get_context('fork')
-        with context.Pool(processes=self.num_processors) as pool:
-            grouped_forests = pool.map(self.read_true_continuum, grouped_forests)
-
-        # Flatten out list of lists
-        forests = [forest for sublist in grouped_forests for forest in sublist]
+        forests = self.read_all_true_continua(forests)
 
         self.compute_mean_cont(forests)
 
@@ -262,13 +240,61 @@ class TrueContinuum(ExpectedFlux):
                 forest_info["ivar"] = ivar
             self.los_ids[forest.los_id] = forest_info
 
-    def read_true_continuum(self, forests):
-        """Read the forest continuum and insert it into
+    def read_all_true_continua(self, forests):
+        """Read all forest continua
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+
+        Raise
+        -----
+        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
+        """
+        healpixes = np.array([healpy.ang2pix(IN_NSIDE,
+                                 np.pi / 2 - forest.dec,
+                                 forest.ra,
+                                 nest=True)
+                              for forest in forests], dtype=int)
+
+        unique_healpixes = np.unique(healpixes)
+        # healpix_n_forests is a list of (sublist, healpix),
+        # where each sublist corresponds to a healpix
+        forests_n_healpix = []
+        for healpix in unique_healpixes:
+            this_idx = np.nonzero(healpix == healpixes)[0]
+            forests_n_healpix.append(([forests[i] for i in this_idx], healpix))
+
+        self.logger.progress(
+            f"Reading continum with {self.num_processors} processors")
+
+        if self.num_processors > 1:
+            context = multiprocessing.get_context('fork')
+            with context.Pool(processes=self.num_processors) as pool:
+                grouped_forests = pool.starmap(self.read_true_continuum_one_healpix,
+                    forests_n_healpix)
+        else:
+            grouped_forests = []
+            for subforests, healpix in forests_n_healpix:
+                grouped_forests.append(
+                    self.read_true_continuum_one_healpix(subforests, healpix))
+
+        # Flatten out list of lists
+        forests = [forest for sublist in grouped_forests for forest in sublist]
+
+        return forests
+
+    def read_true_continuum_one_healpix(self, forests, healpix=None):
+        """Read the forest continuum from one healpix and insert it into
 
         Arguments
         ---------
         forests: List of Forest
         A list of forest instances where the continuum will be computed
+
+        healpix: int (Optional)
+        Healpix number that forests belong to
 
         Return
         ------
@@ -279,13 +305,14 @@ class TrueContinuum(ExpectedFlux):
         -----
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
-        in_nside = 16
-        healpix = healpy.ang2pix(in_nside,
+        if healpix is None:
+            healpix = healpy.ang2pix(IN_NSIDE,
                                  np.pi / 2 - forests[0].dec,
                                  forests[0].ra,
                                  nest=True)
+
         filename_truth = (
-            f"{self.input_directory}/{healpix//100}/{healpix}/truth-{in_nside}-"
+            f"{self.input_directory}/{healpix//100}/{healpix}/truth-{IN_NSIDE}-"
             f"{healpix}.fits")
         hdul = fitsio.FITS(filename_truth)
         header = hdul["TRUE_CONT"].read_header()
@@ -295,7 +322,13 @@ class TrueContinuum(ExpectedFlux):
         lambda_ = np.arange(lambda_min, lambda_max + delta_lambda, delta_lambda)
         true_cont = hdul["TRUE_CONT"].read()
         for forest in forests:
-            indx = np.nonzero(true_cont["TARGETID"] == forest.targetid)[0][0]
+            indx = np.nonzero(true_cont["TARGETID"] == forest.targetid)[0]
+            if indx.size == 0:
+                raise ExpectedFluxError("Forest target id was not found in "
+                    "the truth file.")
+            indx = indx[0]
+
+            # Should we also check for healpix consistency here?
             true_continuum = interp1d(lambda_, true_cont["TRUE_CONT"][indx])
 
             forest.continuum = true_continuum(10**forest.log_lambda)
