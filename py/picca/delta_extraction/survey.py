@@ -197,7 +197,7 @@ class Survey:
         """
         # load configuration
         self.config = Config(config_file)
-        self.num_processors = int(self.config.num_processors)
+        self.num_processors = self.config.num_processors
 
     def read_corrections(self):
         """Read the spectral corrections."""

@@ -18,23 +18,20 @@ defaults = {
 accepted_options = ["bal index type", "filename", "los_id name"]
 
 # Wavelengths in Angstroms
-lines = {
-    "lCIV": 1549,
-    "lNV": 1240.81,
-    "lLya": 1216.1,
-    "lCIII": 1175,
-    "lPV1": 1117,
-    "lPV2": 1128,
-    "lSIV1": 1062,
-    "lSIV2": 1074,
-    "lLyb": 1020,
-    "lOIV": 1031,
-    "lOVI": 1037,
-    "lOI": 1039
-}
-
-# Numpy arrays are faster to modifty
-lines_np = np.array(list(lines.values()), dtype=float)
+lines = np.array([
+    ("lCIV", 1549),
+    ("lNV", 1240.81),
+    ("lLya", 1216.1),
+    ("lCIII", 1175),
+    ("lPV1", 1117),
+    ("lPV2", 1128),
+    ("lSIV1", 1062),
+    ("lSIV2", 1074),
+    ("lLyb", 1020),
+    ("lOIV", 1031),
+    ("lOVI", 1037),
+    ("lOI", 1039),
+    ], dtype=[("name", "U10"), ("value", float)])
 
 class BalMask(Mask):
     """Class to mask BALs
@@ -179,9 +176,12 @@ class BalMask(Mask):
         min_velocities = min_velocities[w]
         max_velocities = max_velocities[w]
 
-        nvelocities = w.sum()
-        nlines = lines_np.size
-        mask_rest_frame_bal = np.empty(nvelocities * nlines,
+        num_velocities = min_velocities.size()
+        if num_velocities == 0:
+            return None
+
+        num_lines = lines.size
+        mask_rest_frame_bal = np.empty(num_velocities * num_lines,
             dtype=[('log_lambda_min', 'f8'), ('log_lambda_max', 'f8'),
             ('lambda_min', 'f8'), ('lambda_max', 'f8')])
 
@@ -191,8 +191,8 @@ class BalMask(Mask):
         # corresponds to the red side of the BAL absorption (the larger
         # wavelength value), and the “maximum velocity” corresponds to
         # the blue side (the smaller wavelength value).
-        lambda_max = np.outer(lines_np, 1 - min_velocities / SPEED_LIGHT).ravel()
-        lambda_min = np.outer(lines_np, 1 - max_velocities / SPEED_LIGHT).ravel()
+        lambda_max = np.outer(lines['value'], 1 - min_velocities / SPEED_LIGHT).ravel()
+        lambda_min = np.outer(lines['value'], 1 - max_velocities / SPEED_LIGHT).ravel()
         mask_rest_frame_bal['lambda_min'] = lambda_min
         mask_rest_frame_bal['lambda_max'] = lambda_max
         mask_rest_frame_bal['log_lambda_min'] = np.log10(lambda_min)
@@ -220,10 +220,12 @@ class BalMask(Mask):
         # find out which pixels to mask
         w = np.ones(forest.log_lambda.size, dtype=bool)
         rest_frame_log_lambda = forest.log_lambda - np.log10(1. + forest.z)
-        idx1s, idx2s = np.searchsorted(rest_frame_log_lambda,
-                [mask_table['log_lambda_min'], mask_table['log_lambda_max']])
+        mask_idx_ranges = np.searchsorted(rest_frame_log_lambda,
+                [mask_table['log_lambda_min'], mask_table['log_lambda_max']]).T
+        # Make sure first index comes before the second
+        mask_idx_ranges.sort(axis=1)
 
-        for idx1, idx2 in zip(idx1s, idx2s):
+        for idx1, idx2 in mask_idx_ranges:
             w[idx1:idx2] = 0
 
         # do the actual masking
