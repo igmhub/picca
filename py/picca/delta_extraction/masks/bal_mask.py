@@ -21,6 +21,8 @@ accepted_options = ["bal index type", "filename", "los_id name"]
 # Wavelengths in Angstroms
 lines = {
     "lCIV": 1549,
+    "lSiIV1": 1394,
+    "lSiIV2": 1403,
     "lNV": 1240.81,
     "lLya": 1216.1,
     "lCIII": 1175,
