@@ -20,6 +20,8 @@ accepted_options = ["bal index type", "filename", "los_id name"]
 # Wavelengths in Angstroms
 lines = np.array([
     ("lCIV", 1549),
+    ("lSiIV1", 1394),
+    ("lSiIV2", 1403),
     ("lNV", 1240.81),
     ("lLya", 1216.1),
     ("lCIII", 1175),
@@ -32,6 +34,7 @@ lines = np.array([
     ("lOVI", 1037),
     ("lOI", 1039),
     ], dtype=[("name", "U10"), ("value", float)])
+
 
 class BalMask(Mask):
     """Class to mask BALs
