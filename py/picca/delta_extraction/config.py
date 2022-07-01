@@ -340,7 +340,7 @@ class Config:
         # add output directory
         section["out dir"] = self.out_dir
         if "num processors" in accepted_options and "num processors" not in section:
-            section["num processors"] = self.num_processors
+            section["num processors"] = str(self.num_processors)
 
         # finally add the information to self.data
         self.data = (DataType, section)
@@ -408,7 +408,7 @@ class Config:
             section["out dir"] = self.out_dir
         if ("num processors" in accepted_options and
                 "num processors" not in section):  # pragma: no branch
-            section["num processors"] = self.num_processors
+            section["num processors"] = str(self.num_processors)
         # finally add the information to self.continua
         self.expected_flux = (ExpectedFluxType, section)
 
@@ -473,7 +473,7 @@ class Config:
                 "In section 'logging level file' in section [general]")
         self.logging_level_file = self.logging_level_file.upper()
 
-        self.num_processors = section.get("num processors")
+        self.num_processors = section.getint("num processors")
         # this should never be true as the general section is loaded in the
         # default dictionary
         if self.num_processors is None:  # pragma: no cover
