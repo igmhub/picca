@@ -50,7 +50,25 @@ defaults = {
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
 
-def _save_deltas_healpix(out_dir, healpix, forests):
+def _save_deltas_one_healpix(out_dir, healpix, forests):
+    """Saves the deltas that belong to one healpix.
+
+    Arguments
+    ---------
+    out_dir: str
+    Parent directory to save deltas.
+    
+    healpix: int
+
+    forests: List of Forests
+    List of forests to save into one file.
+
+    Returns:
+    ---------
+    header_n_size: List of (header, size)
+    List of forest.header and forest.size to later
+    add to rejection log as accepted.
+    """
     results = fitsio.FITS(
         f"{out_dir}/Delta/delta-{healpix}.fits.gz",
         'rw',
@@ -438,11 +456,12 @@ class Data:
         if num_processors > 1:
             context = multiprocessing.get_context('fork')
             with context.Pool(processes=num_processors) as pool:
-                header_n_sizes = pool.starmap(_save_deltas_healpix, arguments)
+                header_n_sizes = pool.starmap(_save_deltas_one_healpix,
+                                              arguments)
         else:
             header_n_sizes = []
             for args in arguments:
-                header_n_sizes.append(_save_deltas_healpix(*args))
+                header_n_sizes.append(_save_deltas_one_healpix(*args))
 
         # store information for logs
         for header_n_size in header_n_sizes:
