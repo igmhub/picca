@@ -5,6 +5,7 @@ objects.
 """
 import time
 import logging
+import multiprocessing
 from numba import prange#, jit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -13,6 +14,48 @@ from picca.delta_extraction.errors import DeltaExtractionError
 
 # create logger
 module_logger = logging.getLogger(__name__)
+
+class MaskHandler():
+    """ Simple class to parallelize masking in Survey.apply_masks()
+
+    Methods
+    -------
+    __init__
+    __call__
+
+    Attributes
+    ----------
+    masks: list of Mask
+    Mask corrections to be applied to individual spectra. Constructed
+    from a Survey instance.
+    """
+    def __init__(self, masks):
+        """Initialize MaskHandler
+
+        Arguments
+        ---------
+        masks: list of Mask
+        Mask corrections to be applied to individual spectra.
+        """
+        self.masks = masks
+
+    def __call__(self, forest):
+        """Call method for each forest.
+
+        Arguments
+        ---------
+        forest: Forest
+        A Forest instance to which all masks are applied.
+
+        Returns:
+        ---------
+        forest: Forest
+        Masked Forest instance.
+        """
+        for mask in self.masks:
+            mask.apply_mask(forest)
+
+        return forest
 
 class Survey:
     """Class to manage the computation of deltas
@@ -54,6 +97,9 @@ class Survey:
     masks: list of Mask
     Mask corrections to be applied to individual spectra. This includes things
     like absorber mask, DLA mask, ...
+
+    num_processors: int
+    Number of processors to use in parallelization
     """
     def __init__(self):
         """Initialize class instance"""
@@ -63,6 +109,7 @@ class Survey:
         self.masks = None
         self.data = None
         self.expected_flux = None
+        self.num_processors = None
 
     def apply_corrections(self):
         """Apply the corrections. To be run after self.read_corrections()"""
@@ -81,9 +128,20 @@ class Survey:
         t0 = time.time()
         self.logger.info("Applying masks")
 
-        for forest_index, _ in enumerate(self.data.forests):
-            for mask_index, _ in enumerate(self.masks):
-                self.masks[mask_index].apply_mask(self.data.forests[forest_index])
+        if self.num_processors > 1:
+            context = multiprocessing.get_context('fork')
+            # Pick a large chunk size such that masks are
+            # copied as few times as possible
+            chunksize = int(len(self.data.forests)/self.num_processors/3)
+            chunksize = max(1, chunksize)
+            with context.Pool(processes=self.num_processors) as pool:
+                self.data.forests = pool.map(MaskHandler(self.masks),
+                    self.data.forests, chunksize=chunksize)
+        else:
+            mask_handler = MaskHandler(self.masks)
+            for forest_index, _ in enumerate(self.data.forests):
+                self.data.forests[forest_index] = mask_handler(
+                    self.data.forests[forest_index])
 
         t1 = time.time()
         self.logger.info(f"Time spent applying masks: {t1-t0}")
@@ -139,6 +197,7 @@ class Survey:
         """
         # load configuration
         self.config = Config(config_file)
+        self.num_processors = self.config.num_processors
 
     def read_corrections(self):
         """Read the spectral corrections."""
