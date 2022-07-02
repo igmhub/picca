@@ -219,38 +219,70 @@ def spectral_resolution_desi(reso_matrix, lambda_):
 
     Arguments
     ---------
-    reso_matrix: array
+    reso_matrix: 2D array of shape (num_diags, num_rows)
     Resolution matrix
 
-    lambda_: array or None
-    Logarithm of the wavelength (in Angstroms)
+    lambda_: 1D array
+    Wavelength (in Angstroms)
 
     Return
     ------
     reso_in_km_per_s: array
     The spectral resolution
     """
-    delta_log_lambda = np.diff(np.log10(lambda_))
+    delta_log_lambda = np.empty_like(lambda_)
+    delta_log_lambda[:-1] = np.diff(np.log10(lambda_))
     #note that this would be the same result as before (except for the missing bug) in
     #case of log-uniform binning, but for linear binning pixel size chenges wrt lambda
-    delta_log_lambda = np.append(
-        delta_log_lambda,
-        [delta_log_lambda[-1] + (delta_log_lambda[-1] - delta_log_lambda[-2])])
-    reso = np.clip(reso_matrix, 1.0e-6, 1.0e6)
+    delta_log_lambda[-1] = delta_log_lambda[-2] + (delta_log_lambda[-2] - delta_log_lambda[-3])
+
+    num_diags, num_rows = reso_matrix.shape
+    num_offdiags = num_diags // 2
+    # num_offdiags = reso_matrix.shape[0] // 2
+
+    # shift every row to a small positive value
+    # new resolution model is then Gaussian + constant
+    # using an arbitrary epsilon is not stable
+    # use nonzero absolute minimum of the row
+    nonzero_abs_min_per_row = np.zeros(num_rows, dtype=float)
+    for nrow in range(num_rows):
+        row = reso_matrix[:, nrow]
+        nonzero_idx = row.nonzero()[0]
+        if nonzero_idx.size == 0:
+            continue
+
+        nonzero_abs_min_per_row[nrow] = np.abs(row[nonzero_idx]).min() 
+
+    # mask out rows that are all zeros
+    w = nonzero_abs_min_per_row>0
+    if not np.any(w):
+        return np.zeros_like(lambda_), np.zeros_like(lambda_)
+
+    shift = reso_matrix.min(axis=0) - nonzero_abs_min_per_row
+    reso = reso_matrix[:, w] - shift[w]
+
     #assume reso = A*exp(-(x-central_pixel_pos)**2 / 2 / sigma**2)
     #=> sigma = sqrt((x-central_pixel_pos)/2)**2 / log(A/reso)
     #   A = reso(central_pixel_pos)
     # the following averages over estimates for four symmetric values of x
-    rms_in_pixel = (
-        (np.sqrt(1.0 / 2.0 / np.log(
-            reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 1, :])) +
-         np.sqrt(4.0 / 2.0 / np.log(
-             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 2, :])) +
-         np.sqrt(1.0 / 2.0 / np.log(
-             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 1, :])) +
-         np.sqrt(4.0 / 2.0 / np.log(
-             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 2, :])))
-        / 4.0) #this is rms
+    indices = np.array([-2, -1, 1, 2], dtype=int)
+    ratios = reso[num_offdiags, :]/reso[num_offdiags+indices, :]
+    ratios = 1./np.sqrt(np.log(ratios))
+
+    rms_in_pixel = np.empty_like(lambda_)
+    rms_in_pixel[w] = np.abs(indices).dot(ratios)/np.sqrt(2.)/indices.size
+    rms_in_pixel[~w] = rms_in_pixel[w].mean()
+    # Previous code for reference:
+    # rms_in_pixel = (
+    #     (np.sqrt(1.0 / 2.0 / np.log(
+    #         reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 1, :])) +
+    #      np.sqrt(4.0 / 2.0 / np.log(
+    #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 2, :])) +
+    #      np.sqrt(1.0 / 2.0 / np.log(
+    #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 1, :])) +
+    #      np.sqrt(4.0 / 2.0 / np.log(
+    #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 2, :])))
+    #     / 4.0) #this is rms
 
     reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
                         np.log(10.0))   #this is FWHM
