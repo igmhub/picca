@@ -1230,8 +1230,10 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
+        kwargs = desi_mock_data_kwargs.copy()
+        kwargs["wave solution"] = "log"
         config.read_dict({
-            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "data": kwargs,
             "expected flux": {
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data/data",
@@ -1373,8 +1375,10 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
+        kwargs = desi_mock_data_kwargs.copy()
+        kwargs["wave solution"] = "log"
         config.read_dict({
-            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "data": kwargs,
             "expected flux": {
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data",
@@ -1490,8 +1494,10 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
+        kwargs = desi_mock_data_kwargs.copy()
+        kwargs["wave solution"] = "log"
         config.read_dict({
-            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "data": kwargs,
             "expected flux": {
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data",
@@ -1591,8 +1597,10 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
+        kwargs = desi_mock_data_kwargs.copy()
+        kwargs["wave solution"] = "log"
         config.read_dict({
-            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "data": kwargs,
             "expected flux": {
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data",
@@ -1656,8 +1664,10 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
+        kwargs = desi_mock_data_kwargs.copy()
+        kwargs["wave solution"] = "log"
         config.read_dict({
-            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "data": kwargs,
             "expected flux": {
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data",
