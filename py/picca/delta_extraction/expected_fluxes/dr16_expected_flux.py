@@ -16,7 +16,7 @@ from picca.delta_extraction.utils import find_bins
 accepted_options = [
     "iter out prefix", "limit eta", "limit var lss", "min num qso in fit",
     "num bins variance", "num iterations", "num processors", "order", "out dir",
-    "use constant weight", "use ivar as weight"
+    "use constant weight", "use ivar as weight", "force stack delta to zero"
 ]
 
 defaults = {
@@ -29,6 +29,7 @@ defaults = {
     "order": 1,
     "use constant weight": False,
     "use ivar as weight": False,
+    "force stack delta to zero": True
 }
 
 
@@ -133,6 +134,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
     use_ivar_as_weight: boolean
     If "True", use ivar as weights (implemented as eta = 1, sigma_lss = fudge = 0).
+
+    force_stack_delta_to_zero: boolean
+    If "True", continuum is corrected by stack_delta.
     """
 
     def __init__(self, config):
@@ -156,6 +160,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.order = None
         self.use_constant_weight = None
         self.use_ivar_as_weight = None
+        self.force_stack_delta_to_zero = None
         self.__parse_config(config)
 
         # initialize variables
@@ -374,6 +379,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.use_ivar_as_weight is None:
             raise ExpectedFluxError(
                 "Missing argument 'use ivar as weight' required by Dr16ExpectedFlux"
+            )
+
+        self.force_stack_delta_to_zero = config.getboolean("force stack delta to zero")
+        if self.force_stack_delta_to_zero is None:
+            raise ExpectedFluxError(
+                "Missing argument 'force stack delta to zero' required by Dr16ExpectedFlux"
             )
 
     # this should be a read-only function as it is called in a parallelized way
@@ -958,7 +969,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
             stack_delta = self.get_stack_delta(forest.log_lambda)
             eta = self.get_eta(forest.log_lambda)
 
-            mean_expected_flux = forest.continuum * stack_delta
+            mean_expected_flux = forest.continuum
+            if self.force_stack_delta_to_zero:
+                mean_expected_flux *= stack_delta
             weights = self.get_continuum_weights(forest, mean_expected_flux)
             # this is needed as the weights from get_continuum_weights are
             # divided by the continuum model squared, in this case mean_expected_flux
