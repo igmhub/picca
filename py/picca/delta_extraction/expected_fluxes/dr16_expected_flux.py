@@ -966,11 +966,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
             if forest.bad_continuum_reason is not None:
                 continue
             # get the variance functions and statistics
-            stack_delta = self.get_stack_delta(forest.log_lambda)
             eta = self.get_eta(forest.log_lambda)
 
-            mean_expected_flux = forest.continuum
+            # assignment operator (=) creates a reference, such that
+            # mean_expected_flux points to forest.continuum and
+            # forest.continuum gets modified within if statement
+            mean_expected_flux = np.copy(forest.continuum)
             if self.force_stack_delta_to_zero:
+                stack_delta = self.get_stack_delta(forest.log_lambda)
                 mean_expected_flux *= stack_delta
             weights = self.get_continuum_weights(forest, mean_expected_flux)
             # this is needed as the weights from get_continuum_weights are
