@@ -1,6 +1,7 @@
 """This module defines the class Dr16ExpectedFlux"""
 import logging
 import multiprocessing
+import time
 
 import iminuit
 import numpy as np
@@ -466,6 +467,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.logger.progress(
                 f"Continuum fitting: starting iteration {iteration} of {self.num_iterations}"
             )
+            t0 = time.time()
+            self.logger.info(
+                f"Computing quasar continua using {self.num_processors} processors")
             if self.num_processors > 1:
                 with context.Pool(processes=self.num_processors) as pool:
                     imap_it = pool.imap(self.compute_continuum, forests)
@@ -487,17 +491,29 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     forest.continuum = cont_model
                     self.continuum_fit_parameters[forest.los_id] = continuum_fit_parameters
                 #forests = [self.compute_continuum(f) for f in forests]
+            t1 = time.time()
+            self.logger.info(f"Time spent computing quasar continua: {t1-t0}")
 
             if iteration < self.num_iterations - 1:
                 # Compute mean continuum (stack in rest-frame)
+                t0 = time.time()
                 self.compute_mean_cont(forests)
+                t1 = time.time()
+                self.logger.info(f"Time spent computing the mean continuum: {t1-t0}")
 
                 # Compute observer-frame mean quantities (var_lss, eta, fudge)
                 if not (self.use_ivar_as_weight or self.use_constant_weight):
+                    t0 = time.time()
                     self.compute_var_stats(forests)
+                    t1 = time.time()
+                    self.logger.info(
+                        f"Time spent computing eta, var_lss and fudge: {t1-t0}")
 
             # compute the mean deltas
+            t0 = time.time()
             self.compute_delta_stack(forests)
+            t1 = time.time()
+            self.logger.info(f"Time spent computing delta stack: {t1-t0}")
 
             # Save the iteration step
             if iteration == self.num_iterations - 1:
