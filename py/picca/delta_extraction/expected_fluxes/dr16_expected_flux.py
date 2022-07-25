@@ -1,4 +1,4 @@
-"""This module defines the class Dr16ExpectedFlux"""
+"""This module defines the class Dr16ExpectedFlux and the function compute_continuum"""
 import logging
 import multiprocessing
 
@@ -54,7 +54,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     _initialize_variance_wavelength_array
     _initialize_variance_functions
     __parse_config
-    compute_continuum
     compute_delta_stack
     compute_forest_variance
     compute_mean_cont
@@ -710,10 +709,38 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss,
     forest: Forest
     A forest instance where the continuum will be computed
 
+    get_mean_cont: scipy.interpolate.interp1d
+    Interpolation function to compute the unabsorbed mean quasar continua.
+
+    get_eta: scipy.interpolate.interp1d
+    Interpolation function to compute mapping function eta. See equation 4 of
+    du Mas des Bourboux et al. 2020 for details.
+
+    get_fudge: scipy.interpolate.interp1d
+    Interpolation function to compute mapping function fudge. See equation 4 of
+    du Mas des Bourboux et al. 2020 for details.
+
+    get_var_lss: scipy.interpolate.interp1d
+    Interpolation function to compute mapping functions var_lss. See equation 4 of
+    du Mas des Bourboux et al. 2020 for details.
+
+    use_constant_weight: boolean
+    If "True", set all the delta weights to one.
+
+    order: int
+    Order of the polynomial for the continuum fit.
+
     Return
     ------
-    forest: Forest
-    The modified forest instance
+    cont_model: array of float or None
+    The quasar continuum. None if there were problems computing it
+
+    bad_continuum_reason: str or None
+    The reason why the continuum could not be computed. None when there were
+    no problems
+
+    continuum_fit_parameters: (float, float)
+    The zero-point and the slope used in the linear part of the continuum model 
     """
     # get mean continuum
     mean_cont = get_mean_cont(forest.log_lambda - np.log10(1 + forest.z))
