@@ -740,7 +740,7 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss,
     no problems
 
     continuum_fit_parameters: (float, float)
-    The zero-point and the slope used in the linear part of the continuum model 
+    The zero-point and the slope used in the linear part of the continuum model
     """
     # get mean continuum
     mean_cont = get_mean_cont(forest.log_lambda - np.log10(1 + forest.z))
