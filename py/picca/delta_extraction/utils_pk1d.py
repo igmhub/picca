@@ -11,6 +11,7 @@ See the respective documentation for details
 import logging
 
 import numpy as np
+from numba import njit
 
 from picca.delta_extraction.utils import SPEED_LIGHT
 
@@ -213,13 +214,41 @@ def spectral_resolution(wdisp,
 
     return reso
 
+@njit#("f8[:](float32[:, :], i8)")
+def _find_nonzero_abs_min_per_row(reso_matrix, num_rows):
+    """Find the non-zero absolute minimum of the resolution matrix
+    for each row
+
+    Arguments
+    ---------
+    reso_matrix: 2D array of shape (num_diags, num_rows)
+    Resolution matrix
+
+    num_rows: int
+    Number of rows
+
+    Return
+    ------
+    nonzero_abs_min_per_row: 1D array
+    An array of size num_rows with non-zero abs. min
+    """
+    nonzero_abs_min_per_row = np.zeros(num_rows)
+    for irow in range(num_rows):
+        row = reso_matrix[:, irow]
+        nonzero_idx = row.nonzero()[0]
+        if nonzero_idx.size == 0:
+            continue
+
+        nonzero_abs_min_per_row[irow] = np.abs(row[nonzero_idx]).min()
+
+    return nonzero_abs_min_per_row
 
 def spectral_resolution_desi(reso_matrix, lambda_):
     """Compute the spectral resolution for DESI spectra
 
     Arguments
     ---------
-    reso_matrix: 2D array of shape (num_diags, num_rows)
+    reso_matrix: 2D float32 array of shape (num_diags, num_rows)
     Resolution matrix
 
     lambda_: 1D array
@@ -230,6 +259,9 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     reso_in_km_per_s: array
     The spectral resolution
     """
+    if lambda_ is None:
+        return None
+
     delta_log_lambda = np.empty_like(lambda_)
     delta_log_lambda[:-1] = np.diff(np.log10(lambda_))
     #note that this would be the same result as before (except for the missing bug) in
@@ -244,14 +276,7 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     # new resolution model is then Gaussian + constant
     # using an arbitrary epsilon is not stable
     # use nonzero absolute minimum of the row
-    nonzero_abs_min_per_row = np.zeros(num_rows, dtype=float)
-    for nrow in range(num_rows):
-        row = reso_matrix[:, nrow]
-        nonzero_idx = row.nonzero()[0]
-        if nonzero_idx.size == 0:
-            continue
-
-        nonzero_abs_min_per_row[nrow] = np.abs(row[nonzero_idx]).min() 
+    nonzero_abs_min_per_row = _find_nonzero_abs_min_per_row(reso_matrix, num_rows)
 
     # mask out rows that are all zeros
     w = nonzero_abs_min_per_row>0
