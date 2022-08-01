@@ -10,7 +10,7 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
-from picca.delta_extraction.expected_fluxes.utils import compute_continuum
+from picca.delta_extraction.expected_fluxes.utils import fit_continuum_gls
 from picca.delta_extraction.least_squares.least_squares_var_stats import (
     LeastsSquaresVarStats, FUDGE_REF)
 from picca.delta_extraction.utils import (find_bins, update_accepted_options,
@@ -397,7 +397,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                   self.get_var_lss, self.get_fudge,
                                   self.use_constant_weight, self.order)
                                  for forest in forests]
-                    imap_it = pool.starmap(compute_continuum, arguments)
+                    imap_it = pool.starmap(fit_continuum_gls, arguments)
 
                     self.continuum_fit_parameters = {}
                     for forest, (cont_model, bad_continuum_reason,
@@ -412,7 +412,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 self.continuum_fit_parameters = {}
                 for forest in forests:
                     (cont_model, bad_continuum_reason,
-                     continuum_fit_parameters) = compute_continuum(
+                     continuum_fit_parameters) = fit_continuum_gls(
                          forest, self.get_mean_cont, self.get_eta,
                          self.get_var_lss, self.get_fudge,
                          self.use_constant_weight, self.order)
