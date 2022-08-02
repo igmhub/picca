@@ -19,7 +19,7 @@ from picca.delta_extraction.utils import (find_bins, update_accepted_options,
 accepted_options = update_accepted_options(accepted_options, [
     "force stack delta to zero", "limit eta", "limit var lss",
     "min num qso in fit", "num iterations", "order", "use constant weight",
-    "use ivar as weight"
+    "use ivar as weight", "num_iter_inner"
 ])
 
 defaults = update_default_options(
