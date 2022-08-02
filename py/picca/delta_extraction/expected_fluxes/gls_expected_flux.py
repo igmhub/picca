@@ -12,7 +12,7 @@ from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
 from picca.delta_extraction.expected_fluxes.utils import fit_continuum_gls, fit_var_stats_gls
 from picca.delta_extraction.least_squares.least_squares_var_stats import (
-    LeastsSquaresVarStats)
+    LeastsSquaresVarStats, FUDGE_REF)
 from picca.delta_extraction.utils import (find_bins, update_accepted_options,
                                           update_default_options)
 
@@ -565,11 +565,12 @@ class GlsExpectedFlux(ExpectedFlux):
             if solution[0] is None or np.any(solution<=0):
                 eta[index] = 1.
                 var_lss[index] = 0.1
-                fudge[index] = 0
+                fudge[index] = FUDGE_REF
                 valid_fit[index] = False
                 chi2_in_bin[index] = 0
             else:
                 eta[index], var_lss[index], fudge[index] = solution
+                fudge[index] *= FUDGE_REF
                 valid_fit[index] = True
                 chi2_in_bin[index] = leasts_squares(*solution)
 
