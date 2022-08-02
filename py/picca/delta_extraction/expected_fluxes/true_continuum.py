@@ -12,6 +12,7 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
+from picca.delta_extraction.least_squares.least_squares_var_stats import LeastsSquaresVarStats
 from picca.delta_extraction.utils import (find_bins, update_accepted_options,
                                           update_default_options)
 
