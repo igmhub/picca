@@ -57,7 +57,7 @@ def _save_deltas_one_healpix(out_dir, healpix, forests):
     ---------
     out_dir: str
     Parent directory to save deltas.
-    
+
     healpix: int
 
     forests: List of Forests
