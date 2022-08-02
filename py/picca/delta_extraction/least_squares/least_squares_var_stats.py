@@ -229,8 +229,8 @@ class LeastsSquaresVarStats:
             "loglam_var_grid",
             "var_delta_obs",
             "var_delta2_obs",
-            "num_qso"
-            "num_pixels",
+            "num_qso",
+            "num_pixels"
         ]
 
         fitsfile.write(values, names=names, extname='VAR_STATS')
