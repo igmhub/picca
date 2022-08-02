@@ -128,7 +128,7 @@ def _polynomial_sum(log_lambda_slope_arr, coef):
 # Generalized least squares fitting
 # see https://en.wikipedia.org/wiki/Generalized_least_squares
 def fit_continuum_gls(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
-                      use_constant_weight, order):
+                      use_constant_weight, order, num_iter):
     """Compute the forest continuum.
 
     Fits a model based on the mean quasar continuum and linear function
@@ -198,7 +198,7 @@ def fit_continuum_gls(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
 
     # print("=======================")
     poly_coefficients = np.zeros(2)
-    for _ in range(3):
+    for _ in range(num_iter):
         if use_constant_weight:
             weights = np.ones_like(forest.flux)
         else:
