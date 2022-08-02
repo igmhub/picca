@@ -207,7 +207,7 @@ class ExpectedFlux:
                 delta = np.zeros_like(forest.log_lambda)
                 w = forest.ivar > 0
                 delta[w] = forest.flux[w] / forest.continuum[w]
-                weights = self.compute_forest_weight(forest, forest.continuum)
+                weights = 1. / self.compute_forest_variance(forest, forest.continuum)
 
             bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
                              Forest.wave_solution)
@@ -266,24 +266,6 @@ class ExpectedFlux:
         """
         raise ExpectedFluxError("Function 'compute_forest_variance' was not "
                                 "overloaded by child class")
-
-    def compute_forest_weight(self, forest, continuum):
-        """Compute the forest weights by setting ivar=0 to 0
-
-        Arguments
-        ---------
-        forest: Forest
-        A forest instance where the variance will be computed
-
-        continuum: array of float
-        Quasar continuum associated with the forest
-        """
-        weights = np.zeros_like(forest.log_lambda)
-        w = forest.ivar > 0
-        variance = self.compute_forest_variance(forest, continuum)
-        weights[w] = 1. / variance[w]
-
-        return weights
 
     def extract_deltas(self, forest):
         """Apply the continuum to compute the delta field

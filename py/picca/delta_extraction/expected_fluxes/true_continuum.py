@@ -162,7 +162,8 @@ class TrueContinuum(ExpectedFlux):
         Quasar continuum associated with the forest
         """
         w = forest.ivar > 0
-        variance = np.zeros_like(forest.log_lambda)
+        variance = np.empty_like(forest.log_lambda)
+        variance[~w] = np.inf
 
         if self.use_constant_weight:
             variance[w] = 1
@@ -192,7 +193,7 @@ class TrueContinuum(ExpectedFlux):
                              Forest.log_lambda_rest_frame_grid,
                              Forest.wave_solution)
 
-            weights = self.compute_forest_weight(forest, forest.continuum)
+            weights = 1. / self.compute_forest_variance(forest, forest.continuum)
 
             mean_cont += np.bincount(bins, weights=forest.continuum * weights,
                 minlength=mean_cont.size)
@@ -243,16 +244,17 @@ class TrueContinuum(ExpectedFlux):
             if forest.bad_continuum_reason is not None:
                 continue
 
-            w = forest.ivar>0
-            weights = np.zeros_like(forest.log_lambda)
             # get the variance functions
             if self.use_constant_weight:
+                w = forest.ivar>0
+                weights = np.empty_like(forest.log_lambda)
                 weights[w] = 1
+                weights[~w]= 0
                 mean_expected_flux = forest.continuum
             else:
                 mean_expected_flux = forest.continuum
-                weights[w] = 1. / self.compute_forest_variance(
-                    forest, forest.continuum)[w]
+                weights = 1. / self.compute_forest_variance(
+                    forest, forest.continuum)
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,

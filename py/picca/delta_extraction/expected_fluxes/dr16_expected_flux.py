@@ -458,7 +458,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         Quasar continuum associated with the forest
         """
         w = forest.ivar > 0
-        variance = np.zeros_like(forest.log_lambda)
+        variance = np.empty_like(forest.log_lambda)
+        variance[~w] = np.inf
 
         var_pipe = 1. / forest.ivar[w] / continuum[w]**2
         var_lss = self.get_var_lss(forest.log_lambda[w])
@@ -504,7 +505,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                              Forest.log_lambda_rest_frame_grid,
                              Forest.wave_solution)
 
-            weights = self.compute_forest_weight(forest, forest.continuum)
+            weights = 1. / self.compute_forest_variance(forest, forest.continuum)
 
             mean_cont += np.bincount(bins, weights=forest.flux / (forest.continuum+1e-16) * weights,
                 minlength=mean_cont.size)
@@ -686,7 +687,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 stack_delta = self.get_stack_delta(forest.log_lambda)
                 mean_expected_flux *= stack_delta
 
-            weights = self.compute_forest_weight(forest, mean_expected_flux)
+            weights = 1. / self.compute_forest_variance(forest, mean_expected_flux)
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,

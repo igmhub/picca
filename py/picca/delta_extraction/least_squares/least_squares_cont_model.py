@@ -171,7 +171,8 @@ class LeastsSquaresContModel:
                                     "'use_constant_weight' in the **kwargs dictionary")
         # Assign 0 weight to pixels with ivar==0
         w = forest.ivar > 0
-        weights = np.zeros_like(forest.log_lambda)
+        weights = np.empty_like(forest.log_lambda)
+        weights[~w] = 0
 
         if kwargs.get("use_constant_weight"):
             weights[w] = 1

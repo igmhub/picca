@@ -155,7 +155,7 @@ class LeastsSquaresVarStats:
             w =  forest.ivar > 0
             var_pipe = np.empty_like(forest.log_lambda)
             var_pipe[w]  = 1 / forest.ivar[w] / forest.continuum[w]**2
-            var_pipe[~w] = VAR_PIPE_MAX+1
+            var_pipe[~w] = np.inf
 
             w &= ((np.log10(var_pipe) > VAR_PIPE_MIN) &
                  (np.log10(var_pipe) < VAR_PIPE_MAX))
