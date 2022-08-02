@@ -559,8 +559,10 @@ class GlsExpectedFlux(ExpectedFlux):
             num_pixels[index] = leasts_squares.get_num_pixels()
 
             ls_i, ls_f = leasts_squares.running_indexs
-            solution = fit_var_stats_gls(leasts_squares.var_pipe_values, 
-                leasts_squares.var_delta, leasts_squares.var2_delta, ls_i, ls_f)
+            w = leasts_squares.num_qso[ls_i:ls_f] > self.min_num_qso_in_fit
+            solution = fit_var_stats_gls(leasts_squares.var_pipe_values[w], 
+                leasts_squares.var_delta[ls_i:ls_f][w],
+                leasts_squares.var2_delta[ls_i:ls_f][w])
 
             if solution[0] is None or np.any(solution<=0):
                 eta[index] = 1.

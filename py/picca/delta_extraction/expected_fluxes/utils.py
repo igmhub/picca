@@ -236,10 +236,10 @@ def fit_continuum_gls(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
 
     return cont_model, bad_continuum_reason, continuum_fit_parameters
 
-def fit_var_stats_gls(var_pipe_values, var_delta, var2_delta, ls_i, ls_f):
+def fit_var_stats_gls(var_pipe_values, var_delta, var2_delta):
     x_matrix = np.column_stack([var_pipe_values, np.ones_like(var_pipe_values)])
-    y_vector = var_delta[ls_i:ls_f]
-    weights = var2_delta[ls_i:ls_f]
+    y_vector = var_delta
+    weights = var2_delta
 
     try:
         solution = _solve_gls(x_matrix, weights, y_vector)
