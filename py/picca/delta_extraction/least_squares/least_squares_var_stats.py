@@ -215,3 +215,22 @@ class LeastsSquaresVarStats:
         Index of the wavelength grid activated to fit
         """
         self.running_indexs = (index * NUM_VAR_BINS, (index + 1) * NUM_VAR_BINS)
+
+    def save_var(self, fitsfile):
+        values = [
+            np.outer(self.log_lambda_var_func_grid, self.var_pipe_values).ravel(),
+            self.var_delta,
+            self.var2_delta,
+            self.num_qso,
+            self.num_pixels
+        ]
+
+        names = [
+            "loglam_var_grid",
+            "var_delta_obs",
+            "var_delta2_obs",
+            "num_qso"
+            "num_pixels",
+        ]
+
+        fitsfile.write(values, names=names, extname='VAR_STATS')

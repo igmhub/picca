@@ -63,6 +63,7 @@ class ExpectedFlux:
         self.out_dir = None
         self.num_bins_variance = None
         self.num_processors = None
+        self.leasts_squares = None
         self.__parse_config(config)
 
         # check that Forest class variables are set
@@ -356,3 +357,5 @@ class ExpectedFlux:
             self.hdu_stack_deltas(results)
             self.hdu_var_func(results)
             self.hdu_cont(results)
+            if self.leasts_squares is not None:
+                self.leasts_squares.save_var(results)

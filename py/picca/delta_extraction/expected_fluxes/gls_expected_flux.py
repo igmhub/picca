@@ -603,6 +603,8 @@ class GlsExpectedFlux(ExpectedFlux):
                                       fill_value="extrapolate",
                                       kind="nearest")
 
+        self.leasts_squares = leasts_squares
+
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
 
