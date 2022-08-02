@@ -116,9 +116,14 @@ def _solve_gls(x_matrix, weights, flux):
     xw_matrix = x_matrix.T * weights
     xwx_matrix = xw_matrix @ x_matrix
     yw_vector = xw_matrix @ flux
-    zero_point, slope = np.linalg.solve(xwx_matrix, yw_vector)
+    poly_coef = np.linalg.solve(xwx_matrix, yw_vector)
 
-    return zero_point, slope
+    return poly_coef
+
+def _polynomial_sum(log_lambda_slope_arr, coef):
+    order = coef.size
+    return np.sum([coef[n]*log_lambda_slope_arr**n for n in range(order)],
+        axis=0)
 
 # Generalized least squares fitting
 # see https://en.wikipedia.org/wiki/Generalized_least_squares
@@ -168,10 +173,6 @@ def fit_continuum_gls(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     continuum_fit_parameters: (float, float)
     The zero-point and the slope used in the linear part of the continuum model
     """
-
-    if order != 1:
-        raise Exception("GLS solution only accepts order 1.")
-
     # get mean continuum
     mean_cont = get_mean_cont(forest.log_lambda - np.log10(1 + forest.z))
 
@@ -184,7 +185,9 @@ def fit_continuum_gls(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     log_lambda_slope_arr = (forest.log_lambda - log_lambda_min) / (log_lambda_max - log_lambda_min)
 
     # same as np.column_stack
-    x_matrix = np.c_[mean_cont, mean_cont*log_lambda_slope_arr]
+    x_matrix = np.column_stack(
+        [mean_cont*(log_lambda_slope_arr**n) for n in range(order+1)]
+    )
 
     if forest.continuum is None:
         cont_model = mean_cont
@@ -194,6 +197,7 @@ def fit_continuum_gls(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     bad_continuum_reason = None
 
     # print("=======================")
+    poly_coefficients = np.zeros(2)
     for _ in range(3):
         if use_constant_weight:
             weights = np.ones_like(forest.flux)
@@ -206,12 +210,13 @@ def fit_continuum_gls(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
             weights = 1.0 / cont_model**2 / variance
 
         try:
-            zero_point, slope = _solve_gls(x_matrix, weights, forest.flux)
+            poly_coefficients[:order+1] = _solve_gls(x_matrix, weights, forest.flux)
         except np.linalg.LinAlgError:
             bad_continuum_reason = "singular matrix"
             break
 
-        cont_model_new = mean_cont * (slope * log_lambda_slope_arr + zero_point)
+        poly = _polynomial_sum(log_lambda_slope_arr, poly_coefficients)
+        cont_model_new = mean_cont * poly
         dcont = cont_model_new - cont_model
         cont_model = cont_model_new
         # print(np.mean(dcont**2))
@@ -223,7 +228,7 @@ def fit_continuum_gls(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
         bad_continuum_reason = "negative continuum"
 
     if bad_continuum_reason is None:
-        continuum_fit_parameters = (zero_point, slope)
+        continuum_fit_parameters = poly
     ## if problem, then set it to None
     else:
         cont_model = None
