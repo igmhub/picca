@@ -35,7 +35,7 @@ class AbsorberMask(Mask):
     logger: logging.Logger
     Logger object
     """
-    def __init__(self, config, keep_masked_pixels=False):
+    def __init__(self, config):
         """Initialize class instance.
 
         Arguments
@@ -45,7 +45,7 @@ class AbsorberMask(Mask):
         """
         self.logger = logging.getLogger(__name__)
 
-        super().__init__(keep_masked_pixels)
+        super().__init__(config)
 
         # first load the absorbers catalogue
         filename = config.get("filename")

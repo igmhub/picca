@@ -62,16 +62,13 @@ class BalMask(Mask):
     logger: logging.Logger
     Logger object
     """
-    def __init__(self, config, keep_masked_pixels=False):
+    def __init__(self, config):
         """Initializes class instance.
 
         Arguments
         ---------
         config: configparser.SectionProxy
         Parsed options to initialize class
-
-        keep_masked_pixels: bool (default: False)
-        Determines the method to mask pixels. If true, sets ivar to 0.
 
         Raise
         -----
@@ -82,7 +79,7 @@ class BalMask(Mask):
         """
         self.logger = logging.getLogger(__name__)
 
-        super().__init__(keep_masked_pixels)
+        super().__init__(config)
 
         filename = config.get("filename")
         if filename is None:
@@ -237,4 +234,4 @@ class BalMask(Mask):
 
         # do the actual masking
         for param in Forest.mask_fields:
-                self._masker(forest, param, w)
+            self._masker(forest, param, w)

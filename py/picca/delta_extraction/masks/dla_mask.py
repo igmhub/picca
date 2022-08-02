@@ -45,16 +45,13 @@ class DlaMask(Mask):
     mask: astropy.Table
     Table containing specific intervals of wavelength to be masked for DLAs
     """
-    def __init__(self, config, keep_masked_pixels=False):
+    def __init__(self, config):
         """Initializes class instance.
 
         Arguments
         ---------
         config: configparser.SectionProxy
         Parsed options to initialize class
-
-        keep_masked_pixels: bool (default: False)
-        Determines the method to mask pixels. If true, sets ivar to 0.
 
         Raise
         -----
@@ -66,7 +63,7 @@ class DlaMask(Mask):
         """
         self.logger = logging.getLogger(__name__)
 
-        super().__init__(keep_masked_pixels)
+        super().__init__(config)
 
         # first load the dla catalogue
         filename = config.get("filename")

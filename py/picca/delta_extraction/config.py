@@ -163,7 +163,6 @@ class Config:
         self.__format_corrections_section()
         self.masks = None
         self.num_masks = None
-        self.keep_masked_pixels = False
         self.__format_masks_section()
         self.data = None
         self.__format_data_section()
@@ -503,8 +502,6 @@ class Config:
         if self.num_masks < 0:
             raise ConfigError("In section [masks], variable 'num masks' "
                               "must be a non-negative integer")
-
-        self.keep_masked_pixels = section.getboolean("keep pixels", fallback=False)
 
         # check that arguments are valid
         for key in section.keys():

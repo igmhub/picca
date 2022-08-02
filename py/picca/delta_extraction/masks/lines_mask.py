@@ -32,7 +32,7 @@ class LinesMask(Mask):
     Table with the observed-frame wavelength of the lines to mask. This usually
     contains the sky lines.
     """
-    def __init__(self, config, keep_masked_pixels=False):
+    def __init__(self, config):
         """Initialize class instance.
 
         Arguments
@@ -40,7 +40,7 @@ class LinesMask(Mask):
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
-        super().__init__(keep_masked_pixels)
+        super().__init__(config)
 
         mask_file = config.get("filename")
         if mask_file is None:

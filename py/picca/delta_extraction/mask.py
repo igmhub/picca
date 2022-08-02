@@ -20,8 +20,8 @@ class Mask:
 
     Arguments
     ---------
-    keep_masked_pixels: bool (default: False)
-    Determines the method to mask pixels. If true, sets ivar to 0.
+    config: configparser.SectionProxy
+    Parsed options to initialize class
 
     Methods
     -------
@@ -37,9 +37,11 @@ class Mask:
     If keep_masked_pixels=True, then points to _set_ivar_to_zero.
     Otherwise, points to _remove_pixels.
     """
-    def __init__(self, keep_masked_pixels=False):
+    def __init__(self, config):
         """Initialize class instance"""
         self.los_id = {}
+
+        keep_masked_pixels = config.getboolean("keep pixels", fallback=False)
         
         if keep_masked_pixels:
             self._masker = _set_ivar_to_zero
