@@ -10,9 +10,9 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
-from picca.delta_extraction.expected_fluxes.utils import fit_continuum_gls
+from picca.delta_extraction.expected_fluxes.utils import fit_continuum_gls, fit_var_stats_gls
 from picca.delta_extraction.least_squares.least_squares_var_stats import (
-    LeastsSquaresVarStats, FUDGE_REF)
+    LeastsSquaresVarStats)
 from picca.delta_extraction.utils import (find_bins, update_accepted_options,
                                           update_default_options)
 
@@ -33,11 +33,6 @@ defaults = update_default_options(
         "use constant weight": False,
         "use ivar as weight": False,
     })
-
-FUDGE_FIT_START = FUDGE_REF
-ETA_FIT_START = 1.
-VAR_LSS_FIT_START = 0.1
-
 
 class GlsExpectedFlux(ExpectedFlux):
     """Class to the expected flux using Generalized Least Squares fitting
@@ -509,7 +504,7 @@ class GlsExpectedFlux(ExpectedFlux):
 
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
-        mean_cont /= mean_cont.mean()
+        mean_cont[w] /= mean_cont[w].mean()
         log_lambda_cont = Forest.log_lambda_rest_frame_grid[w]
 
         # the new mean continuum is multiplied by the previous one to recover
@@ -540,18 +535,10 @@ class GlsExpectedFlux(ExpectedFlux):
         ExpectedFluxError if wavelength solution is not valid
         """
         # initialize arrays
-        if "eta" in self.fit_variance_functions:
-            eta = np.zeros(self.num_bins_variance) + ETA_FIT_START
-        else:
-            eta = self.get_eta(self.log_lambda_var_func_grid)
-        if "var_lss" in self.fit_variance_functions:
-            var_lss = np.zeros(self.num_bins_variance) + VAR_LSS_FIT_START
-        else:
-            var_lss = self.get_var_lss(self.log_lambda_var_func_grid)
-        if "fudge" in self.fit_variance_functions:
-            fudge = np.zeros(self.num_bins_variance) + FUDGE_FIT_START
-        else:
-            fudge = self.get_fudge(self.log_lambda_var_func_grid)
+        eta = np.empty(self.num_bins_variance)
+        var_lss = np.empty(self.num_bins_variance)
+        fudge = np.zeros(self.num_bins_variance)
+
         num_pixels = np.zeros(self.num_bins_variance)
         valid_fit = np.zeros(self.num_bins_variance)
         chi2_in_bin = np.zeros(self.num_bins_variance)
@@ -569,40 +556,21 @@ class GlsExpectedFlux(ExpectedFlux):
             " loglam    eta      var_lss  fudge    chi2     num_pix valid_fit")
         for index in range(self.num_bins_variance):
             leasts_squares.set_fit_bins(index)
+            num_pixels[index] = leasts_squares.get_num_pixels()
 
-            minimizer = iminuit.Minuit(leasts_squares,
-                                       name=("eta", "var_lss", "fudge"),
-                                       eta=eta[index],
-                                       var_lss=var_lss[index],
-                                       fudge=fudge[index] / FUDGE_REF)
-            minimizer.errors["eta"] = 0.05
-            minimizer.limits["eta"] = self.limit_eta
-            minimizer.errors["var_lss"] = 0.05
-            minimizer.limits["var_lss"] = self.limit_var_lss
-            minimizer.errors["fudge"] = 0.05
-            minimizer.limits["fudge"] = (0, None)
-            minimizer.errordef = 1.
-            minimizer.print_level = 0
-            minimizer.fixed["eta"] = "eta" not in self.fit_variance_functions
-            minimizer.fixed[
-                "var_lss"] = "var_lss" not in self.fit_variance_functions
-            minimizer.fixed[
-                "fudge"] = "fudge" not in self.fit_variance_functions
-            minimizer.migrad()
+            ls_i, ls_f = leasts_squares.running_indexs
+            solution = fit_var_stats_gls(leasts_squares.var_pipe_values, 
+                leasts_squares.var_delta, leasts_squares.var2_delta, ls_i, ls_f)
 
-            if minimizer.valid:
-                minimizer.hesse()
-                eta[index] = minimizer.values["eta"]
-                var_lss[index] = minimizer.values["var_lss"]
-                fudge[index] = minimizer.values["fudge"] * FUDGE_REF
-                valid_fit[index] = True
-            else:
+            if solution[0] is None or np.any(solution<=0):
                 eta[index] = 1.
                 var_lss[index] = 0.1
-                fudge[index] = 1. * FUDGE_REF
                 valid_fit[index] = False
-            num_pixels[index] = leasts_squares.get_num_pixels()
-            chi2_in_bin[index] = minimizer.fval
+                chi2_in_bin[index] = 0
+            else:
+                eta[index], var_lss[index] = solution
+                valid_fit[index] = True
+                chi2_in_bin[index] = leasts_squares(*solution, fudge=0)
 
             self.logger.progress(
                 f" {self.log_lambda_var_func_grid[index]:.3e} "
