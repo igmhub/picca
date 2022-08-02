@@ -237,7 +237,8 @@ def fit_continuum_gls(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     return cont_model, bad_continuum_reason, continuum_fit_parameters
 
 def fit_var_stats_gls(var_pipe_values, var_delta, var2_delta, ls_i, ls_f):
-    x_matrix = np.column_stack([var_pipe_values, np.ones_like(var_pipe_values)])
+    x_matrix = np.column_stack([var_pipe_values, np.ones_like(var_pipe_values),
+        1/var_pipe_values])
     y_vector = var_delta[ls_i:ls_f]
     weights = var2_delta[ls_i:ls_f]
 
@@ -245,7 +246,7 @@ def fit_var_stats_gls(var_pipe_values, var_delta, var2_delta, ls_i, ls_f):
         solution = _solve_gls(x_matrix, weights, y_vector)
     except np.linalg.LinAlgError:
         bad_continuum_reason = "singular matrix"
-        return None, None
+        return None, None, None
 
     return solution
     
