@@ -93,6 +93,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     pixel_step = np.nan
 
     # compute bins
+    # Remove only out-of-bounds pixels
     if wave_solution == "log":
         pixel_step = log_lambda_grid[1] - log_lambda_grid[0]
         half_pixel_step = pixel_step / 2.
@@ -106,7 +107,6 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
                log_lambda_rest_frame_grid[0] - half_pixel_step_rest_frame)
         w1 &= (log_lambda - np.log10(1. + z) <
                log_lambda_rest_frame_grid[-1] + half_pixel_step_rest_frame)
-        # w1 &= (ivar > 0.)
 
     elif wave_solution == "lin":
         pixel_step = 10**log_lambda_grid[1] - 10**log_lambda_grid[0]
@@ -121,7 +121,6 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
                10**log_lambda_rest_frame_grid[0] - half_pixel_step_rest_frame)
         w1 &= (lambda_ / (1. + z) <
                10**log_lambda_rest_frame_grid[-1] + half_pixel_step_rest_frame)
-        # w1 &= (ivar > 0.)
     else:
         raise AstronomicalObjectError("Error in Forest.rebin(). "
                                       "Class variable 'wave_solution' "
@@ -144,12 +143,14 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     flux = flux[w1]
     ivar = ivar[w1]
     transmission_correction = transmission_correction[w1]
+    # Out-of-bounds pixels are removed. IVAR=0 pixels are kept
 
     bins = find_bins(log_lambda, log_lambda_grid, wave_solution)
     binned_arr_size = bins.max() + 1
     log_lambda = log_lambda_grid[0] + bins * pixel_step
 
-    # Find non-empty bins
+    # Find non-empty bins. There will be empty bins
+    # at the lower end by construction.
     bincounts = np.bincount(bins, minlength=binned_arr_size)
     wnonempty_bins = bincounts != 0
     final_arr_size = np.sum(wnonempty_bins)
@@ -169,6 +170,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     transmission_correction = np.zeros(final_arr_size)
     ivar = np.zeros(final_arr_size)
 
+    # Remove the empty pixels at the lower end
     flux[w2] = rebin_flux[w2_] / rebin_ivar[w2_]
     transmission_correction[w2] = rebin_transmission_correction[
         w2_] / rebin_ivar[w2_]
@@ -186,7 +188,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
 
     # finally update control variables
     snr = flux * np.sqrt(ivar)
-    mean_snr = np.sum(snr) / float(np.sum(w2))
+    mean_snr = np.mean(snr[w2])
 
     # return weights and binning solution to be used by child classes if
     # required
