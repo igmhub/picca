@@ -194,10 +194,9 @@ class TrueContinuum(ExpectedFlux):
 
             weights = self.compute_forest_weight(forest, forest.continuum)
 
-            cont = np.bincount(bins, weights=forest.continuum * weights)
-            mean_cont[:len(cont)] += cont
-            cont_weight = np.bincount(bins, weights=weights)
-            mean_cont_weight[:len(cont)] += cont_weight
+            mean_cont += np.bincount(bins, weights=forest.continuum * weights,
+                minlength=mean_cont.size)
+            mean_cont_weight += np.bincount(bins, weights=weights, minlength=mean_cont.size)
 
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
