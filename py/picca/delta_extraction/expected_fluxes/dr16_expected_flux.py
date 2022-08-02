@@ -11,15 +11,16 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
-from picca.delta_extraction.least_squares.least_squares_cont_model import LeastsSquaresContModel
+from picca.delta_extraction.expected_fluxes.utils import compute_continuum
 from picca.delta_extraction.least_squares.least_squares_var_stats import (
     LeastsSquaresVarStats, FUDGE_REF)
 from picca.delta_extraction.utils import (find_bins, update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, [
-    "force stack delta to zero", "limit eta", "limit var lss", "min num qso in fit",
-    "num iterations", "order", "use constant weight", "use ivar as weight"
+    "force stack delta to zero", "limit eta", "limit var lss",
+    "min num qso in fit", "num iterations", "order", "use constant weight",
+    "use ivar as weight"
 ])
 
 defaults = update_default_options(
@@ -55,13 +56,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
     _initialize_variance_wavelength_array
     _initialize_variance_functions
     __parse_config
-    compute_continuum
     compute_delta_stack
     compute_forest_variance
     compute_mean_cont
     compute_expected_flux
     compute_var_stats
-    get_continuum_model
     get_continuum_weights
     hdu_cont
     hdu_stack_deltas
@@ -297,7 +296,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ------
         ExpectedFluxError if variables are not valid
         """
-        self.force_stack_delta_to_zero = config.getboolean("force stack delta to zero")
+        self.force_stack_delta_to_zero = config.getboolean(
+            "force stack delta to zero")
         if self.force_stack_delta_to_zero is None:
             raise ExpectedFluxError(
                 "Missing argument 'force stack delta to zero' required by Dr16ExpectedFlux"
@@ -376,81 +376,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 "Dr16FixedEtaVarlssFudgeExpectedFlux with options 'eta = 1', "
                 "'var lss = 0' and 'fudge = 0'")
 
-    # this should be a read-only function as it is called in a parallelized way
-    # TODO: consider making this not a function to minimize future bugs
-    def compute_continuum(self, forest):
-        """Compute the forest continuum.
-
-        Fits a model based on the mean quasar continuum and linear function
-        (see equation 2 of du Mas des Bourboux et al. 2020)
-        Flags the forest with bad_cont if the computation fails.
-
-        Arguments
-        ---------
-        forest: Forest
-        A forest instance where the continuum will be computed
-
-        Return
-        ------
-        forest: Forest
-        The modified forest instance
-        """
-        # get mean continuum
-        mean_cont = self.get_mean_cont(forest.log_lambda -
-                                       np.log10(1 + forest.z))
-
-        # add transmission correction
-        # (previously computed using method add_optical_depth)
-        mean_cont *= forest.transmission_correction
-
-        mean_cont_kwargs = {"mean_cont": mean_cont}
-        # TODO: This can probably be replaced by forest.log_lambda[-1] and
-        # forest.log_lambda[0]
-        mean_cont_kwargs["log_lambda_max"] = (
-            Forest.log_lambda_rest_frame_grid[-1] + np.log10(1 + forest.z))
-        mean_cont_kwargs["log_lambda_min"] = (
-            Forest.log_lambda_rest_frame_grid[0] + np.log10(1 + forest.z))
-
-        leasts_squares = LeastsSquaresContModel(
-            forest=forest,
-            expected_flux=self,
-            mean_cont_kwargs=mean_cont_kwargs,
-        )
-
-        zero_point = (forest.flux * forest.ivar).sum() / forest.ivar.sum()
-        slope = 0.0
-
-        minimizer = iminuit.Minuit(leasts_squares,
-                                   zero_point=zero_point,
-                                   slope=slope)
-        minimizer.errors["zero_point"] = zero_point / 2.
-        minimizer.errors["slope"] = zero_point / 2.
-        minimizer.errordef = 1.
-        minimizer.print_level = 0
-        minimizer.fixed["slope"] = self.order == 0
-        minimizer.migrad()
-
-        bad_continuum_reason = None
-        cont_model = self.get_continuum_model(forest,
-                                              minimizer.values["zero_point"],
-                                              minimizer.values["slope"],
-                                              **mean_cont_kwargs)
-        if not minimizer.valid:
-            bad_continuum_reason = "minuit didn't converge"
-        if np.any(cont_model < 0):
-            bad_continuum_reason = "negative continuum"
-
-        if bad_continuum_reason is None:
-            continuum_fit_parameters = (minimizer.values["zero_point"],
-                                        minimizer.values["slope"])
-        ## if the continuum is negative or minuit didn't converge, then
-        ## set it to None
-        else:
-            cont_model = None
-            continuum_fit_parameters = (np.nan, np.nan)
-
-        return cont_model, bad_continuum_reason, continuum_fit_parameters
-
     def compute_expected_flux(self, forests):
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
@@ -472,7 +397,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 f"Computing quasar continua using {self.num_processors} processors")
             if self.num_processors > 1:
                 with context.Pool(processes=self.num_processors) as pool:
-                    imap_it = pool.imap(self.compute_continuum, forests)
+                    arguments = [(forest, self.get_mean_cont, self.get_eta,
+                                  self.get_var_lss, self.get_fudge,
+                                  self.use_constant_weight, self.order)
+                                 for forest in forests]
+                    imap_it = pool.starmap(compute_continuum, arguments)
 
                     self.continuum_fit_parameters = {}
                     for forest, (cont_model, bad_continuum_reason,
@@ -480,16 +409,22 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                      forests, imap_it):
                         forest.bad_continuum_reason = bad_continuum_reason
                         forest.continuum = cont_model
-                        self.continuum_fit_parameters[forest.los_id] = continuum_fit_parameters
+                        self.continuum_fit_parameters[
+                            forest.los_id] = continuum_fit_parameters
 
             else:
                 self.continuum_fit_parameters = {}
                 for forest in forests:
                     (cont_model, bad_continuum_reason,
-                     continuum_fit_parameters) = self.compute_continuum(forest)
+                     continuum_fit_parameters) = compute_continuum(
+                         forest, self.get_mean_cont, self.get_eta,
+                         self.get_var_lss, self.get_fudge,
+                         self.use_constant_weight, self.order)
+
                     forest.bad_continuum_reason = bad_continuum_reason
                     forest.continuum = cont_model
-                    self.continuum_fit_parameters[forest.los_id] = continuum_fit_parameters
+                    self.continuum_fit_parameters[
+                        forest.los_id] = continuum_fit_parameters
                 #forests = [self.compute_continuum(f) for f in forests]
             t1 = time.time()
             self.logger.info(f"Time spent computing quasar continua: {t1-t0}")
@@ -529,7 +464,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.populate_los_ids(forests)
 
     def compute_forest_variance(self, forest, continuum):
-        """Compute the forest variance following Du Mas 2020
+        """Compute the forest variance following du Mas des Bourboux 2020
 
         Arguments
         ---------
@@ -714,84 +649,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                       valid_fit[w],
                                       fill_value="extrapolate",
                                       kind="nearest")
-
-    # pylint: disable=no-self-use
-    # We expect this function to be changed by some child classes
-    def get_continuum_model(self, forest, zero_point, slope, **kwargs):
-        """Get the model for the continuum fit
-
-        Arguments
-        ---------
-        forest: Forest
-        The forest instance we want the model from
-
-        zero_point: float
-        Zero point of the linear function (flux mean). Referred to as $a_q$ in
-        du Mas des Bourboux et al. 2020
-
-        slope: float
-        Slope of the linear function (evolution of the flux). Referred to as
-        $b_q$ in du Mas des Bourboux et al. 2020
-
-        Keyword Arguments
-        -----------------
-        mean_cont: array of floats
-        Mean continuum. Required.
-
-        log_lambda_max: float
-        Maximum log_lambda for this forest.
-
-        log_lambda_min: float
-        Minimum log_lambda for this forest.
-
-        Return
-        ------
-        cont_model: array of float
-        The continuum model
-        """
-        # unpack kwargs
-        if "mean_cont" not in kwargs:
-            raise ExpectedFluxError("Function get_cont_model requires "
-                                    "'mean_cont' in the **kwargs dictionary")
-        mean_cont = kwargs.get("mean_cont")
-        for key in ["log_lambda_max", "log_lambda_min"]:
-            if key not in kwargs:
-                raise ExpectedFluxError("Function get_cont_model requires "
-                                        f"'{key}' in the **kwargs dictionary")
-        log_lambda_max = kwargs.get("log_lambda_max")
-        log_lambda_min = kwargs.get("log_lambda_min")
-        # compute continuum
-        line = (slope * (forest.log_lambda - log_lambda_min) /
-                (log_lambda_max - log_lambda_min) + zero_point)
-
-        return line * mean_cont
-
-    # pylint: disable=unused-argument
-    # kwargs are passed here in case this is necessary in child classes
-    def get_continuum_weights(self, forest, cont_model, **kwargs):
-        """Get the continuum model weights
-
-        Arguments
-        ---------
-        forest: Forest
-        The forest instance we want the model from
-
-        cont_model: array of float
-        The continuum model
-
-        Return
-        ------
-        weights: array of float
-        The continuum model weights
-        """
-        # force weights=1 when use-constant-weight
-        if self.use_constant_weight:
-            weights = np.ones_like(forest.flux)
-        else:
-            variance = self.compute_forest_variance(forest, cont_model)
-            weights = 1.0 / cont_model**2 / variance
-
-        return weights
 
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
