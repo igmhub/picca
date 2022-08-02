@@ -571,7 +571,7 @@ class GlsExpectedFlux(ExpectedFlux):
             else:
                 eta[index], var_lss[index], fudge[index] = solution
                 valid_fit[index] = True
-                chi2_in_bin[index] = leasts_squares(*solution, fudge=0)
+                chi2_in_bin[index] = leasts_squares(*solution)
 
             self.logger.progress(
                 f" {self.log_lambda_var_func_grid[index]:.3e} "
