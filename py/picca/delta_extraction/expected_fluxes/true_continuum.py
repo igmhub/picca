@@ -143,6 +143,8 @@ class TrueContinuum(ExpectedFlux):
         # var_lss
         self.compute_mean_cont(forests)
 
+        self.compute_var_stats(forests)
+
         self.compute_delta_stack(forests)
 
         self.save_iteration_step(iteration=-1)
@@ -494,3 +496,12 @@ class TrueContinuum(ExpectedFlux):
                                     var_lss[w],
                                     fill_value='extrapolate',
                                     kind='nearest')
+
+    def compute_var_stats(self, forests):
+        # initialize the fitter class
+        self.leasts_squares = LeastsSquaresVarStats(
+            self.num_bins_variance,
+            forests,
+            self.log_lambda_var_func_grid,
+            0,
+        )

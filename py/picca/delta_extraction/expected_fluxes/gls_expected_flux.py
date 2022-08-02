@@ -537,7 +537,7 @@ class GlsExpectedFlux(ExpectedFlux):
         # initialize arrays
         eta = np.empty(self.num_bins_variance)
         var_lss = np.empty(self.num_bins_variance)
-        fudge = np.empty(self.num_bins_variance)
+        fudge = np.zeros(self.num_bins_variance)
 
         num_pixels = np.zeros(self.num_bins_variance)
         valid_fit = np.zeros(self.num_bins_variance)
@@ -565,14 +565,12 @@ class GlsExpectedFlux(ExpectedFlux):
             if solution[0] is None or np.any(solution<=0):
                 eta[index] = 1.
                 var_lss[index] = 0.1
-                fudge[index] = FUDGE_REF
                 valid_fit[index] = False
                 chi2_in_bin[index] = 0
             else:
-                eta[index], var_lss[index], fudge[index] = solution
-                fudge[index] *= FUDGE_REF
+                eta[index], var_lss[index] = solution
                 valid_fit[index] = True
-                chi2_in_bin[index] = leasts_squares(*solution)
+                chi2_in_bin[index] = leasts_squares(*solution, fudge=0)
 
             self.logger.progress(
                 f" {self.log_lambda_var_func_grid[index]:.3e} "
