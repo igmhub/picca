@@ -358,4 +358,4 @@ class ExpectedFlux:
             self.hdu_var_func(results)
             self.hdu_cont(results)
             if self.leasts_squares is not None:
-                self.leasts_squares.save_var(results)
+                self.leasts_squares.save_var_stats(results)

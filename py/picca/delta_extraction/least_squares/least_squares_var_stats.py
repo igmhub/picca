@@ -216,9 +216,15 @@ class LeastsSquaresVarStats:
         """
         self.running_indexs = (index * NUM_VAR_BINS, (index + 1) * NUM_VAR_BINS)
 
-    def save_var(self, fitsfile):
+    def save_var_stats(self, fitsfile):
+        header = {}
+        header['VPIPE_0'] = self.var_pipe_values[0]
+        header['D_VPIPE'] = (VAR_PIPE_MAX - VAR_PIPE_MIN) / NUM_VAR_BINS
+        header['NUM_VPIPE'] = NUM_VAR_BINS
+
         values = [
-            np.outer(self.log_lambda_var_func_grid, self.var_pipe_values).ravel(),
+            np.tile(self.var_pipe_values, self.num_bins_variance),
+            np.repeat(self.log_lambda_var_func_grid, NUM_VAR_BINS),
             self.var_delta,
             self.var2_delta,
             self.num_qso,
@@ -226,7 +232,8 @@ class LeastsSquaresVarStats:
         ]
 
         names = [
-            "loglam_var_grid",
+            "var_pipe_grid",
+            "loglam_grid",
             "var_delta_obs",
             "var_delta2_obs",
             "num_qso",
