@@ -32,7 +32,7 @@ class Mask:
     ----------
     los_ids: dict
     Empty dictionary to be overloaded by child classes
-    
+
     _masker: function
     If keep_masked_pixels=True, then points to _set_ivar_to_zero.
     Otherwise, points to _remove_pixels.
@@ -42,7 +42,7 @@ class Mask:
         self.los_id = {}
 
         keep_masked_pixels = config.getboolean("keep pixels", fallback=False)
-        
+
         if keep_masked_pixels:
             self._masker = _set_ivar_to_zero
         else:
