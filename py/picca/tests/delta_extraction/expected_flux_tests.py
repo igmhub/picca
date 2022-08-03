@@ -170,14 +170,14 @@ class ExpectedFluxTest(AbstractTest):
             elif continua.get(forest.los_id) is None:
                 self.assertTrue(forest.continuum is None)
             else:
-                if not np.allclose(forest.continuum[forest.ivar>0], continua.get(forest.los_id)):
+                if not np.allclose(forest.continuum, continua.get(forest.los_id)):
                     print("Difference found in forest.continuum")
                     print(f"forest.los_id: {forest.los_id}")
                     print(f"result test are_close result-test")
                     for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
                         print(i1, i2, np.isclose(i1, i2), i1-i2)
                 self.assertTrue(
-                    np.allclose(forest.continuum[forest.ivar>0], continua.get(forest.los_id)))
+                    np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
 
         # check that we loaded all quasars
@@ -248,14 +248,14 @@ class ExpectedFluxTest(AbstractTest):
         # compare the results
         correct_forests = 0
         for forest in data.forests:
-            if not np.allclose(forest.continuum[forest.ivar>0], continua.get(forest.los_id)):
+            if not np.allclose(forest.continuum, continua.get(forest.los_id)):
                 print("Difference found in forest.continuum")
                 print(f"forest.los_id: {forest.los_id}")
                 print(f"result test are_close result-test")
                 for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
                     print(i1, i2, np.isclose(i1, i2), i1-i2)
             self.assertTrue(
-                np.allclose(forest.continuum[forest.ivar>0], continua.get(forest.los_id)))
+                np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
 
         # check that we loaded all quasars

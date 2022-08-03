@@ -145,8 +145,6 @@ class AbstractTest(unittest.TestCase):
                 new_header = new_hdul[hdu_name].header
                 for key in orig_header:
                     self.assertTrue(key in new_header)
-                    if key == 'NAXIS2':
-                        continue
                     if not key in ["CHECKSUM", "DATASUM"]:
                         if (orig_header[key] != new_header[key] and not np.isclose(orig_header[key], new_header[key])):
                             print(f"\nOriginal file: {orig_file}")
@@ -167,7 +165,6 @@ class AbstractTest(unittest.TestCase):
                 # check data
                 orig_data = orig_hdul[hdu_name].data
                 new_data = new_hdul[hdu_name].data
-
                 if orig_data is None:
                     self.assertTrue(new_data is None)
                 else:
@@ -178,28 +175,21 @@ class AbstractTest(unittest.TestCase):
                             print(f"Column {col} in HDU {orig_header['EXTNAME']} "
                                   "missing in new file")
                         self.assertTrue(col in new_data.dtype.names)
-                        
-                        if 'IVAR' in new_data.dtype.names:
-                            w = new_data['IVAR']>0
-                        elif 'WEIGHT' in new_data.dtype.names:
-                             w = new_data['WEIGHT']>0
-                        else:
-                            w = np.ones_like(new_data[col], dtype=bool)
 
                         if not np.allclose(orig_data[col],
-                                     new_data[col][w],
+                                     new_data[col],
                                      equal_nan=True):
                             print(f"\nOriginal file: {orig_file}")
                             print(f"New file: {new_file}")
                             print(f"Different values found for column {col} in "
                                   f"HDU {orig_header['EXTNAME']}")
                             print("original new isclose original-new\n")
-                            for new, orig in zip(new_data[col][w], orig_data[col]):
+                            for new, orig in zip(new_data[col], orig_data[col]):
                                 print(f"{orig} {new} "
                                       f"{np.isclose(orig, new, equal_nan=True)} "
                                       f"{orig-new}")
                         self.assertTrue(np.allclose(orig_data[col],
-                                                    new_data[col][w],
+                                                    new_data[col],
                                                     equal_nan=True))
                     for col in new_data.dtype.names:
                         if col not in orig_data.dtype.names:
