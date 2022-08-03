@@ -6,14 +6,13 @@ import iminuit
 import numpy as np
 from scipy.interpolate import interp1d
 
-from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
 from picca.delta_extraction.expected_fluxes.utils import compute_continuum
 from picca.delta_extraction.least_squares.least_squares_var_stats import (
     LeastsSquaresVarStats, FUDGE_REF)
-from picca.delta_extraction.utils import (find_bins, update_accepted_options,
+from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, [
@@ -424,7 +423,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             if iteration < self.num_iterations - 1:
                 # Compute mean continuum (stack in rest-frame)
-                self.compute_mean_cont(forests)
+                self.compute_mean_cont(forests,
+                    lambda forest: forest.flux/(forest.continuum+1e-16))
 
                 # Compute observer-frame mean quantities (var_lss, eta, fudge)
                 if not (self.use_ivar_as_weight or self.use_constant_weight):
@@ -482,51 +482,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
     #    correct weights
     # 3. remove method compute_mean_cont from TrueContinuum
     # 4. restore min-similarity-lines in .pylintrc back to 5
-    def compute_mean_cont(self, forests):
-        """Compute the mean quasar continuum over the whole sample.
-        Then updates the value of self.get_mean_cont to contain it
-
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-        """
-        mean_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid)
-        mean_cont_weight = np.zeros_like(Forest.log_lambda_rest_frame_grid)
-
-        # first compute <F/C> in bins. C=Cont_old*spectrum_dependent_fitting_fct
-        # (and Cont_old is constant for all spectra in a bin), thus we actually
-        # compute
-        #    1/Cont_old * <F/spectrum_dependent_fitting_function>
-        for forest in forests:
-            if forest.bad_continuum_reason is not None:
-                continue
-            bins = find_bins(forest.log_lambda - np.log10(1 + forest.z),
-                             Forest.log_lambda_rest_frame_grid,
-                             Forest.wave_solution)
-
-            weights = 1. / self.compute_forest_variance(forest, forest.continuum)
-
-            mean_cont += np.bincount(bins, weights=forest.flux / (forest.continuum+1e-16) * weights,
-                minlength=mean_cont.size)
-            mean_cont_weight += np.bincount(bins, weights=weights, minlength=mean_cont.size)
-
-
-        w = mean_cont_weight > 0
-        mean_cont[w] /= mean_cont_weight[w]
-        mean_cont /= mean_cont[w].mean()
-        log_lambda_cont = Forest.log_lambda_rest_frame_grid[w]
-
-        # the new mean continuum is multiplied by the previous one to recover
-        # <F/spectrum_dependent_fitting_function>
-        new_cont = self.get_mean_cont(log_lambda_cont) * mean_cont[w]
-        self.get_mean_cont = interp1d(log_lambda_cont,
-                                      new_cont,
-                                      fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(log_lambda_cont,
-                                             mean_cont_weight[w],
-                                             fill_value=0.0,
-                                             bounds_error=False)
+    # def compute_mean_cont(self, forests):
 
     def compute_var_stats(self, forests):
         """Compute variance functions and statistics

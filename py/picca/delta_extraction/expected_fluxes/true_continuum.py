@@ -174,44 +174,6 @@ class TrueContinuum(ExpectedFlux):
 
         return variance
 
-    def compute_mean_cont(self, forests):
-        """Compute the mean quasar continuum over the whole sample.
-        Then updates the value of self.get_mean_cont to contain it
-
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-        """
-        mean_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid)
-        mean_cont_weight = np.zeros_like(Forest.log_lambda_rest_frame_grid)
-
-        for forest in forests:
-            if forest.bad_continuum_reason is not None:
-                continue
-            bins = find_bins(forest.log_lambda - np.log10(1 + forest.z),
-                             Forest.log_lambda_rest_frame_grid,
-                             Forest.wave_solution)
-
-            weights = 1. / self.compute_forest_variance(forest, forest.continuum)
-
-            mean_cont += np.bincount(bins, weights=forest.continuum * weights,
-                minlength=mean_cont.size)
-            mean_cont_weight += np.bincount(bins, weights=weights, minlength=mean_cont.size)
-
-        w = mean_cont_weight > 0
-        mean_cont[w] /= mean_cont_weight[w]
-        mean_cont /= mean_cont.mean()
-        log_lambda_cont = Forest.log_lambda_rest_frame_grid[w]
-
-        self.get_mean_cont = interp1d(log_lambda_cont,
-                                      mean_cont,
-                                      fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(log_lambda_cont,
-                                             mean_cont_weight[w],
-                                             fill_value=0.0,
-                                             bounds_error=False)
-
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
 
