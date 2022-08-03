@@ -248,7 +248,7 @@ class ExpectedFlux:
         raise ExpectedFluxError("Function 'compute_expected_flux' was not "
                                 "overloaded by child class")
 
-    def compute_mean_cont(self, forests,
+    def _compute_mean_cont(self, forests,
         which_cont=lambda forest: forest.continuum):
         """Compute the mean quasar continuum over the whole sample.
         Then updates the value of self.get_mean_cont to contain it

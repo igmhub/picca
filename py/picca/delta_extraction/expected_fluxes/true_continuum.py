@@ -150,6 +150,18 @@ class TrueContinuum(ExpectedFlux):
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
 
+    def compute_mean_cont(self, forests):
+        """Compute the mean quasar continuum over the whole sample.
+        Then updates the value of self.get_mean_cont to contain it
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+        """
+
+        return super()._compute_mean_cont(forests)
+
     def compute_forest_variance(self, forest, continuum):
         """Compute the forest variance
 

@@ -423,8 +423,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             if iteration < self.num_iterations - 1:
                 # Compute mean continuum (stack in rest-frame)
-                self.compute_mean_cont(forests,
-                    lambda forest: forest.flux/(forest.continuum+1e-16))
+                self.compute_mean_cont(forests)
 
                 # Compute observer-frame mean quantities (var_lss, eta, fudge)
                 if not (self.use_ivar_as_weight or self.use_constant_weight):
@@ -482,7 +481,18 @@ class Dr16ExpectedFlux(ExpectedFlux):
     #    correct weights
     # 3. remove method compute_mean_cont from TrueContinuum
     # 4. restore min-similarity-lines in .pylintrc back to 5
-    # def compute_mean_cont(self, forests):
+    def compute_mean_cont(self, forests):
+        """Compute the mean quasar continuum over the whole sample.
+        Then updates the value of self.get_mean_cont to contain it
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+        """
+
+        super()._compute_mean_cont(forests,
+            lambda forest: forest.flux/(forest.continuum+1e-16))
 
     def compute_var_stats(self, forests):
         """Compute variance functions and statistics
