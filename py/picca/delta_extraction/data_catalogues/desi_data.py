@@ -1,7 +1,6 @@
 """This module defines the class DesiData to load DESI data
 """
 import logging
-import multiprocessing
 import time
 import numpy as np
 
