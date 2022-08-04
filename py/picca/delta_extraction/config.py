@@ -337,7 +337,7 @@ class Config:
             if key not in section:
                 section[key] = str(value)
 
-        # add output directory
+        # add output directory and num processors
         section["out dir"] = self.out_dir
         if "num processors" in accepted_options and "num processors" not in section:
             section["num processors"] = str(self.num_processors)

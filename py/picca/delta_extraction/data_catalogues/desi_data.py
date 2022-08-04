@@ -1,7 +1,6 @@
 """This module defines the class DesiData to load DESI data
 """
 import logging
-import multiprocessing
 import time
 import numpy as np
 
@@ -21,7 +20,7 @@ from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff
 accepted_options = sorted(
     list(
         set(accepted_options + accepted_options_quasar_catalogue + [
-            "blinding", "num processors", "use non-coadded spectra",
+            "blinding", "use non-coadded spectra",
             "wave solution"
         ])))
 
@@ -107,7 +106,6 @@ class DesiData(Data):
 
         # load variables from config
         self.blinding = None
-        self.num_processors = None
         self.use_non_coadded_spectra = None
         self.__parse_config(config)
 
@@ -149,13 +147,6 @@ class DesiData(Data):
                 "Unrecognized blinding strategy. Accepted strategies "
                 f"are {ACCEPTED_BLINDING_STRATEGIES}. "
                 f"Found '{self.blinding}'")
-
-        self.num_processors = config.getint("num processors")
-        if self.num_processors is None:
-            raise DataError(
-                "Missing argument 'num processors' required by DesiData")
-        if self.num_processors == 0:
-            self.num_processors = (multiprocessing.cpu_count() // 2)
 
         self.use_non_coadded_spectra = config.getboolean(
             "use non-coadded spectra")

@@ -33,6 +33,7 @@ accepted_options = [
     # with default options)
     "minimal snr pk1d",
     "minimal snr bao3d",
+    "num processors",
 ]
 
 defaults = {
@@ -159,6 +160,7 @@ class Data:
         self.out_dir = None
         self.rejection_log_file = None
         self.min_snr = None
+        self.num_processors = None
         self.__parse_config(config)
 
         # rejection log arays
@@ -273,6 +275,13 @@ class Data:
             raise DataError(
                 "Missing argument 'minimum number pixels in forest' "
                 "required by Data")
+
+        self.num_processors = config.getint("num processors")
+        if self.num_processors is None:
+            raise DataError(
+                "Missing argument 'num processors' required by Data")
+        if self.num_processors == 0:
+            self.num_processors = (multiprocessing.cpu_count() // 2)
 
         self.out_dir = config.get("out dir")
         if self.out_dir is None:
@@ -442,7 +451,7 @@ class Data:
         for forest, healpix in zip(self.forests, healpixs):
             forest.healpix = healpix
 
-    def save_deltas(self, num_processors=1):
+    def save_deltas(self):
         """Save the deltas."""
         healpixs = np.array([forest.healpix for forest in self.forests])
         unique_healpixs = np.unique(healpixs)
@@ -453,9 +462,9 @@ class Data:
             grouped_forests = [self.forests[i] for i in this_idx]
             arguments.append((self.out_dir, healpix, grouped_forests))
 
-        if num_processors > 1:
+        if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
-            with context.Pool(processes=num_processors) as pool:
+            with context.Pool(processes=self.num_processors) as pool:
                 header_n_sizes = pool.starmap(_save_deltas_one_healpix,
                                               arguments)
         else:
