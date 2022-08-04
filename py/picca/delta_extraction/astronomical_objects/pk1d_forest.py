@@ -237,12 +237,12 @@ class Pk1dForest(Forest):
         -----
         AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         """
-        bins, rebin_ivar, orig_ivar, w1, w2 = super().rebin()
+        bins, rebin_ivar, orig_ivar, w1, w2, wslice_inner = super().rebin()
         if len(rebin_ivar) == 0 or np.sum(w2) == 0:
             self.exposures_diff = np.array([])
             self.reso = np.array([])
             self.reso_pix = np.array([])
-            return [], [], [], [], np.array([])
+            return [], [], [], [], np.array([]), np.array([])
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
@@ -251,9 +251,7 @@ class Pk1dForest(Forest):
 
         # Find non-empty bins
         binned_arr_size = bins.max() + 1
-        bincounts = np.bincount(bins, minlength=binned_arr_size)
-        wnonempty_bins = bincounts != 0
-        final_arr_size = np.sum(wnonempty_bins)
+        final_arr_size = np.sum(wslice_inner)
 
         # rebin exposures_diff and reso
         rebin_exposures_diff = np.bincount(bins,
@@ -263,7 +261,7 @@ class Pk1dForest(Forest):
                                      minlength=binned_arr_size)
 
         # Remove empty bins but not ivar
-        w2_ = (rebin_ivar > 0.) & wnonempty_bins
+        w2_ = (rebin_ivar > 0.) & wslice_inner
         self.exposures_diff = np.zeros(final_arr_size)
         self.reso = np.zeros(final_arr_size)
         self.reso_pix = np.zeros(final_arr_size)
@@ -287,4 +285,4 @@ class Pk1dForest(Forest):
 
         # return weights and binning solution to be used by child classes if
         # required
-        return bins, rebin_ivar, orig_ivar, w1, w2
+        return bins, rebin_ivar, orig_ivar, w1, w2, wslice_inner

@@ -14,6 +14,42 @@ defaults = {
     "mask fields": ["flux", "ivar", "transmission_correction", "log_lambda"],
 }
 
+@njit
+def get_inner_region_slice(bincounts):
+    """Return the mask that removes zeros at the both
+    edges. Zero inside remains
+
+    Arguments
+    ---------
+    bincounts: Array of int
+    Obtained from np.bincounts(bins)
+
+    Returns
+    -------
+    wslice_inner: Array of bool
+    False for zeros at the both edges. True for inside
+    """
+    size = bincounts.size
+    first_nonzero_idx = size
+    last_nonzero_idx = 0
+
+    # Find first non-zero index from left
+    for idx in range(bincounts.size):
+        if bincounts[idx] != 0:
+            first_nonzero_idx = idx
+            break
+
+    # Find last non-zero index from right
+    for idx in range(bincounts.size, 0, -1):
+        if bincounts[idx-1] != 0:
+            last_nonzero_idx = idx
+            break
+
+    wslice_inner = np.zeros(bincounts.size, dtype=bool_)
+    wslice_inner[first_nonzero_idx:last_nonzero_idx] = 1
+
+    return wslice_inner
+
 @njit()
 def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
           log_lambda_grid, log_lambda_rest_frame_grid):
@@ -137,7 +173,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
         w1 = np.zeros(0, dtype=bool_)
         w2 = np.zeros(0, dtype=bool_)
         return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
-                rebin_ivar, orig_ivar, w1, w2)
+                rebin_ivar, orig_ivar, w1, w2, w2)
 
     log_lambda = log_lambda[w1]
     flux = flux[w1]
@@ -147,13 +183,12 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
 
     bins = find_bins(log_lambda, log_lambda_grid, wave_solution)
     binned_arr_size = bins.max() + 1
-    log_lambda = log_lambda_grid[0] + bins * pixel_step
 
     # Find non-empty bins. There will be empty bins
     # at the lower end by construction.
     bincounts = np.bincount(bins, minlength=binned_arr_size)
-    wnonempty_bins = bincounts != 0
-    final_arr_size = np.sum(wnonempty_bins)
+    wslice_inner = get_inner_region_slice(bincounts)
+    final_arr_size = np.sum(wslice_inner)
 
     # rebin flux, ivar and transmission_correction
     rebin_flux = np.bincount(bins, weights=ivar * flux, minlength=binned_arr_size)
@@ -164,8 +199,8 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     # this condition should always be non-zero for at least one pixel
     # this does not mean that all rebin_ivar pixels will be non-zero,
     # as we could have a masked region of the spectra
-    w2_ = (rebin_ivar > 0.) & wnonempty_bins
-    w2  = w2_[wnonempty_bins]
+    w2_ = (rebin_ivar > 0.) & wslice_inner
+    w2  = w2_[wslice_inner]
     flux = np.zeros(final_arr_size)
     transmission_correction = np.zeros(final_arr_size)
     ivar = np.zeros(final_arr_size)
@@ -178,13 +213,11 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
 
     # then rebin wavelength
     if wave_solution == "log":
-        rebin_log_lambda = (log_lambda_grid[0] +
-                            np.arange(binned_arr_size) * pixel_step)
-        log_lambda = rebin_log_lambda[wnonempty_bins]
+        log_lambda = (log_lambda_grid[0] + pixel_step *
+                    np.arange(binned_arr_size)[wslice_inner])
     else:  # we have already checked that it will always be "lin" at this point
-        rebin_lambda = (10**log_lambda_grid[0] +
-                        np.arange(binned_arr_size) * pixel_step)
-        log_lambda = np.log10(rebin_lambda[wnonempty_bins])
+        log_lambda = np.log10(10**log_lambda_grid[0] + pixel_step *
+                    np.arange(binned_arr_size)[wslice_inner])
 
     # finally update control variables
     snr = flux * np.sqrt(ivar)
@@ -193,7 +226,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     # return weights and binning solution to be used by child classes if
     # required
     return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
-            rebin_ivar, orig_ivar, w1, w2)
+            rebin_ivar, orig_ivar, w1, w2, wslice_inner)
 
 class Forest(AstronomicalObject):
     """Forest Object
@@ -578,13 +611,13 @@ class Forest(AstronomicalObject):
         """
         (self.log_lambda, self.flux, self.ivar, self.transmission_correction,
          self.mean_snr, bins, rebin_ivar, orig_ivar, w1,
-         w2) = rebin(self.log_lambda, self.flux, self.ivar,
+         w2, wslice_inner) = rebin(self.log_lambda, self.flux, self.ivar,
                      self.transmission_correction, self.z, Forest.wave_solution,
                      Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid)
 
         # return weights and binning solution to be used by child classes if
         # required
-        return bins, rebin_ivar, orig_ivar, w1, w2
+        return bins, rebin_ivar, orig_ivar, w1, w2, wslice_inner
 
     @classmethod
     def set_class_variables(cls, lambda_min, lambda_max, lambda_min_rest_frame,
