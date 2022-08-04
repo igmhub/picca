@@ -187,6 +187,7 @@ sdss_data_kwargs_filter_forest = {
     "lambda max": 7235.0,
     "lambda min rest frame": 2900.0,
     "lambda max rest frame": 3120.0,
+    "num processors": 1,
 }
 
 desi_mock_data_kwargs = {

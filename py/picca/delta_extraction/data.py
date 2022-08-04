@@ -279,7 +279,7 @@ class Data:
         self.num_processors = config.getint("num processors")
         if self.num_processors is None:
             raise DataError(
-                "Missing argument 'num processors' required by DesiData")
+                "Missing argument 'num processors' required by Data")
         if self.num_processors == 0:
             self.num_processors = (multiprocessing.cpu_count() // 2)
 
