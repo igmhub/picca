@@ -17,23 +17,21 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     defaults as defaults_quasar_catalogue)
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
+from picca.delta_extraction.utils import update_accepted_options, update_default_options
 
-accepted_options = sorted(
-    list(
-        set(accepted_options + accepted_options_quasar_catalogue + [
-            "blinding", "num processors", "use non-coadded spectra",
-            "wave solution"
-        ])))
+accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
+accepted_options = update_accepted_options(
+    accepted_options,
+    ["blinding", "num processors", "use non-coadded spectra", "wave solution"])
 
-defaults = defaults.copy()
-defaults.update({
+defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
     "blinding": "corr_yshift",
     "use non-coadded spectra": False,
     "wave solution": "lin",
 })
-defaults.update(defaults_quasar_catalogue)
+defaults = update_default_options(defaults, defaults_quasar_catalogue)
 
 
 def merge_new_forest(forests_by_targetid, new_forests_by_targetid):

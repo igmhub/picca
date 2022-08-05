@@ -265,3 +265,69 @@ def setup_logger(logging_level_console=logging.DEBUG,
 
     # sets up numba logger
     #logging.getLogger('numba').setLevel(logging.WARNING)
+
+def update_accepted_options(accepted_options, new_options, remove=False):
+    """Update the content of the list of accepted options
+
+    Arguments
+    ---------
+    accepted_options: list of string
+    The current accepted options
+
+    new_options: list of string
+    The new options
+
+    remove: bool - Default: False
+    If True, then remove the elements of new_options from accepted_options.
+    If False, then add new_options to accepted_options
+
+    Return
+    ------
+    accepted_options: list of string
+    The updated accepted options
+    """
+    if remove:
+        accepted_options = accepted_options.copy()
+        for item in new_options:
+            if item in accepted_options:
+                accepted_options.remove(item)
+    else:
+        accepted_options = sorted(list(set(accepted_options + new_options)))
+
+    return accepted_options
+
+def update_default_options(default_options, new_options):
+    """Update the content of the list of accepted options
+
+    Arguments
+    ---------
+    default_options: dict
+    The current default options
+
+    new_options: dict
+    The new options
+
+    Return
+    ------
+    default_options: dict
+    The updated default options
+    """
+    default_options = default_options.copy()
+    for key, value in new_options.items():
+        if key in default_options:
+            default_value = default_options.get(key)
+            if type(default_value) is not type(value):
+                raise DeltaExtractionError(
+                    f"Incompatible defaults are being added. Key {key} "
+                    "found to have values with different type: "
+                    f"{type(default_value)} and {type(value)}. "
+                    "Revise your recent changes or contact picca developpers.")
+            if default_value != value:
+                raise DeltaExtractionError(
+                    f"Incompatible defaults are being added. Key {key} "
+                    f"found to have two default values: '{value}' and '{default_value}' "
+                    "Revise your recent changes or contact picca developpers.")
+        else:
+            default_options[key] = value
+
+    return default_options
