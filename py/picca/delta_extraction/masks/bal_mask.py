@@ -149,7 +149,8 @@ class BalMask(Mask):
         for los_id in np.unique(self.cat[los_id_name]):
             self.los_ids[los_id] = self.add_bal_rest_frame(los_id, los_id_name)
 
-        num_bals = np.sum([len(los_id) for los_id in self.los_ids.values()])
+        num_bals = np.sum([len(los_id) for los_id in self.los_ids.values()
+                          if los_id is not None])
         self.logger.progress(f'In catalog: {num_bals} BAL quasars')
 
     def add_bal_rest_frame(self, los_id, los_id_name):
@@ -179,7 +180,7 @@ class BalMask(Mask):
         min_velocities = min_velocities[w]
         max_velocities = max_velocities[w]
 
-        num_velocities = min_velocities.size()
+        num_velocities = min_velocities.size
         if num_velocities == 0:
             return None
 
