@@ -13,7 +13,7 @@ defaults = {
     "absorber mask width": 2.5,
 }
 
-accepted_options = ["absorber mask width", "filename"]
+accepted_options = ["absorber mask width", "filename", "keep pixels"]
 
 
 class AbsorberMask(Mask):

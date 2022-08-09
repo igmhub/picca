@@ -16,7 +16,7 @@ defaults = {
     "los_id name": "THING_ID",
 }
 
-accepted_options = ["dla mask limit", "los_id name", "mask file", "filename"]
+accepted_options = ["dla mask limit", "los_id name", "mask file", "filename", "keep pixels"]
 
 np.random.seed(0)
 NUM_POINTS = 10000

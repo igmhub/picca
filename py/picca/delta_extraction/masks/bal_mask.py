@@ -15,7 +15,7 @@ defaults = {
     "los_id name": "THING_ID",
 }
 
-accepted_options = ["bal index type", "filename", "los_id name"]
+accepted_options = ["bal index type", "filename", "los_id name", "keep pixels"]
 
 # Wavelengths in Angstroms
 lines = np.array([
