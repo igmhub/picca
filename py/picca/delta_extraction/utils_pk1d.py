@@ -292,10 +292,15 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     # the following averages over estimates for four symmetric values of x
     indices = np.array([-2, -1, 1, 2], dtype=int)
     ratios = reso[num_offdiags, :]/reso[num_offdiags+indices, :]
-    ratios = 1./np.sqrt(np.log(ratios))
+    ratios = np.log(ratios)
+    w2 = ratios > 0
+    norm = np.sum(w2, axis=0)
+    new_ratios = np.zeros_like(ratios)
+    new_ratios[w2] = 1./np.sqrt(ratios[w2])
+    # ratios = 1./np.sqrt(np.log(ratios))
 
     rms_in_pixel = np.empty_like(lambda_)
-    rms_in_pixel[w] = np.abs(indices).dot(ratios)/np.sqrt(2.)/indices.size
+    rms_in_pixel[w] = np.abs(indices).dot(new_ratios)/np.sqrt(2.)/norm
     rms_in_pixel[~w] = rms_in_pixel[w].mean()
     # Previous code for reference:
     # rms_in_pixel = (
