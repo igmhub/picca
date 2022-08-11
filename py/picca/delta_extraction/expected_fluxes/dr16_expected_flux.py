@@ -706,9 +706,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 "continuum": forest.continuum,
             }
             if isinstance(forest, Pk1dForest):
-                eta = self.get_eta(forest.log_lambda)
-                ivar = forest.ivar / (eta +
-                                      (eta == 0)) * (mean_expected_flux**2)
+                # eta = self.get_eta(forest.log_lambda)
+                ivar = forest.ivar * mean_expected_flux**2
 
                 forest_info["ivar"] = ivar
+                # forest_info["eta"] = eta
             self.los_ids[forest.los_id] = forest_info
