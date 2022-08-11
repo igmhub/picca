@@ -185,7 +185,7 @@ class ConfigTest(AbstractTest):
 
         # check masks dictionary
         mask_args0 = config.masks[0][1]
-        self.assertTrue(len(mask_args0) == 2)
+        self.assertTrue(len(mask_args0) == 3)
         self.assertTrue(np.isclose(
             mask_args0.getfloat("dla mask limit"),
             defaults_dla_mask.get("dla mask limit")

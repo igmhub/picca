@@ -562,7 +562,7 @@ class Config:
                 self.config.read_dict({f"mask arguments {mask_index}": {}})
             mask_args = self.config[f"mask arguments {mask_index}"]
             # Always overwrite with general term. No need to complicate
-            mask_args["keep pixels"] = section["keep pixels"]
+            mask_args["keep pixels"] = section.get("keep pixels", fallback="false")
 
             # check that arguments are valid
             for key in mask_args:
