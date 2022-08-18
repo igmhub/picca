@@ -9,7 +9,7 @@ This module provides three functions:
 See the respective documentation for details
 """
 import logging
-
+import warnings
 import numpy as np
 from numba import njit
 
@@ -261,7 +261,7 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     """
     if lambda_ is None:
         return None
-
+    
     delta_log_lambda = np.empty_like(lambda_)
     delta_log_lambda[:-1] = np.diff(np.log10(lambda_))
     #note that this would be the same result as before (except for the missing bug) in
@@ -283,38 +283,40 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     if not np.any(w):
         return np.zeros_like(lambda_), np.zeros_like(lambda_)
 
-    shift = reso_matrix.min(axis=0) - nonzero_abs_min_per_row
-    reso = reso_matrix[:, w] - shift[w]
+    #shift = reso_matrix.min(axis=0) - nonzero_abs_min_per_row
+    reso = reso_matrix[:, w] #- shift[w]
 
     #assume reso = A*exp(-(x-central_pixel_pos)**2 / 2 / sigma**2)
     #=> sigma = sqrt((x-central_pixel_pos)/2)**2 / log(A/reso)
     #   A = reso(central_pixel_pos)
     # the following averages over estimates for four symmetric values of x
     indices = np.array([-2, -1, 1, 2], dtype=int)
-    ratios = reso[num_offdiags, :]/reso[num_offdiags+indices, :]
-    ratios = np.log(ratios)
-    w2 = ratios > 0
-    norm = np.sum(w2, axis=0)
-    new_ratios = np.zeros_like(ratios)
-    new_ratios[w2] = 1./np.sqrt(ratios[w2])
-    # ratios = 1./np.sqrt(np.log(ratios))
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore') #this ignores all warnings in this part of the code, could in principle specify the exact warnings to be supressed
+        ratios = reso[num_offdiags, :]/reso[num_offdiags+indices, :]
+        ratios = np.log(ratios)
+        w2 = ratios > 0
+        norm = np.sum(w2, axis=0)
+        new_ratios = np.zeros_like(ratios)
+        new_ratios[w2] = 1./np.sqrt(ratios[w2])
+        # ratios = 1./np.sqrt(np.log(ratios))
 
-    rms_in_pixel = np.empty_like(lambda_)
-    rms_in_pixel[w] = np.abs(indices).dot(new_ratios)/np.sqrt(2.)/norm
-    rms_in_pixel[~w] = rms_in_pixel[w].mean()
-    # Previous code for reference:
-    # rms_in_pixel = (
-    #     (np.sqrt(1.0 / 2.0 / np.log(
-    #         reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 1, :])) +
-    #      np.sqrt(4.0 / 2.0 / np.log(
-    #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 2, :])) +
-    #      np.sqrt(1.0 / 2.0 / np.log(
-    #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 1, :])) +
-    #      np.sqrt(4.0 / 2.0 / np.log(
-    #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 2, :])))
-    #     / 4.0) #this is rms
+        rms_in_pixel = np.empty_like(lambda_)
+        rms_in_pixel[w] = np.abs(indices).dot(new_ratios)/np.sqrt(2.)/norm
+        rms_in_pixel[~w] = rms_in_pixel[w].mean()
+        # Previous code for reference:
+        # rms_in_pixel = (
+        #     (np.sqrt(1.0 / 2.0 / np.log(
+        #         reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 1, :])) +
+        #      np.sqrt(4.0 / 2.0 / np.log(
+        #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 2, :])) +
+        #      np.sqrt(1.0 / 2.0 / np.log(
+        #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 1, :])) +
+        #      np.sqrt(4.0 / 2.0 / np.log(
+        #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 2, :])))
+        #     / 4.0) #this is rms
 
-    reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
+        reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
                         np.log(10.0))   #this is FWHM
 
     return rms_in_pixel, reso_in_km_per_s
