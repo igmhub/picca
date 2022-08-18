@@ -24,15 +24,15 @@ accepted_options = [
     "lambda max rest frame",
     "lambda min",
     "lambda min rest frame",
-    "minimum number pixels in forest",
-    "out dir",
-    "rejection log file",
     "minimal snr",
     # these options are allowed but will be overwritten by
     # minimal snr (only needed to allow running on a .config
     # with default options)
     "minimal snr pk1d",
     "minimal snr bao3d",
+    "minimum number pixels in forest",
+    "out dir",
+    "rejection log file",
     "num processors",
 ]
 

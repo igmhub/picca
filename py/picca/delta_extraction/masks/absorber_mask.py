@@ -11,10 +11,10 @@ from picca.delta_extraction.mask import Mask
 
 defaults = {
     "absorber mask width": 2.5,
+    "los_id name": "THING_ID",
 }
 
-accepted_options = ["absorber mask width", "filename"]
-
+accepted_options = ["absorber mask width", "filename", "los_id name"]
 
 class AbsorberMask(Mask):
     """Class to mask Absorbers
