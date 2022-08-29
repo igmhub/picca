@@ -2,6 +2,7 @@
 classes loading data must inherit
 """
 import logging
+import multiprocessing
 
 import numpy as np
 import fitsio
@@ -32,6 +33,7 @@ accepted_options = [
     "minimum number pixels in forest",
     "out dir",
     "rejection log file",
+    "num processors",
 ]
 
 defaults = {
@@ -49,6 +51,47 @@ defaults = {
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
 
+def _save_deltas_one_healpix(out_dir, healpix, forests):
+    """Saves the deltas that belong to one healpix.
+
+    Arguments
+    ---------
+    out_dir: str
+    Parent directory to save deltas.
+
+    healpix: int
+
+    forests: List of Forests
+    List of forests to save into one file.
+
+    Returns:
+    ---------
+    header_n_size: List of (header, size)
+    List of forest.header and forest.size to later
+    add to rejection log as accepted.
+    """
+    results = fitsio.FITS(
+        f"{out_dir}/Delta/delta-{healpix}.fits.gz",
+        'rw',
+        clobber=True)
+
+    header_n_size = []
+    for forest in forests:
+        header = forest.get_header()
+        cols, names, units, comments = forest.get_data()
+        results.write(cols,
+                      names=names,
+                      header=header,
+                      comment=comments,
+                      units=units,
+                      extname=str(forest.los_id))
+
+        # store information for logs
+        header_n_size.append((header, forest.flux.size))
+        # self.add_to_rejection_log(header, forest.flux.size, "accepted")
+    results.close()
+
+    return header_n_size
 
 class Data:
     """Abstract class from which all classes loading data must inherit.
@@ -117,6 +160,7 @@ class Data:
         self.out_dir = None
         self.rejection_log_file = None
         self.min_snr = None
+        self.num_processors = None
         self.__parse_config(config)
 
         # rejection log arays
@@ -231,6 +275,13 @@ class Data:
             raise DataError(
                 "Missing argument 'minimum number pixels in forest' "
                 "required by Data")
+
+        self.num_processors = config.getint("num processors")
+        if self.num_processors is None:
+            raise DataError(
+                "Missing argument 'num processors' required by Data")
+        if self.num_processors == 0:
+            self.num_processors = (multiprocessing.cpu_count() // 2)
 
         self.out_dir = config.get("out dir")
         if self.out_dir is None:
@@ -404,30 +455,27 @@ class Data:
         """Save the deltas."""
         healpixs = np.array([forest.healpix for forest in self.forests])
         unique_healpixs = np.unique(healpixs)
-        healpixs_indexs = {
-            healpix: np.where(healpixs == healpix)[0]
-            for healpix in unique_healpixs
-        }
 
-        for healpix, indexs in sorted(healpixs_indexs.items()):
-            results = fitsio.FITS(
-                f"{self.out_dir}/Delta/delta-{healpix}.fits.gz",
-                'rw',
-                clobber=True)
-            for index in indexs:
-                forest = self.forests[index]
-                header = forest.get_header()
-                cols, names, units, comments = forest.get_data()
-                results.write(cols,
-                              names=names,
-                              header=header,
-                              comment=comments,
-                              units=units,
-                              extname=str(forest.los_id))
+        arguments = []
+        for healpix in unique_healpixs:
+            this_idx = np.nonzero(healpix == healpixs)[0]
+            grouped_forests = [self.forests[i] for i in this_idx]
+            arguments.append((self.out_dir, healpix, grouped_forests))
 
-                # store information for logs
-                self.add_to_rejection_log(header, forest.flux.size, "accepted")
-            results.close()
+        if self.num_processors > 1:
+            context = multiprocessing.get_context('fork')
+            with context.Pool(processes=self.num_processors) as pool:
+                header_n_sizes = pool.starmap(_save_deltas_one_healpix,
+                                              arguments)
+        else:
+            header_n_sizes = []
+            for args in arguments:
+                header_n_sizes.append(_save_deltas_one_healpix(*args))
+
+        # store information for logs
+        for header_n_size in header_n_sizes:
+            for header, size in header_n_size:
+                self.add_to_rejection_log(header, size, "accepted")
 
         self.save_rejection_log()
 
