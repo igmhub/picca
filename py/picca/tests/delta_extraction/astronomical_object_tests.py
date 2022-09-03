@@ -17,46 +17,80 @@ from picca.tests.delta_extraction.abstract_test import AbstractTest
 from picca.tests.delta_extraction.test_utils import (reset_forest, setup_forest,
                                                      setup_pk1d_forest)
 
+def _isin_float(elements, test_elements):
+    """ Helper function to find indices where 'test_elements'
+    are numerically close 'elements'.
+
+    Arguments
+    ---------
+    elements: array
+    Source array
+
+    test_elements: array
+    Test elements to find in elements.
+
+    Returns:
+    mask: array of bool
+    masking array such that
+    np.allclose(elements[mask], test_elements) == True
+
+    """
+    mask = np.zeros(len(elements), dtype=bool)
+    for test_e in test_elements:
+        mask |= np.isclose(elements, test_e)
+    return mask
+
 # define auxiliar variables
-FLUX = np.ones(10)
-FLUX2 = np.ones(10) * 3
-FLUX_REBIN = np.ones(5)
-FLUX_COADD = np.ones(5) * 2
-IVAR = np.ones(10) * 4
-IVAR_REBIN = np.ones(5) * 8
-IVAR_COADD = np.ones(5) * 16
-EXPOSURES_DIFF = np.ones(10)
-EXPOSURES_DIFF2 = np.ones(10) * 3
-EXPOSURES_DIFF_REBIN = np.ones(5)
-EXPOSURES_DIFF_COADD = np.ones(5) * 2
-
-RESO = np.ones(10)
-RESO2 = np.ones(10) * 3
-RESO_REBIN = np.ones(5)
-RESO_COADD = np.ones(5) * 2
-
-
-RESO_PIX = np.ones(10)
-RESO_PIX2 = np.ones(10) * 3
-RESO_PIX_REBIN = np.ones(5)
-RESO_PIX_COADD = np.ones(5) * 2
-
 LOG_LAMBDA = np.array([
     3.5562825, 3.5563225, 3.5565825, 3.5566225, 3.5568825, 3.5569225,
     3.5571825, 3.5572225, 3.5574825, 3.5575225
 ])
-LOG_LAMBDA_REBIN = np.array(
-    [3.5563025, 3.5566025, 3.5569025, 3.5572025, 3.5575025])
+FILLED_LAMBDA_LOG_POINTS = np.array([3.5563025, 3.5566025, 3.5569025, 3.5572025, 3.5575025])
+
 LOG_LAMBDA_LIN = np.log10(np.array([
 3610.0, 3610.4, 3650.0, 3650.4, 3670.0, 3670.4, 3680.0, 3680.4, 3700.0, 3700.4
 ]))
-LOG_LAMBDA_REBIN_LIN = np.log10(np.array([3610, 3650, 3670, 3680, 3700]))
+FILLED_LAMBDA_LIN_POINTS = np.log10(np.array([3610, 3650, 3670, 3680, 3700]))
 
-RESOMAT = np.ones([7, 10])
-RESOMAT2 = np.ones([7, 10])*3
+# others
+SIZE = 10
+RESO_NDIAGS = 7
+forest_dtype = np.dtype([('flux','f8'), ('ivar','f8'),
+    ('exposures_diff','f8'), ('reso','f8'),
+    ('reso_pix','f8'), ('resolution_matrix','f8', RESO_NDIAGS)
+])
+BASE_FOREST = np.ones(SIZE, dtype=forest_dtype)
 
-RESOMAT_REBIN = np.ones([7, 5])
-RESOMAT_COADD = np.ones([7, 5])*2
+# Values for three types of spectra
+SPECTRA_VALUES_DICT = {
+    '1': {
+        'flux': 1,
+        'ivar': 4,
+        'ivar_rebin': 8,
+        'exposures_diff': 1,
+        'reso': 1,
+        'reso_pix': 1,
+        'resolution_matrix': 1
+    },
+    '2': {
+        'flux': 3,
+        'ivar': 4,
+        'ivar_rebin': 8,
+        'exposures_diff': 3,
+        'reso': 3,
+        'reso_pix': 3,
+        'resolution_matrix': 3
+    },
+    'COADD': {
+        'flux': 2,
+        'ivar': 16,
+        'ivar_rebin': 16,
+        'exposures_diff': 2,
+        'reso': 2,
+        'reso_pix': 2,
+        'resolution_matrix': 2
+    }
+}
 
 THINGID = 100000000
 TARGETID = 100000000
@@ -97,256 +131,302 @@ kwargs_astronomical_object_gt = {
     },
 }
 
-# define contructors for Forest
-kwargs_forest = kwargs_astronomical_object.copy()
-kwargs_forest.update({
-    "flux": FLUX,
-    "ivar": IVAR,
-})
+def get_kwargs_input(wave_solution, which_spectrum, is_p1d=False, is_desi=False):
+    """ This function creates the sparse input spectrum. BASE_FOREST values are
+    scaled with SPECTRA_VALUES_DICT for a given which_spectrum.
 
-kwargs_forest2 = kwargs_astronomical_object.copy()
-kwargs_forest2.update({
-    "flux": FLUX2,
-    "ivar": IVAR,
-})
+    Arguments
+    ---------
+    wave_solution: str
+    lin or log
 
-kwargs_forest_log = kwargs_forest.copy()
-kwargs_forest_log.update({
-    "log_lambda": LOG_LAMBDA,
-})
+    which_spectrum: str
+    It should be "1", "2" or "COADD".
 
-kwargs_forest_log2 = kwargs_forest2.copy()
-kwargs_forest_log2.update({
-    "log_lambda": LOG_LAMBDA,
-})
+    is_p1d: bool
+    Adds P1D expected fields
 
-kwargs_forest_lin = kwargs_forest.copy()
-kwargs_forest_lin.update({
-    "log_lambda": LOG_LAMBDA_LIN,
-})
+    is_desi: bool
+    Adds "resolution_matrix" to dictionary.
 
-kwargs_forest_lin2 = kwargs_forest2.copy()
-kwargs_forest_lin2.update({
-    "log_lambda": LOG_LAMBDA_LIN,
-})
+    Returns
+    ---------
+    rebin_kwargs_forest: dict
+    A copy of kwargs_astronomical_object as base and truth updated.
 
-kwargs_forest_rebin = kwargs_astronomical_object.copy()
-kwargs_forest_rebin.update({
-    "flux": FLUX_REBIN,
-    "ivar": IVAR_REBIN,
-})
+    """
+    base_kwargs_forest = kwargs_astronomical_object.copy()
 
-kwargs_forest_log_rebin = kwargs_forest_rebin.copy()
-kwargs_forest_log_rebin.update({
-    "log_lambda": LOG_LAMBDA_REBIN,
-})
+    if wave_solution == "lin":
+        in_wave = LOG_LAMBDA_LIN
+    else:
+        in_wave = LOG_LAMBDA
 
-kwargs_forest_lin_rebin = kwargs_forest_rebin.copy()
-kwargs_forest_lin_rebin.update({
-    "log_lambda": LOG_LAMBDA_REBIN_LIN,
-})
+    spectrum_vals = SPECTRA_VALUES_DICT[which_spectrum]
+    update_dict = { "log_lambda": in_wave }
 
-kwargs_forest_coadd = kwargs_astronomical_object.copy()
-kwargs_forest_coadd.update({
-    "flux": FLUX_COADD,
-    "ivar": IVAR_COADD,
-})
+    keys_to_update = ["flux", "ivar"]
+    if is_p1d:
+        keys_to_update += ["exposures_diff", "reso", "reso_pix"]
+        if is_desi:
+            keys_to_update += ["resolution_matrix"]
 
-kwargs_forest_log_coadd = kwargs_forest_coadd.copy()
-kwargs_forest_log_coadd.update({
-    "log_lambda": LOG_LAMBDA_REBIN,
-})
+    for key in keys_to_update:
+        update_dict[key] = BASE_FOREST[key]*spectrum_vals[key]
+    if "resolution_matrix" in keys_to_update:
+        update_dict["resolution_matrix"] = update_dict["resolution_matrix"].T
 
-kwargs_forest_lin_coadd = kwargs_forest_coadd.copy()
-kwargs_forest_lin_coadd.update({
-    "log_lambda": LOG_LAMBDA_REBIN_LIN,
-})
+    base_kwargs_forest.update(update_dict)
 
-# define contructors for Pk1dForest
-kwargs_pk1d_forest = kwargs_forest.copy()
-kwargs_pk1d_forest.update({
-    "exposures_diff": EXPOSURES_DIFF,
-    "reso": RESO,
-    "reso_pix": RESO_PIX
-})
+    return base_kwargs_forest
 
-kwargs_pk1d_forest2 = kwargs_forest2.copy()
-kwargs_pk1d_forest2.update({
-    "exposures_diff": EXPOSURES_DIFF2,
-    "reso": RESO2,
-    "reso_pix": RESO_PIX2
+def get_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False, is_desi=False):
+    """ This function creates the truth for rebinned spectrum. Masked pixels are present
+    with flux, ivar and exposures_diff set to 0, whereas resolution related values are not.
 
-})
+    Arguments
+    ---------
+    wave_solution: str
+    lin or log
 
-kwargs_pk1d_forest_log = kwargs_pk1d_forest.copy()
-kwargs_pk1d_forest_log.update({
-    "log_lambda": LOG_LAMBDA,
-})
+    which_spectrum: str
+    It should be "1", "2" or "COADD".
 
-kwargs_pk1d_forest_log2 = kwargs_pk1d_forest2.copy()
-kwargs_pk1d_forest_log2.update({
-    "log_lambda": LOG_LAMBDA,
-})
+    rebin: int
+    Rebinning factor
 
-kwargs_pk1d_forest_lin = kwargs_pk1d_forest.copy()
-kwargs_pk1d_forest_lin.update({
-    "log_lambda": LOG_LAMBDA_LIN,
-})
+    is_p1d: bool
+    Adds P1D expected fields
 
-kwargs_pk1d_forest_lin2 = kwargs_pk1d_forest2.copy()
-kwargs_pk1d_forest_lin2.update({
-    "log_lambda": LOG_LAMBDA_LIN,
-})
+    is_desi: bool
+    Adds "resolution_matrix" to dictionary.
 
-kwargs_pk1d_forest_rebin = kwargs_forest_rebin.copy()
-kwargs_pk1d_forest_rebin.update({
-    "exposures_diff": EXPOSURES_DIFF_REBIN,
-    "reso": RESO_REBIN,
-    "reso_pix": RESO_PIX_REBIN
-})
+    Returns
+    ---------
+    rebin_kwargs_forest: dict
+    A copy of kwargs_astronomical_object as base and truth updated.
 
-kwargs_pk1d_forest_log_rebin = kwargs_pk1d_forest_rebin.copy()
-kwargs_pk1d_forest_log_rebin.update({
-    "log_lambda": LOG_LAMBDA_REBIN,
-})
+    """
+    rebin_kwargs_forest = kwargs_astronomical_object.copy()
 
-kwargs_pk1d_forest_lin_rebin = kwargs_pk1d_forest_rebin.copy()
-kwargs_pk1d_forest_lin_rebin.update({
-    "log_lambda": LOG_LAMBDA_REBIN_LIN,
-})
+    if wave_solution == "lin":
+        step = 1. * rebin
+        rebin_wave = np.log10(np.arange(3610, 3700+step/2., step=step))
+        filled_points = FILLED_LAMBDA_LIN_POINTS
+    else:
+        step = 1e-4 * rebin
+        rebin_wave = np.arange(3.5563025, 3.5575025+step/2., step=step)
+        filled_points = FILLED_LAMBDA_LOG_POINTS
 
-kwargs_pk1d_forest_coadd = kwargs_forest_coadd.copy()
-kwargs_pk1d_forest_coadd.update({
-    "exposures_diff": EXPOSURES_DIFF_COADD,
-    "reso": RESO_COADD,
-    "reso_pix": RESO_PIX_COADD
-})
+    w_filled_points = _isin_float(rebin_wave, filled_points)
+    rebin_forest_array = np.ones(rebin_wave.size, dtype=forest_dtype)
+    rebin_forest_array['flux'][~w_filled_points] = 0
+    rebin_forest_array['ivar'][~w_filled_points] = 0
+    rebin_forest_array['exposures_diff'][~w_filled_points] = 0
 
-kwargs_pk1d_forest_log_coadd = kwargs_pk1d_forest_coadd.copy()
-kwargs_pk1d_forest_log_coadd.update({
-    "log_lambda": LOG_LAMBDA_REBIN,
-})
+    spectrum_vals = SPECTRA_VALUES_DICT[which_spectrum]
+    update_dict = {
+        "log_lambda": rebin_wave,
+        "ivar":rebin_forest_array["ivar"]*spectrum_vals["ivar_rebin"]
+    }
 
-kwargs_pk1d_forest_lin_coadd = kwargs_pk1d_forest_coadd.copy()
-kwargs_pk1d_forest_lin_coadd.update({
-    "log_lambda": LOG_LAMBDA_REBIN_LIN,
-})
+    keys_to_update = ["flux"]
+    if is_p1d:
+        keys_to_update += ["exposures_diff", "reso", "reso_pix"]
+        if is_desi:
+            keys_to_update += ["resolution_matrix"]
+
+    for key in keys_to_update:
+        update_dict[key] = rebin_forest_array[key]*spectrum_vals[key]
+
+    # Fix the shape for picca expected
+    if "resolution_matrix" in keys_to_update:
+        update_dict["resolution_matrix"] = update_dict["resolution_matrix"].T
+    rebin_kwargs_forest.update(update_dict)
+
+    return rebin_kwargs_forest
 
 # define contructors for DesiForest
-kwargs_desi_forest = kwargs_forest_lin.copy()
-del kwargs_desi_forest["los_id"]
-kwargs_desi_forest.update({
-    "targetid": TARGETID,
-    "night": 0,
-    "petal": 0,
-    "tile": 0,
-})
+def get_desi_kwargs_input(wave_solution, which_spectrum, is_p1d=False):
+    """ This function creates the sparse input spectrum for DESI.
+    Also includes targetid, night, petal and tile information.
 
-kwargs_desi_forest2 = kwargs_forest_lin2.copy()
-del kwargs_desi_forest2["los_id"]
-kwargs_desi_forest2.update({
-    "targetid": TARGETID,
-    "night": 1,
-    "petal": 2,
-    "tile": 3,
-})
+    Arguments
+    ---------
+    wave_solution: str
+    lin or log
 
-kwargs_desi_forest_rebin = kwargs_forest_lin_rebin.copy()
-kwargs_desi_forest_rebin.update({
-    "targetid": TARGETID,
-    "night": [0],
-    "petal": [0],
-    "tile": [0],
-})
-kwargs_desi_forest_rebin["los_id"] = TARGETID
+    which_spectrum: str
+    It should be "1" or "2". Otherwise returns None
 
-kwargs_desi_forest_coadd = kwargs_forest_lin_coadd.copy()
-kwargs_desi_forest_coadd.update({
-    "targetid": TARGETID,
-    "night": [0, 1],
-    "petal": [0, 2],
-    "tile": [0, 3],
-})
-kwargs_desi_forest_coadd["los_id"] = TARGETID
+    is_p1d: bool
+    Adds P1D expected fields
 
-# define contructors for DesiPk1dForest
-kwargs_desi_pk1d_forest = kwargs_desi_forest.copy()
-kwargs_desi_pk1d_forest.update(kwargs_pk1d_forest_lin)
-kwargs_desi_pk1d_forest.update({
-    "resolution_matrix": RESOMAT,
-})
-del kwargs_desi_pk1d_forest["los_id"]
+    Returns
+    ---------
+    kwargs_desi_forest: dict
+    A copy of kwargs_astronomical_object as base and truth updated.
 
-kwargs_desi_pk1d_forest2 = kwargs_desi_forest2.copy()
-kwargs_desi_pk1d_forest2.update(kwargs_pk1d_forest_lin2)
-kwargs_desi_pk1d_forest2.update({
-    "resolution_matrix": RESOMAT2,
-})
-del kwargs_desi_pk1d_forest2["los_id"]
+    """
+    kwargs_desi_forest = get_kwargs_input(wave_solution, which_spectrum,
+        is_p1d=is_p1d, is_desi=True)
+    del kwargs_desi_forest["los_id"]
+    if which_spectrum == "1":
+        kwargs_desi_forest.update({
+            "targetid": TARGETID,
+            "night": 0,
+            "petal": 0,
+            "tile": 0,
+        })
+    elif which_spectrum == "2":
+        kwargs_desi_forest.update({
+            "targetid": TARGETID,
+            "night": 1,
+            "petal": 2,
+            "tile": 3,
+        })
+    else:
+        return None
 
-kwargs_desi_pk1d_forest_rebin = kwargs_pk1d_forest_rebin.copy()
-kwargs_desi_pk1d_forest_rebin.update(kwargs_desi_forest_rebin)
-kwargs_desi_pk1d_forest_rebin.update({
-    "resolution_matrix": RESOMAT_REBIN,
-})
+    return kwargs_desi_forest
 
-kwargs_desi_pk1d_forest_coadd = kwargs_pk1d_forest_coadd.copy()
-kwargs_desi_pk1d_forest_coadd.update(kwargs_desi_forest_coadd)
-kwargs_desi_pk1d_forest_coadd.update({
-    "resolution_matrix": RESOMAT_COADD,
-})
+def get_desi_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False):
+    """ This function creates the rebinned spectrum for DESI.
+    Also includes targetid, night, petal and tile information.
+
+    Arguments
+    ---------
+    wave_solution: str
+    lin or log
+
+    which_spectrum: str
+    Pass "COADD" for coadded tests. Otherwise returns rebin values
+    for both "1" and "2" spectra.
+
+    rebin: int
+    Rebinning factor.
+
+    is_p1d: bool
+    Adds P1D expected fields
+
+    Returns
+    ---------
+    kwargs_desi_forest: dict
+    A copy of kwargs_astronomical_object as base and truth updated.
+
+    """
+    kwargs_desi_forest = get_kwargs_rebin(wave_solution, which_spectrum,
+        rebin=rebin, is_p1d=is_p1d, is_desi=True)
+    del kwargs_desi_forest["los_id"]
+    if which_spectrum == "COADD":
+        kwargs_desi_forest.update({
+            "targetid": TARGETID,
+            "night": [0, 1],
+            "petal": [0, 2],
+            "tile": [0, 3],
+        })
+    else:
+        kwargs_desi_forest.update({
+            "targetid": TARGETID,
+            "night": [0],
+            "petal": [0],
+            "tile": [0],
+        })
+
+    kwargs_desi_forest["los_id"] = TARGETID
+
+    return kwargs_desi_forest
 
 # define contructors for SdssForest
-kwargs_sdss_forest = kwargs_forest_log.copy()
-del kwargs_sdss_forest["los_id"]
-kwargs_sdss_forest.update({
-    "thingid": THINGID,
-    "plate": 0,
-    "fiberid": 0,
-    "mjd": 0,
-})
+def get_sdss_kwargs_input(wave_solution, which_spectrum, is_p1d=False):
+    """ This function creates the sparse input spectrum for SDSS.
+    Also includes thingid, plate, fiberid and mjd information.
 
-kwargs_sdss_forest2 = kwargs_forest_log2.copy()
-del kwargs_sdss_forest2["los_id"]
-kwargs_sdss_forest2.update({
-    "thingid": THINGID,
-    "plate": 1,
-    "fiberid": 2,
-    "mjd": 3,
-})
+    Arguments
+    ---------
+    wave_solution: str
+    lin or log
 
-kwargs_sdss_forest_rebin = kwargs_forest_log_rebin.copy()
-kwargs_sdss_forest_rebin.update({
-    "thingid": THINGID,
-    "plate": [0],
-    "fiberid": [0],
-    "mjd": [0],
-})
-kwargs_sdss_forest_rebin["los_id"] = THINGID
+    which_spectrum: str
+    It should be "1" or "2". Otherwise returns None
 
-kwargs_sdss_forest_coadd = kwargs_forest_log_coadd.copy()
-kwargs_sdss_forest_coadd.update({
-    "thingid": THINGID,
-    "plate": [0, 1],
-    "fiberid": [0, 2],
-    "mjd": [0, 3],
-})
-kwargs_sdss_forest_coadd["los_id"] = THINGID
+    is_p1d: bool
+    Adds P1D expected fields
 
-# define contructors for SdssPk1dForest
-kwargs_sdss_pk1d_forest = kwargs_sdss_forest.copy()
-kwargs_sdss_pk1d_forest.update(kwargs_pk1d_forest)
-del kwargs_sdss_pk1d_forest["los_id"]
+    Returns
+    ---------
+    kwargs_sdss_forest: dict
+    A copy of kwargs_astronomical_object as base and truth updated.
 
-kwargs_sdss_pk1d_forest2 = kwargs_sdss_forest2.copy()
-kwargs_sdss_pk1d_forest2.update(kwargs_pk1d_forest2)
-del kwargs_sdss_pk1d_forest2["los_id"]
+    """
+    kwargs_sdss_forest = get_kwargs_input(wave_solution, which_spectrum, is_p1d=is_p1d)
+    del kwargs_sdss_forest["los_id"]
 
-kwargs_sdss_pk1d_forest_rebin = kwargs_pk1d_forest_rebin.copy()
-kwargs_sdss_pk1d_forest_rebin.update(kwargs_sdss_forest_rebin)
+    if which_spectrum == "1":
+        kwargs_sdss_forest.update({
+        "thingid": THINGID,
+        "plate": 0,
+        "fiberid": 0,
+        "mjd": 0,
+    })
+    elif which_spectrum == "2":
+        kwargs_sdss_forest.update({
+        "thingid": THINGID,
+        "plate": 1,
+        "fiberid": 2,
+        "mjd": 3,
+    })
+    else:
+        return None
 
-kwargs_sdss_pk1d_forest_coadd = kwargs_pk1d_forest_coadd.copy()
-kwargs_sdss_pk1d_forest_coadd.update(kwargs_sdss_forest_coadd)
+    return kwargs_sdss_forest
+
+def get_sdss_kwargs_rebin(wave_solution, which_spectrum, rebin=3, is_p1d=False):
+    """ This function creates the rebinned spectrum for SDSS.
+    Also includes thingid, plate, fiberid and mjd information.
+
+    Arguments
+    ---------
+    wave_solution: str
+    lin or log
+
+    which_spectrum: str
+    Pass "COADD" for coadded tests. Otherwise returns rebin values
+    for both "1" and "2" spectra.
+
+    rebin: int
+    Rebinning factor.
+
+    is_p1d: bool
+    Adds P1D expected fields
+
+    Returns
+    ---------
+    kwargs_sdss_forest_rebin: dict
+    A copy of kwargs_astronomical_object as base and truth updated.
+
+    """
+    kwargs_sdss_forest_rebin = get_kwargs_rebin(wave_solution, which_spectrum,
+        rebin=rebin, is_p1d=is_p1d, is_desi=False)
+
+    if which_spectrum == "COADD":
+        kwargs_sdss_forest_rebin.update({
+            "thingid": THINGID,
+            "plate": [0, 1],
+            "fiberid": [0, 2],
+            "mjd": [0, 3]
+        })
+    else:
+        kwargs_sdss_forest_rebin.update({
+            "thingid": THINGID,
+            "plate": [0],
+            "fiberid": [0],
+            "mjd": [0],
+        })
+
+    kwargs_sdss_forest_rebin["los_id"] = THINGID
+
+    return kwargs_sdss_forest_rebin
 
 # pylint: disable-msg=too-many-public-methods
 # this is a test class
@@ -456,10 +536,11 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(Forest.mask_fields[1] == "ivar")
         self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
         self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(
-            np.allclose(test_obj.transmission_correction, np.ones_like(flux)))
-        mean_snr = (flux * np.sqrt(ivar)).mean()
-        self.assertTrue(np.allclose(test_obj.mean_snr, mean_snr))
+        true_transmission_correction = np.where(ivar>0, 1, 0)
+        self.assertTrue(np.allclose(test_obj.transmission_correction,
+            true_transmission_correction))
+        mean_snr = np.sum(flux * np.sqrt(ivar))/np.sum(ivar>0)
+        self.assertTrue(np.isclose(test_obj.mean_snr, mean_snr))
 
         if isinstance(test_obj, SdssForest):
             self.assertTrue(isinstance(test_obj.plate, list))
@@ -729,6 +810,8 @@ class AstronomicalObjectTest(AbstractTest):
         """Test constructor for DesiForest.
         This includes a test of function rebin.
         """
+        kwargs_desi_forest = get_desi_kwargs_input("lin", "1")
+
         # expected error as class variables are not yet set
         expected_message = (
             "Error constructing Forest. Class variable 'log_lambda_grid' must "
@@ -741,6 +824,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # set Forest class variables
         setup_forest(wave_solution="lin")
+        kwargs_desi_forest_rebin = get_desi_kwargs_rebin("lin", "1")
 
         # create a DesiForest
         test_obj = DesiForest(**kwargs_desi_forest)
@@ -816,6 +900,9 @@ class AstronomicalObjectTest(AbstractTest):
         """Test the coadd function in DesiForest"""
         # set class variables
         setup_forest(wave_solution="lin")
+        kwargs_desi_forest  = get_desi_kwargs_input("lin", "1")
+        kwargs_desi_forest2 = get_desi_kwargs_input("lin", "2")
+        kwargs_desi_forest_coadd = get_desi_kwargs_rebin("lin", "COADD")
 
         # create a DesiForest
         test_obj = DesiForest(**kwargs_desi_forest)
@@ -866,6 +953,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method get_data for DesiForest."""
         # set class variables
         setup_forest(wave_solution="lin")
+        kwargs_desi_forest  = get_desi_kwargs_input("lin", "1")
 
         # create a DesiForest
         test_obj = DesiForest(**kwargs_desi_forest)
@@ -877,6 +965,8 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method get_header for DesiForest."""
         # set class variables
         setup_forest(wave_solution="lin")
+        kwargs_desi_forest  = get_desi_kwargs_input("lin", "1")
+        kwargs_desi_forest2 = get_desi_kwargs_input("lin", "2")
 
         # create a DesiForest
         test_obj = DesiForest(**kwargs_desi_forest)
@@ -897,6 +987,8 @@ class AstronomicalObjectTest(AbstractTest):
         """Test constructor for DesiPk1dForest.
         This includes a test of function rebin.
         """
+        kwargs_desi_pk1d_forest = get_desi_kwargs_input("lin", "1", is_p1d=True)
+        kwargs_desi_pk1d_forest_rebin = get_desi_kwargs_rebin("lin", "1", is_p1d=True)
         # create a DesiPk1dForest class variables are not yet set
         expected_message = (
             "Error constructing Pk1dForest. Class variable 'lambda_abs_igm' "
@@ -954,27 +1046,17 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a DesiForest with missing DesiPk1dForest variables
         kwargs = {
-            "ra":
-                0.15,
-            "dec":
-                0.0,
-            "z":
-                2.1,
-            "flux":
-                np.ones(15),
-            "ivar":
-                np.ones(15) * 4,
-            "lambda":
-                np.array([
+            "ra": 0.15,
+            "dec": 0.0,
+            "z": 2.1,
+            "flux": np.ones(15),
+            "ivar": np.ones(15) * 4,
+            "lambda":np.array([
                     3610, 3610.4, 3650, 3650.4, 3670, 3670.4, 3680, 3680.4,
-                    3700, 3700.4
-                ]),
-            "targetid":
-                100000000,
-            "reso":
-                np.ones(10),
-            "reso_pix":
-                np.ones(10),
+                    3700, 3700.4 ]),
+            "targetid": 100000000,
+            "reso": np.ones(10),
+            "reso_pix": np.ones(10),
         }
         expected_message = (
             "Error constructing DesiPk1dForest. Missing variable "
@@ -986,29 +1068,18 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a DesiPk1dForest with missing DesiForest variables
         kwargs = {
-            "ra":
-                0.15,
-            "dec":
-                0.0,
-            "z":
-                2.1,
-            "flux":
-                np.ones(15),
-            "ivar":
-                np.ones(15) * 4,
-            "lambda":
-                np.array([
+            "ra": 0.15,
+            "dec": 0.0,
+            "z": 2.1,
+            "flux": np.ones(15),
+            "ivar": np.ones(15) * 4,
+            "lambda": np.array([
                     3610, 3610.4, 3650, 3650.4, 3670, 3670.4, 3680, 3680.4,
-                    3700, 3700.4
-                ]),
-            "exposures_diff":
-                np.ones(10),
-            "reso":
-                np.ones(10),
-            "reso_pix":
-                np.ones(10),
-            "resolution_matrix":
-                np.ones([7, 10])
+                    3700, 3700.4]),
+            "exposures_diff": np.ones(10),
+            "reso": np.ones(10),
+            "reso_pix": np.ones(10),
+            "resolution_matrix": np.ones([7, 10])
         }
         expected_message = (
             "Error constructing DesiForest. Missing variable 'targetid'"
@@ -1068,6 +1139,10 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
         setup_pk1d_forest("LYA")
 
+        kwargs_desi_pk1d_forest = get_desi_kwargs_input("lin", "1", is_p1d=True)
+        kwargs_desi_pk1d_forest2 = get_desi_kwargs_input("lin", "2", is_p1d=True)
+        kwargs_desi_pk1d_forest_coadd = get_desi_kwargs_rebin("lin", "COADD", is_p1d=True)
+
         # create a DesiPk1dForest
         test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
         test_obj.rebin()
@@ -1098,7 +1173,7 @@ class AstronomicalObjectTest(AbstractTest):
         self.compare_error_message(context_manager, expected_message)
 
         # create a Forest object
-        kwargs = kwargs_desi_forest2.copy()
+        kwargs = kwargs_desi_pk1d_forest.copy()
         kwargs["los_id"] = 999
         test_obj_other = Forest(**kwargs)
         test_obj_other.rebin()
@@ -1116,6 +1191,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method consistency_check from DesiPk1dForest"""
         setup_forest("log")
         setup_pk1d_forest("LYA")
+        kwargs_desi_pk1d_forest = get_desi_kwargs_input("lin", "1", is_p1d=True)
 
         # create a DesiPk1dForest with flux and resolution_matrix with
         # incompatible sizes
@@ -1134,6 +1210,7 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables
         setup_forest(wave_solution="lin")
         setup_pk1d_forest("LYA")
+        kwargs_desi_pk1d_forest = get_desi_kwargs_input("lin", "1", is_p1d=True)
 
         # create a DesiPk1dForest
         test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
@@ -1145,6 +1222,8 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables
         setup_forest(wave_solution="lin")
         setup_pk1d_forest("LYA")
+        kwargs_desi_pk1d_forest = get_desi_kwargs_input("lin", "1", is_p1d=True)
+        kwargs_desi_pk1d_forest2 = get_desi_kwargs_input("lin", "2", is_p1d=True)
 
         # create a DesiPk1dForest
         test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
@@ -1161,6 +1240,9 @@ class AstronomicalObjectTest(AbstractTest):
 
     def test_forest(self):
         """Test constructor for Forest object."""
+        kwargs_forest_log = get_kwargs_input("log", "1")
+        kwargs_forest_lin = get_kwargs_input("lin", "1")
+
         # create a Forest with missing Forest class variables
         expected_message = (
             "Error constructing Forest. Class variable 'log_lambda_grid' must "
@@ -1191,9 +1273,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Forest with extra variables
         kwargs = kwargs_forest_log.copy()
-        kwargs.update({
-            "test_variable": "test",
-        })
+        kwargs.update({ "test_variable": "test" })
         test_obj = Forest(**kwargs)
         self.assert_forest_object(test_obj, kwargs)
 
@@ -1207,9 +1287,7 @@ class AstronomicalObjectTest(AbstractTest):
         self.compare_error_message(context_manager, expected_message)
 
         # create a Forest with missing flux
-        kwargs = {
-            "log_lambda": np.ones(15),
-        }
+        kwargs = { "log_lambda": np.ones(15) }
         expected_message = (
             "Error constructing Forest. Missing variable 'flux'"
         )
@@ -1262,6 +1340,7 @@ class AstronomicalObjectTest(AbstractTest):
 
     def test_forest_class_variable_check(self):
         """Test class method class_variable_check from Forest"""
+        kwargs_forest_log = get_kwargs_input("log", "1")
         # create a Forest with missing Forest.log_lambda_grid
         expected_message = (
             "Error constructing Forest. Class variable 'log_lambda_grid' must "
@@ -1301,7 +1380,7 @@ class AstronomicalObjectTest(AbstractTest):
         expected_message = (
             "Error constructing Forest. "
             "Expected list in class variable 'mask fields'. "
-            f"Found 'flux'."
+            "Found 'flux'."
         )
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs_forest_log)
@@ -1322,6 +1401,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_forest_comparison(self):
         """Test comparison is properly inheried in Forest."""
         setup_forest(wave_solution="log", rebin=3)
+        kwargs_forest_log = get_kwargs_input("log", "1")
 
         test_obj = Forest(**kwargs_forest_log)
         test_obj.rebin()
@@ -1329,8 +1409,8 @@ class AstronomicalObjectTest(AbstractTest):
         kwargs_forest_gt = kwargs_astronomical_object_gt.copy()
         for kwargs in kwargs_forest_gt.values():
             kwargs.update({
-                "flux": FLUX,
-                "ivar": IVAR,
+                "flux": BASE_FOREST['flux']*SPECTRA_VALUES_DICT["1"]['flux'],
+                "ivar": BASE_FOREST['ivar']*SPECTRA_VALUES_DICT["1"]['ivar'],
                 "log_lambda": LOG_LAMBDA,
             })
 
@@ -1349,8 +1429,8 @@ class AstronomicalObjectTest(AbstractTest):
             "ra": 0.15,
             "dec": 0.0,
             "z": 2.1,
-            "flux": FLUX,
-            "ivar": IVAR,
+            "flux": BASE_FOREST['flux']*SPECTRA_VALUES_DICT["1"]['flux'],
+            "ivar": BASE_FOREST['ivar']*SPECTRA_VALUES_DICT["1"]['ivar'],
             "log_lambda": LOG_LAMBDA,
         }
         other = Forest(**kwargs)
@@ -1361,6 +1441,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_forest_consistency_check(self):
         """Test method consistency_check from Forest"""
         setup_forest("log")
+        kwargs_forest_log = get_kwargs_input("log", "1")
 
         # create a Forest with flux and ivar of different sizes
         kwargs = kwargs_forest_log.copy()
@@ -1389,6 +1470,8 @@ class AstronomicalObjectTest(AbstractTest):
         """Test the rebin function in Forest."""
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
+        kwargs_forest_log = get_kwargs_input("log", "1")
+        kwargs_forest_log_rebin = get_kwargs_rebin("log", "1", rebin=3)
 
         # create a Forest, rebin and test results
         test_obj = Forest(**kwargs_forest_log)
@@ -1398,6 +1481,9 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables; case: linear wavelength solution
         reset_forest()
         setup_forest(wave_solution="lin")
+
+        kwargs_forest_lin = get_kwargs_input("lin", "1")
+        kwargs_forest_lin_rebin = get_kwargs_rebin("lin", "1", rebin=1)
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_lin)
@@ -1420,6 +1506,9 @@ class AstronomicalObjectTest(AbstractTest):
         """Test the coadd function in Forest."""
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
+        kwargs_forest_log  = get_kwargs_input("log", "1")
+        kwargs_forest_log2 = get_kwargs_input("log", "2")
+        kwargs_forest_log_coadd = get_kwargs_rebin("log", "COADD", rebin=3)
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
@@ -1467,6 +1556,10 @@ class AstronomicalObjectTest(AbstractTest):
         reset_forest()
         setup_forest(wave_solution="lin")
 
+        kwargs_forest_lin  = get_kwargs_input("lin", "1")
+        kwargs_forest_lin2 = get_kwargs_input("lin", "2")
+        kwargs_forest_lin_coadd = get_kwargs_rebin("lin", "COADD", rebin=1)
+
         # create a Forest
         test_obj = Forest(**kwargs_forest_lin)
         test_obj.rebin()
@@ -1483,6 +1576,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method get_data for Forest."""
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
+        kwargs_forest_log  = get_kwargs_input("log", "1")
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
@@ -1492,6 +1586,7 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables; case: linear wavelength solution
         reset_forest()
         setup_forest(wave_solution="lin")
+        kwargs_forest_lin  = get_kwargs_input("lin", "1")
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_lin)
@@ -1518,6 +1613,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method get_header for Forest."""
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
+        kwargs_forest_log  = get_kwargs_input("log", "1")
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
@@ -1529,6 +1625,7 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables; case: linear wavelength solution
         reset_forest()
         setup_forest(wave_solution="lin")
+        kwargs_forest_lin  = get_kwargs_input("lin", "1")
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_lin)
@@ -1608,6 +1705,8 @@ class AstronomicalObjectTest(AbstractTest):
 
     def test_pk1d_forest(self):
         """Test constructor for Pk1dForest object."""
+        kwargs_pk1d_forest_log = get_kwargs_input("log", "1", is_p1d=True)
+
         # create a Pk1dForest with missing Pk1dForest class variables
         expected_message = (
             "Error constructing Pk1dForest. Class variable 'lambda_abs_igm' "
@@ -1643,6 +1742,8 @@ class AstronomicalObjectTest(AbstractTest):
         reset_forest()
         setup_forest(wave_solution="lin")
         setup_pk1d_forest("LYA")
+
+        kwargs_pk1d_forest_lin = get_kwargs_input("lin", "1", is_p1d=True)
 
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)
@@ -1706,6 +1807,9 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
+        kwargs_pk1d_forest_log  = get_kwargs_input("log", "1", is_p1d=True)
+        kwargs_pk1d_forest_log2 = get_kwargs_input("log", "2", is_p1d=True)
+        kwargs_pk1d_forest_log_coadd = get_kwargs_rebin("log", "COADD", rebin=3, is_p1d=True)
 
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
@@ -1741,6 +1845,10 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
         setup_pk1d_forest("LYA")
 
+        kwargs_pk1d_forest_lin  = get_kwargs_input("lin", "1", is_p1d=True)
+        kwargs_pk1d_forest_lin2 = get_kwargs_input("lin", "2", is_p1d=True)
+        kwargs_pk1d_forest_lin_coadd = get_kwargs_rebin("lin", "COADD", rebin=1, is_p1d=True)
+
         # create a Forest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)
         test_obj.rebin()
@@ -1772,6 +1880,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method consistency_check from Pk1dForest"""
         setup_forest("log")
         setup_pk1d_forest("LYA")
+        kwargs_pk1d_forest_log  = get_kwargs_input("log", "1", is_p1d=True)
 
         # create a Pk1dForest with flux and ivar of different sizes
         kwargs = kwargs_pk1d_forest_log.copy()
@@ -1800,6 +1909,8 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
+        kwargs_pk1d_forest_log = get_kwargs_input("log", "1", is_p1d=True)
+        kwargs_pk1d_forest_lin = get_kwargs_input("lin", "1", is_p1d=True)
 
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
@@ -1821,6 +1932,8 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
+        kwargs_pk1d_forest_log  = get_kwargs_input("log", "1", is_p1d=True)
+        kwargs_pk1d_forest_lin = get_kwargs_input("lin", "1", is_p1d=True)
 
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
@@ -1845,6 +1958,9 @@ class AstronomicalObjectTest(AbstractTest):
         """Test constructor for SdssForest.
         This includes a test of function rebin.
         """
+        kwargs_sdss_forest = get_sdss_kwargs_input("log", "1")
+        kwargs_sdss_forest_rebin = get_sdss_kwargs_rebin("log", "1")
+
         # expected error as class variables are not yet set
         expected_message = (
             "Error constructing Forest. Class variable 'log_lambda_grid' "
@@ -1963,6 +2079,9 @@ class AstronomicalObjectTest(AbstractTest):
         """Test the coadd function in SdssForest"""
         # set class variables
         setup_forest(wave_solution="log", rebin=3)
+        kwargs_sdss_forest = get_sdss_kwargs_input("log", "1")
+        kwargs_sdss_forest2 = get_sdss_kwargs_input("log", "2")
+        kwargs_sdss_forest_coadd = get_sdss_kwargs_rebin("log", "COADD")
 
         # create a SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
@@ -1994,7 +2113,7 @@ class AstronomicalObjectTest(AbstractTest):
         self.compare_error_message(context_manager, expected_message)
 
         # create a Forest object
-        kwargs = kwargs_desi_forest2.copy()
+        kwargs = kwargs_sdss_forest2.copy()
         kwargs["los_id"] = 999
         test_obj_other = Forest(**kwargs)
         test_obj_other.rebin()
@@ -2012,6 +2131,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method get_data for SdssForest."""
         # set class variables
         setup_forest(wave_solution="log", rebin=3)
+        kwargs_sdss_forest = get_sdss_kwargs_input("log", "1")
 
         # create an SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
@@ -2022,6 +2142,8 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method get_header for SdssForest."""
         # set class variables
         setup_forest(wave_solution="log", rebin=3)
+        kwargs_sdss_forest = get_sdss_kwargs_input("log", "1")
+        kwargs_sdss_forest2 = get_sdss_kwargs_input("log", "2")
 
         # create an SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
@@ -2042,6 +2164,9 @@ class AstronomicalObjectTest(AbstractTest):
         """Test constructor for SdssPk1dForest.
         This includes a test of function rebin.
         """
+        kwargs_sdss_pk1d_forest = get_sdss_kwargs_input("log", "1", is_p1d=True)
+        kwargs_sdss_pk1d_forest_rebin = get_sdss_kwargs_rebin("log", "1", is_p1d=True)
+
         # expected error as Pk1dForest class variables are not yet set
         expected_message = (
             "Error constructing Pk1dForest. Class variable 'lambda_abs_igm' "
@@ -2086,27 +2211,17 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a SdssPk1dForest with missing SdssForest variables
         kwargs = {
-            "ra":
-                0.15,
-            "dec":
-                0.0,
-            "z":
-                2.1,
-            "flux":
-                np.ones(15),
-            "ivar":
-                np.ones(15) * 4,
-            "log_lambda":
-                np.array([
+            "ra": 0.15,
+            "dec": 0.0,
+            "z": 2.1,
+            "flux": np.ones(15),
+            "ivar": np.ones(15) * 4,
+            "log_lambda": np.array([
                     3.5565, 3.55655, 3.5567, 3.55675, 3.5569, 3.55695, 3.5571,
-                    3.55715, 3.5573, 3.55735
-                ]),
-            "exposures_diff":
-                np.ones(15),
-            "reso":
-                np.ones(15),
-            "reso_pix":
-                np.ones(15),
+                    3.55715, 3.5573, 3.55735 ]),
+            "exposures_diff": np.ones(15),
+            "reso": np.ones(15),
+            "reso_pix": np.ones(15),
         }
         expected_message = (
             "Error constructing SdssForest. Missing variable 'fiberid'"
@@ -2162,6 +2277,10 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
 
+        kwargs_sdss_pk1d_forest = get_sdss_kwargs_input("log", "1", is_p1d=True)
+        kwargs_sdss_pk1d_forest2 = get_sdss_kwargs_input("log", "2", is_p1d=True)
+        kwargs_sdss_pk1d_forest_coadd = get_sdss_kwargs_rebin("log", "COADD", is_p1d=True)
+
         # create a SdssPk1dForest
         test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
         test_obj.rebin()
@@ -2196,6 +2315,7 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables
         setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
+        kwargs_sdss_pk1d_forest = get_sdss_kwargs_input("log", "1", is_p1d=True)
 
         # create an SdssPk1dForest
         test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
@@ -2206,6 +2326,8 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables
         setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
+        kwargs_sdss_pk1d_forest = get_sdss_kwargs_input("log", "1", is_p1d=True)
+        kwargs_sdss_pk1d_forest2 = get_sdss_kwargs_input("log", "2", is_p1d=True)
 
         # create an SdssPk1dForest
         test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
