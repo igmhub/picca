@@ -10,9 +10,11 @@ import numpy as np
 
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue, accepted_options
+from picca.delta_extraction.utils import update_accepted_options
 
-accepted_options = sorted(list(set(accepted_options + [
-    "catalogue", "in_nside", "keep surveys"])))
+accepted_options = update_accepted_options(
+    accepted_options,
+    ["catalogue", "in_nside", "keep surveys"])
 
 defaults = {
     "keep surveys": "all",
@@ -145,8 +147,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             keep_columns += ['TILEID', 'PETAL_LOC']
         if 'NIGHT' in catalogue.colnames:
             keep_columns += ['NIGHT']
-        if 'LASTNIGHT' in catalogue.colnames:
-            keep_columns += ['LASTNIGHT']
+        if 'LAST_NIGHT' in catalogue.colnames:
+            keep_columns += ['LAST_NIGHT']
         if 'SURVEY' in catalogue.colnames:
             keep_columns += ['SURVEY']
         if 'DESI_TARGET' in catalogue.colnames:

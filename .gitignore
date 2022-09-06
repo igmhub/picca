@@ -17,3 +17,5 @@ py/picca\.egg-info/
 *.log
 
 py/picca/tests/delta_extraction/results/
+
+*.drawio.bkp

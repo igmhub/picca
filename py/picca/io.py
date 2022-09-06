@@ -161,7 +161,9 @@ def read_drq(drq_filename,
             catalog.rename_column('TARGET_DEC', 'DEC')
         keep_columns += ['TARGETID']
         if 'TILEID' in catalog.colnames:
-            keep_columns += ['TILEID', 'PETAL_LOC', 'FIBER']
+            keep_columns += ['TILEID', 'PETAL_LOC']
+        if 'FIBER' in catalog.colnames:
+            keep_columns += ['FIBER']
         if 'SURVEY' in catalog.colnames:
             keep_columns += ['SURVEY']
         if 'DESI_TARGET' in catalog.colnames:
@@ -1621,7 +1623,7 @@ def read_objects(filename,
 
     if mode == 'desi_mocks':
         nightcol='TARGETID'
-    elif 'desi_' in mode:
+    elif 'desi' in mode:
         if 'LAST_NIGHT' in catalog.colnames:
             nightcol='LAST_NIGHT'
         elif 'NIGHT' in catalog.colnames:
@@ -1635,18 +1637,15 @@ def read_objects(filename,
         userprint("{} of {}".format(index, len(unique_healpix)))
         w = healpixs == healpix
         if 'desi' in mode:
-            if 'TILEID' in catalog.colnames:
-                objs[healpix] = [
-                    QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
-                    entry['TILEID'], entry[nightcol], entry['FIBER'])
-                    for entry in catalog[w]
-                ]
+            if 'FIBER' in catalog.colnames:
+                fibercol = "FIBER"
             else:
-                objs[healpix] = [
-                    QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
-                    entry['TARGETID'], entry[nightcol], entry['TARGETID'])
-                    for entry in catalog[w]
-                ]
+                fibercol = "TARGETID"
+            objs[healpix] = [
+                QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
+                entry['TARGETID'], entry[nightcol], entry[fibercol])
+                for entry in catalog[w]
+            ]
         else:
             objs[healpix] = [
                 QSO(entry['THING_ID'], entry['RA'], entry['DEC'], entry['Z'],

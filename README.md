@@ -13,29 +13,58 @@ This package contains tools used for the analysis of the Lyman-alpha forest samp
 The current reference is du Mas des Bourboux et al. 2020 (https://arxiv.org/abs/2007.08995).
 
 ## Installation
-
-download
-```bash
-git clone https://github.com/igmhub/picca.git
+First, create a clean environment:
 ```
-
-add to your bashrc
-```bash
+conda create -n my_picca_env python==version
+conda activate my_picca_env
+```
+If you already have an environment, you just need to activate it.
+After you have the environment, you can install picca with:
+```
+pip install picca
+```
+If you are a developer, or want the most recent version of picca, you can download and install manually:
+```
+git clone https://github.com/igmhub/picca.git
+cd picca
+pip install -e .
+```
+Optionally, you can add the path to picca to your bashrc:
+```
 export PICCA_BASE=<path to your picca>
 ```
+Or you can add `picca/py/` to your `PYTHONPATH`. Both of these are optional and picca will work without them.
 
-then make sure you have all required modules by running
-```bash
-pip install -r requirements.txt --user
+If you are at working at NERSC, we recommend to keep everything clean by adding a function like this in your bashrc:
+```
+picca_env () {
+    module load python
+    conda activate my_picca_env
+}
+```
+Whenever you need picca just write:
+```
+picca_env
+```
+This is cleaner than directly adding the commands to the bashrc file, and avoids potential issues with the transition to Perlmutter.
+
+If you want to compute models for the correlations computed with picca, or you want to fit these correlations, see https://github.com/andreicuceu/vega.
+
+If you are running MPI code (only needed for some tasks in fitter2), see https://docs.nersc.gov/development/languages/python/parallel-python/#mpi4py-in-your-custom-conda-environment. If want to run the PolyChord sampler for fitter2, see https://github.com/andreicuceu/fitter2_tutorial. Note that fitter2 is deprecated, and will be removed in the future.
+
+If you need to run the "picca_compute_pk_pksb.py" script you will also need to install the following packages:
+```
+pip install camb
+pip install cython
+pip install nbodykit
 ```
 
-and finally run
-```bash
-python setup.py install --user
-```
-(assuming you run as user; for a system-wide install omit `--user` option).
+## Reproducing the BAO measurement in eBOSS DR16 (du Mas des Bourboux et al. 2020)
 
-Alternatively, you can just add `picca/py/` to your `PYTHONPATH`.
+Picca v4.0 was used in du Mas des Bourboux et al. (2020) to compute the final Lyman-alpha BAO measurement from eBOSS DR16.
+
+You can find a tutorial describing the different steps needed to reproduce the analysis (starting from the public catalogs) in `tutorials/eboss_dr16`.
+
 
 ## Examples
 

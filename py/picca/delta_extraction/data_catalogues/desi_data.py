@@ -1,6 +1,7 @@
 """This module defines the class DesiData to load DESI data
 """
 import logging
+import time
 import numpy as np
 
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
@@ -15,21 +16,22 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     defaults as defaults_quasar_catalogue)
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
+from picca.delta_extraction.utils import update_accepted_options, update_default_options
 
-accepted_options = sorted(
-    list(
-        set(accepted_options + accepted_options_quasar_catalogue +
-            ["blinding", "use non-coadded spectra", "wave solution"])))
 
-defaults = defaults.copy()
-defaults.update({
+accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
+accepted_options = update_accepted_options(
+    accepted_options,
+    ["blinding", "use non-coadded spectra", "wave solution"])
+
+defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
     "blinding": "corr_yshift",
     "use non-coadded spectra": False,
     "wave solution": "lin",
 })
-defaults.update(defaults_quasar_catalogue)
+defaults = update_default_options(defaults, defaults_quasar_catalogue)
 
 
 def merge_new_forest(forests_by_targetid, new_forests_by_targetid):
@@ -46,7 +48,8 @@ def merge_new_forest(forests_by_targetid, new_forests_by_targetid):
     forests_by_targetid
     """
     parent_targetids = set(forests_by_targetid.keys())
-    existing_targetids = parent_targetids.intersection(new_forests_by_targetid.keys())
+    existing_targetids = parent_targetids.intersection(
+        new_forests_by_targetid.keys())
     new_targetids = new_forests_by_targetid.keys() - existing_targetids
 
     # Does not fail if existing_targetids is empty
@@ -106,10 +109,18 @@ class DesiData(Data):
         self.__parse_config(config)
 
         # load z_truth catalogue
+        t0 = time.time()
+        self.logger.progress("Reading quasar catalogue")
         self.catalogue = DesiQuasarCatalogue(config).catalogue
+        t1 = time.time()
+        self.logger.progress(f"Time spent reading quasar catalogue: {t1-t0}")
 
         # read data
+        t0 = time.time()
+        self.logger.progress("Reading data")
         is_mock, is_sv = self.read_data()
+        t1 = time.time()
+        self.logger.progress(f"Time spent reading data: {t1-t0}")
 
         # set blinding
         self.set_blinding(is_mock, is_sv)

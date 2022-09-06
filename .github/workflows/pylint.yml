@@ -18,7 +18,7 @@ jobs:
         sudo apt-get -y install libbz2-dev
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install pylint
+        pip install pylint==2.12.2
     - name: This path
       run: |
         ls

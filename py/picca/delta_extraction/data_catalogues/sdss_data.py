@@ -15,18 +15,20 @@ from picca.delta_extraction.quasar_catalogues.drq_catalogue import defaults as d
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import (
     accepted_options as accepted_options_quasar_catalogue)
 from picca.delta_extraction.utils_pk1d import exp_diff, spectral_resolution
+from picca.delta_extraction.utils import update_accepted_options, update_default_options
 
-accepted_options = sorted(
-    list(
-        set(accepted_options + accepted_options_quasar_catalogue +
-            ["rebin", "mode"])))
+accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
+accepted_options = update_accepted_options(accepted_options, ["rebin", "mode"])
+accepted_options = update_accepted_options(
+    accepted_options,
+    ["delta lambda", "delta log lambda", "delta lambda rest frame"],
+    remove=True)
 
-defaults = defaults.copy()
-defaults.update({
+defaults = update_default_options(defaults, {
     "mode": "spplate",
     "rebin": 3,
 })
-defaults.update(defaults_drq)
+defaults = update_default_options(defaults, defaults_drq)
 
 
 class SdssData(Data):
@@ -136,9 +138,10 @@ class SdssData(Data):
                 continue
             self.logger.progress(f"Read {filename}")
 
-            log_lambda = hdul[1]["loglam"][:]
-            flux = hdul[1]["flux"][:]
-            ivar = hdul[1]["ivar"][:] * (hdul[1]["and_mask"][:] == 0)
+            log_lambda = np.array(hdul[1]["loglam"][:], dtype=np.float64)
+            flux = np.array(hdul[1]["flux"][:], dtype=np.float64)
+            ivar = (np.array(hdul[1]["ivar"][:], dtype=np.float64) *
+                    hdul[1]["and_mask"][:] == 0)
 
             if self.analysis_type == "BAO 3D":
                 forest = SdssForest(
