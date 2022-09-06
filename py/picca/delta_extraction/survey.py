@@ -116,8 +116,8 @@ class Survey:
         t0 = time.time()
         self.logger.info("Applying corrections")
 
-        for forest_index, _ in enumerate(self.data.forests):
-            for correction_index, _ in enumerate(self.corrections):
+        for correction_index, _ in enumerate(self.corrections):
+            for forest_index, _ in enumerate(self.data.forests):
                 self.corrections[correction_index].apply_correction(self.data.forests[forest_index])
 
         t1 = time.time()
@@ -125,6 +125,9 @@ class Survey:
 
     def apply_masks(self):
         """Apply the corrections. To be run after self.read_corrections()"""
+        if not self.masks:
+            return
+
         t0 = time.time()
         self.logger.info("Applying masks")
 
