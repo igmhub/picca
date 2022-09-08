@@ -280,7 +280,7 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
         err_msg = f"Object ID has to be one of {', '.join(accepted_obj_ids)}"
         userprint(f"ERROR: {err_msg}")
         raise KeyError(err_msg)
-    
+
     objs_thingid = hdu[obj_keyid.pop()][:]
 
     # moved hpx values here to read from master catalog header
@@ -292,6 +292,13 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     else:
         in_nside = None
         is_nested = None
+
+    accepted_z_keys = ['Z', 'Z_QSO_RSD']
+    z_key = key_val.intersection(accepted_z_keys).pop()
+    if not z_key:
+        err_msg = f"Z key has to be one of {', '.join(accepted_z_keys)}"
+        userprint(f"ERROR: {err_msg}")
+        raise KeyError(err_msg)
 
     w = hdu['Z'][:] > max(0., lambda_min / lambda_max_rest_frame - 1.)
     w &= hdu['Z'][:] < max(0., lambda_max / lambda_min_rest_frame - 1.)
@@ -325,15 +332,6 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
             end_of_file = '.gz'
         else:
             end_of_file = ''
-        # Why do this again?
-        # files = np.sort(
-        #     np.array([("{}/{}/{healpix}/transmission-{}-{healpix}"
-        #                ".fits{}").format(in_dir,
-        #                                  int(healpix // 100),
-        #                                  in_nside,
-        #                                  end_of_file,
-        #                                  healpix=healpix)
-        #               for healpix in np.unique(in_healpixs)]))
     else:
         files = np.sort(np.array(in_filenames))
         is_nested = None
