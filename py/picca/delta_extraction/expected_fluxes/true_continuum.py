@@ -421,27 +421,38 @@ class TrueContinuum(ExpectedFlux):
                 is_rawfile_consistent = False
                 err_msg += "File wave solution is not linear.\n"
 
-        def _check_header_consistency(_key, _test_val, atol):
+        def _check_header_consistency(_key, _test_val, atol, _consistent, _err_msg):
             if not np.isclose(header[_key], _test_val, atol=atol, rtol=1e-3):
-                is_rawfile_consistent = False
-                err_msg += f"header['{_key}']={header[_key]:.2f} vs input={_test_val:2.f}\n"
+                _consistent = False
+                _err_msg += f"header['{_key}']={header[_key]:.2f} vs input={_test_val:2.f}\n"
+            return _consistent, _err_msg
 
         lambda_min = 10**Forest.log_lambda_grid[0]
         lambda_max = 10**Forest.log_lambda_grid[-1]
         lambda_rest_min = 10**Forest.log_lambda_rest_frame_grid[0]
         lambda_rest_max = 10**Forest.log_lambda_rest_frame_grid[-1]
 
-        _check_header_consistency(pixel_step_key, pixel_step, atol=1e-6)
+        # Check pixel size consistency
+        is_rawfile_consistent, err_msg = _check_header_consistency(
+            pixel_step_key, pixel_step, 1e-6, is_rawfile_consistent, err_msg)
+        # Check minimum lambda
         atol = (10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0])/2
-        _check_header_consistency('L_MIN', lambda_min, atol)
+        is_rawfile_consistent, err_msg = _check_header_consistency(
+            'L_MIN', lambda_min, atol, is_rawfile_consistent, err_msg)
+        # Check maximum lambda
         atol = (10**Forest.log_lambda_grid[-1] - 10**Forest.log_lambda_grid[-2])/2
-        _check_header_consistency('L_MAX', lambda_max, atol)
+        is_rawfile_consistent, err_msg = _check_header_consistency(
+            'L_MAX', lambda_max, atol, is_rawfile_consistent, err_msg)
+        # Check minimum rest-frame lambda
         atol = (10**Forest.log_lambda_rest_frame_grid[1]
               - 10**Forest.log_lambda_rest_frame_grid[0])/2
-        _check_header_consistency('LR_MIN', lambda_rest_min, atol)
+        is_rawfile_consistent, err_msg = _check_header_consistency(
+            'LR_MIN', lambda_rest_min, atol, is_rawfile_consistent, err_msg)
+        # Check maximum rest-frame lambda
         atol = (10**Forest.log_lambda_rest_frame_grid[-1]
               - 10**Forest.log_lambda_rest_frame_grid[-2])/2
-        _check_header_consistency('LR_MAX', lambda_rest_max, atol)
+        is_rawfile_consistent, err_msg = _check_header_consistency(
+            'LR_MAX', lambda_rest_max, atol, is_rawfile_consistent, err_msg)
 
         if not is_rawfile_consistent:
             raise ExpectedFluxError(err_msg)
