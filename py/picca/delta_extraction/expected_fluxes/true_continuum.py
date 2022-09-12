@@ -424,7 +424,7 @@ class TrueContinuum(ExpectedFlux):
         def _check_header_consistency(_key, _test_val, atol, _consistent, _err_msg):
             if not np.isclose(header[_key], _test_val, atol=atol, rtol=1e-3):
                 _consistent = False
-                _err_msg += f"header['{_key}']={header[_key]:.2f} vs input={_test_val:2.f}\n"
+                _err_msg += f"header['{_key}']={header[_key]:.2f} vs input={_test_val:.2f}\n"
             return _consistent, _err_msg
 
         lambda_min = 10**Forest.log_lambda_grid[0]
