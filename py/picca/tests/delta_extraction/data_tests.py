@@ -99,6 +99,7 @@ class DataTest(AbstractTest):
                             "wave solution": "log",
                             "delta log lambda": 3e-4,
                             "input directory": f"{THIS_DIR}/data/",
+                            "num processors": 1,
                          }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -116,6 +117,7 @@ class DataTest(AbstractTest):
                                    "wave solution": "log",
                                    "delta log lambda": 3e-4,
                                    "input directory": f"{THIS_DIR}/data/",
+                                   "num processors": 1,
                          }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -350,6 +352,26 @@ class DataTest(AbstractTest):
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
+        # create a Data instance with missing num_processors
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "input directory": f"{THIS_DIR}/data",
+            "minimum number pixels in forest": 50,
+        }})
+        expected_message = (
+            "Missing argument 'num processors' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
         # create a Data instance with missing out_dir
         config = ConfigParser()
         config.read_dict({"data": {
@@ -362,6 +384,7 @@ class DataTest(AbstractTest):
             "analysis type": "BAO 3D",
             "input directory": f"{THIS_DIR}/data",
             "minimum number pixels in forest": 50,
+            "num processors": 1,
         }})
         expected_message = (
             "Missing argument 'out dir' required by Data"
@@ -382,6 +405,7 @@ class DataTest(AbstractTest):
             "analysis type": "BAO 3D",
             "input directory": f"{THIS_DIR}/data",
             "minimum number pixels in forest": 50,
+            "num processors": 1,
             "out dir": f"{THIS_DIR}/results",
         }})
         expected_message = (
@@ -403,6 +427,7 @@ class DataTest(AbstractTest):
             "analysis type": "BAO 3D",
             "input directory": f"{THIS_DIR}/data",
             "minimum number pixels in forest": 50,
+            "num processors": 1,
             "out dir": f"{THIS_DIR}/results",
             "rejection log file": "results/rejection_log.fits.gz",
         }})
@@ -426,6 +451,7 @@ class DataTest(AbstractTest):
             "analysis type": "BAO 3D",
             "input directory": f"{THIS_DIR}/data",
             "minimum number pixels in forest": 50,
+            "num processors": 1,
             "out dir": f"{THIS_DIR}/results",
             "rejection log file": "rejection_log.txt",
         }})
@@ -451,6 +477,7 @@ class DataTest(AbstractTest):
             "analysis type": "BAO 3D",
             "input directory": f"{THIS_DIR}/data",
             "minimum number pixels in forest": 50,
+            "num processors": 1,
             "out dir": f"{THIS_DIR}/results",
             "rejection log file": "rejection_log.fits.gz",
         }})
@@ -476,6 +503,7 @@ class DataTest(AbstractTest):
             "lambda abs IGM": "LYA",
             "input directory": f"{THIS_DIR}/data",
             "minimum number pixels in forest": 50,
+            "num processors": 1,
             "out dir": f"{THIS_DIR}/results",
             "rejection log file": "rejection_log.fits.gz",
         }})
@@ -499,6 +527,7 @@ class DataTest(AbstractTest):
                             "delta log lambda": 3e-4,
                             "delta log lambda rest frame": 3e-4,
                             "input directory": f"{THIS_DIR}/data/",
+                            "num processors": 1,
                         }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -538,6 +567,7 @@ class DataTest(AbstractTest):
                                    "delta log lambda": 3e-4,
                                    "delta log lambda rest frame": 3e-4,
                                    "input directory": f"{THIS_DIR}/data/",
+                                   "num processors": 1,
                          }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -564,6 +594,7 @@ class DataTest(AbstractTest):
                                    "delta log lambda rest frame": 3e-4,
                                    "input directory": f"{THIS_DIR}/data/",
                                    "minimal snr bao3d": 100000000,
+                                   "num processors": 1,
                          }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -635,23 +666,10 @@ class DataTest(AbstractTest):
             data._DesiData__parse_config(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
-        # run __parse_config with missing num_processors
-        config = ConfigParser()
-        config.read_dict({"data": {
-            "blinding": "none",
-                        }})
-        expected_message = (
-            "Missing argument 'num processors' required by DesiData"
-        )
-        with self.assertRaises(DataError) as context_manager:
-            data._DesiData__parse_config(config["data"])
-        self.compare_error_message(context_manager, expected_message)
-
         # run __parse_config with missing 'use_non_coadded_spectra'
         config = ConfigParser()
         config.read_dict({"data": {
             "blinding": "none",
-            "num processors": 1,
                         }})
         expected_message = (
             "Missing argument 'use non-coadded spectra' required by DesiData"

@@ -59,6 +59,13 @@ pip install cython
 pip install nbodykit
 ```
 
+## Reproducing the BAO measurement in eBOSS DR16 (du Mas des Bourboux et al. 2020)
+
+Picca v4.0 was used in du Mas des Bourboux et al. (2020) to compute the final Lyman-alpha BAO measurement from eBOSS DR16.
+
+You can find a tutorial describing the different steps needed to reproduce the analysis (starting from the public catalogs) in `tutorials/eboss_dr16`.
+
+
 ## Examples
 
 example run over 1000 spectra (the DLA catalog is not required):

@@ -31,6 +31,11 @@ class ExpectedFluxError(Exception):
         Exceptions occurred in class ExpectedFlux
     """
 
+class LeastSquaresError(Exception):
+    """
+        Exceptions occurred in class ExpectedFlux
+    """
+
 class MaskError(Exception):
     """
         Exceptions occurred in class Mask

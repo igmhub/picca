@@ -1,7 +1,6 @@
 """This module defines the class DesiData to load DESI data
 """
 import logging
-import multiprocessing
 import time
 import numpy as np
 
@@ -17,23 +16,22 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     defaults as defaults_quasar_catalogue)
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
+from picca.delta_extraction.utils import update_accepted_options, update_default_options
 
-accepted_options = sorted(
-    list(
-        set(accepted_options + accepted_options_quasar_catalogue + [
-            "blinding", "num processors", "use non-coadded spectra",
-            "wave solution"
-        ])))
 
-defaults = defaults.copy()
-defaults.update({
+accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
+accepted_options = update_accepted_options(
+    accepted_options,
+    ["blinding", "use non-coadded spectra", "wave solution"])
+
+defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
     "blinding": "corr_yshift",
     "use non-coadded spectra": False,
     "wave solution": "lin",
 })
-defaults.update(defaults_quasar_catalogue)
+defaults = update_default_options(defaults, defaults_quasar_catalogue)
 
 
 def merge_new_forest(forests_by_targetid, new_forests_by_targetid):
@@ -107,7 +105,6 @@ class DesiData(Data):
 
         # load variables from config
         self.blinding = None
-        self.num_processors = None
         self.use_non_coadded_spectra = None
         self.__parse_config(config)
 
@@ -149,13 +146,6 @@ class DesiData(Data):
                 "Unrecognized blinding strategy. Accepted strategies "
                 f"are {ACCEPTED_BLINDING_STRATEGIES}. "
                 f"Found '{self.blinding}'")
-
-        self.num_processors = config.getint("num processors")
-        if self.num_processors is None:
-            raise DataError(
-                "Missing argument 'num processors' required by DesiData")
-        if self.num_processors == 0:
-            self.num_processors = (multiprocessing.cpu_count() // 2)
 
         self.use_non_coadded_spectra = config.getboolean(
             "use non-coadded spectra")
