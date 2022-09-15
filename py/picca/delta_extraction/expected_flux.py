@@ -325,13 +325,16 @@ class ExpectedFlux:
         A Forest instance to which the continuum is applied
         """
         if self.los_ids.get(forest.los_id) is not None:
+            w = self.los_ids.get(forest.los_id).get("ivar") > 0
             expected_flux = self.los_ids.get(
                 forest.los_id).get("mean expected flux")
-            forest.deltas = forest.flux / expected_flux - 1
+            forest.deltas = np.zeros_like(forest.flux)
+            forest.deltas[w] = forest.flux[w] / expected_flux[w] - 1
             forest.weights = self.los_ids.get(forest.los_id).get("weights")
             if isinstance(forest, Pk1dForest):
                 forest.ivar = self.los_ids.get(forest.los_id).get("ivar")
-                forest.exposures_diff /= expected_flux
+                forest.exposures_diff[w] /= expected_flux[w]
+                forest.exposures_diff[~w] = 0
 
             forest.continuum = self.los_ids.get(forest.los_id).get("continuum")
 
