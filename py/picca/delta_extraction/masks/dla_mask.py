@@ -76,10 +76,16 @@ class DlaMask(Mask):
                 "Missing argument 'los_id name' required by DlaMask")
 
         self.logger.progress(f"Reading DLA catalog from: {filename}")
+
+        accepted_zcolnames = ["Z_DLA", "Z"]
+        z_colname = accepted_zcolnames[0]
         try:
             with fitsio.FITS(filename) as hdul:
-                z_name = "Z_DLA" if "Z_DLA" in hdul["DLACAT"]._colnames else "Z"
-                columns_list = [los_id_name, z_name, "NHI"]
+                hdul_colnames = set(hdul["DLACAT"].get_colnames())
+                z_colname = hdul_colnames.intersection(accepted_zcolnames)
+                if not z_colname:
+                    raise ValueError(f"Z colname has to be one of {', '.join(accepted_zcolnames)}")
+                columns_list = [los_id_name, z_colname, "NHI"]
                 cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
         except OSError as error:
             raise MaskError(
@@ -97,7 +103,7 @@ class DlaMask(Mask):
         self.los_ids = {}
         for los_id in np.unique(cat[los_id_name]):
             w = (los_id == cat[los_id_name])
-            self.los_ids[los_id] = list(zip(cat["Z"][w], cat['NHI'][w]))
+            self.los_ids[los_id] = list(zip(cat[z_colname][w], cat['NHI'][w]))
         num_dlas = np.sum([len(los_id) for los_id in self.los_ids.values()])
 
         self.logger.progress(f'In catalog: {num_dlas} DLAs')
