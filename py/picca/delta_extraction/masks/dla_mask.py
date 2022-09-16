@@ -85,6 +85,7 @@ class DlaMask(Mask):
                 z_colname = hdul_colnames.intersection(accepted_zcolnames)
                 if not z_colname:
                     raise ValueError(f"Z colname has to be one of {', '.join(accepted_zcolnames)}")
+                z_colname = z_colname.pop()
                 columns_list = [los_id_name, z_colname, "NHI"]
                 cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
         except OSError as error:
