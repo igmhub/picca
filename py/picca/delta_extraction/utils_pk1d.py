@@ -270,20 +270,18 @@ def spectral_resolution_desi(reso_matrix, lambda_):
 
     num_diags, num_rows = reso_matrix.shape
     num_offdiags = num_diags // 2
-    # num_offdiags = reso_matrix.shape[0] // 2
 
-    # shift every row to a small positive value
+    # shift every row to a small positive value (not done anymore)
     # new resolution model is then Gaussian + constant
     # using an arbitrary epsilon is not stable
     # use nonzero absolute minimum of the row
     nonzero_abs_min_per_row = _find_nonzero_abs_min_per_row(reso_matrix, num_rows)
 
     # mask out rows that are all zeros
-    w = nonzero_abs_min_per_row>0
+    w = nonzero_abs_min_per_row > 0
     if not np.any(w):
         return np.zeros_like(lambda_), np.zeros_like(lambda_)
 
-    #shift = reso_matrix.min(axis=0) - nonzero_abs_min_per_row
     reso = reso_matrix[:, w] #- shift[w]
 
     #assume reso = A*exp(-(x-central_pixel_pos)**2 / 2 / sigma**2)
@@ -304,18 +302,7 @@ def spectral_resolution_desi(reso_matrix, lambda_):
         rms_in_pixel = np.empty_like(lambda_)
         rms_in_pixel[w] = np.abs(indices).dot(new_ratios)/np.sqrt(2.)/norm
         rms_in_pixel[~w] = rms_in_pixel[w].mean()
-        # Previous code for reference:
-        # rms_in_pixel = (
-        #     (np.sqrt(1.0 / 2.0 / np.log(
-        #         reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 1, :])) +
-        #      np.sqrt(4.0 / 2.0 / np.log(
-        #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 2, :])) +
-        #      np.sqrt(1.0 / 2.0 / np.log(
-        #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 1, :])) +
-        #      np.sqrt(4.0 / 2.0 / np.log(
-        #          reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 2, :])))
-        #     / 4.0) #this is rms
-
+        
         reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
                         np.log(10.0))   #this is FWHM
 
