@@ -351,6 +351,7 @@ class TrueContinuum(ExpectedFlux):
 
             forest.continuum = true_continuum(10**forest.log_lambda)
             forest.continuum *= self.get_mean_flux(forest.log_lambda)
+            forest.continuum *= forest.transmission_correction
 
         hdul.close()
         return forests
