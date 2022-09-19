@@ -9,8 +9,9 @@ This module provides three functions:
 See the respective documentation for details
 """
 import logging
-
+import warnings
 import numpy as np
+from numba import njit
 
 from picca.delta_extraction.utils import SPEED_LIGHT
 
@@ -213,46 +214,96 @@ def spectral_resolution(wdisp,
 
     return reso
 
+@njit#("f8[:](float32[:, :], i8)")
+def _find_nonzero_abs_min_per_row(reso_matrix, num_rows):
+    """Find the non-zero absolute minimum of the resolution matrix
+    for each row
+
+    Arguments
+    ---------
+    reso_matrix: 2D array of shape (num_diags, num_rows)
+    Resolution matrix
+
+    num_rows: int
+    Number of rows
+
+    Return
+    ------
+    nonzero_abs_min_per_row: 1D array
+    An array of size num_rows with non-zero abs. min
+    """
+    nonzero_abs_min_per_row = np.zeros(num_rows)
+    for irow in range(num_rows):
+        row = reso_matrix[:, irow]
+        nonzero_idx = row.nonzero()[0]
+        if nonzero_idx.size == 0:
+            continue
+
+        nonzero_abs_min_per_row[irow] = np.abs(row[nonzero_idx]).min()
+
+    return nonzero_abs_min_per_row
 
 def spectral_resolution_desi(reso_matrix, lambda_):
     """Compute the spectral resolution for DESI spectra
 
     Arguments
     ---------
-    reso_matrix: array
+    reso_matrix: 2D float32 array of shape (num_diags, num_rows)
     Resolution matrix
 
-    lambda_: array or None
-    Logarithm of the wavelength (in Angstroms)
+    lambda_: 1D array
+    Wavelength (in Angstroms)
 
     Return
     ------
     reso_in_km_per_s: array
     The spectral resolution
     """
-    delta_log_lambda = np.diff(np.log10(lambda_))
+    if lambda_ is None:
+        return None
+    
+    delta_log_lambda = np.empty_like(lambda_)
+    delta_log_lambda[:-1] = np.diff(np.log10(lambda_))
     #note that this would be the same result as before (except for the missing bug) in
     #case of log-uniform binning, but for linear binning pixel size chenges wrt lambda
-    delta_log_lambda = np.append(
-        delta_log_lambda,
-        [delta_log_lambda[-1] + (delta_log_lambda[-1] - delta_log_lambda[-2])])
-    reso = np.clip(reso_matrix, 1.0e-6, 1.0e6)
+    delta_log_lambda[-1] = delta_log_lambda[-2] + (delta_log_lambda[-2] - delta_log_lambda[-3])
+
+    num_diags, num_rows = reso_matrix.shape
+    num_offdiags = num_diags // 2
+
+    # shift every row to a small positive value (not done anymore)
+    # new resolution model is then Gaussian + constant
+    # using an arbitrary epsilon is not stable
+    # use nonzero absolute minimum of the row
+    nonzero_abs_min_per_row = _find_nonzero_abs_min_per_row(reso_matrix, num_rows)
+
+    # mask out rows that are all zeros
+    w = nonzero_abs_min_per_row > 0
+    if not np.any(w):
+        return np.zeros_like(lambda_), np.zeros_like(lambda_)
+
+    reso = reso_matrix[:, w] #- shift[w]
+
     #assume reso = A*exp(-(x-central_pixel_pos)**2 / 2 / sigma**2)
     #=> sigma = sqrt((x-central_pixel_pos)/2)**2 / log(A/reso)
     #   A = reso(central_pixel_pos)
     # the following averages over estimates for four symmetric values of x
-    rms_in_pixel = (
-        (np.sqrt(1.0 / 2.0 / np.log(
-            reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 1, :])) +
-         np.sqrt(4.0 / 2.0 / np.log(
-             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 2, :])) +
-         np.sqrt(1.0 / 2.0 / np.log(
-             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 1, :])) +
-         np.sqrt(4.0 / 2.0 / np.log(
-             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 2, :])))
-        / 4.0) #this is rms
+    indices = np.array([-2, -1, 1, 2], dtype=int)
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore') #this ignores all warnings in this part of the code, could in principle specify the exact warnings to be supressed
+        ratios = reso[num_offdiags, :]/reso[num_offdiags+indices, :]
+        ratios = np.log(ratios)
+        w2 = ratios > 0
+        norm = np.sum(w2, axis=0)
+        new_ratios = np.zeros_like(ratios)
+        new_ratios[w2] = 1./np.sqrt(ratios[w2])
+        # ratios = 1./np.sqrt(np.log(ratios))
 
-    reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
+        rms_in_pixel = np.empty_like(lambda_)
+        rms_in_pixel[w] = np.abs(indices).dot(new_ratios)/np.sqrt(2.)/norm
+        rms_in_pixel[~w] = rms_in_pixel[w].mean()
+        
+        reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
                         np.log(10.0))   #this is FWHM
 
     return rms_in_pixel, reso_in_km_per_s
