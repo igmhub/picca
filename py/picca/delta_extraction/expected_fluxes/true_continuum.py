@@ -75,6 +75,7 @@ class TrueContinuum(ExpectedFlux):
     a function of wavelength.
     """
 
+
     def __init__(self, config):
         """Initialize class instance.
 
@@ -397,65 +398,68 @@ class TrueContinuum(ExpectedFlux):
                 f"raw statistics file {filename} couldn't be loaded") from error
 
         header = hdul[1].read_header()
+        fits_data = hdul[1].read()
+        hdul.close()
+        is_rawfile_consistent = True
+        err_msg = ("raw statistics file pixelization scheme does not match "
+                   "input pixelization scheme.\n")
+
         if Forest.wave_solution == "log":
             pixel_step = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
-            log_lambda_min = Forest.log_lambda_grid[0]
-            log_lambda_max = Forest.log_lambda_grid[-1] - pixel_step / 2
-            log_lambda_rest_min = Forest.log_lambda_rest_frame_grid[
-                0] - pixel_step / 2
-            log_lambda_rest_max = Forest.log_lambda_rest_frame_grid[-1]
-            if (header['LINEAR'] or not np.isclose(
-                    header['L_MIN'], 10**log_lambda_min, rtol=1e-3) or
-                    not np.isclose(
-                        header['L_MAX'], 10**log_lambda_max, rtol=1e-3) or
-                    not np.isclose(
-                        header['LR_MIN'], 10**log_lambda_rest_min, rtol=1e-3) or
-                    not np.isclose(
-                        header['LR_MAX'], 10**log_lambda_rest_max, rtol=1e-3) or
-                    not np.isclose(header['DEL_LL'], pixel_step, rtol=1e-3)):
-                raise ExpectedFluxError(
-                    "raw statistics file pixelization scheme does not match "
-                    "input pixelization scheme. "
-                    "\t\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL"
-                    f"raw\t{header['L_MIN']}\t{header['L_MAX']}\t"
-                    f"{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}"
-                    f"input\t{log_lambda_min}\t{log_lambda_max}\t"
-                    f"{log_lambda_rest_min}\t{log_lambda_rest_max}"
-                    "provide a custom file in 'raw statistics file' field "
-                    "matching input pixelization scheme")
-            log_lambda = hdul[1]['LAMBDA'][:]
-        elif Forest.wave_solution == "lin":
-            pixel_step = 10**Forest.log_lambda_grid[
-                1] - 10**Forest.log_lambda_grid[0]
-            lambda_min = 10**Forest.log_lambda_grid[0]
-            lambda_max = 10**Forest.log_lambda_grid[-1] - pixel_step / 2
-            lambda_rest_min = 10**Forest.log_lambda_rest_frame_grid[
-                0] - pixel_step / 2
-            lambda_rest_max = 10**Forest.log_lambda_rest_frame_grid[-1]
-            if (not header['LINEAR'] or
-                    not np.isclose(header['L_MIN'], lambda_min, rtol=1e-3) or
-                    not np.isclose(header['L_MAX'], lambda_max, rtol=1e-3) or
-                    not np.isclose(header['LR_MIN'], lambda_rest_min, rtol=1e-3)
-                    or
-                    not np.isclose(header['LR_MAX'], lambda_rest_max, rtol=1e-3)
-                    or not np.isclose(header['DEL_L'],
-                                      10**Forest.log_lambda_grid[1] -
-                                      10**Forest.log_lambda_grid[0],
-                                      rtol=1e-3)):
-                raise ExpectedFluxError(
-                    "raw statistics file pixelization scheme does not match "
-                    "input pixelization scheme. "
-                    "\t\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_L"
-                    f"raw\t{header['L_MIN']}\t{header['L_MAX']}\t"
-                    f"{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_L']}"
-                    f"input\t{lambda_min}\t{lambda_max}\t{lambda_rest_min}\t"
-                    f"{lambda_rest_max} provide a custom file in 'raw "
-                    "statistics file' field matching input pixelization scheme")
-            log_lambda = np.log10(hdul[1]['LAMBDA'][:])
+            pixel_step_key = 'DEL_LL'
+            log_lambda = fits_data['LAMBDA']
 
-        flux_variance = hdul[1]['VAR'][:]
-        mean_flux = hdul[1]['MEANFLUX'][:]
-        hdul.close()
+            if header['LINEAR']:
+                is_rawfile_consistent = False
+                err_msg += "File wave solution is linear.\n"
+
+        elif Forest.wave_solution == "lin":
+            pixel_step = 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]
+            pixel_step_key = 'DEL_L'
+            log_lambda = np.log10(fits_data['LAMBDA'])
+
+            if not header['LINEAR']:
+                is_rawfile_consistent = False
+                err_msg += "File wave solution is not linear.\n"
+
+        def _check_header_consistency(_key, _test_val, atol, _consistent, _err_msg):
+            if not np.isclose(header[_key], _test_val, atol=atol, rtol=1e-3):
+                _consistent = False
+                _err_msg += f"header['{_key}']={header[_key]:.2f} vs input={_test_val:.2f}\n"
+            return _consistent, _err_msg
+
+        lambda_min = 10**Forest.log_lambda_grid[0]
+        lambda_max = 10**Forest.log_lambda_grid[-1]
+        lambda_rest_min = 10**Forest.log_lambda_rest_frame_grid[0]
+        lambda_rest_max = 10**Forest.log_lambda_rest_frame_grid[-1]
+
+        # Check pixel size consistency
+        is_rawfile_consistent, err_msg = _check_header_consistency(
+            pixel_step_key, pixel_step, 1e-6, is_rawfile_consistent, err_msg)
+        # Check minimum lambda
+        atol = (10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0])/2
+        is_rawfile_consistent, err_msg = _check_header_consistency(
+            'L_MIN', lambda_min, atol, is_rawfile_consistent, err_msg)
+        # Check maximum lambda
+        atol = (10**Forest.log_lambda_grid[-1] - 10**Forest.log_lambda_grid[-2])/2
+        is_rawfile_consistent, err_msg = _check_header_consistency(
+            'L_MAX', lambda_max, atol, is_rawfile_consistent, err_msg)
+        # Check minimum rest-frame lambda
+        atol = (10**Forest.log_lambda_rest_frame_grid[1]
+              - 10**Forest.log_lambda_rest_frame_grid[0])/2
+        is_rawfile_consistent, err_msg = _check_header_consistency(
+            'LR_MIN', lambda_rest_min, atol, is_rawfile_consistent, err_msg)
+        # Check maximum rest-frame lambda
+        atol = (10**Forest.log_lambda_rest_frame_grid[-1]
+              - 10**Forest.log_lambda_rest_frame_grid[-2])/2
+        is_rawfile_consistent, err_msg = _check_header_consistency(
+            'LR_MAX', lambda_rest_max, atol, is_rawfile_consistent, err_msg)
+
+        if not is_rawfile_consistent:
+            raise ExpectedFluxError(err_msg)
+
+        flux_variance = fits_data['VAR']
+        mean_flux = fits_data['MEANFLUX']
 
         var_lss = flux_variance / mean_flux**2
 

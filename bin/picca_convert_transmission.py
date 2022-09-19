@@ -39,13 +39,13 @@ if __name__ == '__main__':
     parser.add_argument('--delta-lambda', type=float, default=None, required=False,
             help='Size of the rebined pixels in log lambda')
 
-    parser.add_argument('--linear-spacing', type=bool, default=False, required=False,
+    parser.add_argument('--linear-spacing', action="store_true", default=False, required=False,
             help='Whether to use linear bins in lambda.')
 
     parser.add_argument('--nspec', type=int, default=None, required=False,
             help="Number of spectra to fit, if None then run on all files")
 
-    parser.add_argument('--use-old-weights', type=bool, default=False, required=False,
+    parser.add_argument('--use-old-weights', action="store_true", default=False, required=False,
             help='Whether to use the old weighting scheme for raw deltas.')
 
     args = parser.parse_args()

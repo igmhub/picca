@@ -270,18 +270,40 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     """
     # read catalog of objects
     hdul = fitsio.FITS(obj_path)
-    key_val = np.char.strip(
-        np.array([
-            hdul[1].read_header()[key] for key in hdul[1].read_header().keys()
-        ]).astype(str))
-    if 'TARGETID' in key_val:
-        objs_thingid = hdul[1]['TARGETID'][:]
-    elif 'THING_ID' in key_val:
-        objs_thingid = hdul[1]['THING_ID'][:]
-    w = hdul[1]['Z'][:] > max(0., lambda_min / lambda_max_rest_frame - 1.)
-    w &= hdul[1]['Z'][:] < max(0., lambda_max / lambda_min_rest_frame - 1.)
-    objs_ra = hdul[1]['RA'][:][w].astype('float64') * np.pi / 180.
-    objs_dec = hdul[1]['DEC'][:][w].astype('float64') * np.pi / 180.
+    hdu = hdul[1]
+    key_val = set(hdu.get_colnames())
+
+    # Get object id in HDU
+    accepted_obj_ids = ['TARGETID', 'THING_ID', 'MOCKID']
+    obj_keyid = key_val.intersection(accepted_obj_ids)
+    if not obj_keyid:
+        err_msg = f"Object ID has to be one of {', '.join(accepted_obj_ids)}"
+        userprint(f"ERROR: {err_msg}")
+        raise KeyError(err_msg)
+
+    objs_thingid = hdu[obj_keyid.pop()][:]
+
+    # moved hpx values here to read from master catalog header
+    # rather than transmission files for ohio-p1d mocks
+    hdr = hdu.read_header()
+    if 'HPXNSIDE' in hdr and 'HPXNEST' in hdr:
+        in_nside  = hdr['HPXNSIDE']
+        is_nested = hdr['HPXNEST'] # true or false
+    else:
+        in_nside = None
+        is_nested = None
+
+    accepted_z_keys = ['Z', 'Z_QSO_RSD']
+    z_key = key_val.intersection(accepted_z_keys).pop()
+    if not z_key:
+        err_msg = f"Z key has to be one of {', '.join(accepted_z_keys)}"
+        userprint(f"ERROR: {err_msg}")
+        raise KeyError(err_msg)
+
+    w = hdu['Z'][:] > max(0., lambda_min / lambda_max_rest_frame - 1.)
+    w &= hdu['Z'][:] < max(0., lambda_max / lambda_min_rest_frame - 1.)
+    objs_ra = hdu['RA'][:][w].astype('float64') * np.pi / 180.
+    objs_dec = hdu['DEC'][:][w].astype('float64') * np.pi / 180.
     objs_thingid = objs_thingid[w]
     hdul.close()
     userprint('INFO: Found {} quasars'.format(objs_ra.size))
@@ -293,31 +315,26 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
                    "'in_filenames' given"))
         sys.exit()
     elif in_dir is not None:
-        files = sorted(glob.glob(in_dir + '/*/*/transmission*.fits*'))
-        files = np.sort(np.array(files))
-        hdul = fitsio.FITS(files[0])
-        in_nside = hdul['METADATA'].read_header()['HPXNSIDE']
-        nest = hdul['METADATA'].read_header()['HPXNEST']
-        hdul.close()
+        # ohio-p1d transmissions are named lya-transmissions*
+        files = np.array(sorted(glob.glob(in_dir + '/*/*/*transmission*.fits*')))
+
+        if in_nside is None:
+            hdul = fitsio.FITS(files[0])
+            in_nside = hdul['METADATA'].read_header()['HPXNSIDE']
+            is_nested = hdul['METADATA'].read_header()['HPXNEST']
+            hdul.close()
+
         in_healpixs = healpy.ang2pix(in_nside,
                                      np.pi / 2. - objs_dec,
                                      objs_ra,
-                                     nest=nest)
+                                     nest=is_nested)
         if files[0].endswith('.gz'):
             end_of_file = '.gz'
         else:
             end_of_file = ''
-        files = np.sort(
-            np.array([("{}/{}/{healpix}/transmission-{}-{healpix}"
-                       ".fits{}").format(in_dir,
-                                         int(healpix // 100),
-                                         in_nside,
-                                         end_of_file,
-                                         healpix=healpix)
-                      for healpix in np.unique(in_healpixs)]))
     else:
         files = np.sort(np.array(in_filenames))
-        nest = None
+        is_nested = None
     userprint('INFO: Found {} files'.format(files.size))
 
     # Check if we should compute linear or log spaced deltas
@@ -337,9 +354,9 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     arguments = [(f, num_bins, objs_thingid, lambda_min, lambda_max,
                   lambda_min_rest_frame, lambda_max_rest_frame,
                   delta_log_lambda, delta_lambda, lin_spaced) for f in files]
-    pool = Pool(processes=nproc)
-    read_results = pool.starmap(read_transmission_file, arguments)
-    pool.close()
+
+    with Pool(processes=nproc) as pool:
+        read_results = pool.starmap(read_transmission_file, arguments)
 
     # Read and merge the results
     stack_flux = np.zeros(num_bins)
@@ -370,35 +387,28 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     mean_flux = stack_flux
     mean_flux[w] /= stack_weight[w]
 
+    # set mapping between input healpix and output healpix
+    out_healpix_method = lambda in_nside, healpix: healpix
+
+    # The first case doesn't make sense.
+    # Why even convert from nested to ring at all?
+    if is_nested is None and out_healpix_order is not None:
+        raise ValueError('Input HEALPix scheme not known, cannot'
+                'convert to scheme {}'.format(out_healpix_order))
+    elif is_nested and out_healpix_order.lower() == 'ring':
+        out_healpix_method = lambda in_nside, healpix: healpy.nest2ring(int(in_nside), int(healpix))
+    elif not is_nested and out_healpix_order.lower() == 'nest':
+        out_healpix_method = lambda in_nside, healpix: healpy.ring2nest(int(in_nside), int(healpix))
+    else:
+        raise ValueError('HEALPix scheme {} not recognised'.format(
+            out_healpix_order))
+
     #  save results
     out_filenames = {}
     for healpix in sorted(deltas):
-        if nest is None:
-            if out_healpix_order is None:
-                out_healpix = healpix
-            else:
-                raise ValueError('Input HEALPix scheme not known, cannot'
-                                 'convert to scheme {}'.format(out_healpix_order))
-        else:
-            if nest:
-                if out_healpix_order.lower() == 'nest':
-                    out_healpix = healpix
-                elif out_healpix_order.lower() == 'ring':
-                    out_healpix = healpy.nest2ring(int(in_nside), int(healpix))
-                else:
-                    raise ValueError('HEALPix scheme {} not recognised'.format(
-                        out_healpix_order))
-            else:
-                if out_healpix_order.lower() == 'nest':
-                    out_healpix = healpy.ring2nest(int(in_nside), int(healpix))
-                elif out_healpix_order.lower() == 'ring':
-                    out_healpix = healpix
-                else:
-                    raise ValueError('HEALPix scheme {} not recognised'.format(
-                        out_healpix_order))
+        out_healpix = out_healpix_method(in_nside, healpix)
 
-        print('Input nested? {} // in_healpix={} // out_healpix={}'.format(
-            nest, healpix, out_healpix))
+        print(f'Input nested? {is_nested} // in_healpix={healpix} // out_healpix={out_healpix}')
         out_filenames[healpix] = out_dir + '/delta-{}'.format(out_healpix) + '.fits.gz'
 
     if use_old_weights:
@@ -425,9 +435,9 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
 
     arguments = [(deltas[hpix], mean_flux, flux_variance, hpix, out_filenames[hpix],
                   x_min, delta_x, lin_spaced) for hpix in deltas.keys()]
-    pool = Pool(processes=nproc)
-    _ = pool.starmap(write_delta_from_transmission, arguments)
-    pool.close()
+
+    with Pool(processes=nproc) as pool:
+        pool.starmap(write_delta_from_transmission, arguments)
 
     userprint("")
 
