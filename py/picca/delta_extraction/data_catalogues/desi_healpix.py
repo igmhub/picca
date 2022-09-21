@@ -205,7 +205,21 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             self.logger.warning(
                 f"Missing Z band from {filename}. Ignoring color.")
 
+        hdul_truth = None
         reso_from_truth = False
+        all_reso_present = all(x in hdul for x in (f"{color}_RESOLUTION" for color in colors))
+        if self.analysis_type == "PK 1D" and not all_reso_present:
+            self.logger.debug(
+                    "no resolution in files, reading from truth files"
+                )
+            basename_truth = os.path.basename(filename).replace(
+                            'spectra-', 'truth-')
+            pathname_truth = os.path.dirname(filename)
+            filename_truth = f"{pathname_truth}/{basename_truth}"
+            if os.path.exists(filename_truth):
+                hdul_truth = fitsio.FITS(filename_truth)
+                reso_from_truth = True
+
         for color in colors:
             spec = {}
             try:
@@ -216,35 +230,29 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
                 w = np.isnan(spec["FLUX"]) | np.isnan(spec["IVAR"])
                 for key in ["FLUX", "IVAR"]:
                     spec[key][w] = 0.
-                if self.analysis_type == "PK 1D":
-                    if f"{color}_RESOLUTION" in hdul:
-                        spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
-                    else:
-                        if not reso_from_truth:
-                            self.logger.debug(
-                                "no resolution in files, reading from truth files"
-                            )
-                        reso_from_truth = True
-                        basename_truth = os.path.basename(filename).replace(
-                            'spectra-', 'truth-')
-                        pathname_truth = os.path.dirname(filename)
-                        filename_truth = f"{pathname_truth}/{basename_truth}"
-                        if os.path.exists(filename_truth):
-                            with fitsio.FITS(filename_truth) as hdul_truth:
-                                spec["RESO"] = hdul_truth[
-                                    f"{color}_RESOLUTION"].read()
-                        else:
-                            raise DataError(
-                                f"Error while reading {color} band from "
-                                f"{filename}. Analysis type is 'PK 1D', "
-                                "but file does not contain HDU "
-                                f"'{color}_RESOLUTION'")
+
+                if self.analysis_type != "PK 1D":
+                    spectrographs_data[color] = spec
+                    continue
+
+                if f"{color}_RESOLUTION" in hdul:
+                    spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
+                elif hdul_truth is not None:
+                    spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
+                else:
+                    raise DataError(
+                            f"Error while reading {color} band from "
+                            f"{filename}. Analysis type is 'PK 1D', "
+                            "but file does not contain HDU "
+                            f"'{color}_RESOLUTION'")
                 spectrographs_data[color] = spec
             except OSError:
                 self.logger.warning(
                     f"Error while reading {color} band from {filename}. "
                     "Ignoring color.")
         hdul.close()
+        if hdul_truth is not None:
+            hdul_truth.close()
 
         forests_by_targetid, num_data = self.format_data(
             catalogue,
