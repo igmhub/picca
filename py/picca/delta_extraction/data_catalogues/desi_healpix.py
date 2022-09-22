@@ -207,8 +207,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
 
         hdul_truth = None
         reso_from_truth = False
-        all_reso_present = all(x in hdul for x in (f"{color}_RESOLUTION" for color in colors))
-        if self.analysis_type == "PK 1D" and not all_reso_present:
+        if self.analysis_type == "PK 1D" and any(f"{c}_RESOLUTION" not in hdul for c in colors):
             self.logger.debug(
                     "no resolution in files, reading from truth files"
                 )
@@ -219,6 +218,18 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             if os.path.exists(filename_truth):
                 hdul_truth = fitsio.FITS(filename_truth)
                 reso_from_truth = True
+
+        def _read_resolution(color):
+            if f"{color}_RESOLUTION" in hdul:
+                return hdul[f"{color}_RESOLUTION"].read()
+            if hdul_truth is not None:
+                return hdul_truth[f"{color}_RESOLUTION"].read()
+
+            raise DataError(
+                    f"Error while reading {color} band from "
+                    f"{filename}. Analysis type is 'PK 1D', "
+                    "but file does not contain HDU "
+                    f"'{color}_RESOLUTION'")
 
         for color in colors:
             spec = {}
@@ -231,20 +242,9 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
                 for key in ["FLUX", "IVAR"]:
                     spec[key][w] = 0.
 
-                if self.analysis_type != "PK 1D":
-                    spectrographs_data[color] = spec
-                    continue
+                if self.analysis_type == "PK 1D":
+                    spec["RESO"] = _read_resolution(color)
 
-                if f"{color}_RESOLUTION" in hdul:
-                    spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
-                elif hdul_truth is not None:
-                    spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
-                else:
-                    raise DataError(
-                            f"Error while reading {color} band from "
-                            f"{filename}. Analysis type is 'PK 1D', "
-                            "but file does not contain HDU "
-                            f"'{color}_RESOLUTION'")
                 spectrographs_data[color] = spec
             except OSError:
                 self.logger.warning(
