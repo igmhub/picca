@@ -75,7 +75,6 @@ class TrueContinuum(ExpectedFlux):
     a function of wavelength.
     """
 
-
     def __init__(self, config):
         """Initialize class instance.
 
@@ -138,11 +137,11 @@ class TrueContinuum(ExpectedFlux):
         # the might be some small changes in the var_lss compared to the read
         # values due to some smoothing of the forests
         # thus, we recompute it from the actual deltas
-        self.compute_var_lss(forests)
+        # self.compute_var_lss(forests)
         # note that this does not change the output deltas but might slightly
         # affect the mean continuum so we have to compute it after updating
         # var_lss
-        self.compute_mean_cont(forests)
+        # self.compute_mean_cont(forests)
 
         self.compute_delta_stack(forests)
 
