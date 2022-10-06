@@ -141,7 +141,7 @@ class TrueContinuum(ExpectedFlux):
         # note that this does not change the output deltas but might slightly
         # affect the mean continuum so we have to compute it after updating
         # var_lss
-        self.compute_mean_cont(forests)
+        # self.compute_mean_cont(forests)
 
         self.compute_delta_stack(forests)
 
@@ -350,8 +350,8 @@ class TrueContinuum(ExpectedFlux):
             true_continuum = interp1d(lambda_, true_cont["TRUE_CONT"][indx])
 
             forest.continuum = true_continuum(10**forest.log_lambda)
-            forest.continuum *= self.get_mean_flux(forest.log_lambda)
-            forest.continuum *= forest.transmission_correction
+            # forest.continuum *= self.get_mean_flux(forest.log_lambda)
+            # forest.continuum *= forest.transmission_correction
 
         hdul.close()
         return forests
