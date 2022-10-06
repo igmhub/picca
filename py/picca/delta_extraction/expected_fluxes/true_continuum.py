@@ -141,7 +141,7 @@ class TrueContinuum(ExpectedFlux):
         # note that this does not change the output deltas but might slightly
         # affect the mean continuum so we have to compute it after updating
         # var_lss
-        # self.compute_mean_cont(forests)
+        self.compute_mean_cont(forests)
 
         self.compute_delta_stack(forests)
 
