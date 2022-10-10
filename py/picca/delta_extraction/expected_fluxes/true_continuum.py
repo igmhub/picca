@@ -161,7 +161,7 @@ class TrueContinuum(ExpectedFlux):
         continuum: array of float
         Quasar continuum associated with the forest
         """
-        var_pipe = 1. / forest.ivar / forest.continuum**2
+        var_pipe = 1. / forest.ivar / (forest.continuum * self.get_mean_flux(forest.log_lambda))**2
         var_lss = self.get_var_lss(forest.log_lambda)
         return var_lss + var_pipe
 
