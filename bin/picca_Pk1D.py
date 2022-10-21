@@ -82,11 +82,6 @@ def process_all_files(index_file_args):
                 delta.mean_reso=1e-3
                 delta.mean_reso_pix=1e-3
                 delta.exposures_diff = np.zeros(delta.delta.shape)
-                #if args.linear_binning:
-                #    delta.dlambda = np.median(sp.diff(10**d.ll))  #(d.ll[-1]-d.ll[0])/(len(d.ll)-1) #both of those should give the same result, but the first is more explicite, second one should be faster, but this shouldn't be a dominant effect
-                #else:
-                #    delta.dll = np.mean(np.diff(d.ll))  #(d.ll[-1]-d.ll[0])/(len(d.ll)-1) #both of those should give the same result, but the first is more explicite, second one should be faster, but this shouldn't be a dominant effect
-                #delta.mean_resolution_matrix=???
             running_on_raw_transmission = True
     elif args.in_format == 'ascii':
         ascii_file = open(file, 'r')
