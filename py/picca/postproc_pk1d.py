@@ -14,21 +14,23 @@ from scipy.stats import binned_statistic
 import glob
 import os
 
-def read_pk1d(f, snr_cut_mean=None, zbins=None):
+def read_pk1d(f, kbin_edges, snr_cut_mean=None, zbins=None):
     """Read Pk1D data from file(s)
     
     Args:
         f: Fits file, Individual p1d 
+        kbin_edges: Array of floats, Edges of the wavenumber bins we want to use (logsample/not)
         snr_cut_mean: Array of floats, Optional
                       Mean SNR threshold to be applied for each redshift bin, Defaults to None
         zbins: Array of floats, Optional if snr_cut_mean is not None
                Which redshift bins to use
+    Output:
+        data_array: Table, one entry per mode(k) per chunk
+        z_array: array[Nchunks]
     """
   
-    data_array=[]
-    z_array=[]
-    removed = 0
-    left = 0
+    data_array = []
+    z_array = []
     with fitsio.FITS(f) as hdus:
         for i,h in enumerate(hdus[1:]):
             data = h.read()
@@ -63,9 +65,9 @@ def read_pk1d(f, snr_cut_mean=None, zbins=None):
                 if(header['MEANSNR'] < snr_cut_mean[zbin_index]):
                     continue
                     
-            #if (tab['Pk_noise'][tab['k']<kbinedges[-1]]>tab['Pk_raw'][tab['k']<kbinedges[-1]]*1000000).any():
-                #print(f"file {f} hdu {i+1} has very high noise power, ignoring, max value: {(tab['Pk_noise'][tab['k']<kbinedges[-1]]/tab['Pk_raw'][tab['k']<kbinedges[-1]]).max()}*Praw")
-                #continue
+            if (tab['Pk_noise'][tab['k']<kbin_edges[-1]]>tab['Pk_raw'][tab['k']<kbin_edges[-1]]*1000000).any():
+                print(f"file {f} hdu {i+1} has very high noise power, ignoring, max value: {(tab['Pk_noise'][tab['k']<kbin_edges[-1]]/tab['Pk_raw'][tab['k']<kbin_edges[-1]]).max()}*Praw")
+                continue
                 
             data_array.append(tab)
             z_array.append(float(header['MEANZ']))
@@ -80,11 +82,12 @@ def read_pk1d(f, snr_cut_mean=None, zbins=None):
             data_array['Pk_noraw_miss'] = data_array['Pk_noise_miss'] / data_array['cor_reso']
         except:
             pass
-        data_array['Pk/Pk_noise'] = data_array['Pk_raw'] / data_array['Pk_noise']   
+        data_array['Pk/Pk_noise'] = data_array['Pk_raw'] / data_array['Pk_noise']
     else:
         print(f"only {len(data_array)} spectra in file, ignoring this as it currently messes with analysis")
+    z_array = np.array(z_array)
 
-    return data_array, np.array(z_array)
+    return data_array, z_array
   
     
 def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, nomedians=False, velunits=False, addweights=False):
@@ -197,20 +200,13 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, snr_cut_mean=None, zb
     from multiprocessing import Pool
     with Pool(ncpu) as pool:
         if snr_cut_mean is not None:
-            full_data_array = pool.starmap(read_pk1d,[[f, snr_cut_mean, zbins] for f in files])
+            full_data_array = pool.starmap(read_pk1d,[[f, kbin_edges, snr_cut_mean, zbins] for f in files])
         else:
-            full_data_array = pool.starmap(read_pk1d,[[f] for f in files])
+            full_data_array = pool.starmap(read_pk1d,[[f, kbin_edges] for f in files])
     
     data_array = vstack([full_data_array[i][0] for i in range(len(full_data_array))])  
     z_array = np.concatenate(tuple([full_data_array[i][1] for i in range(len(full_data_array))]))
-    
-    bad = ( (data_array['Pk_noise'] > data_array['Pk_raw']*1000000) &
-            (data_array['k']<kbin_edges[-1]) )
-    if np.any(bad)>0:
-        print(f"Found HDUs with very high noise power: {np.sum(bad)}, ignoring them.")
-        data_array = data_array[bitwise_not(bad)]
-        z_array = z_array[bitwise_not(bad)]
-    
+
     full_meanP1D_table = compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, nomedians, velunits, addweights)
     
     outdir = full_meanP1D_table
