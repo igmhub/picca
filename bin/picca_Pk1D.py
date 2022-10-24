@@ -75,7 +75,7 @@ def process_all_files(index_file_args):
             running_on_raw_transmission = False
         except ValueError:
             print("\nPk1d_type=True didn't work on read in, maybe perfect model? Trying without any noise or resolution corrections!")
-            deltas = [delta.from_fitsio(hdu,Pk1D_type=False) for hdu in hdul[1:]]
+            deltas = [Delta.from_fitsio(hdu,pk1d_type=False) for hdu in hdul[1:]]
             for delta in deltas:
                 delta.ivar=np.ones(delta.delta.shape)*1e10
                 delta.mean_snr=1e5
