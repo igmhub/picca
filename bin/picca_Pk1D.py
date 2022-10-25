@@ -255,7 +255,7 @@ def process_all_files(index_file_args):
                 correction_reso = compute_correction_reso(
                     delta_pixel=delta_pixel, mean_reso=delta.mean_reso, k=k)
             else:
-                correction_reso=cor_reso = compute_correction_reso(delta_pixel=pixel_step, mean_reso=0., k=k)
+                correction_reso= compute_correction_reso(delta_pixel=pixel_step, mean_reso=0., k=k)
 
             # Compute 1D Pk
             if args.noise_estimate == 'pipeline' or running_on_raw_transmission:
