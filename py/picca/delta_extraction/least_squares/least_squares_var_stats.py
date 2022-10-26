@@ -151,8 +151,13 @@ class LeastsSquaresVarStats:
             # ignore forest if continuum could not be computed
             if forest.continuum is None:
                 continue
-            var_pipe = 1 / forest.ivar / forest.continuum**2
-            w = ((np.log10(var_pipe) > VAR_PIPE_MIN) &
+
+            w =  forest.ivar > 0
+            var_pipe = np.empty_like(forest.log_lambda)
+            var_pipe[w]  = 1 / forest.ivar[w] / forest.continuum[w]**2
+            var_pipe[~w] = np.inf
+
+            w &= ((np.log10(var_pipe) > VAR_PIPE_MIN) &
                  (np.log10(var_pipe) < VAR_PIPE_MAX))
 
             # select the pipeline variance bins
@@ -169,21 +174,14 @@ class LeastsSquaresVarStats:
             bins = var_pipe_bins + NUM_VAR_BINS * log_lambda_bins
 
             # compute deltas
-            delta = (forest.flux / forest.continuum - 1)
-            delta = delta[w]
+            delta = forest.flux[w] / forest.continuum[w] - 1
 
             # add contributions to delta statistics
-            rebin = np.bincount(bins, weights=delta)
-            mean_delta[:len(rebin)] += rebin
+            mean_delta += np.bincount(bins, weights=delta, minlength=mean_delta.size)
+            var_delta  += np.bincount(bins, weights=delta**2, minlength=mean_delta.size)
+            var2_delta += np.bincount(bins, weights=delta**4, minlength=mean_delta.size)
 
-            rebin = np.bincount(bins, weights=delta**2)
-            var_delta[:len(rebin)] += rebin
-
-            rebin = np.bincount(bins, weights=delta**4)
-            var2_delta[:len(rebin)] += rebin
-
-            rebin = np.bincount(bins)
-            num_pixels[:len(rebin)] += rebin
+            num_pixels += np.bincount(bins, minlength=mean_delta.size)
             num_qso[np.unique(bins)] += 1
 
         # normalise and finish the computation of delta statistics

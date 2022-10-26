@@ -180,7 +180,9 @@ class MaskTest(AbstractTest):
 
         Load a Mask instace and check that method apply_mask is not initialized.
         """
-        mask = Mask()
+        config = ConfigParser()
+        config.read_dict({"masks": {}})
+        mask = Mask(config['masks'])
         expected_message = (
             "Function 'apply_mask' was not overloaded by child class")
         with self.assertRaises(MaskError) as context_manager:

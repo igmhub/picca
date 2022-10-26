@@ -185,7 +185,7 @@ class ConfigTest(AbstractTest):
 
         # check masks dictionary
         mask_args0 = config.masks[0][1]
-        self.assertTrue(len(mask_args0) == 2)
+        self.assertTrue(len(mask_args0) == 3)
         self.assertTrue(np.isclose(
             mask_args0.getfloat("dla mask limit"),
             defaults_dla_mask.get("dla mask limit")
@@ -452,8 +452,9 @@ class ConfigTest(AbstractTest):
         # firt check masks section
         in_file = f"{prefix}_masks.ini"
         expected_message = (
-            "Unrecognised option in section [masks]. Found: 'name 0'. Accepted "
-            "options are ['num masks', 'type {int}', 'module name {int}']"
+            "Unrecognised option in section [masks]. Found: 'name 0'. "
+            "Accepted options are "
+            f"{accepted_masks_options}"
         )
         self.check_error(in_file, expected_message)
 

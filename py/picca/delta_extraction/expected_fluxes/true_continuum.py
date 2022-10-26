@@ -151,6 +151,18 @@ class TrueContinuum(ExpectedFlux):
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
 
+    def compute_mean_cont(self, forests):
+        """Compute the mean quasar continuum over the whole sample.
+        Then updates the value of self.get_mean_cont to contain it
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+        """
+
+        return super()._compute_mean_cont(forests)
+
     def compute_forest_variance(self, forest, continuum):
         """Compute the forest variance
 
@@ -162,51 +174,18 @@ class TrueContinuum(ExpectedFlux):
         continuum: array of float
         Quasar continuum associated with the forest
         """
-        var_pipe = 1. / forest.ivar / forest.continuum**2
-        var_lss = self.get_var_lss(forest.log_lambda)
-        return var_lss + var_pipe
+        w = forest.ivar > 0
+        variance = np.empty_like(forest.log_lambda)
+        variance[~w] = np.inf
 
-    def compute_mean_cont(self, forests):
-        """Compute the mean quasar continuum over the whole sample.
-        Then updates the value of self.get_mean_cont to contain it
+        if self.use_constant_weight:
+            variance[w] = 1
+        else:
+            var_lss = self.get_var_lss(forest.log_lambda[w])
+            ivar_pipe = forest.ivar * forest.continuum**2
+            variance[w] = var_lss + 1/ivar_pipe[w]
 
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-        """
-        mean_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid)
-        mean_cont_weight = np.zeros_like(Forest.log_lambda_rest_frame_grid)
-
-        for forest in forests:
-            if forest.bad_continuum_reason is not None:
-                continue
-            bins = find_bins(forest.log_lambda - np.log10(1 + forest.z),
-                             Forest.log_lambda_rest_frame_grid,
-                             Forest.wave_solution)
-
-            if self.use_constant_weight:
-                weights = np.ones_like(forest.log_lambda)
-            else:
-                weights = 1. / self.compute_forest_variance(
-                    forest, forest.continuum)
-            cont = np.bincount(bins, weights=forest.continuum * weights)
-            mean_cont[:len(cont)] += cont
-            cont_weight = np.bincount(bins, weights=weights)
-            mean_cont_weight[:len(cont)] += cont_weight
-
-        w = mean_cont_weight > 0
-        mean_cont[w] /= mean_cont_weight[w]
-        mean_cont /= mean_cont.mean()
-        log_lambda_cont = Forest.log_lambda_rest_frame_grid[w]
-
-        self.get_mean_cont = interp1d(log_lambda_cont,
-                                      mean_cont,
-                                      fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(log_lambda_cont,
-                                             mean_cont_weight[w],
-                                             fill_value=0.0,
-                                             bounds_error=False)
+        return variance
 
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
@@ -239,9 +218,13 @@ class TrueContinuum(ExpectedFlux):
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
+
             # get the variance functions
             if self.use_constant_weight:
-                weights = np.ones_like(forest.log_lambda)
+                w = forest.ivar>0
+                weights = np.empty_like(forest.log_lambda)
+                weights[w] = 1
+                weights[~w]= 0
                 mean_expected_flux = forest.continuum
             else:
                 mean_expected_flux = forest.continuum
@@ -485,11 +468,12 @@ class TrueContinuum(ExpectedFlux):
         counts = np.zeros_like(Forest.log_lambda_grid)
 
         for forest in forests:
+            w = forest.ivar > 0
             log_lambda_bins = find_bins(forest.log_lambda,
                                         Forest.log_lambda_grid,
-                                        Forest.wave_solution)
-            var_pipe = 1. / forest.ivar / forest.continuum**2
-            deltas = forest.flux / forest.continuum - 1
+                                        Forest.wave_solution)[w]
+            var_pipe = 1. / forest.ivar[w] / forest.continuum[w]**2
+            deltas = forest.flux[w] / forest.continuum[w] - 1
             var_lss[log_lambda_bins] += deltas**2 - var_pipe
             counts[log_lambda_bins] += 1
 

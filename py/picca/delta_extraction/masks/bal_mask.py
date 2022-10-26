@@ -15,7 +15,7 @@ defaults = {
     "los_id name": "THING_ID",
 }
 
-accepted_options = ["bal index type", "filename", "los_id name"]
+accepted_options = ["bal index type", "filename", "los_id name", "keep pixels"]
 
 # Wavelengths in Angstroms
 lines = np.array([
@@ -79,7 +79,7 @@ class BalMask(Mask):
         """
         self.logger = logging.getLogger(__name__)
 
-        super().__init__()
+        super().__init__(config)
 
         filename = config.get("filename")
         if filename is None:
@@ -218,6 +218,7 @@ class BalMask(Mask):
         MaskError if Forest.wave_solution is not 'log'
         """
         mask_table = self.los_ids.get(forest.los_id)
+
         if (mask_table is None) or len(mask_table) == 0:
             return
 
@@ -234,7 +235,4 @@ class BalMask(Mask):
 
         # do the actual masking
         for param in Forest.mask_fields:
-            if param in ['resolution_matrix']:
-                setattr(forest, param, getattr(forest, param)[:, w])
-            else:
-                setattr(forest, param, getattr(forest, param)[w])
+            self._masker(forest, param, w)
