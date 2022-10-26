@@ -113,7 +113,7 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, nomedians=Fal
     stats_array = ['mean','error','min','max']
     if nomedians==True:
         stats_array+=['median']
-    
+        
     for izbin,zbin in enumerate(zbin_edges[:-1]):
         table_data = Table()
         N_array = np.empty(0)
@@ -153,13 +153,15 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, nomedians=Fal
                 if addweights==True:
                     weights = (data_array['forest_snr'][select])**2
                     mean = np.average((data_array[c][select]), weights=weights)
-                    variance = np.var((data_array[c][select]))
-                    weights_coeff = np.sqrt((N_array[ikbin] * variance)/(np.sum(1/weights)))
+                    # variance = np.var((data_array[c][select]))
+                    # weights_coeff = np.sqrt((N_array[ikbin] * variance)/(np.sum(1/weights)))
+                    alpha = np.sum(weights * ((data_array[c][select] - mean)**2))
+                    weights_coeff = (N_array[ikbin] - 1) / alpha
                     error = weights_coeff * np.sqrt(1/np.sum(weights))
                 else:
                     mean = np.average((data_array[c][select])) 
                     error = np.std((data_array[c][select])) / np.sqrt(N_array[ikbin]-1)  # unbiased estimate: N-1 
-
+                    
                 minimum = np.min((data_array[c][select]))
                 maximum = np.max((data_array[c][select]))
                 table_data['mean'+c][0,ikbin] = mean
@@ -170,11 +172,12 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, nomedians=Fal
                     median = np.median((data_array[c][select]))
                     table_data['median'+c][0,ikbin] = median
                     median = 0
-                mean, variance, weights_coeff, error, minimum, maximum = 0, 0, 0, 0, 0, 0
+                mean, alpha, weights_coeff, error, minimum, maximum = 0, 0, 0, 0, 0, 0
 
         table_data['N'] = N_array[np.newaxis,:] 
 
         meanP1D_table=vstack([meanP1D_table,table_data])
+        
                             
     return meanP1D_table
 
@@ -213,3 +216,5 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, snr_cut_mean=None, zb
     outdir.meta['velunits']=velunits
     outdir.write(outfilename,overwrite=overwrite)
     return outdir
+
+
