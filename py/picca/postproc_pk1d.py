@@ -13,6 +13,7 @@ from astropy.table import Table, vstack
 from scipy.stats import binned_statistic
 import glob
 import os
+import matplotlib.pyplot as plt
 
 def read_pk1d(f, kbin_edges, snr_cut_mean=None, zbins=None):
     """Read Pk1D data from file(s)
@@ -90,7 +91,7 @@ def read_pk1d(f, kbin_edges, snr_cut_mean=None, zbins=None):
     return data_array, z_array
   
     
-def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, nomedians=False, velunits=False, addweights=False):
+def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_method, nomedians=False, velunits=False):
     """Takes the individual P1D of each forest chunk and computes the mean P1D with adding weights option
     
     Args: 
@@ -100,9 +101,12 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, nomedians=Fal
         z_array: Array of floats, Mean z of each contributing forest chunck stacked in one array done in "read_pk1d"
         zbin_edges: Array of floats, Edges of the redshift bins we want to use
         kbin_edges: Array of floats, Edges of the wavenumber bins we want to use (logsample/not)
+        weights_method: String, 3 possible options: 
+                                'fit_snr': Compute mean P1D with estimated weights using snr fitting
+                                'simple_snr': Compute mean P1D with weights using the snr values from compute_Pk1D output
+                                'no_weights': Compute mean P1D without weights
         nomedians: Bool, Optional, Skip median computation, Default to False
         velunits: Bool, Optional, Compute P1D in velocity units, Default to False  
-        addweights: Bool, Optional, Compute mean P1D with weights, Default to False
     """
     
     meanP1D_table = Table()
@@ -136,7 +140,7 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, nomedians=Fal
                 table_data['median'+c] = np.zeros((1,len(kbin_edges)-1))
 
         for ikbin, kbin in enumerate(kbin_edges[:-1]):
-            select=(data_array['forest_z'][:] < zbin_edges[izbin + 1])&(data_array['forest_z'][:] > zbin_edges[izbin])&(data_array['k'][:] < kbin_edges[ikbin + 1])&(data_array['k'][:] > kbin_edges[ikbin]) # select a specific zbin and kbin
+            select=(data_array['forest_z'][:] < zbin_edges[izbin + 1])&(data_array['forest_z'][:] > zbin_edges[izbin])&(data_array['k'][:] < kbin_edges[ikbin + 1])&(data_array['k'][:] > kbin_edges[ikbin]) # select a specific (z,k) bin
 
             if velunits==True: # Convert data into velocity units
                 conversion_factor = (1215.67 * (1 + np.mean(data_array['forest_z'][select]))) / 3e5
@@ -145,22 +149,44 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, nomedians=Fal
                     if 'Pk' in c:
                         data_array[c][select]/=conversion_factor
 
-            N = np.ma.count(data_array['k'][select]) # Counts the number of chunks in each kbin
+            N = np.ma.count(data_array['k'][select]) # Counts the number of chunks in each (z,k) bin
             N_array = np.append(N_array, N)  
 
             for ic, c in enumerate(data_array_cols): 
                 
-                if addweights==True:
-                    weights = (data_array['forest_snr'][select])**2
+                if weights_method=='fit_snr':
+                    snr_bin_edges = np.arange(1,11,1)
+                    snr_bins = np.arange(1.5,10.5,1)
+                    from scipy.optimize import curve_fit
+                    def variance_function(snr, a, b):
+                        return (a/(snr-1)**2) + b
+                    data_values = data_array[c][select]
+                    data_snr = data_array['forest_snr'][select]
+                    standard_dev,_,_ = binned_statistic(data_snr, data_values,
+                                                                 statistic='std', bins=snr_bin_edges)
+                    coef, coef_cov = curve_fit(variance_function, snr_bins, standard_dev**2, bounds=(0,np.inf))
+                    data_snr[data_snr>11] = 11
+                    data_snr[ data_snr<1.01] = 1.01
+                    variance_estimated = variance_function(data_snr, coef[0], coef[1])
+                    weights = 1. / variance_estimated
                     mean = np.average((data_array[c][select]), weights=weights)
-                    # variance = np.var((data_array[c][select]))
-                    # weights_coeff = np.sqrt((N_array[ikbin] * variance)/(np.sum(1/weights)))
+                    error = np.sqrt(1. / np.sum(weights))
+                elif weights_method=='simple_snr':
+                    snr_limit = 4 # for forests with snr>snr_limit, the weight is fixed to (snr_limit - 1)**2 = 9
+                    forest_snr = data_array['forest_snr'][select]
+                    w, = np.where(forest_snr <= 1)
+                    if len(w)>0: raise RuntimeError('Cannot add weights with SNR<=1.')
+                    weights = (forest_snr - 1)**2
+                    weights[forest_snr>snr_limit] = (snr_limit - 1)**2
+                    mean = np.average((data_array[c][select]), weights=weights)
                     alpha = np.sum(weights * ((data_array[c][select] - mean)**2))
-                    weights_coeff = (N_array[ikbin] - 1) / alpha
-                    error = weights_coeff * np.sqrt(1/np.sum(weights))
-                else:
+                    #- weights_true = weights * (N_array[ikbin] - 1) / alpha
+                    error = np.sqrt(alpha / (np.sum(weights) * (N_array[ikbin] - 1)))
+                elif weights_method=='no_weights':
                     mean = np.average((data_array[c][select])) 
                     error = np.std((data_array[c][select])) / np.sqrt(N_array[ikbin]-1)  # unbiased estimate: N-1 
+                else:
+                    raise ValueError("Option for 'weights_method' argument not found")
                     
                 minimum = np.min((data_array[c][select]))
                 maximum = np.max((data_array[c][select]))
@@ -171,19 +197,16 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, nomedians=Fal
                 if nomedians==True:
                     median = np.median((data_array[c][select]))
                     table_data['median'+c][0,ikbin] = median
-                    median = 0
-                mean, alpha, weights_coeff, error, minimum, maximum = 0, 0, 0, 0, 0, 0
-
+                
         table_data['N'] = N_array[np.newaxis,:] 
 
         meanP1D_table=vstack([meanP1D_table,table_data])
-        
                             
     return meanP1D_table
 
 
-def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, snr_cut_mean=None, zbins=None, nomedians=False, 
-                         velunits=False, addweights=False, overwrite=False):
+def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_cut_mean=None, zbins=None, nomedians=False, 
+                         velunits=False, overwrite=False):
     """Read individual Pk1D data from different files and compute the mean P1D
     
     Args:
@@ -210,7 +233,7 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, snr_cut_mean=None, zb
     data_array = vstack([full_data_array[i][0] for i in range(len(full_data_array))])  
     z_array = np.concatenate(tuple([full_data_array[i][1] for i in range(len(full_data_array))]))
 
-    full_meanP1D_table = compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, nomedians, velunits, addweights)
+    full_meanP1D_table = compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_method, nomedians, velunits)
     
     outdir = full_meanP1D_table
     outdir.meta['velunits']=velunits
