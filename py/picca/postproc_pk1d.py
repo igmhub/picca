@@ -143,7 +143,7 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
             select=(data_array['forest_z'][:] < zbin_edges[izbin + 1])&(data_array['forest_z'][:] > zbin_edges[izbin])&(data_array['k'][:] < kbin_edges[ikbin + 1])&(data_array['k'][:] > kbin_edges[ikbin]) # select a specific (z,k) bin
 
             if velunits==True: # Convert data into velocity units
-                conversion_factor = (1215.67 * (1 + np.mean(data_array['forest_z'][select]))) / 3e5
+                conversion_factor = (1215.67 * (1. + data_array['forest_z'][select])) / 3e5
                 data_array['k'][select]*=conversion_factor
                 for c in data_array_cols:
                     if 'Pk' in c:
