@@ -554,9 +554,9 @@ class DataTest(AbstractTest):
         # filter forests
         data.filter_forests()
         self.assertTrue(len(data.forests) == 0)
-        self.assertTrue(len(data.rejection_log_cols[0]) == 1)
-        self.assertTrue(len(data.rejection_log_cols[1]) == 1)
-        self.assertTrue(data.rejection_log_cols[1][0] == "nan_forest")
+        self.assertTrue(len(data.rejection_log.cols[0]) == 1)
+        self.assertTrue(len(data.rejection_log.cols[1]) == 1)
+        self.assertTrue(data.rejection_log.cols[1][0] == "nan_forest")
 
         # create Data instance with insane forest length requirements
         config = ConfigParser()
@@ -581,9 +581,9 @@ class DataTest(AbstractTest):
         # filter forests
         data.filter_forests()
         self.assertTrue(len(data.forests) == 0)
-        self.assertTrue(len(data.rejection_log_cols[0]) == 1)
-        self.assertTrue(len(data.rejection_log_cols[1]) == 1)
-        self.assertTrue(data.rejection_log_cols[1][0] == "short_forest")
+        self.assertTrue(len(data.rejection_log.cols[0]) == 1)
+        self.assertTrue(len(data.rejection_log.cols[1]) == 1)
+        self.assertTrue(data.rejection_log.cols[1][0] == "short_forest")
 
         # create Data instance with insane forest s/n requirements
         config = ConfigParser()
@@ -608,9 +608,9 @@ class DataTest(AbstractTest):
         # filter forests
         data.filter_forests()
         self.assertTrue(len(data.forests) == 0)
-        self.assertTrue(len(data.rejection_log_cols[0]) == 1)
-        self.assertTrue(len(data.rejection_log_cols[1]) == 1)
-        self.assertTrue(data.rejection_log_cols[1][0] == f"low SNR ({forest1.mean_snr})")
+        self.assertTrue(len(data.rejection_log.cols[0]) == 1)
+        self.assertTrue(len(data.rejection_log.cols[1]) == 1)
+        self.assertTrue(data.rejection_log.cols[1][0] == f"low SNR ({forest1.mean_snr})")
 
     def test_desi_data(self):
         """Test DesiData
