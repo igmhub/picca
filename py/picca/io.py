@@ -1415,25 +1415,27 @@ def read_blinding(in_dir):
     return blinding
 
 
-def read_delta_file(filename, from_image=None):
+def read_delta_file(filename, from_image=False):
     """Extracts deltas from a single file.
     Args:
         filename: str
             Path to the file to read
-        from_image: bool - default: False
-            Whether to use the from_image method.
+        
+        from_image: bool
+            If True read deltas in ImageHDU format.
     Returns:
         deltas:
             A dictionary with the data. Keys are the healpix numbers of each
                 spectrum. Values are lists of delta instances.
     """
 
-    if from_image is None:
-        hdul = fitsio.FITS(filename)
-        deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
-        hdul.close()
+    hdul = fitsio.FITS(filename)
+    if from_image:
+        deltas = Delta.from_image(hdul)
     else:
-        deltas = Delta.from_image(filename)
+        deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
+    
+    hdul.close()
 
     return deltas
 
@@ -1474,9 +1476,8 @@ def read_deltas(in_dir,
         no_project: bool - default: False
             If True, project the deltas (see equation 5 of du Mas des Bourboux
             et al. 2020)
-        from_image: list or None - default: None
-            If not None, read the deltas from image files. The list of
-            filenname for the image files should be paassed in from_image
+        from_image: bool - default: False
+            If True, read deltas in ImageHDU format. 
 
     Returns:
         The following variables:
@@ -1491,26 +1492,17 @@ def read_deltas(in_dir,
     """
     files = []
     in_dir = os.path.expandvars(in_dir)
-    if from_image is None or len(from_image) == 0:
-        if len(in_dir) > 8 and in_dir[-8:] == '.fits.gz':
-            files += sorted(glob.glob(in_dir))
-        elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
-            files += sorted(glob.glob(in_dir))
-        else:
-            files += sorted(glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
-                                                               '/*.fits.gz'))
+
+    if len(in_dir) > 8 and in_dir[-8:] == '.fits.gz':
+        files += sorted(glob.glob(in_dir))
+    elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
+        files += sorted(glob.glob(in_dir))
     else:
-        for arg in from_image:
-            if len(arg) > 8 and arg[-8:] == '.fits.gz':
-                files += sorted(glob.glob(arg))
-            elif len(arg) > 5 and arg[-5:] == '.fits':
-                files += sorted(glob.glob(arg))
-            else:
-                files += sorted(glob.glob(arg + '/*.fits') + glob.glob(arg +
-                                                                '/*.fits.gz'))
+        files += sorted(glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
+                                                            '/*.fits.gz'))
     files = sorted(files)
 
-    arguments = [(f, from_image) for f in files]
+    arguments = [(f,from_image) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
     pool.close()
