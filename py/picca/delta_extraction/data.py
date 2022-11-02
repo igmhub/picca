@@ -10,7 +10,8 @@ import healpy
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
-from picca.delta_extraction.errors import DataError
+from picca.delta_extraction.errors import AstronomicalObjectError, DataError
+from picca.delta_extraction.rejection_log import RejectionLogImage, RejectionLogTable
 from picca.delta_extraction.utils import ABSORBER_IGM
 
 accepted_options = [
@@ -18,6 +19,7 @@ accepted_options = [
     "delta lambda",
     "delta log lambda",
     "delta lambda rest frame",
+    "format", # Adding format as an option in the data section.
     "input directory",
     "lambda abs IGM",
     "lambda max",
@@ -38,6 +40,7 @@ accepted_options = [
 
 defaults = {
     "analysis type": "BAO 3D",
+    "format": "BinTableHDU", # Format option has now a default value, keep default the old one for testint porpouses.
     "lambda abs IGM": "LYA",
     "lambda max": 5500.0,
     "lambda max rest frame": 1200.0,
@@ -246,15 +249,6 @@ class Data:
 
     rejection_log_initialized: bool
     Flag specifying if the rejection log has been initialized
-
-    rejection_log_cols: list of list
-    Each list contains the data of each of the fields saved in the rejection log
-
-    rejection_log_comments: list of list
-    Description of each of the fields saved in the rejection log
-
-    rejection_log_names: list of list
-    Name of each of the fields saved in the rejection log
     """
 
     def __init__(self, config):
@@ -273,9 +267,6 @@ class Data:
 
         # rejection log arays
         self.rejection_log_initialized = False
-        self.rejection_log_cols = None
-        self.rejection_log_names = None
-        self.rejection_log_comments = None
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -391,6 +382,8 @@ class Data:
         if self.num_processors == 0:
             self.num_processors = (multiprocessing.cpu_count() // 2)
 
+        self.format = config.get("format")
+
         self.out_dir = config.get("out dir")
         if self.out_dir is None:
             raise DataError("Missing argument 'out dir' required by Data")
@@ -427,18 +420,15 @@ class Data:
                 "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
                 "required by Data")
 
-    def add_to_rejection_log(self, header, size, rejection_status):
+    def add_to_rejection_log(self, forest, rejection_status):
         """Adds to the rejection log arrays.
         In the log forest headers will be saved along with the forest size and
         the rejection status.
 
         Arguments
         ---------
-        header: list of dict
-        Output of forest.get_header()
-
-        size: int
-        Size of the forest
+        forest: Forest
+        forest to add to the rejection log.
 
         rejection_status: str
         Rejection status
@@ -447,34 +437,24 @@ class Data:
         if not self.rejection_log_initialized:
             self.initialize_rejection_log()
 
-        for col, name in zip(self.rejection_log_cols, self.rejection_log_names):
-            if name == "FOREST_SIZE":
-                col.append(size)
-            elif name == "REJECTION_STATUS":
-                col.append(rejection_status)
-            else:
-                # this loop will always end with the break
-                # the break is introduced to avoid useless checks
-                for item in header:  # pragma: no branch
-                    if item.get("name") == name:
-                        col.append(item.get("value"))
-                        break
+        self.rejection_log.add_to_rejection_log(forest, rejection_status)
 
     def initialize_rejection_log(self):
         """Initializes the rejection log arrays.
         In the log forest headers will be saved along with the forest size and
         the rejection status.
         """
-        self.rejection_log_cols = [[], []]
-        self.rejection_log_names = ["FOREST_SIZE", "REJECTION_STATUS"]
-        self.rejection_log_comments = [
-            "num pixels in forest", "rejection status"
-        ]
+        if self.format == "BinTableHDU":
+            self.rejection_log = RejectionLogTable(
+                self.forests[0].get_header(),
+                self.out_dir + "Log/" + self.rejection_log_file)
+        elif self.format == "ImageHDU":
+            self.rejection_log = RejectionLogImage(
+                self.forests[0].get_metadata_dtype(),
+                self.out_dir + "Log/" + self.rejection_log_file)
+        else:
+            raise ValueError("Invalid format", self.format)
 
-        for item in self.forests[0].get_header():
-            self.rejection_log_cols.append([])
-            self.rejection_log_names.append(item.get("name"))
-            self.rejection_log_comments.append(item.get("comment"))
         self.rejection_log_initialized = True
 
     def filter_bad_cont_forests(self):
@@ -483,8 +463,7 @@ class Data:
         for index, forest in enumerate(self.forests):
             if forest.bad_continuum_reason is not None:
                 # store information for logs
-                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
-                                          forest.bad_continuum_reason)
+                self.add_to_rejection_log(forest, forest.bad_continuum_reason)
 
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
@@ -506,20 +485,17 @@ class Data:
         for index, forest in enumerate(self.forests):
             if forest.flux.size < self.min_num_pix:
                 # store information for logs
-                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
-                                          "short_forest")
+                self.add_to_rejection_log(forest, "short_forest")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     f"due to forest being too short ({forest.flux.size})")
             elif np.isnan((forest.flux * forest.ivar).sum()):
-                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
-                                          "nan_forest")
+                self.add_to_rejection_log(forest, "nan_forest")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to finding nan")
             elif forest.mean_snr < self.min_snr:
-                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
-                                          f"low SNR ({forest.mean_snr})")
+                self.add_to_rejection_log(forest, f"low SNR ({forest.mean_snr})")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     f"due to low SNR ({forest.mean_snr} < {self.min_snr})")
@@ -568,39 +544,23 @@ class Data:
         for healpix in unique_healpixs:
             this_idx = np.nonzero(healpix == healpixs)[0]
             grouped_forests = [self.forests[i] for i in this_idx]
-            arguments.append((self.out_dir, healpix, grouped_forests))
+            arguments.append((self.out_dir, healpix, grouped_forests, self.format))
 
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
             with context.Pool(processes=self.num_processors) as pool:
-                header_n_sizes = pool.starmap(_save_deltas_one_healpix,
+                accepted_forests = pool.starmap(_save_deltas_one_healpix,
                                               arguments)
         else:
-            header_n_sizes = []
+            accepted_forests = []
             for args in arguments:
-                header_n_sizes.append(_save_deltas_one_healpix(*args))
+                accepted_forests.append(_save_deltas_one_healpix(*args))
+
+        accepted_forests = np.concatenate(accepted_forests)
+        
 
         # store information for logs
-        for header_n_size in header_n_sizes:
-            for header, size in header_n_size:
-                self.add_to_rejection_log(header, size, "accepted")
+        for forest in accepted_forests:
+            self.add_to_rejection_log(forest, "accepted")
 
-        self.save_rejection_log()
-
-    def save_rejection_log(self):
-        """Saves the rejection log arrays.
-        In the log forest headers will be saved along with the forest size and
-        the rejection status.
-        """
-        rejection_log = fitsio.FITS(self.out_dir + "Log/" +
-                                    self.rejection_log_file,
-                                    'rw',
-                                    clobber=True)
-
-        rejection_log.write(
-            [np.array(item) for item in self.rejection_log_cols],
-            names=self.rejection_log_names,
-            comment=self.rejection_log_comments,
-            extname="rejection_log")
-
-        rejection_log.close()
+        self.rejection_log.save_rejection_log()
