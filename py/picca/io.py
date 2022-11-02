@@ -1448,7 +1448,7 @@ def read_deltas(in_dir,
                 cosmo,
                 max_num_spec=None,
                 no_project=False,
-                from_image=None,
+                from_image=False,
                 nproc=None):
     """Reads deltas and computes their redshifts.
 
