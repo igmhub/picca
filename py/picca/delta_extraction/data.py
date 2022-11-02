@@ -51,7 +51,90 @@ defaults = {
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
 
-def _save_deltas_one_healpix(out_dir, healpix, forests):
+def _save_deltas_one_healpix_image(out_dir, healpix, forests):
+    """Saves the deltas that belong to one healpix in ImageHDU format.
+    
+    Arguments
+    ---------
+    out_dir: str
+    Parent directory to save deltas.
+
+    healpix: int
+
+    forests: List of Forests
+    List of forests to save into one file.
+
+    Returns:
+    --------
+    @ Add here log rejections(?)
+    """ 
+    results = fitsio.FITS(
+        f"{out_dir}/Delta/delta-{healpix}.fits.gz",
+        'rw',
+        clobber=True)
+
+    # Saving metadata card
+    metadata_header = {
+        "WAVE_SOLUTION": Forest.wave_solution,
+        "BLINDING": Forest.blinding,
+    }
+
+    if Forest.wave_solution == "log":
+        metadata_header["DELTA_LOG_LAMBDA"] = round(Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0], 2)
+    elif Forest.wave_solution == "lin":
+        metadata_header["DELTA_LAMBDA"] = round(10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0], 2)
+    else:
+        raise AstronomicalObjectError("Error in @"
+                                        "Class variable 'wave_solution' "
+                                        "must be either 'lin' or 'log'. "
+                                        f"Found: '{Forest.wave_solution}'")
+
+    results.write(
+        10**Forest.log_lambda_grid,
+        extname="LAMBDA",
+    )
+    
+    results.write(
+        np.array(
+            [tuple(forest.get_metadata()) for forest in forests], # Structured arrays need to take tuples as input.
+            dtype=forests[0].get_metadata_dtype(),
+        ),
+        header= metadata_header, 
+        #comment= @
+        #units= @ maybe use something like .get_metadata_units()
+        extname="METADATA")
+
+    # Filling image information
+    delta = np.full((len(forests), len(Forest.log_lambda_grid)), np.nan)
+    for i, forest in enumerate(forests):
+        delta[i][forest.log_lambda_index] = forest.deltas
+    
+    results.write(
+        delta,
+        extname="DELTA" if Forest.blinding == "none" else "DELTA_BLIND"
+    )
+
+    weight = np.full((len(forests), len(Forest.log_lambda_grid)), np.nan)
+    for i, forest in enumerate(forests):
+        weight[i][forest.log_lambda_index] = forest.weights
+
+    results.write(
+        weight,
+        extname="WEIGHT",
+    )
+
+    continuum = np.full((len(forests), len(Forest.log_lambda_grid)), np.nan)
+    for i, forest in enumerate(forests):
+        continuum[i][forest.log_lambda_index] = forest.continuum
+
+    results.write(
+        continuum,
+        extname="CONT",
+    )
+
+    return forests
+
+def _save_deltas_one_healpix_table(out_dir, healpix, forests):
     """Saves the deltas that belong to one healpix.
 
     Arguments
@@ -67,7 +150,7 @@ def _save_deltas_one_healpix(out_dir, healpix, forests):
     Returns:
     ---------
     header_n_size: List of (header, size)
-    List of forest.header and forest.size to later
+    List forest to later
     add to rejection log as accepted.
     """
     results = fitsio.FITS(
@@ -75,7 +158,6 @@ def _save_deltas_one_healpix(out_dir, healpix, forests):
         'rw',
         clobber=True)
 
-    header_n_size = []
     for forest in forests:
         header = forest.get_header()
         cols, names, units, comments = forest.get_data()
@@ -86,12 +168,38 @@ def _save_deltas_one_healpix(out_dir, healpix, forests):
                       units=units,
                       extname=str(forest.los_id))
 
-        # store information for logs
-        header_n_size.append((header, forest.flux.size))
-        # self.add_to_rejection_log(header, forest.flux.size, "accepted")
     results.close()
 
-    return header_n_size
+    return forests
+
+def _save_deltas_one_healpix(out_dir, healpix, forests, format):
+    """Saves the deltas that belong to one healpix.
+
+    Arguments
+    ---------
+    out_dir: str
+    Parent directory to save deltas.
+
+    healpix: int
+
+    forests: List of Forests
+    List of forests to save into one file.
+
+    format: str
+    Format to store delta into
+
+    Returns:
+    ---------
+    forests: List of Forest
+    List forest to later
+    add to rejection log as accepted.
+    """
+    if format == 'BinTableHDU':
+        return _save_deltas_one_healpix_table(out_dir, healpix, forests)
+    elif format == 'ImageHDU':
+        return _save_deltas_one_healpix_image(out_dir, healpix, forests)
+    else:
+        raise ValueError('Invalid format', format)
 
 class Data:
     """Abstract class from which all classes loading data must inherit.
