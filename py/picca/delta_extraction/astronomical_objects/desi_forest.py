@@ -128,3 +128,23 @@ class DesiForest(Forest):
         ]
 
         return header
+
+    def get_metadata(self):
+        metadata = super().get_metadata()
+
+        metadata += [
+            self.targetid, 
+            "-".join(str(night) for night in self.night),
+            "-".join(str(petal) for petal in self.petal),
+            "-".join(str(tile) for tile in self.tile),  
+        ]
+
+        return metadata 
+
+    @classmethod
+    def get_metadata_dtype(cls):
+        dtype = super().get_metadata_dtype()
+
+        dtype += [('TARGETID', int), ('NIGHT', 'S12'), ('PETAL', 'S12'), ('TILE', 'S12')]
+
+        return dtype

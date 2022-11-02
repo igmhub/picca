@@ -206,6 +206,23 @@ class Pk1dForest(Forest):
 
         return header
 
+    def get_metadata(self):
+        metadata = super().get_metadata()
+
+        metadata += [
+            self.mean_z, self.mean_reso, self.mean_reso_pix
+        ]
+
+        return metadata
+    
+    @classmethod
+    def get_metadata_dtype(cls):
+        dtype = super().get_metadata_dtype()
+
+        dtype += [('MEANZ', float), ('MEANRESO', float), ('MEANRESO_PIX', float)]
+
+        return dtype
+
     def rebin(self):
         """Rebin the arrays and update control variables
 

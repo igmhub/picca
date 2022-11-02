@@ -132,3 +132,23 @@ class SdssForest(Forest):
         ]
 
         return header
+
+    def get_metadata(self):
+        metadata = super().get_metadata()
+
+        metadata += [
+            self.thingid,
+            "-".join(f"{plate:04d}" for plate in self.plate),
+            "-".join(f"{mjd:05d}" for mjd in self.mjd),
+            "-".join(f"{fiberid:04d}" for fiberid in self.fiberid),
+        ]
+
+        return metadata
+
+    @classmethod
+    def get_metadata_dtype(cls):
+        dtype = super().get_metadata_dtype()
+
+        dtype += [('THING_ID', int), ('PLATE', 'S12'), ('MJD', 'S12'), ('FIBERID', 'S12')]
+
+        return dtype

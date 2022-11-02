@@ -140,3 +140,10 @@ class AstronomicalObject:
         ]
 
         return header
+
+    def get_metadata(self):
+        return [self.los_id, self.ra, self.dec, self.z]
+
+    @classmethod
+    def get_metadata_dtype(cls):
+        return [('LOS_ID', int), ('RA', float), ('DEC', float), ('Z', float)]
