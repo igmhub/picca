@@ -93,6 +93,221 @@ def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
+def get_Fhcd(mu1,sigma1,mu2,sigma2,type_pdf='masking',NHI=None):
+    number1 = 1000000
+    number2 = 2000000
+    
+    version = '4.7'
+    path_qso = 'data/zcat_desi_drq.fits'
+    type_pdf='nomasking'
+    path_dla = 'data/zcat_desi_drq_DLA.fits'
+    path_weight_lambda = 'data/weight_lambda_nomasking.txt'
+    ################
+    if version == '4.4':
+        mockid = 'MOCKID'
+        z_dla = 'Z_DLA_RSD'
+        NHI = 'N_HI_DLA'
+    elif version == '4.7':
+        mockid = 'THING_ID'
+        z_dla = 'Z'
+        NHI = 'NHI'
+
+    data = fits.open(path_dla)[1].data
+    qso = fits.open(path_qso)[1].data
+    # keep only DLA which are front of a QSO.
+    data = data[:][np.in1d(data[mockid], qso['THING_ID'])]
+    nb_qso = qso['Z'].size # number of line of sight
+    weight_lambda = np.loadtxt(path_weight_lambda)
+    lamb_w = weight_lambda[:,0]
+    weight = weight_lambda[:,1]
+    zdla = np.mean(data[z_dla])
+
+    def cddf_lbg(mu1,sigma1,number1,mu2,sigma2,number2):
+        NHI2 = np.random.normal(mu2,sigma2,size=int(number2))
+        if number1>100:
+            NHI1 = np.random.normal(mu1,sigma1,size=int(number1))
+            NHI=np.append(NHI1,NHI2)
+        else:
+            NHI1 = []
+            NHI=NHI2
+        NHI=NHI[NHI>17.15]
+        count, bins = np.histogram(NHI, bins=50,density=True)
+        return count, bins
+
+    def renorm_pdf(y_norm, bins):
+        z = bins[:-1] + (bins[1]/2-bins[0]/2)
+        return y_norm, z
+
+    def build_pdf(data_NHI,data_Z,NHI,reshape=False):
+        cddf_Z, dN_Z = np.histogram(data_Z, bins=50, density=True)    
+        if not NHI:
+            cddf_NHI, dN_NHI = np.histogram(data_NHI, bins=50, density=True)
+        else:
+            cddf_NHI, dN_NHI = np.histogram([NHI]*np.ones(len(data_NHI)), bins=50, density=True)
+            cddf_NHI = cddf_NHI+0.0001
+        if reshape:
+            cddf_NHI, dN_NHI = renorm_pdf(cddf_NHI, dN_NHI)
+            cddf_Z, dN_Z = renorm_pdf(cddf_Z, dN_Z)
+            return cddf_NHI, dN_NHI, cddf_Z, dN_Z
+        else:
+            return cddf_NHI, dN_NHI, cddf_Z, dN_Z
+
+    def voigt(x, sigma=1, gamma=1):
+        return np.real(wofz((x + 1j*gamma)/(sigma*np.sqrt(2))))
+
+    def tau(lamb, z, N_hi): # lamb = lambda in A and N_HI in log10 and 10**N_hi in cm^-2
+        lamb_rf = lamb/(1+z)
+        e = 1.6021e-19 # C
+        epsilon0 = 8.8541e-12 # C^2.s^2.kg^-1.m^-3
+        f = 0.4164
+        mp = 1.6726e-27 # kg
+        me = 9.109e-31 # kg
+        c = 2.9979e8 # m.s^-1
+        k = 1.3806e-23 # m^2.kg.s^-2.K-1
+        T = 1e4 # K
+        gamma = 6.265e8 # s^-1
+        lamb_alpha = constants.absorber_IGM["LYA"] # A
+        Deltat_lamb = lamb_alpha/c*np.sqrt(2*k*T/mp) # A
+
+        a = gamma/(4*np.pi*Deltat_lamb)*lamb_alpha**2/c*1e-10
+        u = (lamb_rf - lamb_alpha)/Deltat_lamb
+        H = voigt(u, np.sqrt(1/2), a)
+
+        absorb = np.sqrt(np.pi)*e**2*f*lamb_alpha**2*1e-10/(4*np.pi*epsilon0*me*c**2*Deltat_lamb)*H
+        # 10^N_hi in cm^-2 and absorb in m^2
+        return 10**N_hi*1e4*absorb
+
+    def profile_voigt_lambda(x, z, N_hi):
+        t = tau(x, z, N_hi).astype(float)
+        return np.exp(-t)
+
+    def profile_lambda_to_r(lamb, profile_lambda, fidcosmo): # for lyman-alpha otherwise use an other emission line
+        z = lamb/constants.absorber_IGM["LYA"] - 1
+        r = fidcosmo.r_comoving(z)
+        rr = np.linspace(r[0], r[-1], r.size)
+        profile_r = np.interp(rr, r, profile_lambda) # to have a linear sample
+        return rr, profile_r
+
+    def fft_profile(profile, dx): # not normalized
+        n = profile.size
+        tmp = (1-profile)
+        ft_profile = dx*np.fft.fftshift(np.fft.fft(tmp))
+        k = np.fft.fftshift(np.fft.fftfreq(n, dx))*(2*np.pi)
+        return ft_profile, k
+
+    def lambda_to_r(lamb, profile_lambda, fidcosmo): # f(lambda)dlambda = f(r)dr
+            z = lamb/constants.absorber_IGM["LYA"] - 1
+            r = fidcosmo.r_comoving(z)
+            rr = np.linspace(r[0], r[-1], r.size)
+            profile_lambda = profile_lambda*fidcosmo.hubble(z)*constants.absorber_IGM["LYA"]/3e5
+            profile_r = np.interp(rr,r,profile_lambda)
+            return rr, profile_r
+
+    def dla_catalog(pdf_lbg_NHI,pdf_lbg_Z,number):
+        data_dla_NHI = []
+        data_dla_Z = []
+        for i in range(len(pdf_lbg_NHI[0])):
+            num = int(pdf_lbg_NHI[0][i]*(number)/np.sum(pdf_lbg_NHI[0]))
+            diff = pdf_lbg_NHI[1][i+1]-pdf_lbg_NHI[1][i]
+            data_dla_NHI=data_dla_NHI+list(pdf_lbg_NHI[1][i]+diff*np.random.random(num))
+            #data_dla_NHI=data_dla_NHI+list(int(pdf_lbg[1][i]*(number)/np.sum(pdf_lbg[1]))*[pdf_lbg[0][i]])
+        if len(data_dla_NHI)!=number:
+            for i in range(abs(len(data_dla_NHI)-number)):
+                data_dla_NHI.append(pdf_lbg_NHI[1][i])
+
+        for i in range(len(pdf_lbg_Z[0])):
+            num = int(pdf_lbg_Z[0][i]*(number)/np.sum(pdf_lbg_Z[0]))
+            diff = pdf_lbg_Z[1][i+1]-pdf_lbg_Z[1][i]
+            data_dla_Z=data_dla_Z+list(pdf_lbg_Z[1][i]+diff*np.random.random(num))
+        if len(data_dla_Z)!=number:
+            for i in range(abs(len(data_dla_Z)-number)):
+                data_dla_Z.append(pdf_lbg_Z[1][i])
+
+        data_dla_NHI = random.sample(data_dla_NHI,len(data_dla_NHI))
+        data_dla_Z = random.sample(data_dla_Z,len(data_dla_Z))
+        data_dla_NHI = np.array(data_dla_NHI)
+        data_dla_Z = np.array(data_dla_Z)
+        return data_dla_NHI,data_dla_Z
+
+    def save_function(data,mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='masking',NHI=0):
+        fidcosmo = constants.cosmo(Om=0.3)
+        lamb = np.arange(2000, 8000, 1)
+        f_lambda=np.loadtxt('data/f_lambda_nomasking.txt')
+        r, f_r = lambda_to_r(f_lambda[0], f_lambda[1], fidcosmo)
+        r_w, weight_r = profile_lambda_to_r(lamb_w, weight, fidcosmo)
+        weight_interp = np.interp(r, r_w, weight_r, left=0, right=0)
+        mean_density = np.average(f_r, weights=weight_interp)
+        print(len(data['NHI']),NHI)
+        cddf_NHI, dN_NHI, cddf_Z, dN_Z = build_pdf(data['NHI'],data['Z'],NHI)
+        print(dN_NHI)
+        number = len(data['NHI'])
+        
+        cddf_NHI, dN_NHI = cddf_lbg(mu1,sigma1,number1,mu2,sigma2,number2)
+        print(dN_NHI)
+        cat_NHI, cat_Z = dla_catalog([cddf_NHI, dN_NHI],[cddf_Z, dN_Z],number)
+        cddf_NHI, dN_NHI, cddf_Z, dN_Z = build_pdf(data['NHI'],data['Z'],NHI,reshape=True)
+        zdla = np.mean(cat_Z)
+        for i in range(dN_NHI.size):
+            profile_lambda = profile_voigt_lambda(lamb, zdla, dN_NHI[i])
+            r, profile_r = profile_lambda_to_r(lamb, profile_lambda, fidcosmo) # r is in Mpc h^-1 --> k (from tf) will be in (Mpc h^-1)^-1 = h Mpc^-1 :)
+            ft_profile, k = fft_profile(profile_r, np.abs(r[1]-r[0]))
+            ft_profile = np.abs(ft_profile)
+            if i == 0:
+                df = np.array([ft_profile*mean_density*cddf_NHI[i]])
+            else:
+                df = np.concatenate((df, np.array([ft_profile*mean_density*cddf_NHI[i]])))
+        Fvoigt = np.zeros(k.size)
+        for i in range(k.size):
+            Fvoigt[i] = integrate.trapz(df[:,i], dN_NHI)
+        #Fvoigt = Fvoigt/Fvoigt[k.size//2] #normalization
+        Fvoigt = Fvoigt[k>0]
+        k = k[k>0]
+        save = np.transpose(np.concatenate((np.array([k]), np.array([Fvoigt]))))
+        return save
+    save_all = save_function(data,mu1,sigma1,number1,mu2,sigma2,number2,type_pdf,0)
+    return save_all
+
+def pk_hcd_voigt(k, pk_lin, tracer1, tracer2, **kwargs):
+    """
+    Use Fvoigt function to fit the DLA in the autocorrelation Lyman-alpha without masking them ! (L0 = 1)
+
+    (If you want to mask them --> use Fvoigt_exp.txt and L0 = 10 as eBOOS DR14)
+
+    """
+    global Fvoigt_data
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+
+    key = "bias_hcd_{}".format(kwargs['name'])
+    if key in kwargs :
+        bias_hcd = kwargs[key]
+    else :
+        bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+    
+    mu1 = kwargs["mean_mu1"]
+    sigma1 = kwargs["sigma1"]
+    mu2 = kwargs["mean_mu2"]
+    sigma2 = kwargs["sigma2"]
+
+    kp = k*muk
+    
+    Fvoigt_data=get_Fhcd(mu1,sigma1,mu2,sigma2,type_pdf='nomasking',NHI=None)
+    k_data = Fvoigt_data[:,0]
+    F_data = Fvoigt_data[:,1]
+
+    F_hcd = np.interp(L0*kp, k_data, F_data, left=0, right=0)
+
+    bias_eff1 = bias1 + bias_hcd*F_hcd
+    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+
+    bias_eff2 = bias2 + bias_hcd*F_hcd
+    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+
+    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
 def pk_hcd_no_mask(k, pk_lin, tracer1, tracer2, **kwargs):
     """
     Use Fvoigt function to fit the DLA in the autocorrelation Lyman-alpha without masking them ! (L0 = 1)
