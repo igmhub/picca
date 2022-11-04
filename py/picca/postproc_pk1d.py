@@ -113,55 +113,64 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
         velunits: Bool, Optional, Compute P1D in velocity units, Default to False  
     """
     
-    meanP1D_table = Table()
-    data_array_cols = data_array.colnames
-    
-    N_chunks, zbin_chunks, izbin_chunks = binned_statistic(z_array, z_array, statistic='count', bins=zbin_edges)
-    
+    # Initializing stats we want to compute on data
     stats_array = ['mean','error','min','max']
     if nomedians==True:
         stats_array+=['median']
-        
-    if velunits==True: # Convert data into velocity units
+    
+    # Convert data into velocity units 
+    if velunits==True: 
         conversion_factor = (lambda_lya * (1. + data_array['forest_z'])) / SPEED_LIGHT
         data_array['k']*=conversion_factor
         for c in data_array_cols:
             if 'Pk' in c:
                 data_array[c]/=conversion_factor
+                
+    # Initialize meanP1D_table of len = (nzbins * nkbins) corresponding to hdu[1] in final ouput
+    meanP1D_table = Table()
+    table_length = len(kbin_edges[:-1]) * len(zbin_edges[:-1]) # nzbins * nkbins
+    meanP1D_table['zbin'] = np.zeros(table_length)
+    meanP1D_table['index_zbin'] = np.zeros(table_length, dtype=int)
+    meanP1D_table['N'] = np.zeros(table_length)
+    data_array_cols = data_array.colnames
+    for c in data_array_cols:  
+        for stats in stats_array:
+            meanP1D_table[stats+c] = np.zeros(table_length)
+                
+    # Initialize additional_table of len = nzbins corresponding to hdu[1] in final output
+    additional_table = Table()
+    additional_table['N_chunks'] = np.zeros(len(zbin_edges[:-1]), dtype=int)
+    
+    # Number of chunks in each redshift bin
+    N_chunks, zbin_chunks, izbin_chunks = binned_statistic(z_array, z_array, statistic='count', bins=zbin_edges)
         
     for izbin,zbin in enumerate(zbin_edges[:-1]):
-        table_data = Table()
-        table_data['N'] = np.zeros((1,len(kbin_edges)-1))
-        table_data['N_chunks']=np.array([N_chunks[izbin]],dtype=int) # number of chunks in each redshift bin
         
         if N_chunks[izbin]==0: 
-            
             for c in data_array_cols:
                 for stats in stats_array:
-                    table_data[stats+c] = np.ones((1, len(kbin_edges) - 1)) * np.nan
+                    index_min = izbin*len(kbin_edges[:-1])
+                    index_max = (izbin+1)*len(kbin_edges[:-1])
+                    meanP1D_table[stats+c][index_min:index_max] = np.ones(len(kbin_edges[:-1])) * np.nan
             continue
-        
-        table_data['N_chunks']=np.array([N_chunks[izbin]],dtype=int) # number of chunks in each redshift bin
-        
-        for ic, c in enumerate(data_array_cols):  # initialize table
-            index = len(stats_array)*ic
-            table_data['mean'+c] = np.zeros((1,len(kbin_edges)-1))
-            table_data['error'+c] = np.zeros((1,len(kbin_edges)-1))
-            table_data['min'+c] = np.zeros((1,len(kbin_edges)-1))
-            table_data['max'+c] = np.zeros((1,len(kbin_edges)-1))
-            if nomedians==True:
-                table_data['median'+c] = np.zeros((1,len(kbin_edges)-1))
+            
+        additional_table['N_chunks'][izbin] = N_chunks[izbin]
 
         for ikbin, kbin in enumerate(kbin_edges[:-1]):
+            
             select=(data_array['forest_z'][:] < zbin_edges[izbin + 1])&(data_array['forest_z'][:] > zbin_edges[izbin])&(data_array['k'][:] < kbin_edges[ikbin + 1])&(data_array['k'][:] > kbin_edges[ikbin]) # select a specific (z,k) bin
+            
+            index = (len(kbin_edges[:-1]) * izbin) + ikbin # index to be filled in table
+            meanP1D_table['zbin'][index] = zbin + ((zbin_edges[izbin+1] - zbin_edges[izbin]) / 2)
+            meanP1D_table['index_zbin'][index] = izbin
         
             N = np.ma.count(data_array['k'][select]) # Counts the number of chunks in each (z,k) bin
-            table_data['N'][0,ikbin] = N
+            meanP1D_table['N'][index] = N
             
             for ic, c in enumerate(data_array_cols): 
                 
                 if N==0: 
-                    print('Warning: 0 chunks found in (zbin='+str(zbin)+',kbin='+str(kbin))
+                    print('Warning: 0 chunks found in (zbin='+str(zbin+0.1)+',kbin='+str(kbin+0.05)) # To be checked
                     continue
                 
                 if weights_method=='fit_snr':
@@ -200,17 +209,15 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
                   
                 minimum = np.min((data_array[c][select]))
                 maximum = np.max((data_array[c][select]))
-                table_data['mean'+c][0,ikbin] = mean
-                table_data['error'+c][0,ikbin] = error
-                table_data['min'+c][0,ikbin] = minimum
-                table_data['max'+c][0,ikbin] = maximum
+                
+                meanP1D_table['mean'+c][index] = mean
+                meanP1D_table['error'+c][index] = error
+                meanP1D_table['min'+c][index] = minimum
+                meanP1D_table['max'+c][index] = maximum
                 if nomedians==True:
                     median = np.median((data_array[c][select]))
-                    table_data['median'+c][0,ikbin] = median
 
-        meanP1D_table=vstack([meanP1D_table,table_data])
-                            
-    return meanP1D_table
+    return meanP1D_table, additional_table
 
 
 def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_cut_mean=None, zbins=None, nomedians=False, 
@@ -241,11 +248,16 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_c
     data_array = vstack([full_data_array[i][0] for i in range(len(full_data_array))])  
     z_array = np.concatenate(tuple([full_data_array[i][1] for i in range(len(full_data_array))]))
 
-    full_meanP1D_table = compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_method, nomedians, velunits)
+    full_meanP1D_table, additional_table = compute_mean_pk1d(data_array, z_array, zbin_edges,
+                                                             kbin_edges, weights_method, nomedians, velunits)
     
     outdir = full_meanP1D_table
     outdir.meta['velunits']=velunits
     outdir.write(outfilename,overwrite=overwrite)
     return outdir
 
-
+    # hdu0 = fits.PrimaryHDU()
+    # hdu1 = fits.table_to_hdu(full_meanP1D_table)
+    # hdu2 = fits.table_to_hdu(additional_table)
+    # hdul = fits.HDUList([hdu0, hdu1, hdu2])
+    # hdul.writeto(outfilename)
