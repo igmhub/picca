@@ -138,19 +138,21 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
             
             for c in data_array_cols:
                 for stats in stats_array:
-                    table_data[stats+c] = np.ones((1, len(kbin_edges) - 1)) * np.nan
+                    table_data[stats+c] = np.ones((1, len(kbin_edges[:-1]))) * np.nan
+                    meanP1D_table=vstack([meanP1D_table,table_data])
             continue
         
         table_data['N_chunks']=np.array([N_chunks[izbin]],dtype=int) # number of chunks in each redshift bin
         
-        for ic, c in enumerate(data_array_cols):  # initialize table
-            index = len(stats_array)*ic
-            table_data['mean'+c] = np.zeros((1,len(kbin_edges)-1))
-            table_data['error'+c] = np.zeros((1,len(kbin_edges)-1))
-            table_data['min'+c] = np.zeros((1,len(kbin_edges)-1))
-            table_data['max'+c] = np.zeros((1,len(kbin_edges)-1))
-            if nomedians==True:
-                table_data['median'+c] = np.zeros((1,len(kbin_edges)-1))
+        for c in data_array_cols:  # initialize table
+            for stats in stats_array:
+                table_data[stats+c] = np.zeros((1,len(kbin_edges[:-1])))
+            # table_data['mean'+c] = np.zeros((1,len(kbin_edges)-1))
+            # table_data['error'+c] = np.zeros((1,len(kbin_edges)-1))
+            # table_data['min'+c] = np.zeros((1,len(kbin_edges)-1))
+            # table_data['max'+c] = np.zeros((1,len(kbin_edges)-1))
+            # if nomedians==True:
+            #     table_data['median'+c] = np.zeros((1,len(kbin_edges)-1))
 
         for ikbin, kbin in enumerate(kbin_edges[:-1]):
             select=(data_array['forest_z'][:] < zbin_edges[izbin + 1])&(data_array['forest_z'][:] > zbin_edges[izbin])&(data_array['k'][:] < kbin_edges[ikbin + 1])&(data_array['k'][:] > kbin_edges[ikbin]) # select a specific (z,k) bin
@@ -158,10 +160,12 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
             N = np.ma.count(data_array['k'][select]) # Counts the number of chunks in each (z,k) bin
             table_data['N'][0,ikbin] = N
             
-            for ic, c in enumerate(data_array_cols): 
+            for c in data_array_cols:
                 
                 if N==0: 
                     print('Warning: 0 chunks found in (zbin='+str(zbin)+',kbin='+str(kbin))
+                    for stats in stats_array:
+                        table_data[stats+c][0,ikbin] = np.nan
                     continue
                 
                 if weights_method=='fit_snr':
