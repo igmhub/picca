@@ -148,11 +148,14 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
     for izbin,zbin in enumerate(zbin_edges[:-1]):
         
         if N_chunks[izbin]==0: 
-            for c in data_array_cols:
-                for stats in stats_array:
-                    index_min = izbin*len(kbin_edges[:-1])
-                    index_max = (izbin+1)*len(kbin_edges[:-1])
-                    meanP1D_table[stats+c][index_min:index_max] = np.ones(len(kbin_edges[:-1])) * np.nan
+            for ikbin, kbin in enumerate(kbin_edges[:-1]):
+                index = (len(kbin_edges[:-1]) * izbin) + ikbin # index to be filled in table
+                meanP1D_table['zbin'][index] = zbin + ((zbin_edges[izbin+1] - zbin_edges[izbin]) / 2)
+                meanP1D_table['index_zbin'][index] = izbin
+                for c in data_array_cols:
+                    for stats in stats_array:
+                        meanP1D_table[stats+c][index] = np.nan
+
             continue
             
         additional_table['N_chunks'][izbin] = N_chunks[izbin]
@@ -173,6 +176,10 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
                 if N==0: 
                     print('Warning: 0 chunks found in bin '+str(zbin_edges[izbin])+'<z<'+str(zbin_edges[izbin+1])+
                           ', '+str(kbin_edges[ikbin])+'<k<'+str(kbin_edges[ikbin+1]))
+                    
+                    for stats in stats_array:
+                        meanP1D_table[stats+c][index] = np.nan
+                    
                     continue
                 
                 if weights_method=='fit_snr':
@@ -218,6 +225,7 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
                 meanP1D_table['max'+c][index] = maximum
                 if nomedians==True:
                     median = np.median((data_array[c][select]))
+                    meanP1D_table['median'+c][index] = median
 
     return meanP1D_table, additional_table
 
