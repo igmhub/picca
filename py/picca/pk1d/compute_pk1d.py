@@ -13,8 +13,8 @@ See the respective docstrings for more details
 import numpy as np
 from numpy.fft import rfft, rfftfreq
 
-from . import constants
-from .utils import userprint
+from picca import constants
+from picca.utils import userprint
 
 
 def split_forest(num_parts,

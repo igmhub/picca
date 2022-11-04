@@ -9,8 +9,8 @@ See the respective documentation for details
 """
 import numpy as np
 
-from .constants import SPEED_LIGHT
-from .utils import userprint
+from picca.constants import SPEED_LIGHT
+from picca.utils import userprint
 
 
 def exp_diff(hdul, log_lambda):

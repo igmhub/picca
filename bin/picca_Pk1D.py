@@ -11,7 +11,7 @@ import os
 
 from picca import constants
 from picca.data import Delta
-from picca.pk1d import (compute_correction_reso,
+from picca.pk1d.compute_pk1d import (compute_correction_reso,
                         compute_correction_reso_matrix, compute_pk_noise,
                         compute_pk_raw, fill_masked_pixels, rebin_diff_noise,
                         split_forest)

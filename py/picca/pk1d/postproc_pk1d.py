@@ -16,8 +16,8 @@ from scipy.stats import binned_statistic
 import glob
 import os
 import matplotlib.pyplot as plt
-from .constants import SPEED_LIGHT
-from .constants import ABSORBER_IGM
+from picca.constants import SPEED_LIGHT
+from picca.constants import ABSORBER_IGM
 
 lambda_lya = ABSORBER_IGM["LYA"]
 
