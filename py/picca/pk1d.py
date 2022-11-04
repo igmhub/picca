@@ -103,7 +103,10 @@ def split_forest(num_parts,
         mean_z_array.append(mean_z)
         lambda_or_log_lambda_array.append(lambda_or_log_lambda_part)
         delta_array.append(delta[selection].copy())
-        exposures_diff_array.append(exposures_diff[selection].copy())
+        if exposures_diff is not None:
+            exposures_diff_array.append(exposures_diff[selection].copy())
+        else:  # fill exposures_diff_array with zeros
+            exposures_diff_array.append(np.zeros(len(delta[selection])))
         ivar_array.append(ivar[selection].copy())
         if reso_matrix is not None:
             reso_matrix_array.append(reso_matrix_part)
@@ -230,7 +233,8 @@ def fill_masked_pixels(delta_lambda_or_log_lambda, lambda_or_log_lambda, delta,
     lambda_or_log_lambda_new += lambda_or_log_lambda[0]
 
     exposures_diff_new = np.zeros(len(index_all))
-    exposures_diff_new[index_ok] = exposures_diff
+    if exposures_diff is not None:
+        exposures_diff_new[index_ok] = exposures_diff
 
     ivar_new = np.zeros(len(index_all), dtype=float)
     ivar_new[index_ok] = ivar

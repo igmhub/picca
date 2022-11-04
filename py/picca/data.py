@@ -1082,7 +1082,11 @@ class Delta(QSO):
 
         if pk1d_type:
             ivar = hdu['IVAR'][:].astype(float)
-            exposures_diff = hdu['DIFF'][:].astype(float)
+            try:
+                exposures_diff = hdu['DIFF'][:].astype(float)
+            except (KeyError, ValueError):
+                userprint('WARNING: no DIFF in hdu (pk1d_type=True)')
+                exposures_diff = None
             mean_snr = header['MEANSNR']
             mean_reso = header['MEANRESO']
             try:
@@ -1126,7 +1130,11 @@ class Delta(QSO):
             mjd=los_id
             fiberid=los_id
         else:
-            raise Exception("Could not find THING_ID or LOS_ID")
+            los_id = -1
+            plate=los_id
+            mjd=los_id
+            fiberid=los_id
+            #raise Exception("Could not find THING_ID or LOS_ID")
 
         ra = header['RA']
         dec = header['DEC']
