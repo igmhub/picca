@@ -147,12 +147,6 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
         for c in data_array_cols:  # initialize table
             for stats in stats_array:
                 table_data[stats+c] = np.zeros((1,len(kbin_edges[:-1])))
-            # table_data['mean'+c] = np.zeros((1,len(kbin_edges)-1))
-            # table_data['error'+c] = np.zeros((1,len(kbin_edges)-1))
-            # table_data['min'+c] = np.zeros((1,len(kbin_edges)-1))
-            # table_data['max'+c] = np.zeros((1,len(kbin_edges)-1))
-            # if nomedians==True:
-            #     table_data['median'+c] = np.zeros((1,len(kbin_edges)-1))
 
         for ikbin, kbin in enumerate(kbin_edges[:-1]):
             select=(data_array['forest_z'][:] < zbin_edges[izbin + 1])&(data_array['forest_z'][:] > zbin_edges[izbin])&(data_array['k'][:] < kbin_edges[ikbin + 1])&(data_array['k'][:] > kbin_edges[ikbin]) # select a specific (z,k) bin
