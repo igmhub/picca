@@ -142,14 +142,22 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
                 
     # Initialize additional_table of len = nzbins corresponding to hdu[1] in final output
     additional_table = Table()
+    additional_table['z_min'] = np.zeros(len(zbin_edges[:-1]))
+    additional_table['z_max'] = np.zeros(len(zbin_edges[:-1]))
+    additional_table['k_min'] = np.zeros(len(zbin_edges[:-1]))
+    additional_table['k_max'] = np.zeros(len(zbin_edges[:-1]))
     additional_table['N_chunks'] = np.zeros(len(zbin_edges[:-1]), dtype=int)
     
     # Number of chunks in each redshift bin
     N_chunks, zbin_chunks, izbin_chunks = binned_statistic(z_array, z_array, statistic='count', bins=zbin_edges)
         
-    for izbin,zbin in enumerate(zbin_edges[:-1]):
+    for izbin, zbin in enumerate(zbin_edges[:-1]):
         
         # Filling additional table
+        additional_table['z_min'][izbin] = zbin_edges[izbin]
+        additional_table['z_max'][izbin] = zbin_edges[izbin+1]
+        additional_table['k_min'][izbin] = kbin_edges[0]
+        additional_table['k_max'][izbin] = kbin_edges[len(kbin_edges[:-1])]
         additional_table['N_chunks'][izbin] = N_chunks[izbin]
         
         if N_chunks[izbin]==0: 
@@ -270,9 +278,4 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_c
     hdu2 = astropy.io.fits.table_to_hdu(additional_table)
     hdul = astropy.io.fits.HDUList([hdu0, hdu1, hdu2])
     hdul.writeto(outfilename, overwrite=overwrite)
-    # outdir = full_meanP1D_table
-    # outdir.meta['velunits']=velunits
-    # outdir.write(outfilename,overwrite=overwrite)
-    # return outdir
-
 
