@@ -10,6 +10,8 @@ See the respective documentation for details
 import numpy as np
 import fitsio
 from astropy.table import Table, vstack
+import astropy.io.fits
+
 from scipy.stats import binned_statistic
 import glob
 import os
@@ -133,7 +135,7 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
     table_length = len(kbin_edges[:-1]) * len(zbin_edges[:-1]) # nzbins * nkbins
     meanP1D_table['zbin'] = np.zeros(table_length)
     meanP1D_table['index_zbin'] = np.zeros(table_length, dtype=int)
-    meanP1D_table['N'] = np.zeros(table_length)
+    meanP1D_table['N'] = np.zeros(table_length, dtype='int64')
     for c in data_array_cols:  
         for stats in stats_array:
             meanP1D_table[stats+c] = np.zeros(table_length)
@@ -147,6 +149,9 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
         
     for izbin,zbin in enumerate(zbin_edges[:-1]):
         
+        # Filling additional table
+        additional_table['N_chunks'][izbin] = N_chunks[izbin]
+        
         if N_chunks[izbin]==0: 
             for ikbin, kbin in enumerate(kbin_edges[:-1]):
                 index = (len(kbin_edges[:-1]) * izbin) + ikbin # index to be filled in table
@@ -157,8 +162,6 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
                         meanP1D_table[stats+c][index] = np.nan
 
             continue
-            
-        additional_table['N_chunks'][izbin] = N_chunks[izbin]
 
         for ikbin, kbin in enumerate(kbin_edges[:-1]):
             
@@ -261,13 +264,15 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_c
     full_meanP1D_table, additional_table = compute_mean_pk1d(data_array, z_array, zbin_edges,
                                                              kbin_edges, weights_method, nomedians, velunits)
     
-    outdir = full_meanP1D_table
-    outdir.meta['velunits']=velunits
-    outdir.write(outfilename,overwrite=overwrite)
-    return outdir
+    full_meanP1D_table.meta['velunits']=velunits
+    hdu0 = astropy.io.fits.PrimaryHDU()
+    hdu1 = astropy.io.fits.table_to_hdu(full_meanP1D_table)
+    hdu2 = astropy.io.fits.table_to_hdu(additional_table)
+    hdul = astropy.io.fits.HDUList([hdu0, hdu1, hdu2])
+    hdul.writeto(outfilename, overwrite=overwrite)
+    # outdir = full_meanP1D_table
+    # outdir.meta['velunits']=velunits
+    # outdir.write(outfilename,overwrite=overwrite)
+    # return outdir
 
-    # hdu0 = fits.PrimaryHDU()
-    # hdu1 = fits.table_to_hdu(full_meanP1D_table)
-    # hdu2 = fits.table_to_hdu(additional_table)
-    # hdul = fits.HDUList([hdu0, hdu1, hdu2])
-    # hdul.writeto(outfilename)
+
