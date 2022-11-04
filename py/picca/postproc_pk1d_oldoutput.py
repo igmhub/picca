@@ -157,7 +157,8 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
             for c in data_array_cols:
                 
                 if N==0: 
-                    print('Warning: 0 chunks found in (zbin='+str(zbin)+',kbin='+str(kbin))
+                    print('Warning: 0 chunks found in bin '+str(zbin_edges[izbin])+'<z<'+str(zbin_edges[izbin+1])+
+                          ', '+str(kbin_edges[ikbin])+'<k<'+str(kbin_edges[ikbin+1]))
                     for stats in stats_array:
                         table_data[stats+c][0,ikbin] = np.nan
                     continue
