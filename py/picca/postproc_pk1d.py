@@ -118,6 +118,8 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
     if nomedians==True:
         stats_array+=['median']
     
+    data_array_cols = data_array.colnames
+    
     # Convert data into velocity units 
     if velunits==True: 
         conversion_factor = (lambda_lya * (1. + data_array['forest_z'])) / SPEED_LIGHT
@@ -132,7 +134,6 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
     meanP1D_table['zbin'] = np.zeros(table_length)
     meanP1D_table['index_zbin'] = np.zeros(table_length, dtype=int)
     meanP1D_table['N'] = np.zeros(table_length)
-    data_array_cols = data_array.colnames
     for c in data_array_cols:  
         for stats in stats_array:
             meanP1D_table[stats+c] = np.zeros(table_length)
@@ -170,7 +171,8 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
             for ic, c in enumerate(data_array_cols): 
                 
                 if N==0: 
-                    print('Warning: 0 chunks found in (zbin='+str(zbin+0.1)+',kbin='+str(kbin+0.05)) # To be checked
+                    print('Warning: 0 chunks found in bin '+str(zbin_edges[izbin])+'<z<'+str(zbin_edges[izbin+1])+
+                          ', '+str(kbin_edges[ikbin])+'<k<'+str(kbin_edges[ikbin+1]))
                     continue
                 
                 if weights_method=='fit_snr':
