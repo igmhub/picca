@@ -1415,7 +1415,7 @@ def read_blinding(in_dir):
     return blinding
 
 
-def read_delta_file(filename, from_image=None):
+def read_delta_file(filename, from_image=None, rebin_factor=None):
     """Extracts deltas from a single file.
     Args:
         filename: str
@@ -1434,6 +1434,11 @@ def read_delta_file(filename, from_image=None):
         hdul.close()
     else:
         deltas = Delta.from_image(filename)
+
+    # Rebin
+    if rebin_factor is not None:
+        for i in range(len(deltas)):
+            deltas[i].rebin(rebin_factor)
 
     return deltas
 
@@ -1511,7 +1516,10 @@ def read_deltas(in_dir,
                                                                 '/*.fits.gz'))
     files = sorted(files)
 
-    arguments = [(f, from_image) for f in files]
+    if rebin_factor is not None:
+        userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
+
+    arguments = [(f, from_image, rebin_factor) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
     pool.close()
@@ -1531,12 +1539,6 @@ def read_deltas(in_dir,
         num_data = len(deltas)
 
     userprint("\n")
-
-    # Rebin
-    if rebin_factor is not None:
-        userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
-        for delta in deltas:
-            delta.rebin(rebin_factor)
 
     # compute healpix numbers
     phi = [delta.ra for delta in deltas]
