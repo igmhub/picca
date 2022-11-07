@@ -1534,6 +1534,7 @@ def read_deltas(in_dir,
 
     # Rebin
     if rebin_factor is not None:
+        userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
         for delta in deltas:
             delta.rebin(rebin_factor)
 
