@@ -1447,7 +1447,8 @@ def read_deltas(in_dir,
                 max_num_spec=None,
                 no_project=False,
                 from_image=None,
-                nproc=None):
+                nproc=None,
+                rebin_factor=None):
     """Reads deltas and computes their redshifts.
 
     Fills the fields delta.z and multiplies the weights by
@@ -1530,6 +1531,11 @@ def read_deltas(in_dir,
         num_data = len(deltas)
 
     userprint("\n")
+
+    # Rebin
+    if rebin_factor is not None:
+        for delta in deltas:
+            delta.rebin(rebin_factor)
 
     # compute healpix numbers
     phi = [delta.ra for delta in deltas]
