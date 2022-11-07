@@ -558,6 +558,14 @@ class Forest(AstronomicalObject):
 
         return dtype
 
+    @classmethod
+    def get_metadata_units(cls):
+        units = super().get_metadata_units()
+
+        units += [""]
+
+        return units
+
     def rebin(self):
         """Rebin the arrays and update control variables
         Rebinned arrays are flux, ivar, lambda_ or log_lambda, and
@@ -586,14 +594,15 @@ class Forest(AstronomicalObject):
         AstronomicalObjectError if ivar only has zeros
         """
         (self.log_lambda, self.flux, self.ivar, self.transmission_correction,
-         self.mean_snr, self.log_lambda_index, rebin_ivar, orig_ivar, w1,
+         self.mean_snr, bins, rebin_ivar, orig_ivar, w1,
          w2) = rebin(self.log_lambda, self.flux, self.ivar,
                      self.transmission_correction, self.z, Forest.wave_solution,
                      Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid)
 
         # return weights and binning solution to be used by child classes if
         # required
-        return self.log_lambda_index, rebin_ivar, orig_ivar, w1, w2
+        self.log_lambda_index = find_bins(self.log_lambda, self.log_lambda_grid, Forest.wave_solution)
+        return bins, rebin_ivar, orig_ivar, w1, w2
 
     @classmethod
     def set_class_variables(cls, lambda_min, lambda_max, lambda_min_rest_frame,

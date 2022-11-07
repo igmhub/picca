@@ -223,6 +223,14 @@ class Pk1dForest(Forest):
 
         return dtype
 
+    @classmethod
+    def get_metadata_units(cls):
+        units = super().get_metadata_units()
+
+        units += ["", "", ""]
+
+        return units
+
     def rebin(self):
         """Rebin the arrays and update control variables
 

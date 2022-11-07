@@ -147,3 +147,7 @@ class AstronomicalObject:
     @classmethod
     def get_metadata_dtype(cls):
         return [('LOS_ID', int), ('RA', float), ('DEC', float), ('Z', float)]
+
+    @classmethod
+    def get_metadata_units(cls):
+        return ["", "DEGREES", "DEGREES", ""]

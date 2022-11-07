@@ -104,7 +104,7 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
         ),
         header= metadata_header, 
         #comment= @
-        #units= @ maybe use something like .get_metadata_units()
+        units= forests[0].get_metadata_units(),
         extname="METADATA")
 
     # Filling image information

@@ -148,3 +148,12 @@ class DesiForest(Forest):
         dtype += [('TARGETID', int), ('NIGHT', 'S12'), ('PETAL', 'S12'), ('TILE', 'S12')]
 
         return dtype
+
+    @classmethod
+    def get_metadata_units(cls):
+        units = super().get_metadata_units()
+
+        units += ["", "", "", ""]
+
+        return units
+

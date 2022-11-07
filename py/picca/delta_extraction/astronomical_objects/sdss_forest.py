@@ -152,3 +152,11 @@ class SdssForest(Forest):
         dtype += [('THING_ID', int), ('PLATE', 'S12'), ('MJD', 'S12'), ('FIBERID', 'S12')]
 
         return dtype
+
+    @classmethod
+    def get_metadata_units(cls):
+        units = super().get_metadata_units()
+
+        units += ["", "", "DAYS", ""]
+
+        return units
