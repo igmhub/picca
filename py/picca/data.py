@@ -1268,7 +1268,7 @@ class Delta(QSO):
     def rebin(self, factor):
         wave = 10**np.array(self.log_lambda)
         dwave = wave[1] - wave[0]
-        if np.isclose(dwave, wave[-1] - wave[-2]):
+        if not np.isclose(dwave, wave[-1] - wave[-2]):
             raise ValueError('Delta rebinning only implemented for linear lambda bins')
 
         start = wave.min() - dwave / 2
@@ -1287,6 +1287,6 @@ class Delta(QSO):
 
         new_wave = (edges[1:] + edges[:-1]) / 2
 
-        self.log_lambda = np.log10(new_wave)
-        self.delta = binned_delta
-        self.weights = binned_weight
+        self.log_lambda = np.log10(new_wave[mask])
+        self.delta = binned_delta[mask]
+        self.weights = binned_weight[mask]
