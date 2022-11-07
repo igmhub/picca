@@ -1,7 +1,11 @@
 import numpy as np
 from . import utils
 from pkg_resources import resource_filename
-
+import astropy.io.fits as fits
+from . import constants
+import random
+from scipy.special import wofz
+import scipy.integrate as integrate
 muk = utils.muk
 bias_beta = utils.bias_beta
 Fvoigt_data = []
@@ -93,15 +97,13 @@ def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
-def get_Fhcd(mu1,sigma1,mu2,sigma2,type_pdf='masking',NHI=None):
-    number1 = 1000000
-    number2 = 2000000
-    
+def get_Fhcd(mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='masking',NHI=None):
+    path = '{}/'.format(resource_filename('picca', 'fitter2'))
     version = '4.7'
-    path_qso = 'data/zcat_desi_drq.fits'
+    path_qso = path+'data/zcat_desi_drq.fits'
     type_pdf='nomasking'
-    path_dla = 'data/zcat_desi_drq_DLA.fits'
-    path_weight_lambda = 'data/weight_lambda_nomasking.txt'
+    path_dla = path+'data/zcat_desi_drq_DLA.fits'
+    path_weight_lambda = path+'data/weight_lambda_nomasking.txt'
     ################
     if version == '4.4':
         mockid = 'MOCKID'
@@ -111,7 +113,6 @@ def get_Fhcd(mu1,sigma1,mu2,sigma2,type_pdf='masking',NHI=None):
         mockid = 'THING_ID'
         z_dla = 'Z'
         NHI = 'NHI'
-
     data = fits.open(path_dla)[1].data
     qso = fits.open(path_qso)[1].data
     # keep only DLA which are front of a QSO.
@@ -133,6 +134,10 @@ def get_Fhcd(mu1,sigma1,mu2,sigma2,type_pdf='masking',NHI=None):
         NHI=NHI[NHI>17.15]
         count, bins = np.histogram(NHI, bins=50,density=True)
         return count, bins
+    
+    def multi_gauss(x,mu1,sigma1,number1,mu2,sigma2,number2):
+        y=number1 * np.exp(-(x - mu1) ** 2 / (2 * sigma1 ** 2)) + number2 * np.exp(-(x - mu2) ** 2 / (2 * sigma2 ** 2))
+        return x,y/np.trapz(y,x)
 
     def renorm_pdf(y_norm, bins):
         z = bins[:-1] + (bins[1]/2-bins[0]/2)
@@ -141,9 +146,9 @@ def get_Fhcd(mu1,sigma1,mu2,sigma2,type_pdf='masking',NHI=None):
     def build_pdf(data_NHI,data_Z,NHI,reshape=False):
         cddf_Z, dN_Z = np.histogram(data_Z, bins=50, density=True)    
         if not NHI:
-            cddf_NHI, dN_NHI = np.histogram(data_NHI, bins=50, density=True)
+            cddf_NHI, dN_NHI = np.histogram(data_NHI, bins=np.linspace(17.2,22.5,50), density=True)
         else:
-            cddf_NHI, dN_NHI = np.histogram([NHI]*np.ones(len(data_NHI)), bins=50, density=True)
+            cddf_NHI, dN_NHI = np.histogram([NHI]*np.ones(len(data_NHI)), bins=np.linspace(17.2,22.5,50), density=True)
             cddf_NHI = cddf_NHI+0.0001
         if reshape:
             cddf_NHI, dN_NHI = renorm_pdf(cddf_NHI, dN_NHI)
@@ -151,7 +156,12 @@ def get_Fhcd(mu1,sigma1,mu2,sigma2,type_pdf='masking',NHI=None):
             return cddf_NHI, dN_NHI, cddf_Z, dN_Z
         else:
             return cddf_NHI, dN_NHI, cddf_Z, dN_Z
-
+        
+    def build_pdf_Z(data_Z,reshape=False):
+        cddf_Z, dN_Z = np.histogram(data_Z, bins=50, density=True)    
+        if reshape:
+            cddf_Z, dN_Z = renorm_pdf(cddf_Z, dN_Z)
+        return cddf_Z, dN_Z
     def voigt(x, sigma=1, gamma=1):
         return np.real(wofz((x + 1j*gamma)/(sigma*np.sqrt(2))))
 
@@ -208,7 +218,7 @@ def get_Fhcd(mu1,sigma1,mu2,sigma2,type_pdf='masking',NHI=None):
         data_dla_Z = []
         for i in range(len(pdf_lbg_NHI[0])):
             num = int(pdf_lbg_NHI[0][i]*(number)/np.sum(pdf_lbg_NHI[0]))
-            diff = pdf_lbg_NHI[1][i+1]-pdf_lbg_NHI[1][i]
+            diff = pdf_lbg_NHI[1][1]-pdf_lbg_NHI[1][0]
             data_dla_NHI=data_dla_NHI+list(pdf_lbg_NHI[1][i]+diff*np.random.random(num))
             #data_dla_NHI=data_dla_NHI+list(int(pdf_lbg[1][i]*(number)/np.sum(pdf_lbg[1]))*[pdf_lbg[0][i]])
         if len(data_dla_NHI)!=number:
@@ -217,7 +227,7 @@ def get_Fhcd(mu1,sigma1,mu2,sigma2,type_pdf='masking',NHI=None):
 
         for i in range(len(pdf_lbg_Z[0])):
             num = int(pdf_lbg_Z[0][i]*(number)/np.sum(pdf_lbg_Z[0]))
-            diff = pdf_lbg_Z[1][i+1]-pdf_lbg_Z[1][i]
+            diff = pdf_lbg_Z[1][1]-pdf_lbg_Z[1][0]
             data_dla_Z=data_dla_Z+list(pdf_lbg_Z[1][i]+diff*np.random.random(num))
         if len(data_dla_Z)!=number:
             for i in range(abs(len(data_dla_Z)-number)):
@@ -229,23 +239,23 @@ def get_Fhcd(mu1,sigma1,mu2,sigma2,type_pdf='masking',NHI=None):
         data_dla_Z = np.array(data_dla_Z)
         return data_dla_NHI,data_dla_Z
 
-    def save_function(data,mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='masking',NHI=0):
+    def save_function(data,mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='nomasking',NHI=0):
         fidcosmo = constants.cosmo(Om=0.3)
         lamb = np.arange(2000, 8000, 1)
-        f_lambda=np.loadtxt('data/f_lambda_nomasking.txt')
+        f_lambda=np.loadtxt(path+'data/f_lambda_nomasking.txt')
         r, f_r = lambda_to_r(f_lambda[0], f_lambda[1], fidcosmo)
         r_w, weight_r = profile_lambda_to_r(lamb_w, weight, fidcosmo)
         weight_interp = np.interp(r, r_w, weight_r, left=0, right=0)
         mean_density = np.average(f_r, weights=weight_interp)
-        print(len(data['NHI']),NHI)
-        cddf_NHI, dN_NHI, cddf_Z, dN_Z = build_pdf(data['NHI'],data['Z'],NHI)
-        print(dN_NHI)
+        cddf_Z, dN_Z = build_pdf_Z(data['Z'])
         number = len(data['NHI'])
         
-        cddf_NHI, dN_NHI = cddf_lbg(mu1,sigma1,number1,mu2,sigma2,number2)
-        print(dN_NHI)
+        #cddf_NHI, dN_NHI = cddf_lbg(mu1,sigma1,number1,mu2,sigma2,number2)
+        
+        dN_NHI = np.linspace(17.2,22.5,50)
+        cddf_NHI = multi_gauss(dN_NHI,mu1,sigma1,number1,mu2,sigma2,number2)[1]
         cat_NHI, cat_Z = dla_catalog([cddf_NHI, dN_NHI],[cddf_Z, dN_Z],number)
-        cddf_NHI, dN_NHI, cddf_Z, dN_Z = build_pdf(data['NHI'],data['Z'],NHI,reshape=True)
+        cddf_Z, dN_Z = build_pdf_Z(data['Z'],reshape=True)
         zdla = np.mean(cat_Z)
         for i in range(dN_NHI.size):
             profile_lambda = profile_voigt_lambda(lamb, zdla, dN_NHI[i])
@@ -285,16 +295,18 @@ def pk_hcd_voigt(k, pk_lin, tracer1, tracer2, **kwargs):
     beta_hcd = kwargs["beta_hcd"]
     L0 = kwargs["L0_hcd"]
     
-    mu1 = kwargs["mean_mu1"]
+    mu1 = kwargs["mu1"]
     sigma1 = kwargs["sigma1"]
-    mu2 = kwargs["mean_mu2"]
+    number1 = kwargs["number1"]
+    mu2 = kwargs["mu2"]
     sigma2 = kwargs["sigma2"]
+    number2 = kwargs["number2"]
 
     kp = k*muk
     
-    Fvoigt_data=get_Fhcd(mu1,sigma1,mu2,sigma2,type_pdf='nomasking',NHI=None)
-    k_data = Fvoigt_data[:,0]
-    F_data = Fvoigt_data[:,1]
+    Fvoigt=get_Fhcd(mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='nomasking',NHI=None)
+    k_data = Fvoigt[:,0]
+    F_data = Fvoigt[:,1]
 
     F_hcd = np.interp(L0*kp, k_data, F_data, left=0, right=0)
 
