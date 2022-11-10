@@ -1266,6 +1266,12 @@ class Delta(QSO):
         self.delta -= mean_delta + res
 
     def rebin(self, factor):
+        """Rebin deltas by an integer factor
+
+        Args:
+            factor: int
+                Factor to rebin deltas (new_bin_size = factor * old_bin_size)
+        """
         wave = 10**np.array(self.log_lambda)
         dwave = wave[1] - wave[0]
         if not np.isclose(dwave, wave[-1] - wave[-2]):
