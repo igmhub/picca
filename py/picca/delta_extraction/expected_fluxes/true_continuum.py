@@ -17,7 +17,7 @@ from picca.delta_extraction.utils import (find_bins, update_accepted_options,
 
 accepted_options = update_accepted_options(accepted_options, [
     "input directory", "raw statistics file", "use constant weight",
-    "num bins variance"
+    "num bins variance", "force stack delta to zero"
 ])
 
 defaults = update_default_options(defaults, {
