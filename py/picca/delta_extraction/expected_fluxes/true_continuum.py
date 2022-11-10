@@ -23,6 +23,7 @@ accepted_options = update_accepted_options(accepted_options, [
 defaults = update_default_options(defaults, {
     "raw statistics file": "",
     "use constant weight": False,
+    "force stack delta to zero": False
 })
 
 IN_NSIDE = 16
@@ -120,6 +121,8 @@ class TrueContinuum(ExpectedFlux):
 
         self.use_constant_weight = config.getboolean("use constant weight")
         self.raw_statistics_filename = config.get("raw statistics file")
+
+        self.force_stack_delta_to_zero = config.getboolean("force stack delta to zero")
 
     def compute_expected_flux(self, forests):
         """
@@ -224,12 +227,15 @@ class TrueContinuum(ExpectedFlux):
                 w = forest.ivar>0
                 weights = np.empty_like(forest.log_lambda)
                 weights[w] = 1
-                weights[~w]= 0
-                mean_expected_flux = forest.continuum
+                weights[~w] = 0
             else:
-                mean_expected_flux = forest.continuum
                 weights = 1. / self.compute_forest_variance(
                     forest, forest.continuum)
+
+            mean_expected_flux = forest.continuum
+            if self.force_stack_delta_to_zero:
+                stack_delta = self.get_stack_delta(forest.log_lambda)
+                mean_expected_flux *= stack_delta
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,
@@ -309,9 +315,9 @@ class TrueContinuum(ExpectedFlux):
         """
         if healpix is None:
             healpix = healpy.ang2pix(IN_NSIDE,
-                                 np.pi / 2 - forests[0].dec,
-                                 forests[0].ra,
-                                 nest=True)
+                                     np.pi / 2 - forests[0].dec,
+                                     forests[0].ra,
+                                     nest=True)
 
         filename_truth = (
             f"{self.input_directory}/{healpix//100}/{healpix}/truth-{IN_NSIDE}-"
@@ -327,7 +333,7 @@ class TrueContinuum(ExpectedFlux):
             indx = np.nonzero(true_cont["TARGETID"] == forest.targetid)[0]
             if indx.size == 0:
                 raise ExpectedFluxError("Forest target id was not found in "
-                    "the truth file.")
+                                        "the truth file.")
             indx = indx[0]
 
             # Should we also check for healpix consistency here?
