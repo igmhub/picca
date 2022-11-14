@@ -4,6 +4,7 @@ classes loading data must inherit
 import logging
 import multiprocessing
 
+from datetime import datetime
 import numpy as np
 import fitsio
 import healpy
@@ -71,6 +72,7 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
     --------
     @ Add here log rejections(?)
     """ 
+    start = datetime.now()
     results = fitsio.FITS(
         f"{out_dir}/Delta/delta-{healpix}.fits.gz",
         'rw',
@@ -135,6 +137,8 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
         extname="CONT",
     )
 
+    print(f'INNER_FUNCTION TIME {healpix}: {datetime.now()-start}')
+
     return forests
 
 def _save_deltas_one_healpix_table(out_dir, healpix, forests):
@@ -156,6 +160,7 @@ def _save_deltas_one_healpix_table(out_dir, healpix, forests):
     List forest to later
     add to rejection log as accepted.
     """
+    start = datetime.now()
     results = fitsio.FITS(
         f"{out_dir}/Delta/delta-{healpix}.fits.gz",
         'rw',
@@ -173,6 +178,7 @@ def _save_deltas_one_healpix_table(out_dir, healpix, forests):
 
     results.close()
 
+    print(f'INNER_FUNCTION TIME {healpix}: {datetime.now()-start}')
     return forests
 
 def _save_deltas_one_healpix(out_dir, healpix, forests, format):
@@ -546,7 +552,7 @@ class Data:
             grouped_forests = [self.forests[i] for i in this_idx]
             arguments.append((self.out_dir, healpix, grouped_forests, self.format))
 
-        if self.num_processors > 1:
+        if False:
             context = multiprocessing.get_context('fork')
             with context.Pool(processes=self.num_processors) as pool:
                 accepted_forests = pool.starmap(_save_deltas_one_healpix,
@@ -554,7 +560,9 @@ class Data:
         else:
             accepted_forests = []
             for args in arguments:
+                start = datetime.now()
                 accepted_forests.append(_save_deltas_one_healpix(*args))
+                print(f'OUT_FUNCTION TIME {args[1]}: {datetime.now()-start}')
 
         accepted_forests = np.concatenate(accepted_forests)
         
