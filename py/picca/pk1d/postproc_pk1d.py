@@ -11,7 +11,6 @@ import numpy as np
 import fitsio
 from astropy.table import Table, vstack
 import astropy.io.fits
-
 from scipy.stats import binned_statistic
 import glob
 import os
@@ -79,19 +78,18 @@ def read_pk1d(f, kbin_edges, snr_cut_mean=None, zbins=None):
             data_array.append(tab)
             z_array.append(float(header['MEANZ']))
             
-    if len(data_array) > 1:
-        data_array = vstack(data_array)
-        data_array['Delta2'] = data_array['k'] * data_array['Pk'] / np.pi
-        data_array['Pk_norescor'] = data_array['Pk_raw'] - data_array['Pk_noise']
-        data_array['Pk_nonoise'] = data_array['Pk_raw'] / data_array['cor_reso']
-        data_array['Pk_noraw'] = data_array['Pk_noise'] / data_array['cor_reso']
-        try:
-            data_array['Pk_noraw_miss'] = data_array['Pk_noise_miss'] / data_array['cor_reso']
-        except:
-            pass
-        data_array['Pk/Pk_noise'] = data_array['Pk_raw'] / data_array['Pk_noise']
-    else:
-        print(f"only {len(data_array)} spectra in file, ignoring this as it currently messes with analysis")
+    data_array = vstack(data_array)
+    data_array['Delta2'] = data_array['k'] * data_array['Pk'] / np.pi
+    data_array['Pk_norescor'] = data_array['Pk_raw'] - data_array['Pk_noise']
+    data_array['Pk_nonoise'] = data_array['Pk_raw'] / data_array['cor_reso']
+    data_array['Pk_noraw'] = data_array['Pk_noise'] / data_array['cor_reso']
+    try:
+        data_array['Pk_noraw_miss'] = data_array['Pk_noise_miss'] / data_array['cor_reso']
+    except:
+        pass
+    # the following is unnecessary - and doesnt work if noise=0 (true cont analysis)
+    #data_array['Pk/Pk_noise'] = data_array['Pk_raw'] / data_array['Pk_noise']
+
     z_array = np.array(z_array)
 
     return data_array, z_array
@@ -173,7 +171,7 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
 
         for ikbin, kbin in enumerate(kbin_edges[:-1]):
             
-            select=(data_array['forest_z'][:] < zbin_edges[izbin + 1])&(data_array['forest_z'][:] > zbin_edges[izbin])&(data_array['k'][:] < kbin_edges[ikbin + 1])&(data_array['k'][:] > kbin_edges[ikbin]) # select a specific (z,k) bin
+            select=(data_array['forest_z'] < zbin_edges[izbin + 1])&(data_array['forest_z'] > zbin_edges[izbin])&(data_array['k'] < kbin_edges[ikbin + 1])&(data_array['k'] > kbin_edges[ikbin]) # select a specific (z,k) bin
             
             index = (len(kbin_edges[:-1]) * izbin) + ikbin # index to be filled in table
             meanP1D_table['zbin'][index] = zbin + ((zbin_edges[izbin+1] - zbin_edges[izbin]) / 2)
@@ -265,13 +263,13 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_c
             full_data_array = pool.starmap(read_pk1d,[[f, kbin_edges, snr_cut_mean, zbins] for f in files])
         else:
             full_data_array = pool.starmap(read_pk1d,[[f, kbin_edges] for f in files])
-    
+
     data_array = vstack([full_data_array[i][0] for i in range(len(full_data_array))])  
     z_array = np.concatenate(tuple([full_data_array[i][1] for i in range(len(full_data_array))]))
 
     full_meanP1D_table, additional_table = compute_mean_pk1d(data_array, z_array, zbin_edges,
                                                              kbin_edges, weights_method, nomedians, velunits)
-    
+
     full_meanP1D_table.meta['velunits']=velunits
     hdu0 = astropy.io.fits.PrimaryHDU()
     hdu1 = astropy.io.fits.table_to_hdu(full_meanP1D_table)
