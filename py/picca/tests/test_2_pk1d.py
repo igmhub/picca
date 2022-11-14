@@ -51,6 +51,28 @@ class TestPk1d(AbstractTest):
 
         return
 
+    def test_Pk1D_raw(self):
+        """
+            Runs a simple test of Pk1d routines
+        """
+        import picca.bin.picca_Pk1D as picca_Pk1D
+
+        self._test = True
+        userprint("\n")
+        ### Send
+        cmd = "picca_Pk1D.py "
+        cmd += "--in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --out-dir " + self._branchFiles + "/Products/Pk1D_raw/"
+        picca_Pk1D.main(cmd.split()[1:])
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_Pk1D/Pk1D_raw.fits.gz"
+            path2 = self._branchFiles + "/Products/Pk1D_raw/Pk1D-0.fits.gz"
+            self.compare_fits(path1, path2, "picca_Pk1D.py")
+
+        return
+
 
 if __name__ == '__main__':
     unittest.main()
