@@ -1422,6 +1422,8 @@ def read_delta_file(filename, from_image=None, rebin_factor=None):
             Path to the file to read
         from_image: bool - default: False
             Whether to use the from_image method.
+        rebin_factor: int - default: None
+            Factor to rebin the lambda grid by. If None, no rebinning is done.
     Returns:
         deltas:
             A dictionary with the data. Keys are the healpix numbers of each
@@ -1483,6 +1485,10 @@ def read_deltas(in_dir,
         from_image: list or None - default: None
             If not None, read the deltas from image files. The list of
             filenname for the image files should be paassed in from_image
+        nproc: int - default: None
+            Number of cpus for parallelization. If None, uses all available.
+        rebin_factor: int - default: None
+            Factor to rebin the lambda grid by. If None, no rebinning is done.
 
     Returns:
         The following variables:

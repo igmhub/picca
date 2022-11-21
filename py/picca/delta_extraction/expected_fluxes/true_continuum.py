@@ -232,7 +232,7 @@ class TrueContinuum(ExpectedFlux):
                 weights = 1. / self.compute_forest_variance(
                     forest, forest.continuum)
 
-            mean_expected_flux = forest.continuum
+            mean_expected_flux = np.copy(forest.continuum)
             if self.force_stack_delta_to_zero:
                 stack_delta = self.get_stack_delta(forest.log_lambda)
                 mean_expected_flux *= stack_delta
