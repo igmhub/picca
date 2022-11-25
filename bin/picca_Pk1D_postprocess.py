@@ -119,7 +119,7 @@ def main(cmdargs):
 
     parser.add_argument('--apply-mean-snr-cut',
                         action='store_true',
-                        default=True,
+                        default=False,
                         required=False,
                         help='Apply a redshift-dependent SNR quality cut')
 
@@ -157,7 +157,7 @@ def main(cmdargs):
                             tested and should bias the result""")
 
     if args.apply_mean_snr_cut:
-        if args.snr_cut_scheme is "eboss":
+        if args.snr_cut_scheme == "eboss":
             snr_cut_mean =       [4.1, 3.9, 3.6, 3.2, 2.9, 2.6, 2.2, 2.0, 2.0,
                                   2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
                                   2.0, 2.0, 2.0]
@@ -185,7 +185,7 @@ def main(cmdargs):
 
 
     k_edges = np.arange(kedge_min,kedge_max,kedge_bin)
-    z_edges = np.arange(args.zedge_min, args.zedge_max, args.zbin_size)
+    z_edges = np.arange(args.zedge_min, args.zedge_max, args.zedge_bin)
 
 
     data = postproc_pk1d.parallelize_p1d_comp(args.in_dir,
@@ -194,7 +194,7 @@ def main(cmdargs):
                                               weights_method=args.weights_method,
                                               snr_cut_mean=snr_cut_mean,
                                               zbins=zbins_snr_cut_mean,
-                                              nomedians=args.no_medians,
+                                              nomedians=args.no_median,
                                               velunits=args.velunits,
                                               overwrite=args.overwrite)
 
