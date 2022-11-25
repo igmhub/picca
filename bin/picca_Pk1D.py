@@ -70,7 +70,19 @@ def process_all_files(index_file_args):
     # read fits or ascii file
     if args.in_format == 'fits':
         hdul = fitsio.FITS(file)
-        deltas = [Delta.from_fitsio(hdu, pk1d_type=True) for hdu in hdul[1:]]
+        try:
+            deltas = [Delta.from_fitsio(hdu, pk1d_type=True) for hdu in hdul[1:]]
+            running_on_raw_transmission = False
+        except ValueError:
+            print("\nPk1d_type=True didn't work on read in, maybe perfect model? Trying without any noise or resolution corrections!")
+            deltas = [Delta.from_fitsio(hdu,pk1d_type=False) for hdu in hdul[1:]]
+            for delta in deltas:
+                delta.ivar=np.ones(delta.delta.shape)*1e10
+                delta.mean_snr=1e5
+                delta.mean_reso=1e-3
+                delta.mean_reso_pix=1e-3
+                delta.exposures_diff = np.zeros(delta.delta.shape)
+            running_on_raw_transmission = True
     elif args.in_format == 'ascii':
         ascii_file = open(file, 'r')
         deltas = [Delta.from_ascii(line) for line in ascii_file]
@@ -203,23 +215,25 @@ def process_all_files(index_file_args):
             run_noise = False
             if args.noise_estimate == 'pipeline':
                 run_noise = True
-            if linear_binning:
+            if linear_binning and not running_on_raw_transmission:
                 pk_noise, pk_diff = compute_pk_noise(pixel_step,
                                                      ivar_new,
                                                      exposures_diff_new,
                                                      run_noise,
                                                      linear_binning=True,
                                                      num_noise_exposures=args.num_noise_exp)
-            else:
+            elif not running_on_raw_transmission:
                 pk_noise, pk_diff = compute_pk_noise(pixel_step,
                                                      ivar_new,
                                                      exposures_diff_new,
                                                      run_noise,
                                                      linear_binning=False,
                                                      num_noise_exposures=args.num_noise_exp)
+            else:
+                pk_noise=pk_diff=np.zeros(pk_raw.shape)
 
             # Compute resolution correction, needs uniform binning
-            if linear_binning:
+            if linear_binning and not running_on_raw_transmission:
                 #in this case all is in AA space
                 if reso_correction == 'matrix':
                     correction_reso = compute_correction_reso_matrix(
@@ -234,15 +248,17 @@ def process_all_files(index_file_args):
                     mean_reso_AA = pixel_step * delta.mean_reso_pix
                     correction_reso = compute_correction_reso(
                         delta_pixel=pixel_step, mean_reso=mean_reso_AA, k=k)
-            else:
+            elif not running_on_raw_transmission:
                 #in this case all is in velocity space
                 delta_pixel = (pixel_step * np.log(10.) *
                                constants.speed_light / 1000.)
                 correction_reso = compute_correction_reso(
                     delta_pixel=delta_pixel, mean_reso=delta.mean_reso, k=k)
+            else:
+                correction_reso= compute_correction_reso(delta_pixel=pixel_step, mean_reso=0., k=k)
 
             # Compute 1D Pk
-            if args.noise_estimate == 'pipeline':
+            if args.noise_estimate == 'pipeline' or running_on_raw_transmission:
                 pk = (pk_raw - pk_noise) / correction_reso
             elif args.noise_estimate == 'mean_pipeline':
                 if args.kmin_noise_avg is None and linear_binning:

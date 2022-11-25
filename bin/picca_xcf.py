@@ -237,6 +237,14 @@ def main(cmdargs):
         help=('Shuffle the distribution of forests on the sky following the '
               'given seed. Do not shuffle if None'))
 
+    parser.add_argument('--rebin-factor',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Rebin factor for deltas. If not None, deltas will '
+                             'be rebinned by that factor')
+
+
     args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -291,7 +299,9 @@ def main(cmdargs):
                                                   cosmo=cosmo,
                                                   max_num_spec=args.nspec,
                                                   no_project=args.no_project,
-                                                  from_image=args.from_image)
+                                                  from_image=args.from_image,
+                                                  nproc=args.nproc,
+                                                  rebin_factor=args.rebin_factor)
     xcf.data = data
     xcf.num_data = num_data
     userprint("")
