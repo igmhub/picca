@@ -22,9 +22,9 @@ lambda_lya = ABSORBER_IGM["LYA"]
 
 def read_pk1d(f, kbin_edges, snr_cut_mean=None, zbins=None):
     """Read Pk1D data from file(s)
-    
+
     Args:
-        f: Fits file, Individual p1d 
+        f: Fits file, Individual p1d
         kbin_edges: Array of floats, Edges of the wavenumber bins we want to use (logsample/not) in Angstrom^-1
         snr_cut_mean: Array of floats, Optional
                       Mean SNR threshold to be applied for each redshift bin, Defaults to None
@@ -34,7 +34,7 @@ def read_pk1d(f, kbin_edges, snr_cut_mean=None, zbins=None):
         data_array: Table, one entry per mode(k) per chunk
         z_array: array[Nchunks]
     """
-  
+
     data_array = []
     z_array = []
     with fitsio.FITS(f) as hdus:
@@ -55,29 +55,29 @@ def read_pk1d(f, kbin_edges, snr_cut_mean=None, zbins=None):
                 tab.rename_column('PK_NOISE_MISS','Pk_noise_miss')
             except:
                 pass
-            
+
             if np.nansum(tab['Pk'])==0:
                 tab['Pk'] = (tab['Pk_raw'] - tab['Pk_noise']) / tab['cor_reso']
-                
+
             tab['forest_z'] = float(header['MEANZ'])
             tab['forest_snr'] = float(header['MEANSNR'])
-            
+
             if snr_cut_mean is not None :
                 if len(snr_cut_mean) != len(zbins) :
                     raise ValueError("Please provide same size for zbins and snr_cut_mean arrays")
-                    
+
                 zbin_index = np.argmin(np.abs(zbins - header['MEANZ']))
-                
+
                 if(header['MEANSNR'] < snr_cut_mean[zbin_index]):
                     continue
-                    
+
             if (tab['Pk_noise'][tab['k']<kbin_edges[-1]]>tab['Pk_raw'][tab['k']<kbin_edges[-1]]*1000000).any():
                 print(f"file {f} hdu {i+1} has very high noise power, ignoring, max value: {(tab['Pk_noise'][tab['k']<kbin_edges[-1]]/tab['Pk_raw'][tab['k']<kbin_edges[-1]]).max()}*Praw")
                 continue
-                
+
             data_array.append(tab)
             z_array.append(float(header['MEANZ']))
-            
+
     data_array = vstack(data_array)
     data_array['Delta2'] = data_array['k'] * data_array['Pk'] / np.pi
     data_array['Pk_norescor'] = data_array['Pk_raw'] - data_array['Pk_noise']
@@ -93,51 +93,51 @@ def read_pk1d(f, kbin_edges, snr_cut_mean=None, zbins=None):
     z_array = np.array(z_array)
 
     return data_array, z_array
-  
-    
+
+
 def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_method, nomedians=False, velunits=False):
     """Takes the individual P1D of each forest chunk and computes the mean P1D with adding weights option
-    
-    Args: 
-        data_array: Table, Individual_pk1d(s) of the contributing forest chunkcs stacked in one table using "read_pk1d", 
+
+    Args:
+        data_array: Table, Individual_pk1d(s) of the contributing forest chunkcs stacked in one table using "read_pk1d",
                     containing 'k', 'Pk_raw', 'Pk_noise', 'Pk_diff', 'cor_reso', 'Pk',
                     'forest_z', 'forest_snr','Delta2', 'Pk_norescor', 'Pk_nonoise', 'Pk_noraw', 'Pk/Pk_noise'
         z_array: Array of floats, Mean z of each contributing forest chunck stacked in one array done in "read_pk1d"
         zbin_edges: Array of floats, Edges of the redshift bins we want to use
         kbin_edges: Array of floats, Edges of the wavenumber bins we want to use (logsample/not) in velocity units
-        weights_method: String, 3 possible options: 
+        weights_method: String, 3 possible options:
                                 'fit_snr': Compute mean P1D with estimated weights using snr fitting
                                 'simple_snr': Compute mean P1D with weights using the snr values from compute_Pk1D output
                                 'no_weights': Compute mean P1D without weights
         nomedians: Bool, Optional, Skip median computation, Default to False
-        velunits: Bool, Optional, Compute P1D in velocity units, Default to False  
+        velunits: Bool, Optional, Compute P1D in velocity units, Default to False
     """
-    
+
     # Initializing stats we want to compute on data
     stats_array = ['mean','error','min','max']
     if nomedians==True:
         stats_array+=['median']
-    
+
     data_array_cols = data_array.colnames
-    
-    # Convert data into velocity units 
-    if velunits==True: 
+
+    # Convert data into velocity units
+    if velunits==True:
         conversion_factor = (lambda_lya * (1. + data_array['forest_z'])) / SPEED_LIGHT
         data_array['k']*=conversion_factor
         for c in data_array_cols:
             if 'Pk' in c:
                 data_array[c]/=conversion_factor
-                
+
     # Initialize meanP1D_table of len = (nzbins * nkbins) corresponding to hdu[1] in final ouput
     meanP1D_table = Table()
     table_length = len(kbin_edges[:-1]) * len(zbin_edges[:-1]) # nzbins * nkbins
     meanP1D_table['zbin'] = np.zeros(table_length)
     meanP1D_table['index_zbin'] = np.zeros(table_length, dtype=int)
     meanP1D_table['N'] = np.zeros(table_length, dtype='int64')
-    for c in data_array_cols:  
+    for c in data_array_cols:
         for stats in stats_array:
             meanP1D_table[stats+c] = np.zeros(table_length)
-                
+
     # Initialize additional_table of len = nzbins corresponding to hdu[1] in final output
     additional_table = Table()
     additional_table['z_min'] = np.zeros(len(zbin_edges[:-1]))
@@ -145,20 +145,20 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
     additional_table['k_min'] = np.zeros(len(zbin_edges[:-1]))
     additional_table['k_max'] = np.zeros(len(zbin_edges[:-1]))
     additional_table['N_chunks'] = np.zeros(len(zbin_edges[:-1]), dtype=int)
-    
+
     # Number of chunks in each redshift bin
     N_chunks, zbin_chunks, izbin_chunks = binned_statistic(z_array, z_array, statistic='count', bins=zbin_edges)
-        
+
     for izbin, zbin in enumerate(zbin_edges[:-1]):
-        
+
         # Filling additional table
         additional_table['z_min'][izbin] = zbin_edges[izbin]
         additional_table['z_max'][izbin] = zbin_edges[izbin+1]
         additional_table['k_min'][izbin] = kbin_edges[0]
         additional_table['k_max'][izbin] = kbin_edges[len(kbin_edges[:-1])]
         additional_table['N_chunks'][izbin] = N_chunks[izbin]
-        
-        if N_chunks[izbin]==0: 
+
+        if N_chunks[izbin]==0:
             for ikbin, kbin in enumerate(kbin_edges[:-1]):
                 index = (len(kbin_edges[:-1]) * izbin) + ikbin # index to be filled in table
                 meanP1D_table['zbin'][index] = zbin + ((zbin_edges[izbin+1] - zbin_edges[izbin]) / 2)
@@ -170,27 +170,27 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
             continue
 
         for ikbin, kbin in enumerate(kbin_edges[:-1]):
-            
+
             select=(data_array['forest_z'] < zbin_edges[izbin + 1])&(data_array['forest_z'] > zbin_edges[izbin])&(data_array['k'] < kbin_edges[ikbin + 1])&(data_array['k'] > kbin_edges[ikbin]) # select a specific (z,k) bin
-            
+
             index = (len(kbin_edges[:-1]) * izbin) + ikbin # index to be filled in table
             meanP1D_table['zbin'][index] = zbin + ((zbin_edges[izbin+1] - zbin_edges[izbin]) / 2)
             meanP1D_table['index_zbin'][index] = izbin
-        
+
             N = np.ma.count(data_array['k'][select]) # Counts the number of chunks in each (z,k) bin
             meanP1D_table['N'][index] = N
-            
-            for ic, c in enumerate(data_array_cols): 
-                
-                if N==0: 
+
+            for ic, c in enumerate(data_array_cols):
+
+                if N==0:
                     print('Warning: 0 chunks found in bin '+str(zbin_edges[izbin])+'<z<'+str(zbin_edges[izbin+1])+
                           ', '+str(kbin_edges[ikbin])+'<k<'+str(kbin_edges[ikbin+1]))
-                    
+
                     for stats in stats_array:
                         meanP1D_table[stats+c][index] = np.nan
-                    
+
                     continue
-                
+
                 if weights_method=='fit_snr':
                     snr_bin_edges = np.arange(1,11,1)
                     snr_bins = np.arange(1.5,10.5,1)
@@ -220,14 +220,14 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
                     #- weights_true = weights * (N - 1) / alpha
                     error = np.sqrt(alpha / (np.sum(weights) * (N - 1)))
                 elif weights_method=='no_weights':
-                    mean = np.average((data_array[c][select])) 
-                    error = np.std((data_array[c][select])) / np.sqrt(N-1)  # unbiased estimate: N-1 
+                    mean = np.average((data_array[c][select]))
+                    error = np.std((data_array[c][select])) / np.sqrt(N-1)  # unbiased estimate: N-1
                 else:
                     raise ValueError("Option for 'weights_method' argument not found")
-                  
+
                 minimum = np.min((data_array[c][select]))
                 maximum = np.max((data_array[c][select]))
-                
+
                 meanP1D_table['mean'+c][index] = mean
                 meanP1D_table['error'+c][index] = error
                 meanP1D_table['min'+c][index] = minimum
@@ -239,10 +239,10 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
     return meanP1D_table, additional_table
 
 
-def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_cut_mean=None, zbins=None, nomedians=False, 
+def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_cut_mean=None, zbins=None, nomedians=False,
                          velunits=False, overwrite=False):
     """Read individual Pk1D data from different files and compute the mean P1D
-    
+
     Args:
         data_dir: Directory where the individual P1D fits files are saved
         overwrite: Bool, Optional, Overwrite files if existing, Defaults to False.
@@ -253,7 +253,7 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_c
     if os.path.exists(outfilename) and not overwrite:
         outdir=Table.read(outfilename)
         return outdir
-     
+
     searchstr = '*'
     files = glob.glob(os.path.join(data_dir,f"Pk1D{searchstr}.fits.gz"))
     ncpu = 8
@@ -264,7 +264,7 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_c
         else:
             full_data_array = pool.starmap(read_pk1d,[[f, kbin_edges] for f in files])
 
-    data_array = vstack([full_data_array[i][0] for i in range(len(full_data_array))])  
+    data_array = vstack([full_data_array[i][0] for i in range(len(full_data_array))])
     z_array = np.concatenate(tuple([full_data_array[i][1] for i in range(len(full_data_array))]))
 
     full_meanP1D_table, additional_table = compute_mean_pk1d(data_array, z_array, zbin_edges,
@@ -276,4 +276,3 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_c
     hdu2 = astropy.io.fits.table_to_hdu(additional_table)
     hdul = astropy.io.fits.HDUList([hdu0, hdu1, hdu2])
     hdul.writeto(outfilename, overwrite=overwrite)
-
