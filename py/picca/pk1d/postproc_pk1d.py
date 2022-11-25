@@ -248,8 +248,8 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_c
         overwrite: Bool, Optional, Overwrite files if existing, Defaults to False.
         other args: As defined in previous functions
     """
-    
-    outfilename=os.path.join(data_dir,f'mean_Pk1d{"_vel" if velunits else ""}.fits.gz')
+
+    outfilename=os.path.join(data_dir,f'mean_Pk1d_{weights_method}{"" if nomedians else "_medians"}{"_snr_cut_mean" if snr_cut_mean is not None else ""}{"_vel" if velunits else ""}.fits.gz')
     if os.path.exists(outfilename) and not overwrite:
         outdir=Table.read(outfilename)
         return outdir
