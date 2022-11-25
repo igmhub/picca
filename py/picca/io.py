@@ -30,8 +30,8 @@ from multiprocessing import Pool
 
 from .utils import userprint
 from .data import Forest, Delta, QSO
-from .prep_pk1d import exp_diff, spectral_resolution
-from .prep_pk1d import spectral_resolution_desi
+from .pk1d.prep_pk1d import exp_diff, spectral_resolution
+from .pk1d.prep_pk1d import spectral_resolution_desi
 
 
 def read_dlas(filename,obj_id_name='THING_ID'):
