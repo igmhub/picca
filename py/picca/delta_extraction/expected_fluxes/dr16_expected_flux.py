@@ -7,14 +7,13 @@ import iminuit
 import numpy as np
 from scipy.interpolate import interp1d
 
-from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
 from picca.delta_extraction.expected_fluxes.utils import compute_continuum
 from picca.delta_extraction.least_squares.least_squares_var_stats import (
     LeastsSquaresVarStats, FUDGE_REF)
-from picca.delta_extraction.utils import (find_bins, update_accepted_options,
+from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, [
@@ -474,11 +473,17 @@ class Dr16ExpectedFlux(ExpectedFlux):
         continuum: array of float
         Quasar continuum associated with the forest
         """
-        var_pipe = 1. / forest.ivar / continuum**2
-        var_lss = self.get_var_lss(forest.log_lambda)
-        eta = self.get_eta(forest.log_lambda)
-        fudge = self.get_fudge(forest.log_lambda)
-        return eta * var_pipe + var_lss + fudge / var_pipe
+        w = forest.ivar > 0
+        variance = np.empty_like(forest.log_lambda)
+        variance[~w] = np.inf
+
+        var_pipe = 1. / forest.ivar[w] / continuum[w]**2
+        var_lss = self.get_var_lss(forest.log_lambda[w])
+        eta = self.get_eta(forest.log_lambda[w])
+        fudge = self.get_fudge(forest.log_lambda[w])
+        variance[w] = eta * var_pipe + var_lss + fudge / var_pipe
+
+        return variance
 
     # TODO: We should check if we can directly compute the mean continuum
     # in particular this means:
@@ -502,43 +507,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
         """
-        mean_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid)
-        mean_cont_weight = np.zeros_like(Forest.log_lambda_rest_frame_grid)
 
-        # first compute <F/C> in bins. C=Cont_old*spectrum_dependent_fitting_fct
-        # (and Cont_old is constant for all spectra in a bin), thus we actually
-        # compute
-        #    1/Cont_old * <F/spectrum_dependent_fitting_function>
-        for forest in forests:
-            if forest.bad_continuum_reason is not None:
-                continue
-            bins = find_bins(forest.log_lambda - np.log10(1 + forest.z),
-                             Forest.log_lambda_rest_frame_grid,
-                             Forest.wave_solution)
-
-            weights = 1.0 / self.compute_forest_variance(
-                forest, forest.continuum)
-            cont = np.bincount(bins,
-                               weights=forest.flux / forest.continuum * weights)
-            mean_cont[:len(cont)] += cont
-            cont = np.bincount(bins, weights=weights)
-            mean_cont_weight[:len(cont)] += cont
-
-        w = mean_cont_weight > 0
-        mean_cont[w] /= mean_cont_weight[w]
-        mean_cont /= mean_cont.mean()
-        log_lambda_cont = Forest.log_lambda_rest_frame_grid[w]
-
-        # the new mean continuum is multiplied by the previous one to recover
-        # <F/spectrum_dependent_fitting_function>
-        new_cont = self.get_mean_cont(log_lambda_cont) * mean_cont[w]
-        self.get_mean_cont = interp1d(log_lambda_cont,
-                                      new_cont,
-                                      fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(log_lambda_cont,
-                                             mean_cont_weight[w],
-                                             fill_value=0.0,
-                                             bounds_error=False)
+        super()._compute_mean_cont(forests,
+            lambda forest: forest.flux/(forest.continuum+1e-16))
 
     def compute_var_stats(self, forests):
         """Compute variance functions and statistics
@@ -571,6 +542,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             fudge = self.get_fudge(self.log_lambda_var_func_grid)
         num_pixels = np.zeros(self.num_bins_variance)
         valid_fit = np.zeros(self.num_bins_variance)
+
         chi2_in_bin = np.zeros(self.num_bins_variance)
 
         # initialize the fitter class
@@ -697,8 +669,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             if self.force_stack_delta_to_zero:
                 stack_delta = self.get_stack_delta(forest.log_lambda)
                 mean_expected_flux *= stack_delta
-            weights = 1.0 / self.compute_forest_variance(
-                forest, mean_expected_flux)
+
+            weights = 1. / self.compute_forest_variance(forest, mean_expected_flux)
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,

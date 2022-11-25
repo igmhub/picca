@@ -82,8 +82,9 @@ class LeastsSquaresContModel:
         weights = self.get_continuum_weights(
             self.forest, cont_model, **self.weights_kwargs)
 
+        w = weights > 0
         chi2_contribution = (self.forest.flux - cont_model)**2 * weights
-        return chi2_contribution.sum() - np.log(weights).sum()
+        return chi2_contribution.sum() - np.log(weights[w]).sum()
 
     # pylint: disable=no-self-use
     # We expect this function to be changed by some child classes at some point
@@ -168,18 +169,23 @@ class LeastsSquaresContModel:
         if "use_constant_weight" not in kwargs:
             raise LeastSquaresError("Function get_continuum_weights requires "
                                     "'use_constant_weight' in the **kwargs dictionary")
+        # Assign 0 weight to pixels with ivar==0
+        w = forest.ivar > 0
+        weights = np.empty_like(forest.log_lambda)
+        weights[~w] = 0
+
         if kwargs.get("use_constant_weight"):
-            weights = np.ones_like(forest.flux)
+            weights[w] = 1
         else:
             for key in ["eta", "var_lss", "fudge"]:
                 if key not in kwargs:
                     raise LeastSquaresError("Function get_continuum_weights requires "
                                             f"'{key}' in the **kwargs dictionary")
-            var_pipe = 1. / forest.ivar / cont_model**2
+            var_pipe = 1. / forest.ivar[w] / cont_model[w]**2
             var_lss = kwargs["var_lss"]
             eta = kwargs["eta"]
             fudge = kwargs["fudge"]
-            variance = eta * var_pipe + var_lss + fudge / var_pipe
-            weights = 1.0 / cont_model**2 / variance
+            variance = eta[w] * var_pipe + var_lss[w] + fudge[w] / var_pipe
+            weights[w] = 1.0 / cont_model[w]**2 / variance
 
         return weights

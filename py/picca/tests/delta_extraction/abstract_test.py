@@ -175,15 +175,16 @@ class AbstractTest(unittest.TestCase):
                             print(f"Column {col} in HDU {orig_header['EXTNAME']} "
                                   "missing in new file")
                         self.assertTrue(col in new_data.dtype.names)
-                        if not np.allclose(orig_data[col],
+                        w = np.isclose(orig_data[col],
                                      new_data[col],
-                                     equal_nan=True):
+                                     equal_nan=True)
+                        if not np.all(w):
                             print(f"\nOriginal file: {orig_file}")
                             print(f"New file: {new_file}")
                             print(f"Different values found for column {col} in "
                                   f"HDU {orig_header['EXTNAME']}")
                             print("original new isclose original-new\n")
-                            for new, orig in zip(new_data[col], orig_data[col]):
+                            for new, orig in zip(new_data[col][~w], orig_data[col][~w]):
                                 print(f"{orig} {new} "
                                       f"{np.isclose(orig, new, equal_nan=True)} "
                                       f"{orig-new}")

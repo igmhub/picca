@@ -14,7 +14,7 @@ defaults = {
     "los_id name": "THING_ID",
 }
 
-accepted_options = ["absorber mask width", "filename", "los_id name"]
+accepted_options = ["absorber mask width", "filename", "keep pixels", "los_id name"]
 
 class AbsorberMask(Mask):
     """Class to mask Absorbers
@@ -45,7 +45,7 @@ class AbsorberMask(Mask):
         """
         self.logger = logging.getLogger(__name__)
 
-        super().__init__()
+        super().__init__(config)
 
         # first load the absorbers catalogue
         filename = config.get("filename")
@@ -119,7 +119,4 @@ class AbsorberMask(Mask):
 
             # do the actual masking
             for param in Forest.mask_fields:
-                if param in ['resolution_matrix']:
-                    setattr(forest, param, getattr(forest, param)[:, w])
-                else:
-                    setattr(forest, param, getattr(forest, param)[w])
+                self._masker(forest, param, w)

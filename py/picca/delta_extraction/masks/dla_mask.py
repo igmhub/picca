@@ -16,7 +16,7 @@ defaults = {
     "los_id name": "THING_ID",
 }
 
-accepted_options = ["dla mask limit", "los_id name", "mask file", "filename"]
+accepted_options = ["dla mask limit", "los_id name", "mask file", "filename", "keep pixels"]
 
 np.random.seed(0)
 NUM_POINTS = 10000
@@ -63,7 +63,7 @@ class DlaMask(Mask):
         """
         self.logger = logging.getLogger(__name__)
 
-        super().__init__()
+        super().__init__(config)
 
         # first load the dla catalogue
         filename = config.get("filename")
@@ -167,11 +167,7 @@ class DlaMask(Mask):
             # do the actual masking
             forest.transmission_correction *= dla_transmission
             for param in Forest.mask_fields:
-                if param in ['resolution_matrix']:
-                    setattr(forest, param, getattr(forest, param)[:, w])
-                else:
-                    setattr(forest, param, getattr(forest, param)[w])
-
+                self._masker(forest, param, w)
 
 class DlaProfile:
     """Class to represent Damped Lyman-alpha Absorbers.
