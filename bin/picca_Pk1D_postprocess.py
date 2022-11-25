@@ -185,7 +185,7 @@ def main(cmdargs):
 
 
     k_edges = np.arange(kedge_min,kedge_max,kedge_bin)
-    z_edges = np.arange(args.zedge_min, args.zedge_max, args.zedge_bin)
+    z_edges = np.around(np.arange(args.zedge_min, args.zedge_max, args.zedge_bin),5)
 
 
     data = postproc_pk1d.parallelize_p1d_comp(args.in_dir,
