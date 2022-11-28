@@ -140,13 +140,13 @@ def main(cmdargs):
                         action='store_true',
                         default=False,
                         required=False,
-                        help='Make the calculation in velocity units')
+                        help='Compute mean P1D in velocity units')
 
     parser.add_argument('--no-median',
                         action='store_true',
                         default=False,
                         required=False,
-                        help='Use averages instead of medians')
+                        help='Skip computation of median quantities')
 
 
     args = parser.parse_args(sys.argv[1:])
