@@ -10,10 +10,10 @@ from picca.pk1d import postproc_pk1d
 
 
 def define_wavevector_limits(k_inf,k_sup,k_dist,velunits,pixsize,rebinfac):
-    """ Define the wavenumber vector limits and binning
-        Default binning define linearly with assumed average redshift of 3.4,
+    """ Define the wavenumber array limits and binning
+        Default binning defined linearly with assumed average redshift of 3.4,
         and a forest defined between 1050 and 1200 Angstrom.
-        Default velocity binning with same number of pixel"""
+        Default velocity binning with same number of pixels"""
 
     k_inf_lin_default = 2*np.pi/((1200-1050)*(1+3.4)/rebinfac)
     k_sup_lin_default = np.pi/pixsize
@@ -70,37 +70,37 @@ def main(cmdargs):
                         default='0.2',
                         required=False,
                         help='Number of bins of the redshift edge array,'
-                             'Default value: 6.3')
+                             'Default value: 0.2')
 
     parser.add_argument('--kedge-min',
                         type=float,
                         default=None,
                         required=False,
-                        help='Minimal value of the wavenumber edge array,'
-                             'Default value defined in function of --rebinfac, '
+                        help='Minimal value of the wavenumber edges array,'
+                             'Default value defined as function of --rebinfac, '
                              '--pixsize, and --velunits arguments')
 
     parser.add_argument('--kedge-max',
                         type=float,
                         default=None,
                         required=False,
-                        help='Maximal value of the wavenumber edge array,'
-                             'Default value defined in function of --rebinfac, '
+                        help='Maximal value of the wavenumber edges array,'
+                             'Default value defined as function of --rebinfac, '
                              '--pixsize, and --velunits arguments')
 
     parser.add_argument('--kedge-bin',
                         type=float,
                         default=None,
                         required=False,
-                        help='Number of bins of the wavenumber edge array,'
-                             'Default value defined in function of --rebinfac, '
+                        help='Number of bins of the wavenumber edges array,'
+                             'Default value defined as function of --rebinfac, '
                              '--pixsize, and --velunits arguments')
 
     parser.add_argument('--rebinfac',
                         type=int,
                         default=1,
                         required=False,
-                        help='Rebining factor used to define the binning of '
+                        help='Rebinning factor used to define the binning of '
                              'the output wavenumber array')
 
     parser.add_argument('--pixsize',
@@ -127,7 +127,7 @@ def main(cmdargs):
                         type=str,
                         default='eboss',
                         required=False,
-                        help='Choice of the type of SNR cut, '
+                        help='Choice of SNR cut type, '
                              'Possible options: eboss')
 
     parser.add_argument('--overwrite',
