@@ -114,8 +114,8 @@ def main(cmdargs):
                         type=str,
                         default='no_weights',
                         required=False,
-                        help='Weighted scheme for the averaging.'
-                             'Possible options: no_weights, simple_snr')
+                        help='Weighting scheme for the mean P1D computation,'
+                             'Possible options: no_weights, simple_snr, fit_snr')
 
     parser.add_argument('--apply-mean-snr-cut',
                         action='store_true',
@@ -151,13 +151,13 @@ def main(cmdargs):
 
     args = parser.parse_args(sys.argv[1:])
 
-    if (args.weights_method != "no_weights") & (args.apply_mean_snr_cut):
+    if (args.weights_method != 'no_weights') & (args.apply_mean_snr_cut):
         raise ValueError("""You are using a weighting method with a
                             redshift-dependent SNR quality cut, this is not
                             tested and should bias the result""")
 
     if args.apply_mean_snr_cut:
-        if args.snr_cut_scheme == "eboss":
+        if args.snr_cut_scheme == 'eboss':
             snr_cut_mean =       [4.1, 3.9, 3.6, 3.2, 2.9, 2.6, 2.2, 2.0, 2.0,
                                   2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
                                   2.0, 2.0, 2.0]
@@ -184,8 +184,8 @@ def main(cmdargs):
                                                                args.rebinfac)
 
 
-    k_edges = np.arange(kedge_min,kedge_max,kedge_bin)
-    z_edges = np.around(np.arange(args.zedge_min, args.zedge_max, args.zedge_bin),5)
+    k_edges = np.arange(kedge_min, kedge_max, kedge_bin)
+    z_edges = np.around(np.arange(args.zedge_min, args.zedge_max, args.zedge_bin), 5)
 
 
     data = postproc_pk1d.parallelize_p1d_comp(args.in_dir,
