@@ -5,8 +5,7 @@
 import sys, os, argparse
 import numpy as np
 import fitsio
-from picca.pk1d import postproc_pk1d
-
+from picca.pk1d import postproc_pk1d, postproc_pk1d_oldoutput
 
 
 def define_wavenumber_array(k_min, k_max, k_dist, velunits, pixsize, rebinfac):
@@ -148,6 +147,13 @@ def main(cmdargs):
                         required=False,
                         help='Skip computation of median quantities')
 
+    parser.add_argument('--old-output',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Output the older version of the average P1D')
+
+
 
     args = parser.parse_args(sys.argv[1:])
 
@@ -188,15 +194,29 @@ def main(cmdargs):
     z_edges = np.around(np.arange(args.zedge_min, args.zedge_max, args.zedge_bin), 5)
 
 
-    data = postproc_pk1d.parallelize_p1d_comp(args.in_dir,
-                                              z_edges,
-                                              k_edges,
-                                              weights_method=args.weights_method,
-                                              snr_cut_mean=snr_cut_mean,
-                                              zbins=zbins_snr_cut_mean,
-                                              nomedians=args.no_median,
-                                              velunits=args.velunits,
-                                              overwrite=args.overwrite)
+
+    if args.old_output:
+        data = postproc_pk1d_oldoutput.parallelize_p1d_comp(args.in_dir,
+                                                            z_edges,
+                                                            k_edges,
+                                                            weights_method=args.weights_method,
+                                                            snr_cut_mean=snr_cut_mean,
+                                                            zbins=zbins_snr_cut_mean,
+                                                            nomedians=args.no_median,
+                                                            velunits=args.velunits,
+                                                            overwrite=args.overwrite)
+
+    else:
+        data = postproc_pk1d.parallelize_p1d_comp(args.in_dir,
+                                                  z_edges,
+                                                  k_edges,
+                                                  weights_method=args.weights_method,
+                                                  snr_cut_mean=snr_cut_mean,
+                                                  zbins=zbins_snr_cut_mean,
+                                                  nomedians=args.no_median,
+                                                  velunits=args.velunits,
+                                                  overwrite=args.overwrite)
+
 
 if __name__ == '__main__':
     cmdargs = sys.argv[1:]
