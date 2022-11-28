@@ -117,7 +117,7 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
     N_chunks, zbin_chunks, izbin_chunks = binned_statistic(z_array, z_array, statistic='count', bins=zbin_edges)
     
     stats_array = ['mean','error','min','max']
-    if nomedians==True:
+    if nomedians==False:
         stats_array+=['median']
         
     if velunits==True: # Convert data into velocity units
@@ -201,7 +201,7 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
                 table_data['error'+c][0,ikbin] = error
                 table_data['min'+c][0,ikbin] = minimum
                 table_data['max'+c][0,ikbin] = maximum
-                if nomedians==True:
+                if nomedians==False:
                     median = np.median((data_array[c][select]))
                     table_data['median'+c][0,ikbin] = median
 
