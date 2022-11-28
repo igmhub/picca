@@ -165,9 +165,9 @@ def main(cmdargs):
                                   4.0, 4.2, 4.4, 4.6, 4.8, 5.0, 5.2, 5.4, 5.6,
                                   5.8, 6.0, 6.2]
         else:
-            raise ValueError("Please choose the snr cutting scheme to be eboss, "
-                             "or turn of the --apply-mean-snr-cut parameter, or "
-                             "add here in the code a specific snr cutting scheme")
+            raise ValueError("Please choose the SNR cutting scheme to be eboss, "
+                             "or turn off the --apply-mean-snr-cut parameter, or "
+                             "add here in the code a specific SNR cutting scheme")
     else:
         snr_cut_mean = None
         zbins_snr_cut_mean = None
