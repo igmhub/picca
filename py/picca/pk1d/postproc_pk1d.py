@@ -175,7 +175,7 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
             select=(data_array['forest_z'] < zbin_edges[izbin + 1])&(data_array['forest_z'] > zbin_edges[izbin])&(data_array['k'] < kbin_edges[ikbin + 1])&(data_array['k'] > kbin_edges[ikbin]) # select a specific (z,k) bin
 
             index = (len(kbin_edges[:-1]) * izbin) + ikbin # index to be filled in table
-            meanP1D_table['zbin'][index] = zbin + ((zbin_edges[izbin+1] - zbin_edges[izbin]) / 2)
+            meanP1D_table['zbin'][index] = zbin_centers[izbin]
             meanP1D_table['index_zbin'][index] = izbin
 
             N = np.ma.count(data_array['k'][select]) # Counts the number of chunks in each (z,k) bin
