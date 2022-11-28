@@ -9,31 +9,31 @@ from picca.pk1d import postproc_pk1d
 
 
 
-def define_wavevector_limits(k_inf,k_sup,k_dist,velunits,pixsize,rebinfac):
+def define_wavenumber_array(k_min, k_max, k_dist, velunits, pixsize, rebinfac):
     """ Define the wavenumber array limits and binning
         Default binning defined linearly with assumed average redshift of 3.4,
         and a forest defined between 1050 and 1200 Angstrom.
         Default velocity binning with same number of pixels"""
 
-    k_inf_lin_default = 2*np.pi/((1200-1050)*(1+3.4)/rebinfac)
-    k_sup_lin_default = np.pi/pixsize
-    nb_k_bin_lin = int(k_sup_lin_default/k_inf_lin_default/4)
-    k_dist_lin_default = (k_sup_lin_default-k_inf_lin_default) / nb_k_bin_lin
+    k_min_lin_default = 2 * np.pi / ((1200 - 1050) * (1 + 3.4) / rebinfac)
+    k_max_lin_default = np.pi / pixsize
+    nb_k_bin_lin = int(k_max_lin_default / k_min_lin_default / 4)
+    k_dist_lin_default = (k_max_lin_default - k_min_lin_default) / nb_k_bin_lin
 
-    k_inf_vel_default = 0.000813
+    k_min_vel_default = 0.000813
     k_dist_vel_default = 0.000542 * rebinfac
-    k_sup_vel_default = k_inf_vel_default + nb_k_bin_lin * k_dist_vel_default
+    k_max_vel_default = k_min_vel_default + nb_k_bin_lin * k_dist_vel_default
 
     if velunits:
-        if k_inf is None: k_inf = k_inf_vel_default
-        if k_sup is None: k_sup = k_sup_vel_default
+        if k_min is None: k_min = k_min_vel_default
+        if k_max is None: k_max = k_max_vel_default
         if k_dist is None: k_dist = k_dist_vel_default
     else:
-        if k_inf is None: k_inf = k_inf_lin_default
-        if k_sup is None: k_sup = k_sup_lin_default
+        if k_min is None: k_min = k_min_lin_default
+        if k_max is None: k_max = k_max_lin_default
         if k_dist is None: k_dist = k_dist_lin_default
 
-    return(k_inf,k_sup,k_dist)
+    return k_min, k_max, k_dist
 
 
 
@@ -176,7 +176,7 @@ def main(cmdargs):
 
 
 
-    kedge_min, kedge_max, kedge_bin = define_wavevector_limits(args.kedge_min,
+    kedge_min, kedge_max, kedge_bin = define_wavenumber_array(args.kedge_min,
                                                                args.kedge_max,
                                                                args.kedge_bin,
                                                                args.velunits,
