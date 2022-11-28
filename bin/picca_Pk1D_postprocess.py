@@ -144,9 +144,9 @@ def main(cmdargs):
 
     parser.add_argument('--no-median',
                         action='store_true',
-                        default=True,
+                        default=False,
                         required=False,
-                        help='Used averages instead of medians')
+                        help='Use averages instead of medians')
 
 
     args = parser.parse_args(sys.argv[1:])
