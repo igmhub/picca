@@ -148,6 +148,7 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
 
     # Number of chunks in each redshift bin
     N_chunks, zbin_chunks, izbin_chunks = binned_statistic(z_array, z_array, statistic='count', bins=zbin_edges)
+    zbin_centers = np.around((zbin_edges[1:] + zbin_edges[:-1])/2,5)
 
     for izbin, zbin in enumerate(zbin_edges[:-1]):
 
@@ -161,7 +162,7 @@ def compute_mean_pk1d(data_array, z_array, zbin_edges, kbin_edges, weights_metho
         if N_chunks[izbin]==0:
             for ikbin, kbin in enumerate(kbin_edges[:-1]):
                 index = (len(kbin_edges[:-1]) * izbin) + ikbin # index to be filled in table
-                meanP1D_table['zbin'][index] = zbin + ((zbin_edges[izbin+1] - zbin_edges[izbin]) / 2)
+                meanP1D_table['zbin'][index] = zbin_centers[izbin]
                 meanP1D_table['index_zbin'][index] = izbin
                 for c in data_array_cols:
                     for stats in stats_array:
