@@ -6,6 +6,7 @@ This module provides 3 functions:
     - parallelize_p1d_comp: Main function, runs read_pk1d in parallel, then runs compute_mean_pk1d
 See the respective documentation for details
 """
+
 import os, glob
 from multiprocessing import Pool
 
@@ -90,7 +91,7 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins=None):
                 userprint(f"file {filename} hdu {i+1} has very high noise power: discarded")
                 continue
 
-            p1d_table.append(p1d_table)
+            p1d_table.append(chunk_table)
             z_array.append(float(chunk_header['MEANZ']))
 
     p1d_table = vstack(p1d_table)
