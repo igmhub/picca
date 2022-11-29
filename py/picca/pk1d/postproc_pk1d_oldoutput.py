@@ -48,7 +48,7 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins=None):
   
     p1d_table = []
     z_array = []
-    with fitsio.FITS(f) as hdus:
+    with fitsio.FITS(filename) as hdus:
         for i,h in enumerate(hdus[1:]):
             data = h.read()
             chunk_header = h.read_header()
@@ -166,7 +166,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                 p1d_table[c] /= conversion_factor
 
     # Number of chunks in each redshift bin
-     N_chunks, zbin_chunks, izbin_chunks = binned_statistic(z_array, z_array, statistic='count', bins=zbin_edges)
+    N_chunks, zbin_chunks, izbin_chunks = binned_statistic(z_array, z_array, statistic='count', bins=zbin_edges)
 
     # Initialize meanP1D_table of len = nzbins, consisting of stacked table_data (1 table_data per zbin)
     meanP1D_table = Table()
@@ -189,10 +189,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
 
         for ikbin, kbin in enumerate(kbin_edges[:-1]): # Main loop 2) k bins
 
-            select=(p1d_table['forest_z'] < zbin_edges[izbin + 1])&
-                    (p1d_table['forest_z'] > zbin_edges[izbin])&
-                    (p1d_table['k'] < kbin_edges[ikbin + 1])&
-                    (p1d_table['k'] > kbin_edges[ikbin]) # select a specific (z,k) bin
+            select=(p1d_table['forest_z'] < zbin_edges[izbin + 1])&(p1d_table['forest_z'] > zbin_edges[izbin])&(p1d_table['k'] < kbin_edges[ikbin + 1])&(p1d_table['k'] > kbin_edges[ikbin]) # select a specific (z,k) bin
 
             N = np.ma.count(p1d_table['k'][select]) # Counts the number of chunks in each (z,k) bin
             table_data['N'][0,ikbin] = N
@@ -284,7 +281,7 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weight_method, snrcut
         output_file = os.path.join(data_dir,
                 f'mean_Pk1d_{weight_method}{"" if nomedians else "_medians"}{"_snr_cut" if snrcut is not None else ""}{"_vel" if velunits else ""}.fits.gz')
     if os.path.exists(output_file) and not overwrite:
-        outdir=Table.read(outfilename)
+        outdir=Table.read(output_file)
         return outdir
 
     searchstr = '*'
@@ -292,16 +289,16 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weight_method, snrcut
     ncpu = 8
     with Pool(ncpu) as pool:
         if snrcut is not None:
-            full_p1d_table = pool.starmap(read_pk1d,[[f, kbin_edges, snrcut, zbins] for f in files])
+            full_p1d_table = pool.starmap(read_pk1d, [[f, kbin_edges, snrcut, zbins] for f in files])
         else:
-            full_p1d_table = pool.starmap(read_pk1d,[[f, kbin_edges] for f in files])
+            full_p1d_table = pool.starmap(read_pk1d, [[f, kbin_edges] for f in files])
 
     p1d_table = vstack([full_p1d_table[i][0] for i in range(len(full_p1d_table))])
-    z_array = np.concatenate(tuple([full_data_array[i][1] for i in range(len(full_p1d_table))]))
+    z_array = np.concatenate(tuple([full_p1d_table[i][1] for i in range(len(full_p1d_table))]))
 
     full_meanP1D_table = compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method, nomedians, velunits)
 
     outdir = full_meanP1D_table
     outdir.meta['velunits']=velunits
-    outdir.write(outfilename,overwrite=overwrite)
+    outdir.write(output_file, overwrite=overwrite)
     return outdir
