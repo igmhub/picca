@@ -1,4 +1,4 @@
-"""This module defines a set of functions to postprocess files produced by pk1d.py.
+"""This module defines a set of functions to postprocess files produced by compute_pk1d.py.
 
 This module provides 3 functions:
     - read_pk1d: Reads all HDUs in an individual "P1D" FITS file and stacks all data in one table
