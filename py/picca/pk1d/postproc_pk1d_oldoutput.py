@@ -260,8 +260,9 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
     return meanP1D_table
 
 
-def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weight_method, snrcut=None, zbins=None, nomedians=False,
-                         velunits=False, output_file=None, overwrite=False):
+def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weight_method, 
+                         snrcut=None, zbins=None, output_file=None, nomedians=False, 
+                         velunits=False, overwrite=False):
     """Read individual Pk1D data from a set of files and compute P1D statistics, stored in a summary FITS file.
 
     Arguments:
