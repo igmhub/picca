@@ -167,6 +167,19 @@ class AbstractTest(unittest.TestCase):
                 new_data = new_hdul[hdu_name].data
                 if orig_data is None:
                     self.assertTrue(new_data is None)
+                elif orig_data.dtype.names is None:
+                    if not np.allclose(orig_data, new_data, equal_nan=True):
+                        print(f"\nOriginal file: {orig_file}")
+                        print(f"New file: {new_file}")
+                        print(f"Different values found for hdu {hdu_name}")
+                        print(f"original new isclose original-new\n")
+                        for new, orig in zip(orig_data, new_data):
+                            print(f"{orig} {new} "
+                                  f"{np.isclose(orig, new, equal_nan=True)} "
+                                  f"{orig-new}")
+                    self.assertTrue(np.allclose(orig_data, 
+                                                new_data,
+                                                equal_nan=True))
                 else:
                     for col in orig_data.dtype.names:
                         if not col in new_data.dtype.names:
@@ -175,7 +188,19 @@ class AbstractTest(unittest.TestCase):
                             print(f"Column {col} in HDU {orig_header['EXTNAME']} "
                                   "missing in new file")
                         self.assertTrue(col in new_data.dtype.names)
-                        if not np.allclose(orig_data[col],
+                        if isinstance(orig_data[col][0], str):
+                            if not np.all(orig_data[col] == new_data[col]):
+                                print(f"\nOriginal file: {orig_file}")
+                                print(f"New file: {new_file}")
+                                print(f"Different values found for column {col} in "
+                                    f"HDU {orig_header['EXTNAME']}")
+                                print("original new isclose original-new\n")
+                                for new, orig in zip(new_data[col], orig_data[col]):
+                                    print(f"{orig} {new} "
+                                        f"{np.isclose(orig, new, equal_nan=True)} "
+                                        f"{orig-new}")
+                                self.assertTrue(np.all(orig_data[col] == new_data[col]))
+                        elif not np.allclose(orig_data[col],
                                      new_data[col],
                                      equal_nan=True):
                             print(f"\nOriginal file: {orig_file}")
@@ -187,7 +212,7 @@ class AbstractTest(unittest.TestCase):
                                 print(f"{orig} {new} "
                                       f"{np.isclose(orig, new, equal_nan=True)} "
                                       f"{orig-new}")
-                        self.assertTrue(np.allclose(orig_data[col],
+                            self.assertTrue(np.allclose(orig_data[col],
                                                     new_data[col],
                                                     equal_nan=True))
                     for col in new_data.dtype.names:
