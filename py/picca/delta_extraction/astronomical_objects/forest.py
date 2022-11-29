@@ -605,7 +605,7 @@ class Forest(AstronomicalObject):
 
         # return weights and binning solution to be used by child classes if
         # required
-        self.log_lambda_index = find_bins(self.log_lambda, self.log_lambda_grid, 
+        self.log_lambda_index = find_bins(self.log_lambda, self.log_lambda_grid,
                                           Forest.wave_solution)
         return bins, rebin_ivar, orig_ivar, w1, w2
 
