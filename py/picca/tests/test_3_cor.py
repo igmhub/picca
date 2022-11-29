@@ -156,6 +156,35 @@ class TestCor(AbstractTest):
 
         return
 
+    def test_cf_image_data(self):
+        """
+            Test correlation function reading image data
+        """
+        importlib.reload(picca.cf)
+
+        userprint("\n")
+        ### Send
+        cmd = "picca_cf.py"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA_image/"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf.fits.gz"
+        cmd += " --rp-min +0.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --nproc 1"
+        cmd += " --from-image"
+        print(repr(cmd))
+        picca.bin.picca_cf.main(cmd.split()[1:])
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/cf_image.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/cf.fits.gz"
+            self.compare_fits(path1, path2, "picca_cf.py")
+
+        return
+
     def test_dmat(self):
         """
             Test distortion matrix
