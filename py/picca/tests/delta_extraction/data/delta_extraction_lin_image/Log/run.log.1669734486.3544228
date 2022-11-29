@@ -1,0 +1,166 @@
+[INFO]: Reading corrections. There are None corrections
+[INFO]: Time spent reading Corrections: 0.000217437744140625
+[INFO]: Reading masks. There are None masks
+[INFO]: Time spent reading masks: 4.982948303222656e-05
+[INFO]: Reading data
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /global/u2/c/cramirez/Codes/picca_image_model/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.007321596145629883
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Time spent reading data: 10.353713750839233
+[WARNING]: Selected blinding, corr_yshift is being ignored as SV data should not be blinded. 'none' blinding engaged
+[PROGRESS]: determining nside
+[PROGRESS]: nside = 4 -- mean #obj per pixel = 31.5
+[INFO]: Time spent reading data: 10.362863540649414
+[INFO]: Applying corrections
+[INFO]: Time spent applying corrections: 7.2479248046875e-05
+[INFO]: Applying masks
+[INFO]: Time spent applying masks: 9.632110595703125e-05
+[PROGRESS]: Input sample has 63 forests
+[PROGRESS]: Rejected forest with los_id 39633493583463661 due to low SNR (-0.10346939003806442 < 0.0)
+[PROGRESS]: Rejected forest with los_id 39633561174674576 due to forest being too short (19)
+[PROGRESS]: Rejected forest with los_id 39633562000951961 due to forest being too short (8)
+[PROGRESS]: Removed forests that are too short
+[PROGRESS]: Remaining sample has 60 forests
+[INFO]: Computing mean expected flux.
+[PROGRESS]: Continuum fitting: starting iteration 0 of 5
+[INFO]: Computing quasar continua using 32 processors
+[INFO]: Time spent computing quasar continua: 0.16312956809997559
+[INFO]: Time spent computing the mean continuum: 1.0458519458770752
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.562e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.18e+03 0.0
+[PROGRESS]:  3.573e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.65e+03 0.0
+[PROGRESS]:  3.584e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.96e+03 0.0
+[PROGRESS]:  3.595e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.70e+03 0.0
+[PROGRESS]:  3.605e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.50e+03 0.0
+[PROGRESS]:  3.615e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.52e+03 0.0
+[PROGRESS]:  3.625e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.62e+03 0.0
+[PROGRESS]:  3.635e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.19e+03 0.0
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 8.76e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 8.39e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.51e+02 0.0
+[PROGRESS]:  3.671e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.12e+02 0.0
+[PROGRESS]:  3.680e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 5.12e+02 0.0
+[PROGRESS]:  3.689e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.40e+02 0.0
+[PROGRESS]:  3.697e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.81e+02 0.0
+[PROGRESS]:  3.705e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.72e+02 0.0
+[PROGRESS]:  3.713e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.76e+02 0.0
+[PROGRESS]:  3.721e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.76e+02 0.0
+[PROGRESS]:  3.729e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.22e+02 0.0
+[PROGRESS]:  3.737e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 2.83e+02 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.0778353214263916
+[INFO]: Time spent computing delta stack: 0.06825900077819824
+[PROGRESS]: Continuum fitting: ending iteration 0 of 5
+[PROGRESS]: Continuum fitting: starting iteration 1 of 5
+[INFO]: Computing quasar continua using 32 processors
+[INFO]: Time spent computing quasar continua: 0.17372488975524902
+[INFO]: Time spent computing the mean continuum: 0.021049022674560547
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.562e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.33e+03 0.0
+[PROGRESS]:  3.573e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.68e+03 0.0
+[PROGRESS]:  3.584e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.94e+03 0.0
+[PROGRESS]:  3.595e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.71e+03 0.0
+[PROGRESS]:  3.605e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.45e+03 0.0
+[PROGRESS]:  3.615e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.56e+03 0.0
+[PROGRESS]:  3.625e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.54e+03 0.0
+[PROGRESS]:  3.635e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.21e+03 0.0
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 7.40e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 7.26e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 8.34e+02 0.0
+[PROGRESS]:  3.671e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.44e+02 0.0
+[PROGRESS]:  3.680e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 5.18e+02 0.0
+[PROGRESS]:  3.689e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.31e+02 0.0
+[PROGRESS]:  3.697e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.27e+02 0.0
+[PROGRESS]:  3.705e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.21e+02 0.0
+[PROGRESS]:  3.713e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.49e+02 0.0
+[PROGRESS]:  3.721e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.72e+02 0.0
+[PROGRESS]:  3.729e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.22e+02 0.0
+[PROGRESS]:  3.737e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 2.92e+02 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.07868385314941406
+[INFO]: Time spent computing delta stack: 0.07021117210388184
+[PROGRESS]: Continuum fitting: ending iteration 1 of 5
+[PROGRESS]: Continuum fitting: starting iteration 2 of 5
+[INFO]: Computing quasar continua using 32 processors
+[INFO]: Time spent computing quasar continua: 0.19261527061462402
+[INFO]: Time spent computing the mean continuum: 0.02103590965270996
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.562e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.36e+03 0.0
+[PROGRESS]:  3.573e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.72e+03 0.0
+[PROGRESS]:  3.584e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.96e+03 0.0
+[PROGRESS]:  3.595e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.71e+03 0.0
+[PROGRESS]:  3.605e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.43e+03 0.0
+[PROGRESS]:  3.615e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.52e+03 0.0
+[PROGRESS]:  3.625e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.55e+03 0.0
+[PROGRESS]:  3.635e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.21e+03 0.0
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 7.23e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 6.56e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 7.92e+02 0.0
+[PROGRESS]:  3.671e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.46e+02 0.0
+[PROGRESS]:  3.680e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 5.24e+02 0.0
+[PROGRESS]:  3.689e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.31e+02 0.0
+[PROGRESS]:  3.697e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.10e+02 0.0
+[PROGRESS]:  3.705e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.92e+02 0.0
+[PROGRESS]:  3.713e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.35e+02 0.0
+[PROGRESS]:  3.721e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.71e+02 0.0
+[PROGRESS]:  3.729e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.22e+02 0.0
+[PROGRESS]:  3.737e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 2.98e+02 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.07375288009643555
+[INFO]: Time spent computing delta stack: 0.06778693199157715
+[PROGRESS]: Continuum fitting: ending iteration 2 of 5
+[PROGRESS]: Continuum fitting: starting iteration 3 of 5
+[INFO]: Computing quasar continua using 32 processors
+[INFO]: Time spent computing quasar continua: 0.1763300895690918
+[INFO]: Time spent computing the mean continuum: 0.019845962524414062
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.562e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.36e+03 0.0
+[PROGRESS]:  3.573e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.73e+03 0.0
+[PROGRESS]:  3.584e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.96e+03 0.0
+[PROGRESS]:  3.595e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.72e+03 0.0
+[PROGRESS]:  3.605e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.43e+03 0.0
+[PROGRESS]:  3.615e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.50e+03 0.0
+[PROGRESS]:  3.625e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.56e+03 0.0
+[PROGRESS]:  3.635e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.21e+03 0.0
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 7.11e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 6.43e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 7.82e+02 0.0
+[PROGRESS]:  3.671e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.47e+02 0.0
+[PROGRESS]:  3.680e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 5.24e+02 0.0
+[PROGRESS]:  3.689e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.30e+02 0.0
+[PROGRESS]:  3.697e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.09e+02 0.0
+[PROGRESS]:  3.705e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.92e+02 0.0
+[PROGRESS]:  3.713e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.27e+02 0.0
+[PROGRESS]:  3.721e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.71e+02 0.0
+[PROGRESS]:  3.729e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.22e+02 0.0
+[PROGRESS]:  3.737e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.03e+02 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.07243514060974121
+[INFO]: Time spent computing delta stack: 0.06502103805541992
+[PROGRESS]: Continuum fitting: ending iteration 3 of 5
+[PROGRESS]: Continuum fitting: starting iteration 4 of 5
+[INFO]: Computing quasar continua using 32 processors
+[INFO]: Time spent computing quasar continua: 0.18636560440063477
+[INFO]: Time spent computing delta stack: 0.07219195365905762
+[PROGRESS]: Continuum fitting: ending iteration 4 of 5
+[INFO]: Time spent computing the mean expected flux: 2.6906187534332275
+[INFO]: Extracting deltas
+[PROGRESS]: Rejected forest with los_id 39633493579268963 due to continuum fitting problems. Reason: negative continuum
+[PROGRESS]: Rejected forest with los_id 616094245882692041 due to continuum fitting problems. Reason: negative continuum
+[PROGRESS]: Rejected forest with los_id 39633491540839435 due to continuum fitting problems. Reason: negative continuum
+[PROGRESS]: Rejected forest with los_id 39633489473045106 due to continuum fitting problems. Reason: negative continuum
+[PROGRESS]: Rejected forest with los_id 39633497601608817 due to continuum fitting problems. Reason: negative continuum
+[PROGRESS]: Accepted sample has 55 forests
+[INFO]: Time spent extracting deltas: 0.0009262561798095703
+[INFO]: Saving deltas
+[INFO]: Time spent saving deltas: 0.25153160095214844
+[INFO]: Total time ellapsed: 13.325870275497437
+[INFO]: Done
