@@ -75,7 +75,7 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins=None):
 
             if snrcut is not None :
                 if hasattr(snrcut, "__len__"):
-                    if len(snr_cut_mean) != len(zbins) :
+                    if len(snrcut) != len(zbins) :
                         raise ValueError("Please provide same size for zbins and snrcut arrays")
                     zbin_index = np.argmin(np.abs(zbins - chunk_header['MEANZ']))
                     snrcut_chunk = snrcut[zbin_index]
