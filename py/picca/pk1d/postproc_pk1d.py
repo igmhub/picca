@@ -67,7 +67,7 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins=None):
             except:
                 pass
 
-            if np.nansum(tab['Pk'])==0:
+            if np.nansum(chunk_table['Pk'])==0:
                 chunk_table['Pk'] = (chunk_table['Pk_raw'] - chunk_table['Pk_noise']) / chunk_table['cor_reso']
 
             chunk_table['forest_z'] = float(chunk_header['MEANZ'])
@@ -183,7 +183,9 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
     metadata_table['k_max'] = kbin_edges[-1] * np.ones(nbins_z)
 
     # Number of chunks in each redshift bin
-    metadata_table['N_chunks'], zbin_chunks, izbin_chunks = binned_statistic(z_array, z_array, statistic='count', bins=zbin_edges)
+    N_chunks, zbin_chunks, izbin_chunks = binned_statistic(z_array, z_array, statistic='count', bins=zbin_edges)
+    metadata_table['N_chunks'] = N_chunks
+
     zbin_centers = np.around((zbin_edges[1:] + zbin_edges[:-1])/2, 5)
     
     for izbin, zbin in enumerate(zbin_edges[:-1]):  # Main loop 1) z bins
@@ -200,10 +202,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
 
         for ikbin, kbin in enumerate(kbin_edges[:-1]):  # Main loop 2) k bins
 
-            select = (p1d_table['forest_z'] < zbin_edges[izbin + 1])&
-                     (p1d_table['forest_z'] > zbin_edges[izbin])&
-                     (p1d_table['k'] < kbin_edges[ikbin + 1])&
-                     (p1d_table['k'] > kbin_edges[ikbin]) # select a specific (z,k) bin
+            select = (p1d_table['forest_z'] < zbin_edges[izbin + 1])&(p1d_table['forest_z'] > zbin_edges[izbin])&(p1d_table['k'] < kbin_edges[ikbin + 1])&(p1d_table['k'] > kbin_edges[ikbin]) # select a specific (z,k) bin
 
             index = (nbins_k * izbin) + ikbin # index to be filled in table
             meanP1D_table['zbin'][index] = zbin_centers[izbin]
@@ -297,7 +296,7 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weight_method, snrcut
         output_file = os.path.join(data_dir,
                 f'mean_Pk1d_{weight_method}{"" if nomedians else "_medians"}{"_snr_cut" if snrcut is not None else ""}{"_vel" if velunits else ""}.fits.gz')
     if os.path.exists(output_file) and not overwrite:
-        outdir=Table.read(outfilename)
+        outdir=Table.read(output_file)
         return outdir
 
     searchstr = '*'
@@ -320,4 +319,4 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weight_method, snrcut
     hdu1 = astropy.io.fits.table_to_hdu(full_meanP1D_table)
     hdu2 = astropy.io.fits.table_to_hdu(full_metadata_table)
     hdul = astropy.io.fits.HDUList([hdu0, hdu1, hdu2])
-    hdul.writeto(outfilename, overwrite=overwrite)
+    hdul.writeto(output_file, overwrite=overwrite)
