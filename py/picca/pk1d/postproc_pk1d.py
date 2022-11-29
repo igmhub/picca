@@ -284,7 +284,7 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weight_method,
     ----------
     data_dir: string, Directory where individual P1D FITS files are located
 
-    output_file: string - default:False
+    output_file: string - default: None
     Output file name. If set to None, file name is set to data_dir/mean_Pk1d_[weight_method]_[snr_cut]_[vel].fits.gz
 
     overwrite: Bool - default: False
