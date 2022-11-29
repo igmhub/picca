@@ -121,7 +121,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
             'Delta2', 'Pk_norescor', 'Pk_nonoise', 'Pk_noraw', ('Pk/Pk_noise')
 
     z_array: Array of floats
-    Mean z of each contributing chunck, stacked in one array using "read_pk1d"
+    Mean z of each contributing chunk, stacked in one array using "read_pk1d"
 
     zbin_edges: Array of floats, Edges of the redshift bins we want to use
 
@@ -276,7 +276,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
     return meanP1D_table, metadata_table
 
 
-def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_cut_mean=None, zbins=None, nomedians=False,
+def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weight_method, snrcut=None, zbins=None, nomedians=False,
                          velunits=False, output_file=None, overwrite=False):
     """Read individual Pk1D data from a set of files and compute P1D statistics, stored in a summary FITS file.
 
@@ -295,7 +295,7 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_c
 
     if output_file is None:
         output_file = os.path.join(data_dir,
-                f'mean_Pk1d_{weights_method}{"" if nomedians else "_medians"}{"_snr_cut_mean" if snr_cut_mean is not None else ""}{"_vel" if velunits else ""}.fits.gz')
+                f'mean_Pk1d_{weight_method}{"" if nomedians else "_medians"}{"_snr_cut" if snrcut is not None else ""}{"_vel" if velunits else ""}.fits.gz')
     if os.path.exists(output_file) and not overwrite:
         outdir=Table.read(outfilename)
         return outdir
@@ -304,20 +304,20 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weights_method, snr_c
     files = glob.glob(os.path.join(data_dir,f"Pk1D{searchstr}.fits.gz"))
     ncpu = 8
     with Pool(ncpu) as pool:
-        if snr_cut_mean is not None:
-            full_data_array = pool.starmap(read_pk1d,[[f, kbin_edges, snr_cut_mean, zbins] for f in files])
+        if snrcut is not None:
+            full_p1d_table = pool.starmap(read_pk1d,[[f, kbin_edges, snrcut, zbins] for f in files])
         else:
-            full_data_array = pool.starmap(read_pk1d,[[f, kbin_edges] for f in files])
+            full_p1d_table = pool.starmap(read_pk1d,[[f, kbin_edges] for f in files])
 
-    data_array = vstack([full_data_array[i][0] for i in range(len(full_data_array))])
-    z_array = np.concatenate(tuple([full_data_array[i][1] for i in range(len(full_data_array))]))
+    p1d_table = vstack([full_p1d_table[i][0] for i in range(len(full_p1d_table))])
+    z_array = np.concatenate(tuple([full_p1d_table[i][1] for i in range(len(full_p1d_table))]))
 
-    full_meanP1D_table, additional_table = compute_mean_pk1d(data_array, z_array, zbin_edges,
-                                                             kbin_edges, weights_method, nomedians, velunits)
+    full_meanP1D_table, full_metadata_table = compute_mean_pk1d(p1d_table, z_array, zbin_edges,
+                                                             kbin_edges, weight_method, nomedians, velunits)
 
     full_meanP1D_table.meta['velunits']=velunits
     hdu0 = astropy.io.fits.PrimaryHDU()
     hdu1 = astropy.io.fits.table_to_hdu(full_meanP1D_table)
-    hdu2 = astropy.io.fits.table_to_hdu(additional_table)
+    hdu2 = astropy.io.fits.table_to_hdu(full_metadata_table)
     hdul = astropy.io.fits.HDUList([hdu0, hdu1, hdu2])
     hdul.writeto(outfilename, overwrite=overwrite)
