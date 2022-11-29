@@ -214,7 +214,7 @@ class Pk1dForest(Forest):
         ]
 
         return metadata
-    
+
     @classmethod
     def get_metadata_dtype(cls):
         dtype = super().get_metadata_dtype()

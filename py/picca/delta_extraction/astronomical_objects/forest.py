@@ -250,6 +250,9 @@ class Forest(AstronomicalObject):
     as the particular instance might not have full wavelength coverage or
     might have some missing pixels (because they are masked)
 
+    log_lambda_index: array of int or None
+    Index of each log_lambda array element in Forest.log_lambda_grid
+
     logger: logging.Logger
     Logger object
 
@@ -265,6 +268,7 @@ class Forest(AstronomicalObject):
     blinding = "none"
     log_lambda_grid = np.array([])  #None
     log_lambda_rest_frame_grid = np.array([])  #None
+    log_lambda_index = np.array([]) #None
     mask_fields = []  #None
     wave_solution = None
 
@@ -601,7 +605,8 @@ class Forest(AstronomicalObject):
 
         # return weights and binning solution to be used by child classes if
         # required
-        self.log_lambda_index = find_bins(self.log_lambda, self.log_lambda_grid, Forest.wave_solution)
+        self.log_lambda_index = find_bins(self.log_lambda, self.log_lambda_grid, 
+                                          Forest.wave_solution)
         return bins, rebin_ivar, orig_ivar, w1, w2
 
     @classmethod

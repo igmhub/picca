@@ -133,13 +133,13 @@ class DesiForest(Forest):
         metadata = super().get_metadata()
 
         metadata += [
-            self.targetid, 
+            self.targetid,
             "-".join(str(night) for night in self.night),
             "-".join(str(petal) for petal in self.petal),
-            "-".join(str(tile) for tile in self.tile),  
+            "-".join(str(tile) for tile in self.tile),
         ]
 
-        return metadata 
+        return metadata
 
     @classmethod
     def get_metadata_dtype(cls):
@@ -156,4 +156,3 @@ class DesiForest(Forest):
         units += ["", "", "", ""]
 
         return units
-
