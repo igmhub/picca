@@ -49,6 +49,13 @@ def main(cmdargs):
                         default=None,
                         required=True,
                         help='Directory to individual P1D files')
+    
+    parser.add_argument('--out-dir',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='Output file name,' 
+                             'If set to None, file name is set to --in-dir/mean_Pk1d_[weight_method]_[snr_cut]_[vel].fits.gz')
 
     parser.add_argument('--zedge-min',
                         type=float,
@@ -109,7 +116,7 @@ def main(cmdargs):
                         help='Size of a spectrum pixel in Angstrom, used to'
                              'define the binning of the output wavenumber array')
 
-    parser.add_argument('--weights-method',
+    parser.add_argument('--weight-method',
                         type=str,
                         default='no_weights',
                         required=False,
@@ -152,8 +159,6 @@ def main(cmdargs):
                         default=False,
                         required=False,
                         help='Output the older version of the average P1D')
-
-
 
     args = parser.parse_args(sys.argv[1:])
 
@@ -199,9 +204,10 @@ def main(cmdargs):
         data = postproc_pk1d_oldoutput.parallelize_p1d_comp(args.in_dir,
                                                             z_edges,
                                                             k_edges,
-                                                            weights_method=args.weights_method,
-                                                            snr_cut_mean=snr_cut_mean,
+                                                            weight_method=args.weight_method,
+                                                            snrcut=snr_cut_mean,
                                                             zbins=zbins_snr_cut_mean,
+                                                            output_file=args.outdir,
                                                             nomedians=args.no_median,
                                                             velunits=args.velunits,
                                                             overwrite=args.overwrite)
@@ -210,9 +216,10 @@ def main(cmdargs):
         data = postproc_pk1d.parallelize_p1d_comp(args.in_dir,
                                                   z_edges,
                                                   k_edges,
-                                                  weights_method=args.weights_method,
-                                                  snr_cut_mean=snr_cut_mean,
+                                                  weight_method=args.weight_method,
+                                                  snrcut=snr_cut_mean,
                                                   zbins=zbins_snr_cut_mean,
+                                                  output_file=args.outdir,
                                                   nomedians=args.no_median,
                                                   velunits=args.velunits,
                                                   overwrite=args.overwrite)
