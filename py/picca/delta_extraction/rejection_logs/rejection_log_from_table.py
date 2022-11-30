@@ -1,4 +1,5 @@
-"""This module defined the class RejectionLogTable to manage rejection log when data is saved in BinTableHDU format"""
+"""This module defined the class RejectionLogTable to manage
+rejection log when data is saved in BinTableHDU format"""
 import numpy as np
 import fitsio
 
@@ -7,13 +8,13 @@ from picca.delta_extraction.rejection_log import RejectionLog
 
 class RejectionLogFromTable(RejectionLog):
     """Class to handle rejection logs for data in Table format
-    
+
     Methods
     -------
     add_to_rejection_log
     initialize_rejection_log
     save_rejection_log
-    
+
     Attributes
     ----------
     (see RejectionLog in py/picca/delta_extraction/rejection_log.py)
@@ -30,7 +31,7 @@ class RejectionLogFromTable(RejectionLog):
 
     def __init__(self, file):
         """Initialize class instance
-        
+
         Arguments
         ---------
         file: str
@@ -45,7 +46,7 @@ class RejectionLogFromTable(RejectionLog):
 
     def initialize_rejection_log(self, forest):
         """Intiialize rejection log
-        
+
         Arguments
         ---------
         forest: Forest
@@ -66,7 +67,7 @@ class RejectionLogFromTable(RejectionLog):
         """Adds to the rejection log arrays.
         In the log forest headers will be saved along with the forest size and
         the rejection status.
-        
+
         Arguments
         ---------
         forest: Forest

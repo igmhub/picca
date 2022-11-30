@@ -279,7 +279,8 @@ class Pk1dForest(Forest):
                                                weights=orig_ivar[w1] *
                                                self.exposures_diff)
         rebin_reso_aux = np.bincount(self.log_lambda_index, weights=orig_ivar[w1] * self.reso)
-        rebin_reso_pix_aux = np.bincount(self.log_lambda_index, weights=orig_ivar[w1] * self.reso_pix)
+        rebin_reso_pix_aux = np.bincount(self.log_lambda_index,
+                                         weights=orig_ivar[w1] * self.reso_pix)
         rebin_exposures_diff[:len(rebin_exposures_diff_aux
                                  )] += rebin_exposures_diff_aux
         rebin_reso[:len(rebin_reso_aux)] += rebin_reso_aux

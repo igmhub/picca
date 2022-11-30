@@ -1,4 +1,5 @@
-"""This module defined the class RejectionLogImage to manage rejection log when data is saved in ImageHDU format"""
+"""This module defined the class RejectionLogImage to manage
+rejection log when data is saved in ImageHDU format"""
 
 import numpy as np
 import fitsio
@@ -8,13 +9,13 @@ from picca.delta_extraction.rejection_log import RejectionLog
 
 class RejectionLogFromImage(RejectionLog):
     """Class to handle rejection logs for data in Image format.
-    
+
     Methods
     -------
     add_to_rejection_log
     initialize_rejection_log
     save_rejection_log
-    
+
     Attributes
     ----------
     (see RejectionLog in py/picca/delta_extraction/rejection_log.py)
@@ -22,14 +23,14 @@ class RejectionLogFromImage(RejectionLog):
     data: list of list
     List containing the rejection information for each of the forests
 
-    dtypes: list 
+    dtypes: list
     List containing dtype information for each of the columns
 
     """
 
     def __init__(self, file):
         """Initialize class instance
-        
+
         Arguments
         ---------
 
@@ -43,11 +44,11 @@ class RejectionLogFromImage(RejectionLog):
 
     def initialize_rejection_log(self, forest):
         """Initialize rejection log
-        
+
         Arguments
         ---------
         forest: Forest
-        Forest to obtain metadata dtypes 
+        Forest to obtain metadata dtypes
         """
         self.dtypes = forest.get_metadata_dtype() + [('FOREST_SIZE', int),
                                                      ('REJECTION_STATUS', 'S12')
@@ -56,7 +57,7 @@ class RejectionLogFromImage(RejectionLog):
 
     def add_to_rejection_log(self, forest, rejection_status):
         """Adds to the rejection log arrays.
-        In the log forest metadata will be saved along with the forest size and    
+        In the log forest metadata will be saved along with the forest size and
         rejection status.
 
         Arguments
