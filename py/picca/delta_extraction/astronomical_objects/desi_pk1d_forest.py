@@ -193,7 +193,7 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         -----
         AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         """
-        rebin_ivar, orig_ivar, w1, w2 = super().rebin()
+        rebin_ivar, orig_ivar, w1, w2, wslice_inner = super().rebin()
         if len(rebin_ivar) == 0 or np.sum(w2) == 0:
             self.resolution_matrix = np.array([[]])
             return [], [], [], np.array([]), np.array([])
@@ -208,7 +208,8 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         orig_ivar_2 = orig_ivar[w1]
         w__ = orig_ivar_2>0
         orig_ivar_2[~w__] = 1
-        rebin_reso_ivar = np.bincount(bins, weights=orig_ivar_2, minlength=binned_arr_size)
+        rebin_reso_ivar = np.bincount(self.log_lambda_index,
+                                      weights=orig_ivar_2, minlength=binned_arr_size)
 
         # rebin resolution_matrix
         rebin_reso_matrix_aux = np.zeros(
