@@ -10,7 +10,7 @@ import healpy
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
-from picca.delta_extraction.errors import AstronomicalObjectError, DataError
+from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.rejection_log import RejectionLogImage, RejectionLogTable
 from picca.delta_extraction.utils import ABSORBER_IGM
 
@@ -40,7 +40,7 @@ accepted_options = [
 
 defaults = {
     "analysis type": "BAO 3D",
-    "format": "BinTableHDU", # Format option has now a default value, keep default the old one for testint porpouses.
+    "format": "BinTableHDU",
     "lambda abs IGM": "LYA",
     "lambda max": 5500.0,
     "lambda max rest frame": 1200.0,
@@ -87,7 +87,7 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
     elif Forest.wave_solution == "lin":
         metadata_header["DELTA_LAMBDA"] = 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]
     else:
-        raise AstronomicalObjectError("Error in _save_deltas_one_healpix_image"
+        raise DataError("Error in _save_deltas_one_healpix_image"
                                         "Class variable 'wave_solution' "
                                         "must be either 'lin' or 'log'. "
                                         f"Found: '{Forest.wave_solution}'")
