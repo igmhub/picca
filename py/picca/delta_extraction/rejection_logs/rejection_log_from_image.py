@@ -5,6 +5,7 @@ import fitsio
 
 from picca.delta_extraction.rejection_log import RejectionLog
 
+
 class RejectionLogFromImage(RejectionLog):
     """Class to handle rejection logs for data in Image format.
     
@@ -25,6 +26,7 @@ class RejectionLogFromImage(RejectionLog):
     List containing dtype information for each of the columns
 
     """
+
     def __init__(self, file):
         """Initialize class instance
         
@@ -35,7 +37,7 @@ class RejectionLogFromImage(RejectionLog):
         Filename of the rejection log
         """
         super().__init__(file)
-        
+
         self.dtypes = None
         self.data = []
 
@@ -46,8 +48,10 @@ class RejectionLogFromImage(RejectionLog):
         ---------
         forest: Forest
         Forest to obtain metadata dtypes 
-        """ 
-        self.dtypes = forest.get_metadata_dtype() + [('FOREST_SIZE', int), ('REJECTION_STATUS', 'S12')]
+        """
+        self.dtypes = forest.get_metadata_dtype() + [('FOREST_SIZE', int),
+                                                     ('REJECTION_STATUS', 'S12')
+                                                    ]
         self.initialized = True
 
     def add_to_rejection_log(self, forest, rejection_status):
@@ -68,9 +72,8 @@ class RejectionLogFromImage(RejectionLog):
 
         size = forest.flux.size
 
-        self.data.append(
-            tuple(forest.get_metadata() + [size, rejection_status])
-        )
+        self.data.append(tuple(forest.get_metadata() +
+                               [size, rejection_status]))
 
     def save_rejection_log(self):
         """Saves the rejection log arrays.

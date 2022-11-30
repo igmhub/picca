@@ -4,6 +4,7 @@ import fitsio
 
 from picca.delta_extraction.rejection_log import RejectionLog
 
+
 class RejectionLogFromTable(RejectionLog):
     """Class to handle rejection logs for data in Table format
     
@@ -26,6 +27,7 @@ class RejectionLogFromTable(RejectionLog):
     names: list of list
     Name of each of the fields saved in the rejection log
     """
+
     def __init__(self, file):
         """Initialize class instance
         
@@ -36,7 +38,7 @@ class RejectionLogFromTable(RejectionLog):
 
         """
         super().__init__(file)
-        
+
         self.cols = None
         self.names = None
         self.comments = None
@@ -51,9 +53,7 @@ class RejectionLogFromTable(RejectionLog):
         """
         self.cols = [[], []]
         self.names = ["FOREST_SIZE", "REJECTION_STATUS"]
-        self.comments = [
-            "num pixels in forest", "rejection status"
-        ]
+        self.comments = ["num pixels in forest", "rejection status"]
 
         for item in forest.get_header():
             self.cols.append([])
@@ -61,8 +61,7 @@ class RejectionLogFromTable(RejectionLog):
             self.comments.append(item.get("comment"))
 
         self.initialized = True
-    
-    
+
     def add_to_rejection_log(self, forest, rejection_status):
         """Adds to the rejection log arrays.
         In the log forest headers will be saved along with the forest size and
@@ -90,7 +89,7 @@ class RejectionLogFromTable(RejectionLog):
             else:
                 # this loop will always end with the break
                 # the break is introduced to avoid useless checks
-                for item in header:   # pragma: no branch
+                for item in header:  # pragma: no branch
                     if item.get("name") == name:
                         col.append(item.get("value"))
                         break
@@ -102,10 +101,9 @@ class RejectionLogFromTable(RejectionLog):
         """
         rejection_log = fitsio.FITS(self.file, 'rw', clobber=True)
 
-        rejection_log.write(
-            [np.array(item) for item in self.cols],
-            names=self.names,
-            comment=self.comments,
-            extname="rejection_log")
+        rejection_log.write([np.array(item) for item in self.cols],
+                            names=self.names,
+                            comment=self.comments,
+                            extname="rejection_log")
 
         rejection_log.close()
