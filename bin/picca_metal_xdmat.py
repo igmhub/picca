@@ -245,6 +245,13 @@ def main(cmdargs):
                         required=False,
                         help='Maximum number of spectra to read')
 
+    parser.add_argument('--rebin-factor',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Rebin factor for deltas. If not None, deltas will '
+                             'be rebinned by that factor')
+
     args = parser.parse_args(cmdargs)
 
 
@@ -291,7 +298,9 @@ def main(cmdargs):
                                                   args.z_evol_del,
                                                   args.z_ref,
                                                   cosmo,
-                                                  max_num_spec=args.nspec)
+                                                  max_num_spec=args.nspec,
+                                                  nproc=args.nproc,
+                                                  rebin_factor=args.rebin_factor)
 
     xcf.data = data
     xcf.num_data = num_data

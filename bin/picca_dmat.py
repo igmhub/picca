@@ -225,6 +225,14 @@ def main(cmdargs):
         help=('rp can be positive or negative depending on the relative '
               'position between absorber1 and absorber2'))
 
+    parser.add_argument('--rebin-factor',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Rebin factor for deltas. If not None, deltas will '
+                             'be rebinned by that factor')
+
+
     args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
@@ -270,7 +278,9 @@ def main(cmdargs):
                                                   cf.z_ref,
                                                   cosmo,
                                                   max_num_spec=args.nspec,
-                                                  no_project=args.no_project)
+                                                  no_project=args.no_project,
+                                                  nproc=args.nproc,
+                                                  rebin_factor=args.rebin_factor)
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -298,7 +308,9 @@ def main(cmdargs):
             cf.z_ref,
             cosmo,
             max_num_spec=args.nspec,
-            no_project=args.no_project)
+            no_project=args.no_project,
+            nproc=args.nproc,
+            rebin_factor=args.rebin_factor)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2

@@ -203,29 +203,28 @@ class ExpectedFlux:
                 # ignore forest if continuum could not be computed
                 if forest.continuum is None:
                     continue
-                delta = forest.flux / forest.continuum
-                variance = self.compute_forest_variance(forest,
-                                                        forest.continuum)
-                weights = 1. / variance
+
+                delta = np.zeros_like(forest.log_lambda)
+                w = forest.ivar > 0
+                delta[w] = forest.flux[w] / forest.continuum[w]
+                weights = 1. / self.compute_forest_variance(forest, forest.continuum)
 
             bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
                              Forest.wave_solution)
-            rebin = np.bincount(bins, weights=delta * weights)
-            stack_delta[:len(rebin)] += rebin
-            rebin = np.bincount(bins, weights=weights)
-            stack_weight[:len(rebin)] += rebin
+            stack_delta += np.bincount(bins, weights=delta * weights, minlength=stack_delta.size)
+            stack_weight += np.bincount(bins, weights=weights, minlength=stack_delta.size)
 
         w = stack_weight > 0
         stack_delta[w] /= stack_weight[w]
 
         self.get_stack_delta = interp1d(
-            Forest.log_lambda_grid[stack_weight > 0.],
-            stack_delta[stack_weight > 0.],
+            Forest.log_lambda_grid[w],
+            stack_delta[w],
             kind="nearest",
             fill_value="extrapolate")
         self.get_stack_delta_weights = interp1d(
-            Forest.log_lambda_grid[stack_weight > 0.],
-            stack_weight[stack_weight > 0.],
+            Forest.log_lambda_grid[w],
+            stack_weight[w],
             kind="nearest",
             fill_value=0.0,
             bounds_error=False)
@@ -248,6 +247,55 @@ class ExpectedFlux:
         """
         raise ExpectedFluxError("Function 'compute_expected_flux' was not "
                                 "overloaded by child class")
+
+    def _compute_mean_cont(self, forests,
+        which_cont=lambda forest: forest.continuum):
+        """Compute the mean quasar continuum over the whole sample.
+        Then updates the value of self.get_mean_cont to contain it
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+
+        which_cont: Function or lambda
+        Should return what to use as continuum given a forest
+        """
+        mean_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid)
+        mean_cont_weight = np.zeros_like(Forest.log_lambda_rest_frame_grid)
+
+        # first compute <F/C> in bins. C=Cont_old*spectrum_dependent_fitting_fct
+        # (and Cont_old is constant for all spectra in a bin), thus we actually
+        # compute
+        #    1/Cont_old * <F/spectrum_dependent_fitting_function>
+        for forest in forests:
+            if forest.bad_continuum_reason is not None:
+                continue
+            bins = find_bins(forest.log_lambda - np.log10(1 + forest.z),
+                             Forest.log_lambda_rest_frame_grid,
+                             Forest.wave_solution)
+
+            weights = 1. / self.compute_forest_variance(forest, forest.continuum)
+            forest_continuum = which_cont(forest)
+            mean_cont += np.bincount(bins, weights=forest_continuum * weights,
+                minlength=mean_cont.size)
+            mean_cont_weight += np.bincount(bins, weights=weights, minlength=mean_cont.size)
+
+        w = mean_cont_weight > 0
+        mean_cont[w] /= mean_cont_weight[w]
+        mean_cont /= mean_cont[w].mean()
+        log_lambda_cont = Forest.log_lambda_rest_frame_grid[w]
+
+        # the new mean continuum is multiplied by the previous one to recover
+        # <F/spectrum_dependent_fitting_function>
+        new_cont = self.get_mean_cont(log_lambda_cont) * mean_cont[w]
+        self.get_mean_cont = interp1d(log_lambda_cont,
+                                      new_cont,
+                                      fill_value="extrapolate")
+        self.get_mean_cont_weight = interp1d(log_lambda_cont,
+                                             mean_cont_weight[w],
+                                             fill_value=0.0,
+                                             bounds_error=False)
 
     # this method should use self in child classes
     def compute_forest_variance(self, forest, continuum):  # pylint: disable=no-self-use
@@ -277,13 +325,17 @@ class ExpectedFlux:
         A Forest instance to which the continuum is applied
         """
         if self.los_ids.get(forest.los_id) is not None:
+            w = self.los_ids.get(forest.los_id).get("weights") > 0
+
             expected_flux = self.los_ids.get(
                 forest.los_id).get("mean expected flux")
-            forest.deltas = forest.flux / expected_flux - 1
+            forest.deltas = np.zeros_like(forest.flux)
+            forest.deltas[w] = forest.flux[w] / expected_flux[w] - 1
             forest.weights = self.los_ids.get(forest.los_id).get("weights")
             if isinstance(forest, Pk1dForest):
                 forest.ivar = self.los_ids.get(forest.los_id).get("ivar")
-                forest.exposures_diff /= expected_flux
+                forest.exposures_diff[w] /= expected_flux[w]
+                forest.exposures_diff[~w] = 0
 
             forest.continuum = self.los_ids.get(forest.los_id).get("continuum")
 

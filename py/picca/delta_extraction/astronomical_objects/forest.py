@@ -14,6 +14,41 @@ defaults = {
     "mask fields": ["flux", "ivar", "transmission_correction", "log_lambda"],
 }
 
+@njit
+def get_inner_region_slice(bincounts):
+    """Return the mask that removes zeros at the both
+    edges. Zero inside remains
+
+    Arguments
+    ---------
+    bincounts: Array of int
+    Obtained from np.bincounts(bins)
+
+    Returns
+    -------
+    wslice_inner: Array of bool
+    False for zeros at the both edges. True for inside
+    """
+    size = bincounts.size
+    first_nonzero_idx = size
+    last_nonzero_idx = 0
+
+    # Find first non-zero index from left
+    for idx in range(bincounts.size):
+        if bincounts[idx] != 0:
+            first_nonzero_idx = idx
+            break
+
+    # Find last non-zero index from right
+    for idx in range(bincounts.size, 0, -1):
+        if bincounts[idx-1] != 0:
+            last_nonzero_idx = idx
+            break
+
+    wslice_inner = np.zeros(bincounts.size, dtype=bool_)
+    wslice_inner[first_nonzero_idx:last_nonzero_idx] = 1
+
+    return wslice_inner
 
 @njit()
 def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
@@ -94,6 +129,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     pixel_step = np.nan
 
     # compute bins
+    # Remove only out-of-bounds pixels
     if wave_solution == "log":
         pixel_step = log_lambda_grid[1] - log_lambda_grid[0]
         half_pixel_step = pixel_step / 2.
@@ -107,7 +143,6 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
                log_lambda_rest_frame_grid[0] - half_pixel_step_rest_frame)
         w1 &= (log_lambda - np.log10(1. + z) <
                log_lambda_rest_frame_grid[-1] + half_pixel_step_rest_frame)
-        w1 &= (ivar > 0.)
 
     elif wave_solution == "lin":
         pixel_step = 10**log_lambda_grid[1] - 10**log_lambda_grid[0]
@@ -122,72 +157,76 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
                10**log_lambda_rest_frame_grid[0] - half_pixel_step_rest_frame)
         w1 &= (lambda_ / (1. + z) <
                10**log_lambda_rest_frame_grid[-1] + half_pixel_step_rest_frame)
-        w1 &= (ivar > 0.)
     else:
         raise AstronomicalObjectError("Error in Forest.rebin(). "
                                       "Class variable 'wave_solution' "
                                       "must be either 'lin' or 'log'.")
 
+    if (w1 & (ivar > 0.)).sum() == 0:
+        log_lambda = np.zeros(0)
+        flux = np.zeros(0)
+        ivar = np.zeros(0)
+        transmission_correction = np.zeros(0)
+        mean_snr = 0.0
+        bins = np.zeros(0, dtype=np.int64)
+        rebin_ivar = np.zeros(0)
+        w1 = np.zeros(0, dtype=bool_)
+        w2 = np.zeros(0, dtype=bool_)
+        return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
+                rebin_ivar, orig_ivar, w1, w2, w2)
+
     log_lambda = log_lambda[w1]
     flux = flux[w1]
     ivar = ivar[w1]
     transmission_correction = transmission_correction[w1]
-    if w1.sum() == 0:
-        log_lambda = np.zeros(log_lambda.size)
-        flux = np.zeros(log_lambda.size)
-        ivar = np.zeros(log_lambda.size)
-        transmission_correction = np.zeros(log_lambda.size)
-        mean_snr = 0.0
-        bins = np.zeros(log_lambda.size, dtype=np.int64)
-        rebin_ivar = np.zeros(log_lambda.size)
-        w1 = np.zeros(log_lambda.size, dtype=bool_)
-        w2 = np.zeros(log_lambda.size, dtype=bool_)
-        return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
-                rebin_ivar, orig_ivar, w1, w2)
+    # Out-of-bounds pixels are removed. IVAR=0 pixels are kept
 
     bins = find_bins(log_lambda, log_lambda_grid, wave_solution)
-    log_lambda = log_lambda_grid[0] + bins * pixel_step
+    binned_arr_size = bins.max() + 1
+
+    # Find non-empty bins. There will be empty bins
+    # at the lower end by construction.
+    bincounts = np.bincount(bins, minlength=binned_arr_size)
+    wslice_inner = get_inner_region_slice(bincounts)
+    final_arr_size = np.sum(wslice_inner)
 
     # rebin flux, ivar and transmission_correction
-    rebin_flux = np.zeros(bins.max() + 1)
-    rebin_transmission_correction = np.zeros(bins.max() + 1)
-    rebin_ivar = np.zeros(bins.max() + 1)
-    rebin_flux_aux = np.bincount(bins, weights=ivar * flux)
-    rebin_transmission_correction_aux = np.bincount(
-        bins, weights=(ivar * transmission_correction))
-    rebin_ivar_aux = np.bincount(bins, weights=ivar)
-    rebin_flux[:len(rebin_flux_aux)] += rebin_flux_aux
-    rebin_transmission_correction[:len(rebin_transmission_correction_aux
-                                      )] += rebin_transmission_correction_aux
-    rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
+    rebin_flux = np.bincount(bins, weights=ivar * flux, minlength=binned_arr_size)
+    rebin_transmission_correction = np.bincount(
+            bins, weights=(ivar * transmission_correction), minlength=binned_arr_size)
+    rebin_ivar = np.bincount(bins, weights=ivar, minlength=binned_arr_size)
 
     # this condition should always be non-zero for at least one pixel
     # this does not mean that all rebin_ivar pixels will be non-zero,
     # as we could have a masked region of the spectra
-    w2 = (rebin_ivar > 0.)
-    flux = rebin_flux[w2] / rebin_ivar[w2]
-    transmission_correction = rebin_transmission_correction[w2] / rebin_ivar[w2]
-    ivar = rebin_ivar[w2]
+    w2_ = (rebin_ivar > 0.) & wslice_inner
+    w2  = w2_[wslice_inner]
+    flux = np.zeros(final_arr_size)
+    transmission_correction = np.zeros(final_arr_size)
+    ivar = np.zeros(final_arr_size)
+
+    # Remove the empty pixels at the lower end
+    flux[w2] = rebin_flux[w2_] / rebin_ivar[w2_]
+    transmission_correction[w2] = rebin_transmission_correction[
+        w2_] / rebin_ivar[w2_]
+    ivar[w2] = rebin_ivar[w2_]
 
     # then rebin wavelength
     if wave_solution == "log":
-        rebin_log_lambda = (log_lambda_grid[0] +
-                            np.arange(bins.max() + 1) * pixel_step)
-        log_lambda = rebin_log_lambda[w2]
+        log_lambda = (log_lambda_grid[0] + pixel_step *
+                    np.arange(binned_arr_size)[wslice_inner])
     else:  # we have already checked that it will always be "lin" at this point
-        rebin_lambda = (10**log_lambda_grid[0] +
-                        np.arange(bins.max() + 1) * pixel_step)
-        log_lambda = np.log10(rebin_lambda[w2])
+        log_lambda = np.log10(10**log_lambda_grid[0] + pixel_step *
+                    np.arange(binned_arr_size)[wslice_inner])
 
     # finally update control variables
     snr = flux * np.sqrt(ivar)
-    mean_snr = np.sum(snr) / float(snr.size)
+    mean_snr = np.mean(snr[w2])
 
     # return weights and binning solution to be used by child classes if
     # required
     return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
-            rebin_ivar, orig_ivar, w1, w2)
-
+            rebin_ivar, orig_ivar, w1, w2, wslice_inner)
 
 class Forest(AstronomicalObject):
     """Forest Object
@@ -596,13 +635,13 @@ class Forest(AstronomicalObject):
         """
         (self.log_lambda, self.flux, self.ivar, self.transmission_correction,
          self.mean_snr, self.log_lambda_index, rebin_ivar, orig_ivar, w1,
-         w2) = rebin(self.log_lambda, self.flux, self.ivar,
+         w2, wslice_inner) = rebin(self.log_lambda, self.flux, self.ivar,
                      self.transmission_correction, self.z, Forest.wave_solution,
                      Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid)
 
         # return weights and binning solution to be used by child classes if
         # required
-        return rebin_ivar, orig_ivar, w1, w2
+        return rebin_ivar, orig_ivar, w1, w2, wslice_inner
 
     @classmethod
     def set_class_variables(cls, lambda_min, lambda_max, lambda_min_rest_frame,

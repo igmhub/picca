@@ -457,7 +457,7 @@ class Data:
 
         remove_indexs = []
         for index, forest in enumerate(self.forests):
-            if forest.flux.size < self.min_num_pix:
+            if np.sum(forest.ivar>0) < self.min_num_pix:
                 # store information for logs
                 self.rejection_log.add_to_rejection_log(forest, "short_forest")
                 self.logger.progress(

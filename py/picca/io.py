@@ -1415,14 +1415,15 @@ def read_blinding(in_dir):
     return blinding
 
 
-def read_delta_file(filename, from_image=False):
+def read_delta_file(filename, from_image=False, rebin_factor=None):
     """Extracts deltas from a single file.
     Args:
         filename: str
-            Path to the file to read
-        
+            Path to the file to read        
         from_image: bool
             If True read deltas in ImageHDU format.
+        rebin_factor: int - default: None
+            Factor to rebin the lambda grid by. If None, no rebinning is done.
     Returns:
         deltas:
             A dictionary with the data. Keys are the healpix numbers of each
@@ -1437,6 +1438,11 @@ def read_delta_file(filename, from_image=False):
     
     hdul.close()
 
+    # Rebin
+    if rebin_factor is not None:
+        for i in range(len(deltas)):
+            deltas[i].rebin(rebin_factor)
+
     return deltas
 
 
@@ -1449,7 +1455,8 @@ def read_deltas(in_dir,
                 max_num_spec=None,
                 no_project=False,
                 from_image=False,
-                nproc=None):
+                nproc=None,
+                rebin_factor=None):
     """Reads deltas and computes their redshifts.
 
     Fills the fields delta.z and multiplies the weights by
@@ -1478,6 +1485,10 @@ def read_deltas(in_dir,
             et al. 2020)
         from_image: bool - default: False
             If True, read deltas in ImageHDU format. 
+        nproc: int - default: None
+            Number of cpus for parallelization. If None, uses all available.
+        rebin_factor: int - default: None
+            Factor to rebin the lambda grid by. If None, no rebinning is done.
 
     Returns:
         The following variables:
@@ -1502,7 +1513,10 @@ def read_deltas(in_dir,
                                                             '/*.fits.gz'))
     files = sorted(files)
 
-    arguments = [(f, from_image) for f in files]
+    if rebin_factor is not None:
+        userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
+
+    arguments = [(f, from_image, rebin_factor) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
     pool.close()

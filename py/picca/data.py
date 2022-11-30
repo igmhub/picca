@@ -1290,7 +1290,7 @@ class Delta(QSO):
         fitiing. See equations 5 and 6 of du Mas des Bourboux et al. 2020
         """
         # 2nd term in equation 6
-        sum_weights=np.sum(self.weights)
+        sum_weights = np.sum(self.weights)
         if sum_weights > 0.0:
             mean_delta = np.average(self.delta, weights=self.weights)
         else:
@@ -1310,3 +1310,35 @@ class Delta(QSO):
             res = self.delta
 
         self.delta -= mean_delta + res
+
+    def rebin(self, factor):
+        """Rebin deltas by an integer factor
+
+        Args:
+            factor: int
+                Factor to rebin deltas (new_bin_size = factor * old_bin_size)
+        """
+        wave = 10**np.array(self.log_lambda)
+        dwave = wave[1] - wave[0]
+        if not np.isclose(dwave, wave[-1] - wave[-2]):
+            raise ValueError('Delta rebinning only implemented for linear lambda bins')
+
+        start = wave.min() - dwave / 2
+        num_bins = np.ceil(((wave[-1] - wave[0]) / dwave + 1) / factor)
+
+        edges = np.arange(num_bins) * dwave * factor + start
+
+        new_indx = np.searchsorted(edges, wave)
+
+        binned_delta = np.bincount(new_indx, weights=self.delta*self.weights,
+                                   minlength=edges.size+1)[1:-1]
+        binned_weight = np.bincount(new_indx, weights=self.weights, minlength=edges.size+1)[1:-1]
+
+        mask = binned_weight != 0
+        binned_delta[mask] /= binned_weight[mask]
+
+        new_wave = (edges[1:] + edges[:-1]) / 2
+
+        self.log_lambda = np.log10(new_wave[mask])
+        self.delta = binned_delta[mask]
+        self.weights = binned_weight[mask]

@@ -259,47 +259,52 @@ class Pk1dForest(Forest):
         -----
         AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         """
-        rebin_ivar, orig_ivar, w1, w2 = super().rebin()
-        if len(rebin_ivar) == 0:
+        rebin_ivar, orig_ivar, w1, w2, wslice_inner = super().rebin()
+        if len(rebin_ivar) == 0 or np.sum(w2) == 0:
             self.exposures_diff = np.array([])
             self.reso = np.array([])
             self.reso_pix = np.array([])
-            return [], [], [], []
+            return [], [], [], np.array([]), np.array([])
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
         self.reso = self.reso[w1]
         self.reso_pix = self.reso_pix[w1]
 
-        # rebin exposures_diff and reso
-        rebin_exposures_diff = np.zeros(self.log_lambda_index.max() + 1)
-        rebin_reso = np.zeros(self.log_lambda_index.max() + 1)
-        rebin_reso_pix = np.zeros(self.log_lambda_index.max() + 1)
-        rebin_exposures_diff_aux = np.bincount(self.log_lambda_index,
-                                               weights=orig_ivar[w1] *
-                                               self.exposures_diff)
-        rebin_reso_aux = np.bincount(self.log_lambda_index, weights=orig_ivar[w1] * self.reso)
-        rebin_reso_pix_aux = np.bincount(self.log_lambda_index,
-                                         weights=orig_ivar[w1] * self.reso_pix)
-        rebin_exposures_diff[:len(rebin_exposures_diff_aux
-                                 )] += rebin_exposures_diff_aux
-        rebin_reso[:len(rebin_reso_aux)] += rebin_reso_aux
-        rebin_reso_pix[:len(rebin_reso_pix_aux)] += rebin_reso_pix_aux
+        # Find non-empty bins
+        binned_arr_size = self.log_lambda_index.max() + 1
+        final_arr_size = np.sum(wslice_inner)
 
+        # rebin exposures_diff and reso
+        rebin_exposures_diff = np.bincount(self.log_lambda_index,
+            weights=orig_ivar[w1] * self.exposures_diff, minlength=binned_arr_size)
+        rebin_reso = np.bincount(self.log_lambda_index, weights=orig_ivar[w1] * self.reso, minlength=binned_arr_size)
+        rebin_reso_pix = np.bincount(self.log_lambda_index, weights=orig_ivar[w1] * self.reso_pix,
+                                     minlength=binned_arr_size)
+
+        # Remove empty bins but not ivar
+        w2_ = (rebin_ivar > 0.) & wslice_inner
+        self.exposures_diff = np.zeros(final_arr_size)
+        self.reso = np.zeros(final_arr_size)
+        self.reso_pix = np.zeros(final_arr_size)
 
         # apply mask due to rebinned inverse vairane
-        self.exposures_diff = rebin_exposures_diff[w2] / rebin_ivar[w2]
-        self.reso = rebin_reso[w2] / rebin_ivar[w2]
-        self.reso_pix = rebin_reso_pix[w2] / rebin_ivar[w2]
+        self.exposures_diff[w2] = rebin_exposures_diff[w2_] / rebin_ivar[w2_]
+        self.reso[w2] = rebin_reso[w2_] / rebin_ivar[w2_]
+        self.reso_pix[w2] = rebin_reso_pix[w2_] / rebin_ivar[w2_]
 
         # finally update control variables
-        self.mean_reso = self.reso.mean()
+        self.mean_reso = self.reso[w2].mean()
         self.mean_z = (
             (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
              np.power(10., self.log_lambda[0])) / 2. /
             Pk1dForest.lambda_abs_igm - 1.0)
-        self.mean_reso_pix = self.reso_pix.mean()
+        self.mean_reso_pix = self.reso_pix[w2].mean()
+
+        # maybe replace empty resolution values with the mean?
+        self.reso[~w2] = self.mean_reso
+        self.reso_pix[~w2] = self.mean_reso_pix
 
         # return weights and binning solution to be used by child classes if
         # required
-        return rebin_ivar, orig_ivar, w1, w2
+        return rebin_ivar, orig_ivar, w1, w2, wslice_inner

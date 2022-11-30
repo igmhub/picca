@@ -17,12 +17,13 @@ from picca.delta_extraction.utils import (find_bins, update_accepted_options,
 
 accepted_options = update_accepted_options(accepted_options, [
     "input directory", "raw statistics file", "use constant weight",
-    "num bins variance"
+    "num bins variance", "force stack delta to zero"
 ])
 
 defaults = update_default_options(defaults, {
     "raw statistics file": "",
     "use constant weight": False,
+    "force stack delta to zero": False
 })
 
 IN_NSIDE = 16
@@ -121,6 +122,8 @@ class TrueContinuum(ExpectedFlux):
         self.use_constant_weight = config.getboolean("use constant weight")
         self.raw_statistics_filename = config.get("raw statistics file")
 
+        self.force_stack_delta_to_zero = config.getboolean("force stack delta to zero")
+
     def compute_expected_flux(self, forests):
         """
 
@@ -151,6 +154,18 @@ class TrueContinuum(ExpectedFlux):
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
 
+    def compute_mean_cont(self, forests):
+        """Compute the mean quasar continuum over the whole sample.
+        Then updates the value of self.get_mean_cont to contain it
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+        """
+
+        return super()._compute_mean_cont(forests)
+
     def compute_forest_variance(self, forest, continuum):
         """Compute the forest variance
 
@@ -162,51 +177,18 @@ class TrueContinuum(ExpectedFlux):
         continuum: array of float
         Quasar continuum associated with the forest
         """
-        var_pipe = 1. / forest.ivar / forest.continuum**2
-        var_lss = self.get_var_lss(forest.log_lambda)
-        return var_lss + var_pipe
+        w = forest.ivar > 0
+        variance = np.empty_like(forest.log_lambda)
+        variance[~w] = np.inf
 
-    def compute_mean_cont(self, forests):
-        """Compute the mean quasar continuum over the whole sample.
-        Then updates the value of self.get_mean_cont to contain it
+        if self.use_constant_weight:
+            variance[w] = 1
+        else:
+            var_lss = self.get_var_lss(forest.log_lambda[w])
+            ivar_pipe = forest.ivar * forest.continuum**2
+            variance[w] = var_lss + 1/ivar_pipe[w]
 
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-        """
-        mean_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid)
-        mean_cont_weight = np.zeros_like(Forest.log_lambda_rest_frame_grid)
-
-        for forest in forests:
-            if forest.bad_continuum_reason is not None:
-                continue
-            bins = find_bins(forest.log_lambda - np.log10(1 + forest.z),
-                             Forest.log_lambda_rest_frame_grid,
-                             Forest.wave_solution)
-
-            if self.use_constant_weight:
-                weights = np.ones_like(forest.log_lambda)
-            else:
-                weights = 1. / self.compute_forest_variance(
-                    forest, forest.continuum)
-            cont = np.bincount(bins, weights=forest.continuum * weights)
-            mean_cont[:len(cont)] += cont
-            cont_weight = np.bincount(bins, weights=weights)
-            mean_cont_weight[:len(cont)] += cont_weight
-
-        w = mean_cont_weight > 0
-        mean_cont[w] /= mean_cont_weight[w]
-        mean_cont /= mean_cont.mean()
-        log_lambda_cont = Forest.log_lambda_rest_frame_grid[w]
-
-        self.get_mean_cont = interp1d(log_lambda_cont,
-                                      mean_cont,
-                                      fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(log_lambda_cont,
-                                             mean_cont_weight[w],
-                                             fill_value=0.0,
-                                             bounds_error=False)
+        return variance
 
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
@@ -239,14 +221,21 @@ class TrueContinuum(ExpectedFlux):
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
+
             # get the variance functions
             if self.use_constant_weight:
-                weights = np.ones_like(forest.log_lambda)
-                mean_expected_flux = forest.continuum
+                w = forest.ivar>0
+                weights = np.empty_like(forest.log_lambda)
+                weights[w] = 1
+                weights[~w] = 0
             else:
-                mean_expected_flux = forest.continuum
                 weights = 1. / self.compute_forest_variance(
                     forest, forest.continuum)
+
+            mean_expected_flux = np.copy(forest.continuum)
+            if self.force_stack_delta_to_zero:
+                stack_delta = self.get_stack_delta(forest.log_lambda)
+                mean_expected_flux *= stack_delta
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,
@@ -326,9 +315,9 @@ class TrueContinuum(ExpectedFlux):
         """
         if healpix is None:
             healpix = healpy.ang2pix(IN_NSIDE,
-                                 np.pi / 2 - forests[0].dec,
-                                 forests[0].ra,
-                                 nest=True)
+                                     np.pi / 2 - forests[0].dec,
+                                     forests[0].ra,
+                                     nest=True)
 
         filename_truth = (
             f"{self.input_directory}/{healpix//100}/{healpix}/truth-{IN_NSIDE}-"
@@ -344,7 +333,7 @@ class TrueContinuum(ExpectedFlux):
             indx = np.nonzero(true_cont["TARGETID"] == forest.targetid)[0]
             if indx.size == 0:
                 raise ExpectedFluxError("Forest target id was not found in "
-                    "the truth file.")
+                                        "the truth file.")
             indx = indx[0]
 
             # Should we also check for healpix consistency here?
@@ -485,11 +474,12 @@ class TrueContinuum(ExpectedFlux):
         counts = np.zeros_like(Forest.log_lambda_grid)
 
         for forest in forests:
+            w = forest.ivar > 0
             log_lambda_bins = find_bins(forest.log_lambda,
                                         Forest.log_lambda_grid,
-                                        Forest.wave_solution)
-            var_pipe = 1. / forest.ivar / forest.continuum**2
-            deltas = forest.flux / forest.continuum - 1
+                                        Forest.wave_solution)[w]
+            var_pipe = 1. / forest.ivar[w] / forest.continuum[w]**2
+            deltas = forest.flux[w] / forest.continuum[w] - 1
             var_lss[log_lambda_bins] += deltas**2 - var_pipe
             counts[log_lambda_bins] += 1
 

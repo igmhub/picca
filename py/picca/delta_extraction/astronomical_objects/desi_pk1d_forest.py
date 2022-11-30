@@ -194,26 +194,36 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         """
         rebin_ivar, orig_ivar, w1, w2 = super().rebin()
-        if len(rebin_ivar) == 0:
+        if len(rebin_ivar) == 0 or np.sum(w2) == 0:
             self.resolution_matrix = np.array([[]])
-            return [], [], [], []
+            return [], [], [], np.array([]), np.array([])
 
         # apply mask due to cuts in bin
         self.resolution_matrix = self.resolution_matrix[:, w1]
 
+        # Find non-empty bins
+        binned_arr_size = self.log_lambda_index.max() + 1
+
+        # Do a simple average when ivar=0
+        orig_ivar_2 = orig_ivar[w1]
+        w__ = orig_ivar_2>0
+        orig_ivar_2[~w__] = 1
+        rebin_reso_ivar = np.bincount(bins, weights=orig_ivar_2, minlength=binned_arr_size)
+
         # rebin resolution_matrix
         rebin_reso_matrix_aux = np.zeros(
-            (self.resolution_matrix.shape[0], self.log_lambda_index.max() + 1))
+            (self.resolution_matrix.shape[0], binned_arr_size))
         for index, reso_matrix_col in enumerate(self.resolution_matrix):
             rebin_reso_matrix_aux[index, :] = np.bincount(
-                self.log_lambda_index, weights=orig_ivar[w1] * reso_matrix_col)
+                self.log_lambda_index, weights=orig_ivar_2 * reso_matrix_col)
+
         # apply mask due to rebinned inverse vairane
-        self.resolution_matrix = rebin_reso_matrix_aux[:, w2] / rebin_ivar[
-            np.newaxis, w2]
+        self.resolution_matrix = rebin_reso_matrix_aux[:, wslice_inner] / rebin_reso_ivar[
+            np.newaxis, wslice_inner]
 
         # return weights and binning solution to be used by child classes if
         # required
-        return rebin_ivar, orig_ivar, w1, w2
+        return rebin_ivar, orig_ivar, w1, w2, wslice_inner
 
     @classmethod
     def update_class_variables(cls):

@@ -10,7 +10,7 @@ defaults = {
     "absorber mask width": 2.5,
 }
 
-accepted_options = ["filename"]
+accepted_options = ["filename", "keep pixels"]
 
 
 class LinesMask(Mask):
@@ -40,7 +40,7 @@ class LinesMask(Mask):
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
-        super().__init__()
+        super().__init__(config)
 
         mask_file = config.get("filename")
         if mask_file is None:
@@ -94,7 +94,4 @@ class LinesMask(Mask):
 
         # do the actual masking
         for param in Forest.mask_fields:
-            if param in ['resolution_matrix']:
-                setattr(forest, param, getattr(forest, param)[:, w])
-            else:
-                setattr(forest, param, getattr(forest, param)[w])
+            self._masker(forest, param, w)
