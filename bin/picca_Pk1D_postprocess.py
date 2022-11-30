@@ -138,7 +138,7 @@ def main(cmdargs):
 
     parser.add_argument('--overwrite',
                         action='store_true',
-                        default=True,
+                        default=False,
                         required=False,
                         help='Overwrite the output')
 
