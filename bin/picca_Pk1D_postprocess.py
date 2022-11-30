@@ -43,14 +43,13 @@ def main(cmdargs):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Compute the averaged 1D power spectrum')
 
-
     parser.add_argument('--in-dir',
                         type=str,
                         default=None,
                         required=True,
                         help='Directory to individual P1D files')
     
-    parser.add_argument('--out-dir',
+    parser.add_argument('--output-file',
                         type=str,
                         default=None,
                         required=False,
@@ -160,6 +159,12 @@ def main(cmdargs):
                         required=False,
                         help='Output the older version of the average P1D')
 
+    parser.add_argument('--ncpu',
+                        type=int,
+                        default=8,
+                        required=False,
+                        help='Number of CPUs used to read input P1D files')
+
     args = parser.parse_args(sys.argv[1:])
 
     if (args.weight_method != 'no_weights') & (args.apply_mean_snr_cut):
@@ -180,10 +185,6 @@ def main(cmdargs):
     else:
         snr_cut_mean = None
         zbins_snr_cut_mean = None
-
-
-
-
 
     kedge_min, kedge_max, kedge_bin = define_wavenumber_array(args.kedge_min,
                                                                args.kedge_max,
@@ -209,16 +210,24 @@ def main(cmdargs):
                                                             overwrite=args.overwrite)
 
     else:
-        data = postproc_pk1d.parallelize_p1d_comp(args.in_dir,
-                                                  z_edges,
-                                                  k_edges,
-                                                  weight_method=args.weight_method,
-                                                  snrcut=snr_cut_mean,
-                                                  zbins=zbins_snr_cut_mean,
-                                                  output_file=args.out_dir,
-                                                  nomedians=args.no_median,
-                                                  velunits=args.velunits,
-                                                  overwrite=args.overwrite)
+        if args.output_file is None:
+            med_ext = "" if nomedians else "_medians"
+            snr_ext = "_snr_cut" if snrcut is not None else ""
+            vel_ext = "_vel" if velunits else ""
+            output_file = os.path.join(data_dir,
+                    f'mean_Pk1d_{weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
+        else:
+            output_file = args.output_file
+        postproc_pk1d.run_postproc_pk1d(args.in_dir, output_file,
+                                        z_edges,
+                                        k_edges,
+                                        weight_method=args.weight_method,
+                                        snrcut=snr_cut_mean,
+                                        zbins_snrcut=zbins_snr_cut_mean,
+                                        nomedians=args.no_median,
+                                        velunits=args.velunits,
+                                        overwrite=args.overwrite,
+                                        ncpu = args.ncpu)
 
 
 if __name__ == '__main__':

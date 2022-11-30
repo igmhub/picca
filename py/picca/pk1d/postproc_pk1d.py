@@ -21,7 +21,7 @@ from picca.constants import SPEED_LIGHT
 from picca.constants import ABSORBER_IGM
 from picca.utils import userprint
 
-def read_pk1d(filename, kbin_edges, snrcut=None, zbins=None):
+def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     """Read Pk1D data from a single file
 
     Arguments:
@@ -34,9 +34,9 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins=None):
 
     snrcut: float, or array of floats - Default: None
     Chunks with mean SNR > snrcut are discarded. If snrcut is an array,
-    zbins must be set, so that the cut is made redshift dependent.
+    zbins_snrcut must be set, so that the cut is made redshift dependent.
 
-    zbins: array of floats - Default: None
+    zbins_snrcut: array of floats - Default: None
     Required if snrcut is an array of floats. List of redshifts
     associated to the list of snr cuts.
 
@@ -54,19 +54,12 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins=None):
             data = h.read()
             chunk_header = h.read_header()
             chunk_table = Table(data)
-            try:
-                chunk_table.rename_column('K','k')
-                chunk_table.rename_column('PK','Pk')
-                chunk_table.rename_column('PK_RAW','Pk_raw')
-                chunk_table.rename_column('PK_NOISE','Pk_noise')
-                chunk_table.rename_column('PK_DIFF','Pk_diff')
-                chunk_table.rename_column('COR_RESO','cor_reso')
-            except:
-                pass
-            try:
-                chunk_table.rename_column('PK_NOISE_MISS','Pk_noise_miss')
-            except:
-                pass
+            for colname in ['k', 'Pk', 'Pk_raw', 'Pk_noise',
+                            'Pk_diff', 'cor_reso', 'Pk_noise_miss']:
+                try:
+                    chunk_table.rename_column(colname.upper(), colname)
+                except:
+                    pass
 
             if np.nansum(chunk_table['Pk'])==0:
                 chunk_table['Pk'] = (chunk_table['Pk_raw'] - chunk_table['Pk_noise']) / chunk_table['cor_reso']
@@ -76,9 +69,9 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins=None):
 
             if snrcut is not None :
                 if hasattr(snrcut, "__len__"):
-                    if len(snrcut) != len(zbins) :
-                        raise ValueError("Please provide same size for zbins and snrcut arrays")
-                    zbin_index = np.argmin(np.abs(zbins - chunk_header['MEANZ']))
+                    if len(snrcut) != len(zbins_snrcut) :
+                        raise ValueError("Please provide same size for zbins_snrcut and snrcut arrays")
+                    zbin_index = np.argmin(np.abs(zbins_snrcut - chunk_header['MEANZ']))
                     snrcut_chunk = snrcut[zbin_index]
                 else:
                     snrcut_chunk = snrcut
@@ -278,50 +271,45 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
     return meanP1D_table, metadata_table
 
 
-def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weight_method, 
-                         snrcut=None, zbins=None, output_file=None, nomedians=False,
-                         velunits=False, overwrite=False):
+def run_postproc_pk1d(data_dir, output_file, zbin_edges, kbin_edges,
+                      weight_method='fit_snr', snrcut=None, zbins_snrcut=None,
+                      nomedians=False, velunits=False, overwrite=False, ncpu=8):
     """Read individual Pk1D data from a set of files and compute P1D statistics, stored in a summary FITS file.
 
     Arguments:
     ----------
     data_dir: string, Directory where individual P1D FITS files are located
 
-    output_file: string - default: None
-    Output file name. If set to None, file name is set to data_dir/mean_Pk1d_[weight_method]_[snr_cut]_[vel].fits.gz
+    output_file: string, Output file name
 
     overwrite: Bool - default: False
     Overwrite output file if existing
 
-    other args: As defined in previous functions
+    ncpu: int - default: 8
+    The I/O function read_pk1d() is run parallel
+
+    other args: As defined in compute_mean_pk1d() or read_pk1d()
     """
 
-    if output_file is None:
-        output_file = os.path.join(data_dir,
-                f'mean_Pk1d_{weight_method}{"" if nomedians else "_medians"}{"_snr_cut" if snrcut is not None else ""}{"_vel" if velunits else ""}.fits.gz')
     if os.path.exists(output_file) and not overwrite:
-        outdir=Table.read(output_file)
-        return outdir
+        raise RuntimeError('Output file already exists: '+output_file)
 
     searchstr = '*'
     files = glob.glob(os.path.join(data_dir,f"Pk1D{searchstr}.fits.gz"))
-    ncpu = 8
+
     with Pool(ncpu) as pool:
-        if snrcut is not None:
-            full_p1d_table = pool.starmap(read_pk1d,[[f, kbin_edges, snrcut, zbins] for f in files])
-        else:
-            full_p1d_table = pool.starmap(read_pk1d,[[f, kbin_edges] for f in files])
+        output_readpk1d = pool.starmap(read_pk1d, [[f, kbin_edges, snrcut, zbins_snrcut] for f in files])
 
-    full_p1d_table = [ x for x in full_p1d_table if x is not None ]
-    p1d_table = vstack([full_p1d_table[i][0] for i in range(len(full_p1d_table))])
-    z_array = np.concatenate(tuple([full_p1d_table[i][1] for i in range(len(full_p1d_table))]))
+    output_readpk1d = [ x for x in output_readpk1d if x is not None ]
+    p1d_table = vstack([output_readpk1d[i][0] for i in range(len(output_readpk1d))])
+    z_array = np.concatenate(tuple([output_readpk1d[i][1] for i in range(len(output_readpk1d))]))
 
-    full_meanP1D_table, full_metadata_table = compute_mean_pk1d(p1d_table, z_array, zbin_edges,
-                                                             kbin_edges, weight_method, nomedians, velunits)
-
-    full_meanP1D_table.meta['velunits']=velunits
+    userprint('Individual P1Ds read, now computing statistics.')
+    meanP1D_table, metadata_table = compute_mean_pk1d(p1d_table, z_array, zbin_edges,
+                                                      kbin_edges, weight_method, nomedians, velunits)
+    meanP1D_table.meta['velunits']=velunits
     hdu0 = astropy.io.fits.PrimaryHDU()
-    hdu1 = astropy.io.fits.table_to_hdu(full_meanP1D_table)
-    hdu2 = astropy.io.fits.table_to_hdu(full_metadata_table)
+    hdu1 = astropy.io.fits.table_to_hdu(meanP1D_table)
+    hdu2 = astropy.io.fits.table_to_hdu(metadata_table)
     hdul = astropy.io.fits.HDUList([hdu0, hdu1, hdu2])
     hdul.writeto(output_file, overwrite=overwrite)
