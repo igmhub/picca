@@ -243,9 +243,6 @@ class Pk1dForest(Forest):
 
         Return
         ------
-        bins: array of float
-        Binning solution to be used for the rebinning
-
         rebin_ivar: array of float
         Rebinned version of ivar
 
@@ -262,12 +259,12 @@ class Pk1dForest(Forest):
         -----
         AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         """
-        bins, rebin_ivar, orig_ivar, w1, w2 = super().rebin()
+        rebin_ivar, orig_ivar, w1, w2 = super().rebin()
         if len(rebin_ivar) == 0:
             self.exposures_diff = np.array([])
             self.reso = np.array([])
             self.reso_pix = np.array([])
-            return [], [], [], [], []
+            return [], [], [], []
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
@@ -275,14 +272,14 @@ class Pk1dForest(Forest):
         self.reso_pix = self.reso_pix[w1]
 
         # rebin exposures_diff and reso
-        rebin_exposures_diff = np.zeros(bins.max() + 1)
-        rebin_reso = np.zeros(bins.max() + 1)
-        rebin_reso_pix = np.zeros(bins.max() + 1)
-        rebin_exposures_diff_aux = np.bincount(bins,
+        rebin_exposures_diff = np.zeros(self.log_lambda_index.max() + 1)
+        rebin_reso = np.zeros(self.log_lambda_index.max() + 1)
+        rebin_reso_pix = np.zeros(self.log_lambda_index.max() + 1)
+        rebin_exposures_diff_aux = np.bincount(self.log_lambda_index,
                                                weights=orig_ivar[w1] *
                                                self.exposures_diff)
-        rebin_reso_aux = np.bincount(bins, weights=orig_ivar[w1] * self.reso)
-        rebin_reso_pix_aux = np.bincount(bins, weights=orig_ivar[w1] * self.reso_pix)
+        rebin_reso_aux = np.bincount(self.log_lambda_index, weights=orig_ivar[w1] * self.reso)
+        rebin_reso_pix_aux = np.bincount(self.log_lambda_index, weights=orig_ivar[w1] * self.reso_pix)
         rebin_exposures_diff[:len(rebin_exposures_diff_aux
                                  )] += rebin_exposures_diff_aux
         rebin_reso[:len(rebin_reso_aux)] += rebin_reso_aux
@@ -304,4 +301,4 @@ class Pk1dForest(Forest):
 
         # return weights and binning solution to be used by child classes if
         # required
-        return bins, rebin_ivar, orig_ivar, w1, w2
+        return rebin_ivar, orig_ivar, w1, w2

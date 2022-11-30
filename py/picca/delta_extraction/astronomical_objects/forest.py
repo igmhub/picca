@@ -577,9 +577,6 @@ class Forest(AstronomicalObject):
 
         Return
         ------
-        bins: array of float
-        Binning solution to be used for the rebinning
-
         rebin_ivar: array of float
         Rebinned version of ivar
 
@@ -598,16 +595,14 @@ class Forest(AstronomicalObject):
         AstronomicalObjectError if ivar only has zeros
         """
         (self.log_lambda, self.flux, self.ivar, self.transmission_correction,
-         self.mean_snr, bins, rebin_ivar, orig_ivar, w1,
+         self.mean_snr, self.log_lambda_index, rebin_ivar, orig_ivar, w1,
          w2) = rebin(self.log_lambda, self.flux, self.ivar,
                      self.transmission_correction, self.z, Forest.wave_solution,
                      Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid)
 
         # return weights and binning solution to be used by child classes if
         # required
-        self.log_lambda_index = find_bins(self.log_lambda, self.log_lambda_grid,
-                                          Forest.wave_solution)
-        return bins, rebin_ivar, orig_ivar, w1, w2
+        return rebin_ivar, orig_ivar, w1, w2
 
     @classmethod
     def set_class_variables(cls, lambda_min, lambda_max, lambda_min_rest_frame,

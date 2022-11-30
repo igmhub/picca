@@ -177,9 +177,6 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
 
         Return
         ------
-        bins: array of float
-        Binning solution to be used for the rebinning
-
         rebin_ivar: array of float
         Rebinned version of ivar
 
@@ -196,27 +193,27 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         -----
         AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         """
-        bins, rebin_ivar, orig_ivar, w1, w2 = super().rebin()
+        rebin_ivar, orig_ivar, w1, w2 = super().rebin()
         if len(rebin_ivar) == 0:
             self.resolution_matrix = np.array([[]])
-            return [], [], [], [], []
+            return [], [], [], []
 
         # apply mask due to cuts in bin
         self.resolution_matrix = self.resolution_matrix[:, w1]
 
         # rebin resolution_matrix
         rebin_reso_matrix_aux = np.zeros(
-            (self.resolution_matrix.shape[0], bins.max() + 1))
+            (self.resolution_matrix.shape[0], self.log_lambda_index.max() + 1))
         for index, reso_matrix_col in enumerate(self.resolution_matrix):
             rebin_reso_matrix_aux[index, :] = np.bincount(
-                bins, weights=orig_ivar[w1] * reso_matrix_col)
+                self.log_lambda_index, weights=orig_ivar[w1] * reso_matrix_col)
         # apply mask due to rebinned inverse vairane
         self.resolution_matrix = rebin_reso_matrix_aux[:, w2] / rebin_ivar[
             np.newaxis, w2]
 
         # return weights and binning solution to be used by child classes if
         # required
-        return bins, rebin_ivar, orig_ivar, w1, w2
+        return rebin_ivar, orig_ivar, w1, w2
 
     @classmethod
     def update_class_variables(cls):
