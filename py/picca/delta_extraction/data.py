@@ -543,7 +543,7 @@ class Data:
         arguments = []
         for healpix in unique_healpixs:
             this_idx = np.nonzero(healpix == healpixs)[0]
-            grouped_forests = [self.forests[i] for i in this_idx]
+            grouped_forests = sorted([self.forests[i] for i in this_idx])
             arguments.append((self.out_dir, healpix, grouped_forests, self.format))
 
         if self.num_processors > 1:
