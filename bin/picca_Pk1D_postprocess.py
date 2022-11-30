@@ -66,7 +66,7 @@ def main(cmdargs):
 
     parser.add_argument('--zedge-max',
                         type=float,
-                        default='6.3',
+                        default='6.5',
                         required=False,
                         help='Maximal value of the redshift edge array,'
                              'Default value: 6.3')
@@ -162,7 +162,7 @@ def main(cmdargs):
 
     args = parser.parse_args(sys.argv[1:])
 
-    if (args.weights_method != 'no_weights') & (args.apply_mean_snr_cut):
+    if (args.weight_method != 'no_weights') & (args.apply_mean_snr_cut):
         raise ValueError("""You are using a weighting method with a
                             redshift-dependent SNR quality cut, this is not
                             tested and should bias the result""")
@@ -172,9 +172,7 @@ def main(cmdargs):
             snr_cut_mean =       [4.1, 3.9, 3.6, 3.2, 2.9, 2.6, 2.2, 2.0, 2.0,
                                   2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
                                   2.0, 2.0, 2.0]
-            zbins_snr_cut_mean = [2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8,
-                                  4.0, 4.2, 4.4, 4.6, 4.8, 5.0, 5.2, 5.4, 5.6,
-                                  5.8, 6.0, 6.2]
+            zbins_snr_cut_mean = np.arange(2.2, 6.4, 0.2)
         else:
             raise ValueError("Please choose the SNR cutting scheme to be eboss, "
                              "or turn off the --apply-mean-snr-cut parameter, or "
@@ -198,8 +196,6 @@ def main(cmdargs):
     k_edges = np.arange(kedge_min, kedge_max, kedge_bin)
     z_edges = np.around(np.arange(args.zedge_min, args.zedge_max, args.zedge_bin), 5)
 
-
-
     if args.old_output:
         data = postproc_pk1d_oldoutput.parallelize_p1d_comp(args.in_dir,
                                                             z_edges,
@@ -207,7 +203,7 @@ def main(cmdargs):
                                                             weight_method=args.weight_method,
                                                             snrcut=snr_cut_mean,
                                                             zbins=zbins_snr_cut_mean,
-                                                            output_file=args.outdir,
+                                                            output_file=args.out_dir,
                                                             nomedians=args.no_median,
                                                             velunits=args.velunits,
                                                             overwrite=args.overwrite)
@@ -219,7 +215,7 @@ def main(cmdargs):
                                                   weight_method=args.weight_method,
                                                   snrcut=snr_cut_mean,
                                                   zbins=zbins_snr_cut_mean,
-                                                  output_file=args.outdir,
+                                                  output_file=args.out_dir,
                                                   nomedians=args.no_median,
                                                   velunits=args.velunits,
                                                   overwrite=args.overwrite)
