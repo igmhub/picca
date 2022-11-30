@@ -44,6 +44,7 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins=None):
     -------
     p1d_table: Table, one entry per mode(k) per chunk
     z_array: array[Nchunks]
+    If no chunk is selected, returns None
     """
 
     p1d_table = []
@@ -81,7 +82,6 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins=None):
                     snrcut_chunk = snrcut[zbin_index]
                 else:
                     snrcut_chunk = snrcut
-
                 if(chunk_header['MEANSNR'] < snrcut_chunk):
                     continue
 
@@ -93,6 +93,9 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins=None):
 
             p1d_table.append(chunk_table)
             z_array.append(float(chunk_header['MEANZ']))
+
+    if len(p1d_table)==0:  # No chunk was selected
+        return None
 
     p1d_table = vstack(p1d_table)
     p1d_table['Delta2'] = p1d_table['k'] * p1d_table['Pk'] / np.pi
@@ -214,7 +217,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
             for ic, c in enumerate(p1d_table_cols):
 
                 if N==0:
-                    print('Warning: 0 chunks found in bin '+str(zbin_edges[izbin])+'<z<'+str(zbin_edges[izbin+1])+
+                    userprint('Warning: 0 chunks found in bin '+str(zbin_edges[izbin])+'<z<'+str(zbin_edges[izbin+1])+
                           ', '+str(kbin_edges[ikbin])+'<k<'+str(kbin_edges[ikbin+1]))
                     for stats in stats_array:
                         meanP1D_table[stats+c][index] = np.nan
@@ -309,6 +312,7 @@ def parallelize_p1d_comp(data_dir, zbin_edges, kbin_edges, weight_method,
         else:
             full_p1d_table = pool.starmap(read_pk1d,[[f, kbin_edges] for f in files])
 
+    full_p1d_table = [ x for x in full_p1d_table if x is not None ]
     p1d_table = vstack([full_p1d_table[i][0] for i in range(len(full_p1d_table))])
     z_array = np.concatenate(tuple([full_p1d_table[i][1] for i in range(len(full_p1d_table))]))
 
