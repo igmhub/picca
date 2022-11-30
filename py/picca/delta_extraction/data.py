@@ -106,7 +106,7 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
             dtype=forests[0].get_metadata_dtype(),
         ),
         header= metadata_header, 
-        #comment= @
+        #TODO: Figure out how to add comments.
         units= forests[0].get_metadata_units(),
         extname="METADATA")
 
