@@ -218,7 +218,6 @@ class Data:
     filter_forests
     find_nside
     save_deltas
-    save_rejection_log
 
     Attributes
     ----------
