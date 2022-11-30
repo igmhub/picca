@@ -83,11 +83,11 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
     }
 
     if Forest.wave_solution == "log":
-        metadata_header["DELTA_LOG_LAMBDA"] = round(Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0], 2)
+        metadata_header["DELTA_LOG_LAMBDA"] = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
     elif Forest.wave_solution == "lin":
-        metadata_header["DELTA_LAMBDA"] = round(10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0], 2)
+        metadata_header["DELTA_LAMBDA"] = 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]
     else:
-        raise AstronomicalObjectError("Error in @"
+        raise AstronomicalObjectError("Error in _save_deltas_one_healpix_image"
                                         "Class variable 'wave_solution' "
                                         "must be either 'lin' or 'log'. "
                                         f"Found: '{Forest.wave_solution}'")
