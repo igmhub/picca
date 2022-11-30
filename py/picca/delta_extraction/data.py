@@ -11,7 +11,8 @@ import healpy
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import DataError
-from picca.delta_extraction.rejection_log import RejectionLogImage, RejectionLogTable
+from picca.delta_extraction.rejection_logs.rejection_log_from_image import RejectionLogFromImage
+from picca.delta_extraction.rejection_logs.rejection_log_from_table import RejectionLogFromTable
 from picca.delta_extraction.utils import ABSORBER_IGM
 
 accepted_options = [
@@ -19,7 +20,6 @@ accepted_options = [
     "delta lambda",
     "delta log lambda",
     "delta lambda rest frame",
-    "format", # Adding format as an option in the data section.
     "input directory",
     "lambda abs IGM",
     "lambda max",
@@ -35,12 +35,12 @@ accepted_options = [
     "minimum number pixels in forest",
     "out dir",
     "rejection log file",
+    "save format",
     "num processors",
 ]
 
 defaults = {
     "analysis type": "BAO 3D",
-    "format": "BinTableHDU",
     "lambda abs IGM": "LYA",
     "lambda max": 5500.0,
     "lambda max rest frame": 1200.0,
@@ -48,11 +48,13 @@ defaults = {
     "lambda min rest frame": 1040.0,
     "minimum number pixels in forest": 50,
     "rejection log file": "rejection_log.fits.gz",
+    "save format": "BinTableHDU",
     "minimal snr pk1d": 1,
     "minimal snr bao3d": 0,
 }
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
+accepted_save_format = ["BinTableHDU", "ImageHDU"]
 
 def _save_deltas_one_healpix_image(out_dir, healpix, forests):
     """Saves the deltas that belong to one healpix in ImageHDU format.
@@ -68,8 +70,9 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
     List of forests to save into one file.
 
     Returns:
-    --------
-    @ Add here log rejections(?)
+    ---------
+    forests: List of forests 
+    List of forests to later add to rejection log as accepted.
     """ 
     results = fitsio.FITS(
         f"{out_dir}/Delta/delta-{healpix}.fits.gz",
@@ -152,9 +155,8 @@ def _save_deltas_one_healpix_table(out_dir, healpix, forests):
 
     Returns:
     ---------
-    header_n_size: List of (header, size)
-    List forest to later
-    add to rejection log as accepted.
+    forests: List of forests 
+    List of forests to later add to rejection log as accepted.
     """
     results = fitsio.FITS(
         f"{out_dir}/Delta/delta-{healpix}.fits.gz",
@@ -202,7 +204,7 @@ def _save_deltas_one_healpix(out_dir, healpix, forests, format):
     elif format == 'ImageHDU':
         return _save_deltas_one_healpix_image(out_dir, healpix, forests)
     else:
-        raise ValueError('Invalid format', format)
+        raise DataError('Invalid format', format)
 
 class Data:
     """Abstract class from which all classes loading data must inherit.
@@ -212,8 +214,6 @@ class Data:
     Methods
     -------
     __parse_config
-    add_to_rejection_log
-    initialize_rejection_log
     filter_bad_cont_forests
     filter_forests
     find_nside
@@ -244,11 +244,11 @@ class Data:
     Directory where data will be saved. Log info will be saved in out_dir+"Log/"
     and deltas will be saved in out_dir+"Delta/"
 
-    rejection_log_file: str
-    Filelame of the rejection log
+    rejection_log: RejectionLog
+    Manages forests rejection log
 
-    rejection_log_initialized: bool
-    Flag specifying if the rejection log has been initialized
+    save_format: str
+    Format in which to save deltas. Must be in accepted_save_format
     """
 
     def __init__(self, config):
@@ -260,13 +260,11 @@ class Data:
         self.input_directory = None
         self.min_num_pix = None
         self.out_dir = None
-        self.rejection_log_file = None
+        self.rejection_log = None
         self.min_snr = None
         self.num_processors = None
+        self.save_format = None
         self.__parse_config(config)
-
-        # rejection log arays
-        self.rejection_log_initialized = False
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -382,26 +380,40 @@ class Data:
         if self.num_processors == 0:
             self.num_processors = (multiprocessing.cpu_count() // 2)
 
-        self.format = config.get("format")
-
         self.out_dir = config.get("out dir")
         if self.out_dir is None:
             raise DataError("Missing argument 'out dir' required by Data")
 
-        self.rejection_log_file = config.get("rejection log file")
-        if self.rejection_log_file is None:
+        rejection_log_file = config.get("rejection log file")
+        if rejection_log_file is None:
             raise DataError(
                 "Missing argument 'rejection log file' required by Data")
-        if "/" in self.rejection_log_file:
+        if "/" in rejection_log_file:
             raise DataError("Error constructing Data. "
                             "'rejection log file' should not incude folders. "
-                            f"Found: {self.rejection_log_file}")
-        if not (self.rejection_log_file.endswith(".fits") or
-                self.rejection_log_file.endswith(".fits.gz")):
+                            f"Found: {rejection_log_file}")
+        if not (rejection_log_file.endswith(".fits") or
+                rejection_log_file.endswith(".fits.gz")):
             raise DataError("Error constructing Data. Invalid extension for "
                             "'rejection log file'. Filename "
                             "should en with '.fits' or '.fits.gz'. Found "
-                            f"'{self.rejection_log_file}'")
+                            f"'{rejection_log_file}'")
+
+        self.save_format = config.get("save format")
+        if self.save_format is None:
+            raise DataError(
+                "Missing argument 'save format' required by Data")
+
+        if self.save_format == "BinTableHDU":
+            self.rejection_log = RejectionLogFromTable(
+                self.out_dir + "Log/" + rejection_log_file)
+        elif self.save_format == "ImageHDU":
+            self.rejection_log = RejectionLogFromImage(
+                self.out_dir + "Log/" + rejection_log_file)
+        else:
+            raise DataError("Invalid argument 'save format' required by "
+                            f"Data. Found: '{self.save_format}'. Accepted "
+                             "values: " + ",".join(accepted_save_format))
 
         if self.analysis_type == "BAO 3D":
             self.min_snr = config.getfloat("minimal snr bao3d")
@@ -420,50 +432,13 @@ class Data:
                 "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
                 "required by Data")
 
-    def add_to_rejection_log(self, forest, rejection_status):
-        """Adds to the rejection log arrays.
-        In the log forest headers will be saved along with the forest size and
-        the rejection status.
-
-        Arguments
-        ---------
-        forest: Forest
-        forest to add to the rejection log.
-
-        rejection_status: str
-        Rejection status
-        """
-        # if necessary initialize arrays to save rejected quasars in the log
-        if not self.rejection_log_initialized:
-            self.initialize_rejection_log()
-
-        self.rejection_log.add_to_rejection_log(forest, rejection_status)
-
-    def initialize_rejection_log(self):
-        """Initializes the rejection log arrays.
-        In the log forest headers will be saved along with the forest size and
-        the rejection status.
-        """
-        if self.format == "BinTableHDU":
-            self.rejection_log = RejectionLogTable(
-                self.forests[0].get_header(),
-                self.out_dir + "Log/" + self.rejection_log_file)
-        elif self.format == "ImageHDU":
-            self.rejection_log = RejectionLogImage(
-                self.forests[0].get_metadata_dtype(),
-                self.out_dir + "Log/" + self.rejection_log_file)
-        else:
-            raise ValueError("Invalid format", self.format)
-
-        self.rejection_log_initialized = True
-
     def filter_bad_cont_forests(self):
         """Remove forests where continuum could not be computed"""
         remove_indexs = []
         for index, forest in enumerate(self.forests):
             if forest.bad_continuum_reason is not None:
                 # store information for logs
-                self.add_to_rejection_log(forest, forest.bad_continuum_reason)
+                self.rejection_log.add_to_rejection_log(forest, forest.bad_continuum_reason)
 
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
@@ -485,17 +460,17 @@ class Data:
         for index, forest in enumerate(self.forests):
             if forest.flux.size < self.min_num_pix:
                 # store information for logs
-                self.add_to_rejection_log(forest, "short_forest")
+                self.rejection_log.add_to_rejection_log(forest, "short_forest")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     f"due to forest being too short ({forest.flux.size})")
             elif np.isnan((forest.flux * forest.ivar).sum()):
-                self.add_to_rejection_log(forest, "nan_forest")
+                self.rejection_log.add_to_rejection_log(forest, "nan_forest")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to finding nan")
             elif forest.mean_snr < self.min_snr:
-                self.add_to_rejection_log(forest, f"low SNR ({forest.mean_snr})")
+                self.rejection_log.add_to_rejection_log(forest, f"low SNR ({forest.mean_snr})")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     f"due to low SNR ({forest.mean_snr} < {self.min_snr})")
@@ -544,7 +519,7 @@ class Data:
         for healpix in unique_healpixs:
             this_idx = np.nonzero(healpix == healpixs)[0]
             grouped_forests = sorted([self.forests[i] for i in this_idx])
-            arguments.append((self.out_dir, healpix, grouped_forests, self.format))
+            arguments.append((self.out_dir, healpix, grouped_forests, self.save_format))
 
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
@@ -561,6 +536,6 @@ class Data:
 
         # store information for logs
         for forest in accepted_forests:
-            self.add_to_rejection_log(forest, "accepted")
+            self.rejection_log.add_to_rejection_log(forest, "accepted")
 
         self.rejection_log.save_rejection_log()

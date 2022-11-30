@@ -1502,7 +1502,7 @@ def read_deltas(in_dir,
                                                             '/*.fits.gz'))
     files = sorted(files)
 
-    arguments = [(f,from_image) for f in files]
+    arguments = [(f, from_image) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
     pool.close()

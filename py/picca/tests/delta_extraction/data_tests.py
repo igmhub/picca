@@ -12,7 +12,7 @@ from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.config import default_config
 from picca.delta_extraction.data import Data
 from picca.delta_extraction.data import defaults as defaults_data
-from picca.delta_extraction.data import accepted_analysis_type
+from picca.delta_extraction.data import accepted_analysis_type, accepted_save_format
 from picca.delta_extraction.data_catalogues.desi_data import DesiData
 from picca.delta_extraction.data_catalogues.desi_data import defaults as defaults_desi_data
 from picca.delta_extraction.data_catalogues.desi_data import accepted_options as accepted_options_desi_data
@@ -465,6 +465,53 @@ class DataTest(AbstractTest):
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
+        # create a Data instance with missing save format
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "input directory": f"{THIS_DIR}/data",
+            "minimum number pixels in forest": 50,
+            "num processors": 1,
+            "out dir": f"{THIS_DIR}/results",
+            "rejection log file": "rejection_log.fits.gz",
+        }})
+        expected_message = (
+            "Missing argument 'save format' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with invalid save format
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "input directory": f"{THIS_DIR}/data",
+            "minimum number pixels in forest": 50,
+            "num processors": 1,
+            "out dir": f"{THIS_DIR}/results",
+            "rejection log file": "rejection_log.fits.gz",
+            "save format": "InvalidFormat",
+        }})
+        expected_message = (
+            "Invalid argument 'save format' required by Data. Found: 'InvalidFormat'. Accepted values: " + ",".join(accepted_save_format)
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+        
         # create a Data instance with missing minimal snr bao3d
         config = ConfigParser()
         config.read_dict({"data": {
@@ -480,6 +527,7 @@ class DataTest(AbstractTest):
             "num processors": 1,
             "out dir": f"{THIS_DIR}/results",
             "rejection log file": "rejection_log.fits.gz",
+            "save format": "BinTableHDU",
         }})
         expected_message = (
             "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
@@ -506,6 +554,7 @@ class DataTest(AbstractTest):
             "num processors": 1,
             "out dir": f"{THIS_DIR}/results",
             "rejection log file": "rejection_log.fits.gz",
+            "save format": "BinTableHDU",
         }})
         expected_message = (
             "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
@@ -890,6 +939,7 @@ class DataTest(AbstractTest):
             "minimum number pixels in forest": 50,
             "rejection log file": "rejection.fits",
             "minimal snr bao3d": 0.0,
+            "save format": "BinTableHDU",
         }})
         expected_message = (
             "Missing argument 'blinding' required by DesiData"
