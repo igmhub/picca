@@ -272,7 +272,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
 
 
 def run_postproc_pk1d(data_dir, output_file, zbin_edges, kbin_edges,
-                      weight_method='fit_snr', snrcut=None, zbins_snrcut=None,
+                      weight_method='no_weights', snrcut=None, zbins_snrcut=None,
                       nomedians=False, velunits=False, overwrite=False, ncpu=8):
     """Read individual Pk1D data from a set of files and compute P1D statistics, stored in a summary FITS file.
 
