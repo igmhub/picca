@@ -6,6 +6,7 @@ See the respective docstrings for more details
 """
 import numpy as np
 import iminuit
+from itertools import repeat
 import fitsio
 import warnings
 
@@ -1184,57 +1185,102 @@ class Delta(QSO):
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
                    mean_reso, mean_z, delta_log_lambda)
 
-    @staticmethod
-    def from_image(file):
+    @classmethod
+    def from_image(cls, hdul, pk1d_type=False):
         """Initialize instance from an ascii file.
 
         Args:
-            file: string
-                Name of the fits file containing the image data
-
+            hdu: fitsio.hdu.table.TableHDU
+                A Header Data Unit opened with fitsio
+            pk1d_type: bool - default: False
+                Specifies if the fits file is formatted for the 1D Power
+                Spectrum analysis
         Returns:
-            a list of Delta instances
+            a Delta instance
         """
-        hdu = fitsio.FITS(file)
-        deltas_image = hdu[0].read().astype(float)
-        ivar_image = hdu[1].read().astype(float)
-        log_lambda_image = hdu[2].read().astype(float)
-        ra = hdu[3]["RA"][:].astype(np.float64) * np.pi / 180.
-        dec = hdu[3]["DEC"][:].astype(np.float64) * np.pi / 180.
-        z = hdu[3]["Z"][:].astype(np.float64)
-        plate = hdu[3]["PLATE"][:]
-        mjd = hdu[3]["MJD"][:]
-        fiberid = hdu[3]["FIBER"]
-        thingid = hdu[3]["THING_ID"][:]
+        if pk1d_type:
+            raise ValueError("ImageHDU format not implemented for Pk1D forests.")
 
-        nspec = hdu[0].read().shape[1]
+        header = hdul["METADATA"].read_header()
+        N_forests = hdul["METADATA"].get_nrows()
+        Nones = np.full(N_forests, None)
+
+        # new runs of picca_deltas should have a blinding keyword
+        if "BLINDING" in header:
+            blinding = header["BLINDING"]
+        else:
+            blinding = "none"
+
+        if blinding != "none":
+            delta_name = "DELTA_BLIND"
+        else:
+            delta_name = "DELTA"
+
+        delta = hdul[delta_name].read().astype(float)
+
+        if "LOGLAM" in hdul:
+            log_lambda = hdul["LOGLAM"][:].astype(float)
+        elif "LAMBDA" in hdul:
+            log_lambda = np.log10(hdul["LAMBDA"][:].astype(float))
+        else:
+            raise KeyError("Did not find LOGLAM or LAMBDA in delta file")
+
+        ivar = Nones
+        exposures_diff = Nones
+        mean_snr = Nones
+        mean_reso = Nones
+        mean_z = Nones
+        resolution_matrix = Nones
+        mean_resolution_matrix = Nones
+        mean_reso_pix = Nones
+        weights = hdul["WEIGHT"].read().astype(float)
+        w = weights > 0
+        cont = hdul["CONT"].read().astype(float)
+
+        if "THING_ID" in hdul["METADATA"].get_colnames():
+            los_id = hdul["METADATA"]["THING_ID"][:]
+            plate = hdul["METADATA"]["PLATE"][:]
+            mjd = hdul["METADATA"]["MJD"][:]
+            fiberid=hdul["METADATA"]["FIBERID"][:]
+        elif "LOS_ID" in hdul["METADATA"].get_colnames():
+            los_id = hdul["METADATA"]["LOS_ID"][:]
+            plate=los_id
+            mjd=los_id
+            fiberid=los_id
+        else:
+            raise Exception("Could not find THING_ID or LOS_ID")
+
+        ra = hdul["METADATA"]["RA"][:]
+        dec = hdul["METADATA"]["DEC"][:]
+        z_qso = hdul["METADATA"]["Z"][:]
+        try:
+            order = hdul["METADATA"]["ORDER"][:]
+        except (KeyError, ValueError):
+            order = np.full(N_forests, 1)
+
         deltas = []
-        for index in range(nspec):
-            if index % 100 == 0:
-                userprint("\rreading deltas {} of {}".format(index, nspec),
-                          end="")
+        for (los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i, log_lambda,
+            weights_i, cont_i, delta_i, order_i, ivar_i, exposures_diff_i, mean_snr_i,
+            mean_reso_i, mean_z_i, resolution_matrix_i,
+            mean_resolution_matrix_i, mean_reso_pix_i, w_i
+        ) in zip(los_id, ra, dec, z_qso, plate, mjd, fiberid, repeat(log_lambda),
+                   weights, cont, delta, order, ivar, exposures_diff, mean_snr,
+                   mean_reso, mean_z, resolution_matrix,
+                   mean_resolution_matrix, mean_reso_pix, w):
+            deltas.append(cls(
+                los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i, log_lambda[w_i],
+                weights_i[w_i] if weights_i is not None else None, 
+                cont_i[w_i], 
+                delta_i[w_i],
+                order_i, 
+                ivar_i[w_i] if ivar_i is not None else None,
+                exposures_diff_i[w_i] if exposures_diff_i is not None else None, 
+                mean_snr_i, mean_reso_i, mean_z_i,
+                resolution_matrix_i if resolution_matrix_i is not None else None,
+                mean_resolution_matrix_i if mean_resolution_matrix_i is not None else None,
+                mean_reso_pix_i,
+            ))
 
-            delta = deltas_image[:, index]
-            ivar = ivar_image[:, index]
-            w = ivar > 0
-            delta = delta[w]
-            aux_ivar = ivar[w]
-            log_lambda = log_lambda_image[w]
-
-            order = 1
-            exposures_diff = None
-            mean_snr = None
-            mean_reso = None
-            delta_log_lambda = None
-            mean_z = None
-
-            deltas.append(
-                Delta(thingid[index], ra[index], dec[index], z[index],
-                      plate[index], mjd[index], fiberid[index], log_lambda,
-                      aux_ivar, None, delta, order, ivar, exposures_diff,
-                      mean_snr, mean_reso, mean_z, delta_log_lambda))
-
-        hdu.close()
         return deltas
 
     def project(self):

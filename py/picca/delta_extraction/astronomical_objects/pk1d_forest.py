@@ -206,6 +206,31 @@ class Pk1dForest(Forest):
 
         return header
 
+    def get_metadata(self):
+        metadata = super().get_metadata()
+
+        metadata += [
+            self.mean_z, self.mean_reso, self.mean_reso_pix
+        ]
+
+        return metadata
+
+    @classmethod
+    def get_metadata_dtype(cls):
+        dtype = super().get_metadata_dtype()
+
+        dtype += [('MEANZ', float), ('MEANRESO', float), ('MEANRESO_PIX', float)]
+
+        return dtype
+
+    @classmethod
+    def get_metadata_units(cls):
+        units = super().get_metadata_units()
+
+        units += ["", "", ""]
+
+        return units
+
     def rebin(self):
         """Rebin the arrays and update control variables
 
@@ -218,9 +243,6 @@ class Pk1dForest(Forest):
 
         Return
         ------
-        bins: array of float
-        Binning solution to be used for the rebinning
-
         rebin_ivar: array of float
         Rebinned version of ivar
 
@@ -237,12 +259,12 @@ class Pk1dForest(Forest):
         -----
         AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         """
-        bins, rebin_ivar, orig_ivar, w1, w2, wslice_inner = super().rebin()
+        rebin_ivar, orig_ivar, w1, w2, wslice_inner = super().rebin()
         if len(rebin_ivar) == 0 or np.sum(w2) == 0:
             self.exposures_diff = np.array([])
             self.reso = np.array([])
             self.reso_pix = np.array([])
-            return [], [], [], [], np.array([]), np.array([])
+            return [], [], [], np.array([]), np.array([])
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
@@ -250,14 +272,15 @@ class Pk1dForest(Forest):
         self.reso_pix = self.reso_pix[w1]
 
         # Find non-empty bins
-        binned_arr_size = bins.max() + 1
+        binned_arr_size = self.log_lambda_index.max() + 1
         final_arr_size = np.sum(wslice_inner)
 
         # rebin exposures_diff and reso
-        rebin_exposures_diff = np.bincount(bins,
+        rebin_exposures_diff = np.bincount(self.log_lambda_index,
             weights=orig_ivar[w1] * self.exposures_diff, minlength=binned_arr_size)
-        rebin_reso = np.bincount(bins, weights=orig_ivar[w1] * self.reso, minlength=binned_arr_size)
-        rebin_reso_pix = np.bincount(bins, weights=orig_ivar[w1] * self.reso_pix,
+        rebin_reso = np.bincount(self.log_lambda_index,
+                                 weights=orig_ivar[w1] * self.reso, minlength=binned_arr_size)
+        rebin_reso_pix = np.bincount(self.log_lambda_index, weights=orig_ivar[w1] * self.reso_pix,
                                      minlength=binned_arr_size)
 
         # Remove empty bins but not ivar
@@ -285,4 +308,4 @@ class Pk1dForest(Forest):
 
         # return weights and binning solution to be used by child classes if
         # required
-        return bins, rebin_ivar, orig_ivar, w1, w2, wslice_inner
+        return rebin_ivar, orig_ivar, w1, w2, wslice_inner

@@ -11,6 +11,8 @@ import healpy
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import DataError
+from picca.delta_extraction.rejection_logs.rejection_log_from_image import RejectionLogFromImage
+from picca.delta_extraction.rejection_logs.rejection_log_from_table import RejectionLogFromTable
 from picca.delta_extraction.utils import ABSORBER_IGM
 
 accepted_options = [
@@ -33,6 +35,7 @@ accepted_options = [
     "minimum number pixels in forest",
     "out dir",
     "rejection log file",
+    "save format",
     "num processors",
 ]
 
@@ -45,13 +48,99 @@ defaults = {
     "lambda min rest frame": 1040.0,
     "minimum number pixels in forest": 50,
     "rejection log file": "rejection_log.fits.gz",
+    "save format": "BinTableHDU",
     "minimal snr pk1d": 1,
     "minimal snr bao3d": 0,
 }
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
+accepted_save_format = ["BinTableHDU", "ImageHDU"]
 
-def _save_deltas_one_healpix(out_dir, healpix, forests):
+def _save_deltas_one_healpix_image(out_dir, healpix, forests):
+    """Saves the deltas that belong to one healpix in ImageHDU format.
+    
+    Arguments
+    ---------
+    out_dir: str
+    Parent directory to save deltas.
+
+    healpix: int
+
+    forests: List of Forests
+    List of forests to save into one file.
+
+    Returns:
+    ---------
+    forests: List of forests 
+    List of forests to later add to rejection log as accepted.
+    """ 
+    results = fitsio.FITS(
+        f"{out_dir}/Delta/delta-{healpix}.fits.gz",
+        'rw',
+        clobber=True)
+
+    # Saving metadata card
+    metadata_header = {
+        "WAVE_SOLUTION": Forest.wave_solution,
+        "BLINDING": Forest.blinding,
+    }
+
+    if Forest.wave_solution == "log":
+        metadata_header["DELTA_LOG_LAMBDA"] = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
+    elif Forest.wave_solution == "lin":
+        metadata_header["DELTA_LAMBDA"] = 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]
+    else:
+        raise DataError("Error in _save_deltas_one_healpix_image"
+                                        "Class variable 'wave_solution' "
+                                        "must be either 'lin' or 'log'. "
+                                        f"Found: '{Forest.wave_solution}'")
+
+    results.write(
+        10**Forest.log_lambda_grid,
+        extname="LAMBDA",
+    )
+    
+    results.write(
+        np.array(
+            [tuple(forest.get_metadata()) for forest in forests], # Structured arrays need to take tuples as input.
+            dtype=forests[0].get_metadata_dtype(),
+        ),
+        header= metadata_header, 
+        #TODO: Figure out how to add comments.
+        units= forests[0].get_metadata_units(),
+        extname="METADATA")
+
+    # Filling image information
+    delta = np.full((len(forests), len(Forest.log_lambda_grid)), np.nan)
+    for i, forest in enumerate(forests):
+        delta[i][forest.log_lambda_index] = forest.deltas
+    
+    results.write(
+        delta,
+        extname="DELTA" if Forest.blinding == "none" else "DELTA_BLIND"
+    )
+
+    weight = np.full((len(forests), len(Forest.log_lambda_grid)), np.nan)
+    for i, forest in enumerate(forests):
+        weight[i][forest.log_lambda_index] = forest.weights
+
+    results.write(
+        weight,
+        extname="WEIGHT",
+    )
+
+    continuum = np.full((len(forests), len(Forest.log_lambda_grid)), np.nan)
+    for i, forest in enumerate(forests):
+        continuum[i][forest.log_lambda_index] = forest.continuum
+
+    results.write(
+        continuum,
+        extname="CONT",
+    )
+
+    return forests
+
+def _save_deltas_one_healpix_table(out_dir, healpix, forests):
     """Saves the deltas that belong to one healpix.
 
     Arguments
@@ -66,16 +155,14 @@ def _save_deltas_one_healpix(out_dir, healpix, forests):
 
     Returns:
     ---------
-    header_n_size: List of (header, size)
-    List of forest.header and forest.size to later
-    add to rejection log as accepted.
+    forests: List of forests 
+    List of forests to later add to rejection log as accepted.
     """
     results = fitsio.FITS(
         f"{out_dir}/Delta/delta-{healpix}.fits.gz",
         'rw',
         clobber=True)
 
-    header_n_size = []
     for forest in forests:
         header = forest.get_header()
         cols, names, units, comments = forest.get_data()
@@ -86,12 +173,38 @@ def _save_deltas_one_healpix(out_dir, healpix, forests):
                       units=units,
                       extname=str(forest.los_id))
 
-        # store information for logs
-        header_n_size.append((header, forest.flux.size))
-        # self.add_to_rejection_log(header, forest.flux.size, "accepted")
     results.close()
 
-    return header_n_size
+    return forests
+
+def _save_deltas_one_healpix(out_dir, healpix, forests, format):
+    """Saves the deltas that belong to one healpix.
+
+    Arguments
+    ---------
+    out_dir: str
+    Parent directory to save deltas.
+
+    healpix: int
+
+    forests: List of Forests
+    List of forests to save into one file.
+
+    format: str
+    Format to store delta into
+
+    Returns:
+    ---------
+    forests: List of Forest
+    List forest to later
+    add to rejection log as accepted.
+    """
+    if format == 'BinTableHDU':
+        return _save_deltas_one_healpix_table(out_dir, healpix, forests)
+    elif format == 'ImageHDU':
+        return _save_deltas_one_healpix_image(out_dir, healpix, forests)
+    else:
+        raise DataError('Invalid format', format)
 
 class Data:
     """Abstract class from which all classes loading data must inherit.
@@ -101,13 +214,10 @@ class Data:
     Methods
     -------
     __parse_config
-    add_to_rejection_log
-    initialize_rejection_log
     filter_bad_cont_forests
     filter_forests
     find_nside
     save_deltas
-    save_rejection_log
 
     Attributes
     ----------
@@ -133,20 +243,11 @@ class Data:
     Directory where data will be saved. Log info will be saved in out_dir+"Log/"
     and deltas will be saved in out_dir+"Delta/"
 
-    rejection_log_file: str
-    Filelame of the rejection log
+    rejection_log: RejectionLog
+    Manages forests rejection log
 
-    rejection_log_initialized: bool
-    Flag specifying if the rejection log has been initialized
-
-    rejection_log_cols: list of list
-    Each list contains the data of each of the fields saved in the rejection log
-
-    rejection_log_comments: list of list
-    Description of each of the fields saved in the rejection log
-
-    rejection_log_names: list of list
-    Name of each of the fields saved in the rejection log
+    save_format: str
+    Format in which to save deltas. Must be in accepted_save_format
     """
 
     def __init__(self, config):
@@ -158,16 +259,11 @@ class Data:
         self.input_directory = None
         self.min_num_pix = None
         self.out_dir = None
-        self.rejection_log_file = None
+        self.rejection_log = None
         self.min_snr = None
         self.num_processors = None
+        self.save_format = None
         self.__parse_config(config)
-
-        # rejection log arays
-        self.rejection_log_initialized = False
-        self.rejection_log_cols = None
-        self.rejection_log_names = None
-        self.rejection_log_comments = None
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -287,20 +383,36 @@ class Data:
         if self.out_dir is None:
             raise DataError("Missing argument 'out dir' required by Data")
 
-        self.rejection_log_file = config.get("rejection log file")
-        if self.rejection_log_file is None:
+        rejection_log_file = config.get("rejection log file")
+        if rejection_log_file is None:
             raise DataError(
                 "Missing argument 'rejection log file' required by Data")
-        if "/" in self.rejection_log_file:
+        if "/" in rejection_log_file:
             raise DataError("Error constructing Data. "
                             "'rejection log file' should not incude folders. "
-                            f"Found: {self.rejection_log_file}")
-        if not (self.rejection_log_file.endswith(".fits") or
-                self.rejection_log_file.endswith(".fits.gz")):
+                            f"Found: {rejection_log_file}")
+        if not (rejection_log_file.endswith(".fits") or
+                rejection_log_file.endswith(".fits.gz")):
             raise DataError("Error constructing Data. Invalid extension for "
                             "'rejection log file'. Filename "
                             "should en with '.fits' or '.fits.gz'. Found "
-                            f"'{self.rejection_log_file}'")
+                            f"'{rejection_log_file}'")
+
+        self.save_format = config.get("save format")
+        if self.save_format is None:
+            raise DataError(
+                "Missing argument 'save format' required by Data")
+
+        if self.save_format == "BinTableHDU":
+            self.rejection_log = RejectionLogFromTable(
+                self.out_dir + "Log/" + rejection_log_file)
+        elif self.save_format == "ImageHDU":
+            self.rejection_log = RejectionLogFromImage(
+                self.out_dir + "Log/" + rejection_log_file)
+        else:
+            raise DataError("Invalid argument 'save format' required by "
+                            f"Data. Found: '{self.save_format}'. Accepted "
+                             "values: " + ",".join(accepted_save_format))
 
         if self.analysis_type == "BAO 3D":
             self.min_snr = config.getfloat("minimal snr bao3d")
@@ -319,64 +431,13 @@ class Data:
                 "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
                 "required by Data")
 
-    def add_to_rejection_log(self, header, size, rejection_status):
-        """Adds to the rejection log arrays.
-        In the log forest headers will be saved along with the forest size and
-        the rejection status.
-
-        Arguments
-        ---------
-        header: list of dict
-        Output of forest.get_header()
-
-        size: int
-        Size of the forest
-
-        rejection_status: str
-        Rejection status
-        """
-        # if necessary initialize arrays to save rejected quasars in the log
-        if not self.rejection_log_initialized:
-            self.initialize_rejection_log()
-
-        for col, name in zip(self.rejection_log_cols, self.rejection_log_names):
-            if name == "FOREST_SIZE":
-                col.append(size)
-            elif name == "REJECTION_STATUS":
-                col.append(rejection_status)
-            else:
-                # this loop will always end with the break
-                # the break is introduced to avoid useless checks
-                for item in header:  # pragma: no branch
-                    if item.get("name") == name:
-                        col.append(item.get("value"))
-                        break
-
-    def initialize_rejection_log(self):
-        """Initializes the rejection log arrays.
-        In the log forest headers will be saved along with the forest size and
-        the rejection status.
-        """
-        self.rejection_log_cols = [[], []]
-        self.rejection_log_names = ["FOREST_SIZE", "REJECTION_STATUS"]
-        self.rejection_log_comments = [
-            "num pixels in forest", "rejection status"
-        ]
-
-        for item in self.forests[0].get_header():
-            self.rejection_log_cols.append([])
-            self.rejection_log_names.append(item.get("name"))
-            self.rejection_log_comments.append(item.get("comment"))
-        self.rejection_log_initialized = True
-
     def filter_bad_cont_forests(self):
         """Remove forests where continuum could not be computed"""
         remove_indexs = []
         for index, forest in enumerate(self.forests):
             if forest.bad_continuum_reason is not None:
                 # store information for logs
-                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
-                                          forest.bad_continuum_reason)
+                self.rejection_log.add_to_rejection_log(forest, forest.bad_continuum_reason)
 
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
@@ -398,20 +459,17 @@ class Data:
         for index, forest in enumerate(self.forests):
             if np.sum(forest.ivar>0) < self.min_num_pix:
                 # store information for logs
-                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
-                                          "short_forest")
+                self.rejection_log.add_to_rejection_log(forest, "short_forest")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     f"due to forest being too short ({forest.flux.size})")
             elif np.isnan((forest.flux * forest.ivar).sum()):
-                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
-                                          "nan_forest")
+                self.rejection_log.add_to_rejection_log(forest, "nan_forest")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to finding nan")
             elif forest.mean_snr < self.min_snr:
-                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
-                                          f"low SNR ({forest.mean_snr})")
+                self.rejection_log.add_to_rejection_log(forest, f"low SNR ({forest.mean_snr})")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     f"due to low SNR ({forest.mean_snr} < {self.min_snr})")
@@ -459,40 +517,24 @@ class Data:
         arguments = []
         for healpix in unique_healpixs:
             this_idx = np.nonzero(healpix == healpixs)[0]
-            grouped_forests = [self.forests[i] for i in this_idx]
-            arguments.append((self.out_dir, healpix, grouped_forests))
+            grouped_forests = sorted([self.forests[i] for i in this_idx])
+            arguments.append((self.out_dir, healpix, grouped_forests, self.save_format))
 
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
             with context.Pool(processes=self.num_processors) as pool:
-                header_n_sizes = pool.starmap(_save_deltas_one_healpix,
+                accepted_forests = pool.starmap(_save_deltas_one_healpix,
                                               arguments)
         else:
-            header_n_sizes = []
+            accepted_forests = []
             for args in arguments:
-                header_n_sizes.append(_save_deltas_one_healpix(*args))
+                accepted_forests.append(_save_deltas_one_healpix(*args))
+
+        accepted_forests = np.concatenate(accepted_forests)
+        
 
         # store information for logs
-        for header_n_size in header_n_sizes:
-            for header, size in header_n_size:
-                self.add_to_rejection_log(header, size, "accepted")
+        for forest in accepted_forests:
+            self.rejection_log.add_to_rejection_log(forest, "accepted")
 
-        self.save_rejection_log()
-
-    def save_rejection_log(self):
-        """Saves the rejection log arrays.
-        In the log forest headers will be saved along with the forest size and
-        the rejection status.
-        """
-        rejection_log = fitsio.FITS(self.out_dir + "Log/" +
-                                    self.rejection_log_file,
-                                    'rw',
-                                    clobber=True)
-
-        rejection_log.write(
-            [np.array(item) for item in self.rejection_log_cols],
-            names=self.rejection_log_names,
-            comment=self.rejection_log_comments,
-            extname="rejection_log")
-
-        rejection_log.close()
+        self.rejection_log.save_rejection_log()

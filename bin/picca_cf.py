@@ -54,11 +54,8 @@ def main(cmdargs):
                         help='Directory to delta files')
 
     parser.add_argument('--from-image',
-                        type=str,
-                        default=None,
-                        required=False,
-                        help='Read delta from image format',
-                        nargs='*')
+                        action="store_true",
+                        help='Read delta from image format')
 
     parser.add_argument('--in-dir2',
                         type=str,

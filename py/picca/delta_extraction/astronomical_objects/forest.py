@@ -289,6 +289,9 @@ class Forest(AstronomicalObject):
     as the particular instance might not have full wavelength coverage or
     might have some missing pixels (because they are masked)
 
+    log_lambda_index: array of int or None
+    Index of each log_lambda array element in Forest.log_lambda_grid
+
     logger: logging.Logger
     Logger object
 
@@ -304,6 +307,7 @@ class Forest(AstronomicalObject):
     blinding = "none"
     log_lambda_grid = np.array([])  #None
     log_lambda_rest_frame_grid = np.array([])  #None
+    log_lambda_index = np.array([]) #None
     mask_fields = []  #None
     wave_solution = None
 
@@ -582,6 +586,29 @@ class Forest(AstronomicalObject):
 
         return header
 
+    def get_metadata(self):
+        metadata = super().get_metadata()
+
+        metadata += [self.mean_snr,]
+
+        return metadata
+
+    @classmethod
+    def get_metadata_dtype(cls):
+        dtype = super().get_metadata_dtype()
+
+        dtype += [('MEANSNR', float),]
+
+        return dtype
+
+    @classmethod
+    def get_metadata_units(cls):
+        units = super().get_metadata_units()
+
+        units += [""]
+
+        return units
+
     def rebin(self):
         """Rebin the arrays and update control variables
         Rebinned arrays are flux, ivar, lambda_ or log_lambda, and
@@ -589,9 +616,6 @@ class Forest(AstronomicalObject):
 
         Return
         ------
-        bins: array of float
-        Binning solution to be used for the rebinning
-
         rebin_ivar: array of float
         Rebinned version of ivar
 
@@ -610,14 +634,14 @@ class Forest(AstronomicalObject):
         AstronomicalObjectError if ivar only has zeros
         """
         (self.log_lambda, self.flux, self.ivar, self.transmission_correction,
-         self.mean_snr, bins, rebin_ivar, orig_ivar, w1,
+         self.mean_snr, self.log_lambda_index, rebin_ivar, orig_ivar, w1,
          w2, wslice_inner) = rebin(self.log_lambda, self.flux, self.ivar,
                      self.transmission_correction, self.z, Forest.wave_solution,
                      Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid)
 
         # return weights and binning solution to be used by child classes if
         # required
-        return bins, rebin_ivar, orig_ivar, w1, w2, wslice_inner
+        return rebin_ivar, orig_ivar, w1, w2, wslice_inner
 
     @classmethod
     def set_class_variables(cls, lambda_min, lambda_max, lambda_min_rest_frame,
