@@ -199,11 +199,11 @@ def main(cmdargs):
 
     if args.old_output:
         if args.output_file is None:
-            med_ext = "" if nomedians else "_medians"
-            snr_ext = "_snr_cut" if snrcut is not None else ""
-            vel_ext = "_vel" if velunits else ""
-            output_file = os.path.join(data_dir,
-                    f'mean_Pk1d_{weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
+            med_ext = "" if args.no_median else "_medians"
+            snr_ext = "_snr_cut" if args.apply_mean_snr_cut else ""
+            vel_ext = "_vel" if args.velunits else ""
+            output_file = os.path.join(args.in_dir,
+                    f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
         else:
             output_file = args.output_file
         postproc_pk1d_oldoutput.run_postproc_pk1d(args.in_dir, output_file,
@@ -219,11 +219,11 @@ def main(cmdargs):
 
     else:
         if args.output_file is None:
-            med_ext = "" if nomedians else "_medians"
-            snr_ext = "_snr_cut" if snrcut is not None else ""
-            vel_ext = "_vel" if velunits else ""
-            output_file = os.path.join(data_dir,
-                    f'mean_Pk1d_{weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
+            med_ext = "" if args.no_median else "_medians"
+            snr_ext = "_snr_cut" if args.apply_mean_snr_cut else ""
+            vel_ext = "_vel" if args.velunits else ""
+            output_file = os.path.join(args.in_dir,
+                    f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
         else:
             output_file = args.output_file
         postproc_pk1d.run_postproc_pk1d(args.in_dir, output_file,
