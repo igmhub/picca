@@ -105,8 +105,8 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
 
     return p1d_table, z_array
 
-
-def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method, nomedians=False, velunits=False):
+def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
+                      nomedians=False, velunits=False, output_snrfit=None):
     """Compute mean P1D in a set of given (z,k) bins, from individual chunks P1Ds
 
     Arguments:
@@ -135,6 +135,10 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
 
     velunits: Bool - Default: False
     Compute P1D in velocity units by converting k on-the-fly from AA-1 to s/km
+
+    output_snrfit: string - Default: None
+    If weight_method='fit_snr', the results of the fit can be saved to an ASCII file.
+    The file contains (z k a b standard_dev_points) for the "Pk" variable, for each (z,k) point
 
     Return:
     -------
@@ -183,6 +187,8 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
     metadata_table['N_chunks'] = N_chunks
 
     zbin_centers = np.around((zbin_edges[1:] + zbin_edges[:-1])/2, 5)
+    if output_snrfit is not None:
+        snrfit_table = np.zeros((nbins_z*nbins_k, 13))  # 13 entries: z k a b + 9 SNR bins used for the fit
     
     for izbin, zbin in enumerate(zbin_edges[:-1]):  # Main loop 1) z bins
 
@@ -217,7 +223,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                     continue
 
                 if weight_method=='fit_snr':
-                    snr_bin_edges = np.arange(1,11,1)
+                    snr_bin_edges = np.arange(1,11,1)  # 9 SNR bins are used for the fit
                     snr_bins = (snr_bin_edges[:-1]+snr_bin_edges[1:])/2
                     def variance_function(snr, a, b):
                         return (a/(snr-1)**2) + b
@@ -234,6 +240,10 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                     weights = 1. / variance_estimated
                     mean = np.average((p1d_table[c][select]), weights=weights)
                     error = np.sqrt(1. / np.sum(weights))
+                    if output_snrfit is not None and c=='Pk':
+                        snrfit_table[index, 0:4] = [zbin_centers[izbin], (kbin+kbin_edges[ikbin+1])/2.,
+                                                    coef[0], coef[1]]
+                        snrfit_table[index, 4:] = standard_dev
 
                 elif weight_method=='simple_snr':
                     # for forests with snr>snr_limit (hardcoded to 4 as of now), 
@@ -268,12 +278,17 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                     median = np.median((p1d_table[c][select]))
                     meanP1D_table['median'+c][index] = median
 
+    if output_snrfit is not None:
+        np.savetxt(output_snrfit, snrfit_table, fmt='%.5e',
+                   header='Result of fit: Variance(Pks) vs SNR\n'
+                          'SNR bin edges used: 1,  2,  3,  4,  5,  6,  7,  8,  9, 10\n'
+                          'z k a b standard_dev_points')
+
     return meanP1D_table, metadata_table
 
 
 def run_postproc_pk1d(data_dir, output_file, zbin_edges, kbin_edges,
-                      weight_method='no_weights', snrcut=None, zbins_snrcut=None,
-                      weight_method, snrcut=None, zbins_snrcut=None,
+                      weight_method='no_weights', snrcut=None, zbins_snrcut=None, output_snrfit=None,
                       nomedians=False, velunits=False, overwrite=False, ncpu=8):
     """Read individual Pk1D data from a set of files and compute P1D statistics, stored in a summary FITS file.
 
@@ -306,8 +321,8 @@ def run_postproc_pk1d(data_dir, output_file, zbin_edges, kbin_edges,
     z_array = np.concatenate(tuple([output_readpk1d[i][1] for i in range(len(output_readpk1d))]))
 
     userprint('Individual P1Ds read, now computing statistics.')
-    meanP1D_table, metadata_table = compute_mean_pk1d(p1d_table, z_array, zbin_edges,
-                                                      kbin_edges, weight_method, nomedians, velunits)
+    meanP1D_table, metadata_table = compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges,
+                                                      weight_method, nomedians, velunits, output_snrfit)
     meanP1D_table.meta['velunits']=velunits
     hdu0 = astropy.io.fits.PrimaryHDU()
     hdu1 = astropy.io.fits.table_to_hdu(meanP1D_table)

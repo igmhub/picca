@@ -122,6 +122,12 @@ def main(cmdargs):
                         help='Weighting scheme for the mean P1D computation,'
                              'Possible options: no_weights, simple_snr, fit_snr')
 
+    parser.add_argument('--output-snrfit',
+                        type=str,
+                        default=None,
+                        help='Name of the ASCII file where SNR fit results are stored,'
+                        'if weight-method is fit_snr')
+
     parser.add_argument('--apply-mean-snr-cut',
                         action='store_true',
                         default=False,
@@ -230,6 +236,7 @@ def main(cmdargs):
                                         z_edges,
                                         k_edges,
                                         weight_method=args.weight_method,
+                                        output_snrfit=args.output_snrfit,
                                         snrcut=snr_cut_mean,
                                         zbins_snrcut=zbins_snr_cut_mean,
                                         nomedians=args.no_median,
