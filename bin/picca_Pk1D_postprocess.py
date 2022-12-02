@@ -68,7 +68,7 @@ def main(cmdargs):
                         default='6.5',
                         required=False,
                         help='Maximal value of the redshift edge array,'
-                             'Default value: 6.3')
+                             'Default value: 6.5')
 
     parser.add_argument('--zedge-bin',
                         type=float,
@@ -198,24 +198,32 @@ def main(cmdargs):
     z_edges = np.around(np.arange(args.zedge_min, args.zedge_max, args.zedge_bin), 5)
 
     if args.old_output:
-        data = postproc_pk1d_oldoutput.parallelize_p1d_comp(args.in_dir,
-                                                            z_edges,
-                                                            k_edges,
-                                                            weight_method=args.weight_method,
-                                                            snrcut=snr_cut_mean,
-                                                            zbins=zbins_snr_cut_mean,
-                                                            output_file=args.out_dir,
-                                                            nomedians=args.no_median,
-                                                            velunits=args.velunits,
-                                                            overwrite=args.overwrite)
+        if args.output_file is None:
+            med_ext = "" if args.no_median else "_medians"
+            snr_ext = "_snr_cut" if args.apply_mean_snr_cut else ""
+            vel_ext = "_vel" if args.velunits else ""
+            output_file = os.path.join(args.in_dir,
+                    f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
+        else:
+            output_file = args.output_file
+        postproc_pk1d_oldoutput.run_postproc_pk1d(args.in_dir, output_file,
+                                        z_edges,
+                                        k_edges,
+                                        weight_method=args.weight_method,
+                                        snrcut=snr_cut_mean,
+                                        zbins_snrcut=zbins_snr_cut_mean,
+                                        nomedians=args.no_median,
+                                        velunits=args.velunits,
+                                        overwrite=args.overwrite,
+                                        ncpu = args.ncpu)
 
     else:
         if args.output_file is None:
-            med_ext = "" if nomedians else "_medians"
-            snr_ext = "_snr_cut" if snrcut is not None else ""
-            vel_ext = "_vel" if velunits else ""
-            output_file = os.path.join(data_dir,
-                    f'mean_Pk1d_{weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
+            med_ext = "" if args.no_median else "_medians"
+            snr_ext = "_snr_cut" if args.apply_mean_snr_cut else ""
+            vel_ext = "_vel" if args.velunits else ""
+            output_file = os.path.join(args.in_dir,
+                    f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
         else:
             output_file = args.output_file
         postproc_pk1d.run_postproc_pk1d(args.in_dir, output_file,
