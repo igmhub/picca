@@ -128,18 +128,16 @@ def main(cmdargs):
                         help='Name of the ASCII file where SNR fit results are stored,'
                         'if weight-method is fit_snr')
 
-    parser.add_argument('--apply-mean-snr-cut',
-                        action='store_true',
-                        default=False,
-                        required=False,
-                        help='Apply a redshift-dependent SNR quality cut')
-
     parser.add_argument('--snr-cut-scheme',
                         type=str,
                         default='eboss',
-                        required=False,
                         help='Choice of SNR cut type, '
-                             'Possible options: eboss')
+                             'Possible options: eboss (varying cut vs z, as in eBOSS - DR14); fixed')
+
+    parser.add_argument('--snrcut',
+                        type=float,
+                        default=None,
+                        help='Value of the SNR cut if snr-cut-scheme=fixed')
 
     parser.add_argument('--overwrite',
                         action='store_true',
@@ -173,24 +171,23 @@ def main(cmdargs):
 
     args = parser.parse_args(sys.argv[1:])
 
-    if (args.weight_method != 'no_weights') & (args.apply_mean_snr_cut):
+    if (args.weight_method != 'no_weights') and (args.snr_cut_scheme == 'eboss'):
         raise ValueError("""You are using a weighting method with a
                             redshift-dependent SNR quality cut, this is not
                             tested and should bias the result""")
 
-    if args.apply_mean_snr_cut:
-        if args.snr_cut_scheme == 'eboss':
-            snr_cut_mean =       [4.1, 3.9, 3.6, 3.2, 2.9, 2.6, 2.2, 2.0, 2.0,
-                                  2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
-                                  2.0, 2.0, 2.0]
-            zbins_snr_cut_mean = np.arange(2.2, 6.4, 0.2)
-        else:
-            raise ValueError("Please choose the SNR cutting scheme to be eboss, "
-                             "or turn off the --apply-mean-snr-cut parameter, or "
-                             "add here in the code a specific SNR cutting scheme")
+    snr_cut_mean = None
+    zbins_snr_cut_mean = None
+    if args.snr_cut_scheme == 'eboss':
+        snr_cut_mean =       [4.1, 3.9, 3.6, 3.2, 2.9, 2.6, 2.2, 2.0, 2.0,
+                              2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
+                              2.0, 2.0, 2.0]
+        zbins_snr_cut_mean = np.arange(2.2, 6.4, 0.2)
+    elif args.snr_cut_scheme == 'fixed':
+        snr_cut_mean = args.snrcut
     else:
-        snr_cut_mean = None
-        zbins_snr_cut_mean = None
+        raise ValueError("Unknown value for option --snr-cut-scheme"
+                         "You may add here in the code a specific SNR cutting scheme")
 
     kedge_min, kedge_max, kedge_bin = define_wavenumber_array(args.kedge_min,
                                                                args.kedge_max,
@@ -206,7 +203,7 @@ def main(cmdargs):
     if args.old_output:
         if args.output_file is None:
             med_ext = "" if args.no_median else "_medians"
-            snr_ext = "_snr_cut" if args.apply_mean_snr_cut else ""
+            snr_ext = "_snr_cut" if snr_cut_mean is not None else ""
             vel_ext = "_vel" if args.velunits else ""
             output_file = os.path.join(args.in_dir,
                     f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
@@ -226,7 +223,7 @@ def main(cmdargs):
     else:
         if args.output_file is None:
             med_ext = "" if args.no_median else "_medians"
-            snr_ext = "_snr_cut" if args.apply_mean_snr_cut else ""
+            snr_ext = "_snr_cut" if snr_cut_mean is not None else ""
             vel_ext = "_vel" if args.velunits else ""
             output_file = os.path.join(args.in_dir,
                     f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
