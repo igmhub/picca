@@ -17,7 +17,7 @@ class pk:
         if (not name_model is None) and (Fvoigt_data == []):
             #path = '{}/models/fvoigt_models/Fvoigt_{}.txt'.format(resource_filename('picca', 'fitter2'),name_model)
             #Fvoigt_data = np.loadtxt(path)
-            type_pdf = kwargs['pdf_hcd']
+            type_pdf = str(name_model)
             Fvoigt_data=get_Fhcd(type_pdf,NHI=None)
 
     def __call__(self, k, pk_lin, tracer1, tracer2, **kwargs):
@@ -224,7 +224,6 @@ def get_Fhcd(type_pdf='masking',NHI=None):
             num = int(pdf_lbg_NHI[0][i]*(number)/np.sum(pdf_lbg_NHI[0]))
             diff = pdf_lbg_NHI[1][1]-pdf_lbg_NHI[1][0]
             data_dla_NHI=data_dla_NHI+list(pdf_lbg_NHI[1][i]+diff*np.random.random(num))
-            #data_dla_NHI=data_dla_NHI+list(int(pdf_lbg[1][i]*(number)/np.sum(pdf_lbg[1]))*[pdf_lbg[0][i]])
         if len(data_dla_NHI)!=number:
             for i in range(abs(len(data_dla_NHI)-number)):
                 data_dla_NHI.append(pdf_lbg_NHI[1][i])
@@ -243,7 +242,7 @@ def get_Fhcd(type_pdf='masking',NHI=None):
         data_dla_Z = np.array(data_dla_Z)
         return data_dla_NHI,data_dla_Z
 
-    def save_function(data,type_pdf='nomasking',NHI=0):
+    def save_function(data,type_pdf,NHI=0):
         fidcosmo = constants.cosmo(Om=0.3)
         lamb = np.arange(2000, 8000, 1)
         if type_pdf=='nomasking':
@@ -258,7 +257,6 @@ def get_Fhcd(type_pdf='masking',NHI=None):
         number = len(data['NHI'])
         cat_NHI, cat_Z = dla_catalog([cddf_NHI, dN_NHI],[cddf_Z, dN_Z],number)
         zdla = np.mean(cat_Z)
-        
         for i in range(dN_NHI.size):
             profile_lambda = profile_voigt_lambda(lamb, zdla, dN_NHI[i])
             profile_lambda = profile_lambda/np.mean(profile_lambda)
@@ -276,19 +274,12 @@ def get_Fhcd(type_pdf='masking',NHI=None):
         k = k[k>0]
         save = np.transpose(np.concatenate((np.array([k]), np.array([Fvoigt]))))
         return save
-    save_all = save_function(type_pdf,NHI)
+    save_all = save_function(data,type_pdf,NHI)
     return save_all
 
 def pk_hcd_voigt(k, pk_lin, tracer1, tracer2, **kwargs):
-    """
-    Use Fvoigt function to fit the DLA in the autocorrelation Lyman-alpha without masking them ! (L0 = 1)
-
-    (If you want to mask them --> use Fvoigt_exp.txt and L0 = 10 as eBOOS DR14)
-
-    """
     global Fvoigt_data
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-
     key = "bias_hcd_{}".format(kwargs['name'])
     if key in kwargs :
         bias_hcd = kwargs[key]
@@ -302,8 +293,9 @@ def pk_hcd_voigt(k, pk_lin, tracer1, tracer2, **kwargs):
     
     k_data = Fvoigt_data[:,0]
     F_data = Fvoigt_data[:,1]
-
-    F_hcd = np.interp(L0*kp, k_data, F_data, left=0, right=0)
+    from scipy.interpolate import splev, splrep
+    f_pk = splrep(k_data, F_data)
+    F_hcd = splev(kp,f_pk)
 
     bias_eff1 = bias1 + bias_hcd*F_hcd
     beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
