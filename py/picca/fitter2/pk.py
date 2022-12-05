@@ -15,8 +15,10 @@ class pk:
         self.func = func
         global Fvoigt_data
         if (not name_model is None) and (Fvoigt_data == []):
-            path = '{}/models/fvoigt_models/Fvoigt_{}.txt'.format(resource_filename('picca', 'fitter2'),name_model)
-            Fvoigt_data = np.loadtxt(path)
+            #path = '{}/models/fvoigt_models/Fvoigt_{}.txt'.format(resource_filename('picca', 'fitter2'),name_model)
+            #Fvoigt_data = np.loadtxt(path)
+            type_pdf = kwargs['pdf_hcd']
+            Fvoigt_data=get_Fhcd(type_pdf,NHI=None)
 
     def __call__(self, k, pk_lin, tracer1, tracer2, **kwargs):
         return self.func(k, pk_lin, tracer1, tracer2, **kwargs)
@@ -97,22 +99,23 @@ def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
-def get_Fhcd(mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='masking',NHI=None):
+def get_Fhcd(type_pdf='masking',NHI=None):
     path = '{}/'.format(resource_filename('picca', 'fitter2'))
     version = '4.7'
     path_qso = path+'data/zcat_desi_drq.fits'
-    type_pdf='nomasking'
-    path_dla = path+'data/zcat_desi_drq_DLA.fits'
-    path_weight_lambda = path+'data/weight_lambda_nomasking.txt'
+    if type_pdf=='masking':
+        path_dla = path+'data/zcat_desi_drq_DLA_inf_203.fits'
+        path_weight_lambda = path+'data/weight_lambda.txt'
+    elif type_pdf=='nomasking':
+        path_dla = path+'data/zcat_desi_drq_DLA.fits'
+        path_weight_lambda = path+'data/weight_lambda_nomasking.txt'
     ################
     if version == '4.4':
         mockid = 'MOCKID'
         z_dla = 'Z_DLA_RSD'
-        NHI = 'N_HI_DLA'
     elif version == '4.7':
         mockid = 'THING_ID'
         z_dla = 'Z'
-        NHI = 'NHI'
     data = fits.open(path_dla)[1].data
     qso = fits.open(path_qso)[1].data
     # keep only DLA which are front of a QSO.
@@ -143,12 +146,12 @@ def get_Fhcd(mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='masking',NHI=None):
         z = bins[:-1] + (bins[1]/2-bins[0]/2)
         return y_norm, z
 
-    def build_pdf(data_NHI,data_Z,NHI,reshape=False):
-        cddf_Z, dN_Z = np.histogram(data_Z, bins=50, density=True)    
+    def build_pdf(data_NHI,data_Z,type_pdf,NHI=None,reshape=False):
+        cddf_Z, dN_Z = np.histogram(data_Z, bins=50, density=True) 
         if not NHI:
-            cddf_NHI, dN_NHI = np.histogram(data_NHI, bins=np.linspace(17.2,22.5,50), density=True)
+            cddf_NHI, dN_NHI = np.histogram(data_NHI, bins=50, density=True)
         else:
-            cddf_NHI, dN_NHI = np.histogram([NHI]*np.ones(len(data_NHI)), bins=np.linspace(17.2,22.5,50), density=True)
+            cddf_NHI, dN_NHI = np.histogram([NHI]*np.ones(len(data_NHI)), bins=50, density=True)
             cddf_NHI = cddf_NHI+0.0001
         if reshape:
             cddf_NHI, dN_NHI = renorm_pdf(cddf_NHI, dN_NHI)
@@ -162,6 +165,7 @@ def get_Fhcd(mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='masking',NHI=None):
         if reshape:
             cddf_Z, dN_Z = renorm_pdf(cddf_Z, dN_Z)
         return cddf_Z, dN_Z
+    
     def voigt(x, sigma=1, gamma=1):
         return np.real(wofz((x + 1j*gamma)/(sigma*np.sqrt(2))))
 
@@ -200,7 +204,7 @@ def get_Fhcd(mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='masking',NHI=None):
 
     def fft_profile(profile, dx): # not normalized
         n = profile.size
-        tmp = (1-profile)
+        tmp = (profile-1)
         ft_profile = dx*np.fft.fftshift(np.fft.fft(tmp))
         k = np.fft.fftshift(np.fft.fftfreq(n, dx))*(2*np.pi)
         return ft_profile, k
@@ -239,26 +243,25 @@ def get_Fhcd(mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='masking',NHI=None):
         data_dla_Z = np.array(data_dla_Z)
         return data_dla_NHI,data_dla_Z
 
-    def save_function(data,mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='nomasking',NHI=0):
+    def save_function(data,type_pdf='nomasking',NHI=0):
         fidcosmo = constants.cosmo(Om=0.3)
         lamb = np.arange(2000, 8000, 1)
-        f_lambda=np.loadtxt(path+'data/f_lambda_nomasking.txt')
+        if type_pdf=='nomasking':
+            f_lambda=np.loadtxt(path+'data/f_lambda_nomasking.txt')
+        elif type_pdf=='masking':
+            f_lambda=np.loadtxt(path+'data/f_lambda_masking.txt')
         r, f_r = lambda_to_r(f_lambda[0], f_lambda[1], fidcosmo)
         r_w, weight_r = profile_lambda_to_r(lamb_w, weight, fidcosmo)
         weight_interp = np.interp(r, r_w, weight_r, left=0, right=0)
         mean_density = np.average(f_r, weights=weight_interp)
-        cddf_Z, dN_Z = build_pdf_Z(data['Z'])
+        cddf_NHI, dN_NHI, cddf_Z, dN_Z = build_pdf(data['NHI'],data['Z'],type_pdf,NHI,reshape=True)
         number = len(data['NHI'])
-        
-        #cddf_NHI, dN_NHI = cddf_lbg(mu1,sigma1,number1,mu2,sigma2,number2)
-        
-        dN_NHI = np.linspace(17.2,22.5,50)
-        cddf_NHI = multi_gauss(dN_NHI,mu1,sigma1,number1,mu2,sigma2,number2)[1]
         cat_NHI, cat_Z = dla_catalog([cddf_NHI, dN_NHI],[cddf_Z, dN_Z],number)
-        cddf_Z, dN_Z = build_pdf_Z(data['Z'],reshape=True)
         zdla = np.mean(cat_Z)
+        
         for i in range(dN_NHI.size):
             profile_lambda = profile_voigt_lambda(lamb, zdla, dN_NHI[i])
+            profile_lambda = profile_lambda/np.mean(profile_lambda)
             r, profile_r = profile_lambda_to_r(lamb, profile_lambda, fidcosmo) # r is in Mpc h^-1 --> k (from tf) will be in (Mpc h^-1)^-1 = h Mpc^-1 :)
             ft_profile, k = fft_profile(profile_r, np.abs(r[1]-r[0]))
             ft_profile = np.abs(ft_profile)
@@ -269,12 +272,11 @@ def get_Fhcd(mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='masking',NHI=None):
         Fvoigt = np.zeros(k.size)
         for i in range(k.size):
             Fvoigt[i] = integrate.trapz(df[:,i], dN_NHI)
-        #Fvoigt = Fvoigt/Fvoigt[k.size//2] #normalization
-        Fvoigt = Fvoigt[k>0]
+        Fvoigt = -Fvoigt[k>0]
         k = k[k>0]
         save = np.transpose(np.concatenate((np.array([k]), np.array([Fvoigt]))))
         return save
-    save_all = save_function(data,mu1,sigma1,number1,mu2,sigma2,number2,type_pdf,0)
+    save_all = save_function(type_pdf,NHI)
     return save_all
 
 def pk_hcd_voigt(k, pk_lin, tracer1, tracer2, **kwargs):
@@ -294,19 +296,12 @@ def pk_hcd_voigt(k, pk_lin, tracer1, tracer2, **kwargs):
         bias_hcd = kwargs["bias_hcd"]
     beta_hcd = kwargs["beta_hcd"]
     L0 = kwargs["L0_hcd"]
-    
-    mu1 = kwargs["mu1"]
-    sigma1 = kwargs["sigma1"]
-    number1 = kwargs["number1"]
-    mu2 = kwargs["mu2"]
-    sigma2 = kwargs["sigma2"]
-    number2 = kwargs["number2"]
+    type_pdf = kwargs["L0_hcd"]
 
     kp = k*muk
     
-    Fvoigt=get_Fhcd(mu1,sigma1,number1,mu2,sigma2,number2,type_pdf='nomasking',NHI=None)
-    k_data = Fvoigt[:,0]
-    F_data = Fvoigt[:,1]
+    k_data = Fvoigt_data[:,0]
+    F_data = Fvoigt_data[:,1]
 
     F_hcd = np.interp(L0*kp, k_data, F_data, left=0, right=0)
 
@@ -544,10 +539,12 @@ def pk_hcd_cross_no_mask(k, pk_lin, tracer1, tracer2, **kwargs):
     L0 = kwargs["L0_hcd"]
 
     kp = k*muk
-    k_data = Fvoigt_data[:,0]
-    F_data = Fvoigt_data[:,1]
-    F_hcd = np.interp(L0*kp, k_data, F_data)
-
+    k_data = Fvoigt_data[0]
+    F_data = Fvoigt_data[1]
+    from scipy.interpolate import splev, splrep
+    f_pk = splrep(k_data, F_data)
+    F_hcd = splev(kp,f_pk)
+    
     if tracer1['name'] == "LYA":
         bias_eff1 = bias1 + bias_hcd*F_hcd
         beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
