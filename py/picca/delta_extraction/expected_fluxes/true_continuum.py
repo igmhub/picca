@@ -16,14 +16,15 @@ from picca.delta_extraction.utils import (find_bins, update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, [
-    "input directory", "raw statistics file", "use constant weight",
+    "input directory", "raw statistics file", "use splines", "use constant weight",
     "num bins variance", "force stack delta to zero"
 ])
 
 defaults = update_default_options(defaults, {
     "raw statistics file": "",
     "use constant weight": False,
-    "force stack delta to zero": False
+    "force stack delta to zero": False,
+    "use splines": False
 })
 
 IN_NSIDE = 16
@@ -123,7 +124,7 @@ class TrueContinuum(ExpectedFlux):
         self.raw_statistics_filename = config.get("raw statistics file")
 
         self.force_stack_delta_to_zero = config.getboolean("force stack delta to zero")
-
+        self.use_splines=config.getboolean("use splines")
     def compute_expected_flux(self, forests):
         """
 
@@ -447,8 +448,12 @@ class TrueContinuum(ExpectedFlux):
         if not is_rawfile_consistent:
             raise ExpectedFluxError(err_msg)
 
-        flux_variance = fits_data['VAR']
-        mean_flux = fits_data['MEANFLUX']
+        if self.use_splines:
+            flux_variance = fits_data['VAR_SPLINE']
+            mean_flux = fits_data['MEANFLUX_SPLINE']
+        else:
+            flux_variance = fits_data['VAR']
+            mean_flux = fits_data['MEANFLUX']
 
         var_lss = flux_variance / mean_flux**2
 
