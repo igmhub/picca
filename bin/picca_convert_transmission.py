@@ -52,7 +52,7 @@ if __name__ == '__main__':
             help='Tracer to use')
 
     parser.add_argument('--use-splines',action="store_true", default=False, required=False,
-            help='Tracer to use')
+            help='Use splines to compute mean flux and variance')
 
     args = parser.parse_args()
 
