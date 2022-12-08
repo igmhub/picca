@@ -118,7 +118,6 @@ def main(cmdargs):
     parser.add_argument('--weight-method',
                         type=str,
                         default='no_weights',
-                        required=False,
                         help='Weighting scheme for the mean P1D computation,'
                              'Possible options: no_weights, simple_snr, fit_snr')
 
@@ -130,9 +129,10 @@ def main(cmdargs):
 
     parser.add_argument('--snr-cut-scheme',
                         type=str,
-                        default='eboss',
+                        default=None,
                         help='Choice of SNR cut type, '
-                             'Possible options: eboss (varying cut vs z, as in eBOSS - DR14); fixed')
+                             'Possible options: eboss (varying cut vs z, as in eBOSS - DR14); fixed;' 
+                             'None (obligatory when --weight-method != no_weights)')
 
     parser.add_argument('--snrcut',
                         type=float,
@@ -171,13 +171,14 @@ def main(cmdargs):
 
     args = parser.parse_args(sys.argv[1:])
 
-    if (args.weight_method != 'no_weights') and (args.snr_cut_scheme == 'eboss'):
+    if (args.weight_method != 'no_weights') and (args.snr_cut_scheme is not None):
         raise ValueError("""You are using a weighting method with a
                             redshift-dependent SNR quality cut, this is not
                             tested and should bias the result""")
 
     snr_cut_mean = None
     zbins_snr_cut_mean = None
+    
     if args.snr_cut_scheme == 'eboss':
         snr_cut_mean =       [4.1, 3.9, 3.6, 3.2, 2.9, 2.6, 2.2, 2.0, 2.0,
                               2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
@@ -185,6 +186,9 @@ def main(cmdargs):
         zbins_snr_cut_mean = np.arange(2.2, 6.4, 0.2)
     elif args.snr_cut_scheme == 'fixed':
         snr_cut_mean = args.snrcut
+    elif args.snr_cut_scheme == None:
+        snr_cut_mean = None
+        zbins_snr_cut_mean = None
     else:
         raise ValueError("Unknown value for option --snr-cut-scheme"
                          "You may add here in the code a specific SNR cutting scheme")
