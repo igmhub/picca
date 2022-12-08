@@ -12,6 +12,7 @@ import os
 import sys
 import glob
 import numpy as np
+import scipy
 import fitsio
 import healpy
 from multiprocessing import Pool
@@ -20,7 +21,7 @@ from .data import Delta
 from .utils import userprint
 
 
-def read_transmission_file(filename, num_bins, objs_thingid, lambda_min=3600.,
+def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lambda_min=3600.,
                            lambda_max=5500., lambda_min_rest_frame=1040., 
                            lambda_max_rest_frame=1200., delta_log_lambda=None,
                            delta_lambda=None, lin_spaced=False):
@@ -33,6 +34,8 @@ def read_transmission_file(filename, num_bins, objs_thingid, lambda_min=3600.,
             The number of bins in our wavelength grid.
         objs_thingid: array
             Array of object thing id.
+        tracer: string - default: F_LYA.
+            Tracer name for HDU in transmission file, usually F_LYA, F_LYB or F_METALS
         lambda_min: float - default: 3600.
             Minimum observed wavelength in Angstrom
         lambda_max: float - default: 5500.
@@ -83,10 +86,10 @@ def read_transmission_file(filename, num_bins, objs_thingid, lambda_min=3600.,
     else:
         lambda_array = np.log10(hdul['WAVELENGTH'].read())
 
-    if 'F_LYA' in hdul:
-        trans = hdul['F_LYA'].read()
+    if tracer in hdul:
+        trans = hdul[tracer].read()
     else:
-        trans = hdul['TRANSMISSION'].read()
+        raise ValueError(f'Tracer {tracer} could not be found in the transmission files.')
 
     num_obj = z.size
     healpix = filename.split('-')[-1].split('.')[0]
@@ -153,7 +156,7 @@ def read_transmission_file(filename, num_bins, objs_thingid, lambda_min=3600.,
 
 
 def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out_filename,
-                                  x_min, delta_x, lin_spaced=False):
+                                  x_min, delta_x, use_old_weights=False, lin_spaced=False):
 
     """Write deltas to file for a given HEALPix pixel.
     Args:
@@ -171,6 +174,8 @@ def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out
             Minimum observed wavelength or log wavelength in Angstrom
         delta_x: float
             Variation of the wavelength (or log wavelength) between two pixels
+        use_old_weights: boolean - default: False
+            Whether to use the old weights based only on the bin size
         lin_spaced: float - default: False
             Whether to use linear spacing for the wavelength binning
     """
@@ -195,10 +200,11 @@ def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out
 
         delta.delta = delta.delta / mean_flux[bins] - 1.
 
-        if sigma_lss_sq is not None:
-            delta.weights = 1 / sigma_lss_sq[bins]
-        else:
+        if use_old_weights:
             delta.weights *= mean_flux[bins]**2
+        else:
+            assert sigma_lss_sq is not None
+            delta.weights = 1 / sigma_lss_sq[bins]
 
         header = {}
         header['RA'] = delta.ra
@@ -226,12 +232,12 @@ def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out
 
 
 def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=None,
-                                   lambda_min=3600., lambda_max=5500.,
+                                   tracer='F_LYA', lambda_min=3600., lambda_max=5500.,
                                    lambda_min_rest_frame=1040.,
                                    lambda_max_rest_frame=1200.,
                                    delta_log_lambda=None, delta_lambda=None, lin_spaced=False,
                                    max_num_spec=None, nproc=None, use_old_weights=False,
-                                   out_healpix_order='RING'):
+                                   use_splines=False, out_healpix_order='RING'):
     """Convert transmission files to picca delta files
 
     Args:
@@ -245,6 +251,8 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
         in_filenames: array of str or None - default: None
             List of the filenames for the transmission files. Ignored if in_dir
             is not 'None'
+        tracer: string - default: F_LYA.
+            Tracer name for HDU in transmission file, usually F_LYA, F_LYB or F_METALS
         lambda_min: float - default: 3600.
             Minimum observed wavelength in Angstrom
         lambda_max: float - default: 5500.
@@ -265,6 +273,8 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
             Number of cpus to use for I/O operations. If None, defaults to os.cpu_count().
         use_old_weights: boolean - default: False
             Whether to use the old weights based only on the bin size
+        use_splines: boolean - default: False
+            Whether to use spline interpolations for mean flux and sigma_lss (helps with stability)
         out_healpix_order: string: 'RING' or 'NEST' - default: 'RING'
             Healpix numbering scheme for output files.
     """
@@ -351,12 +361,15 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     num_bins = int((x_max - x_min) / delta_x) + 1
 
     # Read the transmission files in parallel
-    arguments = [(f, num_bins, objs_thingid, lambda_min, lambda_max,
+    arguments = [(f, num_bins, objs_thingid, tracer, lambda_min, lambda_max,
                   lambda_min_rest_frame, lambda_max_rest_frame,
                   delta_log_lambda, delta_lambda, lin_spaced) for f in files]
 
+    userprint("Reading transmission files...")
     with Pool(processes=nproc) as pool:
         read_results = pool.starmap(read_transmission_file, arguments)
+
+    userprint("Done reading transmission files")
 
     # Read and merge the results
     stack_flux = np.zeros(num_bins)
@@ -387,6 +400,12 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     mean_flux = stack_flux
     mean_flux[w] /= stack_weight[w]
 
+    rebin_lambda = (x_min + np.arange(num_bins) * delta_x)
+    mask = (mean_flux < 1) & (mean_flux > 0)
+    mean_flux_spline = scipy.interpolate.UnivariateSpline(rebin_lambda[mask][10:-10],
+                                                          mean_flux[mask][10:-10], k=5)
+    mean_flux_from_spline = mean_flux_spline(rebin_lambda)
+
     # set mapping between input healpix and output healpix
     out_healpix_method = lambda in_nside, healpix: healpix
 
@@ -394,7 +413,7 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     # Why even convert from nested to ring at all?
     if is_nested is None and out_healpix_order is not None:
         raise ValueError('Input HEALPix scheme not known, cannot'
-                'convert to scheme {}'.format(out_healpix_order))
+                         'convert to scheme {}'.format(out_healpix_order))
     elif is_nested and out_healpix_order.lower() == 'ring':
         out_healpix_method = lambda in_nside, healpix: healpy.nest2ring(int(in_nside), int(healpix))
     elif not is_nested and out_healpix_order.lower() == 'nest':
@@ -411,42 +430,51 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
         print(f'Input nested? {is_nested} // in_healpix={healpix} // out_healpix={out_healpix}')
         out_filenames[healpix] = out_dir + '/delta-{}'.format(out_healpix) + '.fits.gz'
 
-    if use_old_weights:
-        flux_variance = None
+    # Compute variance
+    stack_variance = np.zeros(len(mean_flux))
+    var_weights = np.zeros(len(mean_flux))
+    for hpix_deltas in deltas.values():
+        for delta in hpix_deltas:
+            lambda_array = delta.log_lambda
+            if lin_spaced:
+                lambda_array = 10**(lambda_array)
+
+            norm_lambda = (lambda_array - x_min) / delta_x + 0.5
+            bins = np.floor(np.around(norm_lambda, decimals=3)).astype(int)
+
+            stack_variance[bins] += (delta.delta - mean_flux[bins])**2
+            var_weights[bins] += np.ones(len(bins))
+
+    w = var_weights > 0.
+    flux_variance = stack_variance
+    flux_variance[w] /= var_weights[w]
+
+    mask = (flux_variance > 0)
+    flux_variance_spline = scipy.interpolate.UnivariateSpline(rebin_lambda[mask][10:-10],
+                                                              flux_variance[mask][10:-10], k=5)
+    flux_variance_from_spline = flux_variance_spline(rebin_lambda)
+
+    if use_splines:
+        arguments = [(deltas[hpix], mean_flux_from_spline, flux_variance_from_spline, hpix,
+                      out_filenames[hpix], x_min, delta_x, use_old_weights,
+                      lin_spaced) for hpix in deltas.keys()]
     else:
-        # Compute variance
-        stack_variance = np.zeros(len(mean_flux))
-        var_weights = np.zeros(len(mean_flux))
-        for hpix_deltas in deltas.values():
-            for delta in hpix_deltas:
-                lambda_array = delta.log_lambda
-                if lin_spaced:
-                    lambda_array = 10**(lambda_array)
+        arguments = [(deltas[hpix], mean_flux, flux_variance, hpix, out_filenames[hpix],
+                      x_min, delta_x, use_old_weights, lin_spaced) for hpix in deltas.keys()]
 
-                norm_lambda = (lambda_array - x_min) / delta_x + 0.5
-                bins = np.floor(np.around(norm_lambda, decimals=3)).astype(int)
-
-                stack_variance[bins] += (delta.delta - mean_flux[bins])**2
-                var_weights[bins] += np.ones(len(bins))
-
-        w = var_weights > 0.
-        flux_variance = stack_variance
-        flux_variance[w] /= var_weights[w]
-
-    arguments = [(deltas[hpix], mean_flux, flux_variance, hpix, out_filenames[hpix],
-                  x_min, delta_x, lin_spaced) for hpix in deltas.keys()]
-
+    userprint("Writing deltas...")
     with Pool(processes=nproc) as pool:
         pool.starmap(write_delta_from_transmission, arguments)
 
-    userprint("")
-
     # Output the mean flux and other info
     dir_name = os.path.basename(os.path.normpath(out_dir))
-    rebin_lambda = (x_min + np.arange(num_bins) * delta_x)
-    results = fitsio.FITS(out_dir + '/../{}-stats.fits.gz'.format(dir_name), 'rw', clobber=True)
-    cols = [rebin_lambda, mean_flux, stack_weight, flux_variance, var_weights]
-    names = ['LAMBDA', 'MEANFLUX', 'WEIGHTS', 'VAR', 'VARWEIGHTS']
+    filename = out_dir + f'/../{dir_name}-stats.fits.gz'
+    userprint(f"Writing statistics to {filename}")
+
+    results = fitsio.FITS(filename, 'rw', clobber=True)
+    cols = [rebin_lambda, mean_flux, mean_flux_from_spline, stack_weight,
+            flux_variance, flux_variance_from_spline, var_weights]
+    names = ['LAMBDA', 'MEANFLUX', 'MEANFLUX_SPLINE', 'WEIGHTS', 'VAR', 'VAR_SPLINE', 'VARWEIGHTS']
     header = {}
     header['L_MIN'] = lambda_min
     header['L_MAX'] = lambda_max

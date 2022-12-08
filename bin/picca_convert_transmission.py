@@ -48,10 +48,16 @@ if __name__ == '__main__':
     parser.add_argument('--use-old-weights', action="store_true", default=False, required=False,
             help='Whether to use the old weighting scheme for raw deltas.')
 
+    parser.add_argument('--tracer',type=str, default='F_LYA', required=False,
+            help='Tracer to use')
+
+    parser.add_argument('--use-splines',action="store_true", default=False, required=False,
+            help='Use splines to compute mean flux and variance')
+
     args = parser.parse_args()
 
     raw_io.convert_transmission_to_deltas(args.object_cat, args.out_dir, in_dir=args.in_dir,
-                                          in_filenames=args.in_files,
+                                          in_filenames=args.in_files,tracer=args.tracer,
                                           lambda_min=args.lambda_min,
                                           lambda_max=args.lambda_max,
                                           lambda_min_rest_frame=args.lambda_rest_min,
@@ -60,4 +66,5 @@ if __name__ == '__main__':
                                           delta_lambda=args.delta_lambda,
                                           lin_spaced=args.linear_spacing,
                                           max_num_spec=args.nspec,
-                                          use_old_weights=args.use_old_weights)
+                                          use_old_weights=args.use_old_weights,
+                                          use_splines=args.use_splines)
