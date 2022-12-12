@@ -99,8 +99,7 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
         p1d_table['Pk_noraw_miss'] = p1d_table['Pk_noise_miss'] / p1d_table['cor_reso']
     except:
         pass
-    # the following is unnecessary - and does not work if noise=0 (eg. true cont analysis):
-    #p1d_table['Pk/Pk_noise'] = p1d_table['Pk_raw'] / p1d_table['Pk_noise']
+
     z_array = np.array(z_array)
 
     return p1d_table, z_array
@@ -113,8 +112,8 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
     ----------
     p1d_table: Table
     Individual Pk1Ds of the contributing forest chunks, stacked in one table using "read_pk1d",
-    Contain 'k', 'Pk_raw', 'Pk_noise', 'Pk_diff', 'cor_reso', 'Pk', 'forest_z', 'forest_snr',
-            'Delta2', 'Pk_norescor', 'Pk_nonoise', 'Pk_noraw', ('Pk/Pk_noise')
+    Contains 'k', 'Pk_raw', 'Pk_noise', 'Pk_diff', 'cor_reso', 'Pk', 'forest_z', 'forest_snr',
+            'Delta2', 'Pk_norescor', 'Pk_nonoise', 'Pk_noraw'
 
     z_array: Array of floats
     Mean z of each contributing chunk, stacked in one array using "read_pk1d"
@@ -250,8 +249,9 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                     # the weight is fixed to (snr_limit - 1)**2 = 9
                     snr_limit = 4 
                     forest_snr = p1d_table['forest_snr'][select]
-                    w, = np.where(forest_snr <= 1)
-                    if len(w)>0: raise RuntimeError('Cannot add weights with SNR<=1.')
+                    # w, = np.where(forest_snr <= 1)
+                    # if len(w)>0: raise RuntimeError('Cannot add weights with SNR<=1.')
+                    if (forest_snr<=1).sum()>0: raise RuntimeError('Cannot add weights with SNR<=1.')
                     weights = (forest_snr - 1)**2
                     weights[forest_snr>snr_limit] = (snr_limit - 1)**2
                     mean = np.average((p1d_table[c][select]), weights=weights)
