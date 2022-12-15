@@ -140,8 +140,11 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         elif "ZCATALOG" in extnames:
             extension = "ZCATALOG"
         else:
-            raise QuasarCatalogueError(
-                f"Could not find valid quasar catalog extension in fits file: {self.filename}")
+            # TODO: this is a patch that should be removed before merging with master
+            # The extension=1 line should be removed and the raise uncommented
+            extension = 1
+            #raise QuasarCatalogueError(
+            #    f"Could not find valid quasar catalog extension in fits file: {self.filename}")
         catalogue = Table(fitsio.read(self.filename, ext=extension))
 
         if 'TARGET_RA' in catalogue.colnames:
