@@ -54,20 +54,11 @@ class DesiTile(DesiData):
         is_mock: bool
         False as DESI data are not mocks
 
-        is_sv: bool
-        True if all the read data belong to SV. False otherwise
-
         Raise
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         DataError if no quasars were found
         """
-        if np.any((self.catalogue['TILEID'] < 60000) &
-                  (self.catalogue['TILEID'] >= 1000)):
-            is_sv = False
-        else:
-            is_sv = True
-
         coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
 
         files_in = sorted(
@@ -131,7 +122,7 @@ class DesiTile(DesiData):
 
         self.forests = list(forests_by_targetid.values())
 
-        return False, is_sv
+        return False
 
 
 # Class to read in parallel

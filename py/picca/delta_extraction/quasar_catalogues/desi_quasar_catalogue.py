@@ -126,7 +126,13 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         self.catalogue.sort("HEALPIX")
 
     def read_catalogue(self):
-        """Read the DESI quasar catalogue"""
+        """Read the DESI quasar catalogue
+
+        Raise
+        -----
+        QuasarCatalogueError if the catalogue has missing columns or is
+        empty after the filters are applied
+        """
         self.logger.progress(f'Reading catalogue from {self.filename}')
         extnames = [ext.get_extname() for ext in fitsio.FITS(self.filename)]
         if "QSO_CAT" in extnames:
@@ -142,13 +148,22 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             catalogue.rename_column('TARGET_RA', 'RA')
             catalogue.rename_column('TARGET_DEC', 'DEC')
 
-        keep_columns = ['RA', 'DEC', 'Z', 'TARGETID']
+        # mandatory columns
+        keep_columns = ['RA', 'DEC', 'Z', 'TARGETID', 'LASTNIGHT']
+        for col in keep_columns:
+            if col not in catalogue.colnames:
+                raise QuasarCatalogueError(
+                    f"Missing required column {col} in quasar catalogue")
+
+        # optional columns
         if 'TILEID' in catalogue.colnames:
             keep_columns += ['TILEID', 'PETAL_LOC']
+            if 'PETAL_LOC' not in catalogue.colnames:
+                raise QuasarCatalogueError(
+                    "When TILEID is in the catalogue, PETAL_LOC is also "
+                    "expected to be present but it is not.")
         if 'NIGHT' in catalogue.colnames:
             keep_columns += ['NIGHT']
-        if 'LAST_NIGHT' in catalogue.colnames:
-            keep_columns += ['LAST_NIGHT']
         if 'SURVEY' in catalogue.colnames:
             keep_columns += ['SURVEY']
         if 'DESI_TARGET' in catalogue.colnames:

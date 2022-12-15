@@ -14,7 +14,8 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     accepted_options as accepted_options_quasar_catalogue)
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     defaults as defaults_quasar_catalogue)
-from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
+from picca.delta_extraction.utils import (
+    ACCEPTED_BLINDING_STRATEGIES, UNBLINDABLE_STRATEGIES)
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 from picca.delta_extraction.utils import update_accepted_options, update_default_options
 
@@ -118,12 +119,12 @@ class DesiData(Data):
         # read data
         t0 = time.time()
         self.logger.progress("Reading data")
-        is_mock, is_sv = self.read_data()
+        is_mock = self.read_data()
         t1 = time.time()
         self.logger.progress(f"Time spent reading data: {t1-t0}")
 
         # set blinding
-        self.set_blinding(is_mock, is_sv)
+        self.set_blinding(is_mock)
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -166,9 +167,6 @@ class DesiData(Data):
         is_mock: bool
         True if mocks are read, False otherwise
 
-        is_sv: bool
-        True if all the read data belong to SV. False otherwise
-
         Raise
         -----
         DataError if no quasars were found
@@ -176,7 +174,7 @@ class DesiData(Data):
         raise DataError(
             "Function 'read_data' was not overloaded by child class")
 
-    def set_blinding(self, is_mock, is_sv):
+    def set_blinding(self, is_mock):
         """Set the blinding in Forest.
 
         Update the stored value if necessary.
@@ -185,10 +183,14 @@ class DesiData(Data):
         ----------
         is_mock: boolean
         True if reading mocks, False otherwise
-
-        is_sv: boolean
-        True if reading SV data only, False otherwise
         """
+        if all(self.catalogue["LASTNIGHT"] < 20210801):
+            blinding_strategy = "desi_m2"
+        elif all(self.catalogue["LASTNIGHT"] < 20220801):
+            blinding_strategy = "desi_y1"
+        else:
+            blinding_strategy = "desi-y3"
+
         # blinding checks
         if is_mock:
             if self.blinding != "none":  # pragma: no branch
@@ -196,19 +198,22 @@ class DesiData(Data):
                                     "being ignored as mocks should not be "
                                     "blinded. 'none' blinding engaged")
                 self.blinding = "none"
-        elif is_sv:
-            if self.blinding != "none":
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as SV data should not be "
-                                    "blinded. 'none' blinding engaged")
-                self.blinding = "none"
-        # TODO: remove this when we are ready to unblind
         else:
-            if self.blinding != "corr_yshift":
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as data should be blinded. "
-                                    "'corr_yshift' blinding engaged")
-                self.blinding = "corr_yshift"
+            if self.blinding != blinding_strategy:
+                # These are the blinding strategies that we are allowed to
+                # unblind
+                if self.blinding != "none":
+                    self.logger.warning(
+                        f"Selected blinding, {self.blinding} is being ignored. "
+                        f"Loaded data should use '{blinding_strategy}' instead."
+                        f"'{blinding_strategy}' blinding engaged")
+                    self.blinding = blinding_strategy
+                elif blinding_strategy not in UNBLINDABLE_STRATEGIES:
+                    self.logger.warning(
+                        f"Selected blinding, {self.blinding} is being ignored "
+                        f"as loaded data should be blinded."
+                        f"'{blinding_strategy}' blinding engaged")
+                    self.blinding = blinding_strategy
 
         # set blinding strategy
         Forest.blinding = self.blinding
