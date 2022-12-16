@@ -68,7 +68,7 @@ class DesiTile(DesiData):
 
         if "cumulative" in self.input_directory:
             petal_tile_night = [
-                f"{entry['PETAL_LOC']}-{entry['TILEID']}-thru{entry['LAST_NIGHT']}"
+                f"{entry['PETAL_LOC']}-{entry['TILEID']}-thru{entry['LASTNIGHT']}"
                 for entry in self.catalogue
             ]
         else:
@@ -239,7 +239,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
         if "cumulative" in self.input_directory:
             select = ((catalogue['TILEID'] == tile_spec) &
                       (catalogue['PETAL_LOC'] == petal_spec) &
-                      (catalogue['LAST_NIGHT'] == night_spec))
+                      (catalogue['LASTNIGHT'] == night_spec))
         else:
             select = ((catalogue['TILEID'] == tile_spec) &
                       (catalogue['PETAL_LOC'] == petal_spec) &

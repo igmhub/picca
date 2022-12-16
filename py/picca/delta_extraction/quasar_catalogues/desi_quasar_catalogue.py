@@ -152,7 +152,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             catalogue.rename_column('TARGET_DEC', 'DEC')
 
         # mandatory columns
-        keep_columns = ['RA', 'DEC', 'Z', 'TARGETID', 'LASTNIGHT']
+        keep_columns = ['RA', 'DEC', 'Z', 'TARGETID']
         for col in keep_columns:
             if col not in catalogue.colnames:
                 raise QuasarCatalogueError(
@@ -167,6 +167,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
                     "expected to be present but it is not.")
         if 'NIGHT' in catalogue.colnames:
             keep_columns += ['NIGHT']
+        if 'LASTNIGHT' in catalogue.colnames:
+            keep_columns += ['LASTNIGHT']
         if 'SURVEY' in catalogue.colnames:
             keep_columns += ['SURVEY']
         if 'DESI_TARGET' in catalogue.colnames:

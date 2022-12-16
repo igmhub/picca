@@ -184,13 +184,6 @@ class DesiData(Data):
         is_mock: boolean
         True if reading mocks, False otherwise
         """
-        if all(self.catalogue["LASTNIGHT"] < 20210801):
-            blinding_strategy = "desi_m2"
-        elif all(self.catalogue["LASTNIGHT"] < 20220801):
-            blinding_strategy = "desi_y1"
-        else:
-            blinding_strategy = "desi-y3"
-
         # blinding checks
         if is_mock:
             if self.blinding != "none":  # pragma: no branch
@@ -199,6 +192,13 @@ class DesiData(Data):
                                     "blinded. 'none' blinding engaged")
                 self.blinding = "none"
         else:
+            if all(self.catalogue["LASTNIGHT"] < 20210801):
+                blinding_strategy = "desi_m2"
+            elif all(self.catalogue["LASTNIGHT"] < 20220801):
+                blinding_strategy = "desi_y1"
+            else:
+                blinding_strategy = "desi-y3"
+
             if self.blinding != blinding_strategy:
                 # These are the blinding strategies that we are allowed to
                 # unblind
