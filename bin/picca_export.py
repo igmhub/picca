@@ -258,15 +258,22 @@ def main(cmdargs):
 
     # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
-        if blinding == 'corr_yshift':
-            userprint("Blinding using strategy corr_yshift.")
+        blinding_dir = '/global/cfs/projectdirs/desi/science/lya/y1-kp6/blinding/'
+        blinding_templates = {'desi_m2': {'standard': 'm2_blinding_v1.2_standard_29_03_2022.h5',
+                                          'grid': 'm2_blinding_v1.2_regular_grid_29_03_2022.h5'},
+                              'desi_y1': {'standard': 'y1_blinding_v2_standard_17_12_2022.h5',
+                                          'grid': 'y1_blinding_v2_regular_grid_17_12_2022.h5'},
+                              'desi_y3': {'standard': 'y3_blinding_v3_standard_18_12_2022.h5',
+                                          'grid': 'y3_blinding_v3_regular_grid_18_12_2022.h5'}}
+
+        if blinding in blinding_templates:
+            userprint(f"Blinding using seed for {blinding}")
         else:
-            raise ValueError("Expected blinding to be 'corr_yshift' or 'minimal'."
-                             " Found {}.".format(blinding))
+            raise ValueError(f"Expected blinding to be one of {blinding_templates.keys()}."
+                             f" Found {blinding}.")
 
         if args.blind_corr_type is None:
-            raise ValueError("Blinding strategy 'corr_yshift' requires"
-                             " argument --blind_corr_type.")
+            raise ValueError("Blinding requires argument --blind_corr_type.")
 
         # Check type of correlation and get size and regular binning
         if args.blind_corr_type in ['lyaxlya', 'lyaxlyb']:
@@ -282,12 +289,10 @@ def main(cmdargs):
 
         if corr_size == len(xi):
             # Read the blinding file and get the right template
-            blinding_filename = ('/global/cfs/projectdirs/desi/science/lya/y1-kp6/'
-                                 'blinding/y1_blinding_v1.2_standard_29_03_2022.h5')
+            blinding_filename = blinding_dir + blinding_templates[blinding]['standard']
         else:
             # Read the regular grid blinding file and get the right template
-            blinding_filename = ('/global/cfs/projectdirs/desi/science/lya/y1-kp6/'
-                                 'blinding/y1_blinding_v1.2_regular_grid_29_03_2022.h5')
+            blinding_filename = blinding_dir + blinding_templates[blinding]['grid']
 
         if not os.path.isfile(blinding_filename):
             raise RuntimeError("Missing blinding file. Make sure you are running at"
