@@ -31,12 +31,12 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     kbin_edges: array of floats
     Edges of the wavenumber bins to be later used, in Angstrom^-1
 
-    snrcut: float, or array of floats - Default: None
-    Chunks with mean SNR > snrcut are discarded. If snrcut is an array,
+    snrcut: array of floats - Default: None
+    Chunks with mean SNR > snrcut are discarded. If len(snrcut)>1,
     zbins_snrcut must be set, so that the cut is made redshift dependent.
 
     zbins_snrcut: array of floats - Default: None
-    Required if snrcut is an array of floats. List of redshifts
+    Required if len(snrcut)>1. List of redshifts
     associated to the list of snr cuts.
 
     Return:
@@ -48,7 +48,7 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
 
     p1d_table = []
     z_array = []
-    with fitsio.FITS(filename) as hdus:
+    with fitsio.FITS(filename, 'r') as hdus:
         for i,h in enumerate(hdus[1:]):
             data = h.read()
             chunk_header = h.read_header()
@@ -67,13 +67,13 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
             chunk_table['forest_snr'] = float(chunk_header['MEANSNR'])
 
             if snrcut is not None :
-                if hasattr(snrcut, "__len__"):
-                    if len(snrcut) != len(zbins_snrcut) :
+                if len(snrcut)>1:
+                    if (zbins_snrcut is None) or (len(zbins_snrcut)!=len(snrcut)):
                         raise ValueError("Please provide same size for zbins_snrcut and snrcut arrays")
                     zbin_index = np.argmin(np.abs(zbins_snrcut - chunk_header['MEANZ']))
                     snrcut_chunk = snrcut[zbin_index]
                 else:
-                    snrcut_chunk = snrcut
+                    snrcut_chunk = snrcut[0]
                 if(chunk_header['MEANSNR'] < snrcut_chunk):
                     continue
 
@@ -171,7 +171,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
     meanP1D_table['N'] = np.zeros(nbins_z*nbins_k, dtype='int64')
     for c in p1d_table_cols:
         for stats in stats_array:
-            meanP1D_table[stats+c] = np.zeros(nbins_z*nbins_k)
+            meanP1D_table[stats+c] = np.ones(nbins_z*nbins_k)*np.nan
 
     # Initialize metadata_table of len = nbins_z corresponding to hdu[2] in final output
     metadata_table = Table()
@@ -195,9 +195,6 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
             i_max = (izbin+1) * nbins_k
             meanP1D_table['zbin'][i_min:i_max] = zbin_centers[izbin]
             meanP1D_table['index_zbin'][i_min:i_max] = izbin
-            for c in p1d_table_cols:
-                for stats in stats_array:
-                    meanP1D_table[stats+c][i_min:i_max] = np.nan
             continue
 
         for ikbin, kbin in enumerate(kbin_edges[:-1]):  # Main loop 2) k bins
@@ -216,8 +213,6 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                 if N==0:
                     userprint('Warning: 0 chunks found in bin '+str(zbin_edges[izbin])+'<z<'+str(zbin_edges[izbin+1])+
                           ', '+str(kbin_edges[ikbin])+'<k<'+str(kbin_edges[ikbin+1]))
-                    for stats in stats_array:
-                        meanP1D_table[stats+c][index] = np.nan
                     continue
 
                 if weight_method=='fit_snr':
@@ -253,15 +248,15 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                     if (forest_snr<=1).sum()>0: raise RuntimeError('Cannot add weights with SNR<=1.')
                     weights = (forest_snr - 1)**2
                     weights[forest_snr>snr_limit] = (snr_limit - 1)**2
-                    mean = np.average((p1d_table[c][select]), weights=weights)
+                    mean = np.average(p1d_table[c][select], weights=weights)
                     # Need to rescale the weights to find the error:
                     #   weights_true = weights * (N - 1) / alpha
                     alpha = np.sum(weights * ((p1d_table[c][select] - mean)**2))
                     error = np.sqrt(alpha / (np.sum(weights) * (N - 1)))
 
                 elif weight_method=='no_weights':
-                    mean = np.average((p1d_table[c][select]))
-                    error = np.std((p1d_table[c][select])) / np.sqrt(N-1)  # unbiased estimate: N-1
+                    mean = np.mean(p1d_table[c][select])
+                    error = np.std(p1d_table[c][select]) / np.sqrt(N-1)  # unbiased estimate: N-1
 
                 else:
                     raise ValueError("Option for 'weight_method' argument not found")

@@ -176,19 +176,17 @@ def main(cmdargs):
                             redshift-dependent SNR quality cut, this is not
                             tested and should bias the result""")
 
-    snr_cut_mean = None
-    zbins_snr_cut_mean = None
-    
     if args.snr_cut_scheme == 'eboss':
-        snr_cut_mean =       [4.1, 3.9, 3.6, 3.2, 2.9, 2.6, 2.2, 2.0, 2.0,
+        snrcut = np.array([4.1, 3.9, 3.6, 3.2, 2.9, 2.6, 2.2, 2.0, 2.0,
                               2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
-                              2.0, 2.0, 2.0]
-        zbins_snr_cut_mean = np.arange(2.2, 6.4, 0.2)
+                              2.0, 2.0, 2.0])
+        zbins_snrcut = np.arange(2.2, 6.4, 0.2)
     elif args.snr_cut_scheme == 'fixed':
-        snr_cut_mean = args.snrcut
+        snrcut = np.array([args.snrcut])
+        zbins_snrcut = None
     elif args.snr_cut_scheme == None:
-        snr_cut_mean = None
-        zbins_snr_cut_mean = None
+        snrcut = None
+        zbins_snrcut = None
     else:
         raise ValueError("Unknown value for option --snr-cut-scheme"
                          "You may add here in the code a specific SNR cutting scheme")
@@ -207,7 +205,7 @@ def main(cmdargs):
     if args.old_output:
         if args.output_file is None:
             med_ext = "" if args.no_median else "_medians"
-            snr_ext = "_snr_cut" if snr_cut_mean is not None else ""
+            snr_ext = "_snr_cut" if snrcut is not None else ""
             vel_ext = "_vel" if args.velunits else ""
             output_file = os.path.join(args.in_dir,
                     f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
@@ -217,8 +215,8 @@ def main(cmdargs):
                                         z_edges,
                                         k_edges,
                                         weight_method=args.weight_method,
-                                        snrcut=snr_cut_mean,
-                                        zbins_snrcut=zbins_snr_cut_mean,
+                                        snrcut=snrcut,
+                                        zbins_snrcut=zbins_snrcut,
                                         nomedians=args.no_median,
                                         velunits=args.velunits,
                                         overwrite=args.overwrite,
@@ -227,7 +225,7 @@ def main(cmdargs):
     else:
         if args.output_file is None:
             med_ext = "" if args.no_median else "_medians"
-            snr_ext = "_snr_cut" if snr_cut_mean is not None else ""
+            snr_ext = "_snr_cut" if snrcut is not None else ""
             vel_ext = "_vel" if args.velunits else ""
             output_file = os.path.join(args.in_dir,
                     f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
@@ -238,8 +236,8 @@ def main(cmdargs):
                                         k_edges,
                                         weight_method=args.weight_method,
                                         output_snrfit=args.output_snrfit,
-                                        snrcut=snr_cut_mean,
-                                        zbins_snrcut=zbins_snr_cut_mean,
+                                        snrcut=snrcut,
+                                        zbins_snrcut=zbins_snrcut,
                                         nomedians=args.no_median,
                                         velunits=args.velunits,
                                         overwrite=args.overwrite,
