@@ -206,7 +206,7 @@ class DesiData(Data):
                         "unblinding. If you believe this is an error, contact "
                         "picca developers")
 
-         if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
+        if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
             raise DataError(
                 "Unrecognized blinding strategy. Accepted strategies "
                 f"are {ACCEPTED_BLINDING_STRATEGIES}. "
