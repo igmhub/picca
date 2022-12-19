@@ -197,7 +197,7 @@ class DesiData(Data):
             elif all(self.catalogue["LASTNIGHT"] < 20220801):
                 blinding_strategy = "desi_y1"
             else:
-                blinding_strategy = "desi-y3"
+                blinding_strategy = "desi_y3"
 
             if self.blinding != blinding_strategy:
                 # These are the blinding strategies that we are allowed to

@@ -83,7 +83,7 @@ ABSORBER_IGM = {
 }
 
 ACCEPTED_BLINDING_STRATEGIES = [
-    "none", "minimal", "corr_yshift", "desi_m2", "desi_y1", "desi_y3"]
+    "none", "minimal", "desi_m2", "desi_y1", "desi_y3"]
 # TODO: add tags here when we are allowed to unblind them
 UNBLINDABLE_STRATEGIES = []
 
