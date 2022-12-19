@@ -139,7 +139,16 @@ class AbstractTest(unittest.TestCase):
         new_hdul = fits.open(new_file)
         try:
             # compare them
-            self.assertTrue(len(orig_hdul), len(new_hdul))
+            if not len(orig_hdul) == len(new_hdul):
+                print(f"\nOriginal file: {orig_file}")
+                print(f"New file: {new_file}")
+                print("Different number of extensions found")
+                print("orig_hdul.info():")
+                orig_hdul.info()
+                print("new_hdul.info():")
+                new_hdul.info()
+                self.assertTrue(len(orig_hdul) == len(new_hdul))
+
             # loop over HDUs
             for hdu_index, _ in enumerate(orig_hdul):
                 if "EXTNAME" in orig_hdul[hdu_index].header:

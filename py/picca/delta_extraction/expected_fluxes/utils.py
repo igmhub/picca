@@ -49,8 +49,9 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     The reason why the continuum could not be computed. None when there were
     no problems
 
-    continuum_fit_parameters: (float, float)
-    The zero-point and the slope used in the linear part of the continuum model
+    continuum_fit_parameters: (float, float, float)
+    The zero-point and the slope used in the linear part of the continuum model,
+    the chi2 of the fit, and the number of datapoints used in the fit.
     """
     # get mean continuum
     mean_cont = get_mean_cont(forest.log_lambda - np.log10(1 + forest.z))
@@ -103,11 +104,16 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
 
     if bad_continuum_reason is None:
         continuum_fit_parameters = (minimizer.values["zero_point"],
-                                    minimizer.values["slope"])
+                                    minimizer.values["slope"],
+                                    minimizer.fval,
+                                    leasts_squares.get_ndata())
     ## if the continuum is negative or minuit didn't converge, then
-    ## set it to None
+    ## set continuum fit parameters to None
     else:
         cont_model = None
-        continuum_fit_parameters = (np.nan, np.nan)
+        continuum_fit_parameters = (np.nan,
+                                    np.nan,
+                                    np.nan, 
+                                    leasts_squares.get_ndata())
 
     return cont_model, bad_continuum_reason, continuum_fit_parameters

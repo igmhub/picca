@@ -57,6 +57,8 @@ class LeastsSquaresContModel:
         else:
             self.weights_kwargs = weights_kwargs
 
+        self.ndata = None
+
     def __call__(self, zero_point, slope):
         """
         Compute chi2 for a given set of parameters
@@ -84,6 +86,9 @@ class LeastsSquaresContModel:
 
         w = weights > 0
         chi2_contribution = (self.forest.flux - cont_model)**2 * weights
+
+        if self.ndata is None:
+            self.ndata =  self.forest.flux[w].size
         return chi2_contribution.sum() - np.log(weights[w]).sum()
 
     # pylint: disable=no-self-use
@@ -189,3 +194,12 @@ class LeastsSquaresContModel:
             weights[w] = 1.0 / cont_model[w]**2 / variance
 
         return weights
+
+    def get_ndata(self):
+        """Get the number of datapoints used in the fit
+
+        Return
+        ndata: int
+        Number of datapoints used in the fit
+        """
+        return self.ndata

@@ -1033,6 +1033,7 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
         # compute the forest continua
+        continuum_fit_parameters_dict = {}
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
              continuum_fit_parameters) = compute_continuum(forest,
@@ -1044,6 +1045,8 @@ class ExpectedFluxTest(AbstractTest):
                                                            expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
+            continuum_fit_parameters_dict[forest.los_id] = continuum_fit_parameters
+        expected_flux.continuum_fit_parameters = continuum_fit_parameters_dict
 
         # compute variance functions and statistics
         expected_flux.compute_delta_stack(data.forests)
@@ -1051,6 +1054,7 @@ class ExpectedFluxTest(AbstractTest):
         # save iter_out_prefix for iteration 0
         expected_flux.save_iteration_step(0)
         self.compare_fits(test_file, out_file)
+
 
         # save iter_out_prefix for final iteration
         expected_flux.save_iteration_step(-1)
