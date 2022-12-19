@@ -245,6 +245,10 @@ class data:
         if (self._blinding == 'minimal') and (('fix_at' not in self.par_fixed.keys()) or (not self.par_fixed['fix_at'])):
             raise ValueError("Running with minimal blinding, please fix at (ap is fixed already)!")
 
+        if self._blinding == 'desi_y3':
+            raise ValueError("Running on DESI Y3 data and fitter2 does not support "
+                             "full-shape blinding. Use Vega instead.")
+
         self.dm_met = {}
         self.rp_met = {}
         self.rt_met = {}
