@@ -710,7 +710,7 @@ class DataTest(AbstractTest):
         config = ConfigParser()
         config.read_dict({"data": {
                         }})
-        expected_message = "Missing argument 'blinding' required by DesiData"
+        expected_message = "Missing argument 'unblind' required by DesiData"
         with self.assertRaises(DataError) as context_manager:
             data._DesiData__parse_config(config["data"])
         self.compare_error_message(context_manager, expected_message)
@@ -718,7 +718,7 @@ class DataTest(AbstractTest):
         # run __parse_config with missing 'use_non_coadded_spectra'
         config = ConfigParser()
         config.read_dict({"data": {
-            "blinding": "none",
+            "unblind": "True",
                         }})
         expected_message = (
             "Missing argument 'use non-coadded spectra' required by DesiData"
@@ -738,15 +738,6 @@ class DataTest(AbstractTest):
             if key in accepted_options_desi_data and key not in config["data"]:
                 config["data"][key] = str(value)
         data._DesiData__parse_config(config["data"])
-
-        # check loading with the wrong blinding
-        config["data"]["blinding"] = "invalid"
-        expected_message = (
-            "Unrecognized blinding strategy. Accepted strategies "
-            f"are {ACCEPTED_BLINDING_STRATEGIES}. Found 'invalid'")
-        with self.assertRaises(DataError) as context_manager:
-            data._DesiData__parse_config(config["data"])
-        self.compare_error_message(context_manager, expected_message)
 
     def test_desi_data_set_blinding(self):
         """Test method set_blinding of DesiData"""
@@ -944,7 +935,7 @@ class DataTest(AbstractTest):
             "save format": "BinTableHDU",
         }})
         expected_message = (
-            "Missing argument 'blinding' required by DesiData"
+            "Missing argument 'unblind' required by DesiData"
         )
         with self.assertRaises(DataError) as context_manager:
             DesiHealpix(config["data"])

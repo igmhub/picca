@@ -23,12 +23,12 @@ from picca.delta_extraction.utils import update_accepted_options, update_default
 accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(
     accepted_options,
-    ["blinding", "use non-coadded spectra", "wave solution"])
+    ["unblind", "use non-coadded spectra", "wave solution"])
 
 defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
-    "blinding": "none",
+    "unblind": False,
     "use non-coadded spectra": False,
     "wave solution": "lin",
 })
@@ -105,7 +105,7 @@ class DesiData(Data):
         super().__init__(config)
 
         # load variables from config
-        self.blinding = None
+        self.unblind = None
         self.use_non_coadded_spectra = None
         self.__parse_config(config)
 
@@ -124,6 +124,7 @@ class DesiData(Data):
         self.logger.progress(f"Time spent reading data: {t1-t0}")
 
         # set blinding
+        self.blinding = None
         self.set_blinding(is_mock)
 
     def __parse_config(self, config):
@@ -139,14 +140,9 @@ class DesiData(Data):
         DataError upon missing required variables
         """
         # instance variables
-        self.blinding = config.get("blinding")
-        if self.blinding is None:
-            raise DataError("Missing argument 'blinding' required by DesiData")
-        if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
-            raise DataError(
-                "Unrecognized blinding strategy. Accepted strategies "
-                f"are {ACCEPTED_BLINDING_STRATEGIES}. "
-                f"Found '{self.blinding}'")
+        self.unblind = config.getboolean("unblind")
+        if self.unblind is None:
+            raise DataError("Missing argument 'unblind' required by DesiData")
 
         self.use_non_coadded_spectra = config.getboolean(
             "use non-coadded spectra")
@@ -194,29 +190,21 @@ class DesiData(Data):
         else:
             if all(self.catalogue["LASTNIGHT"] < 20210520):
                 # sv data, no blinding
-                blinding_strategy = "none"
+                self.blinding = "none"
             elif all(self.catalogue["LASTNIGHT"] < 20210801):
-                blinding_strategy = "desi_m2"
+                self.blinding = "desi_m2"
             elif all(self.catalogue["LASTNIGHT"] < 20220801):
-                blinding_strategy = "desi_y1"
+                self.blinding = "desi_y1"
             else:
-                blinding_strategy = "desi_y3"
+                self.blinding = "desi_y3"
 
-            if self.blinding != blinding_strategy:
-                # These are the blinding strategies that we are allowed to
-                # unblind
-                if self.blinding != "none":
-                    self.logger.warning(
-                        f"Selected blinding, {self.blinding} is being ignored. "
-                        f"Loaded data should use '{blinding_strategy}' instead."
-                        f"'{blinding_strategy}' blinding engaged")
-                    self.blinding = blinding_strategy
-                elif blinding_strategy not in UNBLINDABLE_STRATEGIES:
-                    self.logger.warning(
-                        f"Selected blinding, {self.blinding} is being ignored "
-                        f"as loaded data should be blinded."
-                        f"'{blinding_strategy}' blinding engaged")
-                    self.blinding = blinding_strategy
+            if self.unblind:
+                if self.blinding not in UNBLINDABLE_STRATEGIES:
+                    raise DataError(
+                        "In DesiData: Requested unblinding but data requires blinding strategy "
+                        f"{blinding_strategy} and this strategy do not support "
+                        "unblinding. If you believe this is an error, contact "
+                        "picca developers")
 
         # set blinding strategy
         Forest.blinding = self.blinding
