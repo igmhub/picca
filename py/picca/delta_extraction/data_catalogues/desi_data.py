@@ -28,7 +28,7 @@ accepted_options = update_accepted_options(
 defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
-    "blinding": "corr_yshift",
+    "blinding": "none",
     "use non-coadded spectra": False,
     "wave solution": "lin",
 })
@@ -192,7 +192,10 @@ class DesiData(Data):
                                     "blinded. 'none' blinding engaged")
                 self.blinding = "none"
         else:
-            if all(self.catalogue["LASTNIGHT"] < 20210801):
+            if all(self.catalogue["LASTNIGHT"] < 20210520):
+                # sv data, no blinding
+                blinding_strategy = "none"
+            elif all(self.catalogue["LASTNIGHT"] < 20210801):
                 blinding_strategy = "desi_m2"
             elif all(self.catalogue["LASTNIGHT"] < 20220801):
                 blinding_strategy = "desi_y1"

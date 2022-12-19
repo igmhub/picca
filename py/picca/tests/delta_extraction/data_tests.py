@@ -750,7 +750,7 @@ class DataTest(AbstractTest):
 
     def test_desi_data_set_blinding(self):
         """Test method set_blinding of DesiData"""
-        # create a DesiData instance with sv data only and blinding = desi_m2
+        # create a DesiData instance with sv data only and blinding = none
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
         config.read_dict({"data": {
@@ -766,7 +766,7 @@ class DataTest(AbstractTest):
                 config["data"][key] = str(value)
 
         data = DesiHealpix(config["data"])
-        self.assertTrue(data.blinding == "desi_m2")
+        self.assertTrue(data.blinding == "none")
 
         # create a DesiData instance with sv data only and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesiHealpix instance
@@ -784,7 +784,7 @@ class DataTest(AbstractTest):
                 config["data"][key] = str(value)
 
         data = DesiHealpix(config["data"])
-        self.assertTrue(data.blinding == "desi_m2")
+        self.assertTrue(data.blinding == "none")
 
         # create a DesiData instance with main data and blinding = none
         # since DesiData is an abstract class, we create a DesiHealpix instance
@@ -802,9 +802,9 @@ class DataTest(AbstractTest):
                 config["data"][key] = str(value)
 
         data = DesiHealpix(config["data"])
-        self.assertTrue(data.blinding == "desi_m2")
+        self.assertTrue(data.blinding == "none")
 
-        # create a DesiData instance with main data and blinding = corr_yshift
+        # create a DesiData instance with main data and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
         config.read_dict({"data": {
@@ -813,16 +813,16 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
             "num processors": 1,
-            "blinding": "corr_yshift",
+            "blinding": "desi_m2",
         }})
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
         data = DesiHealpix(config["data"])
-        self.assertTrue(data.blinding == "desi_m2")
+        self.assertTrue(data.blinding == "none")
 
-        # create a DesiData instance with mock data and blinding = corr_yshift
+        # create a DesiData instance with mock data and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesisimMocks instance
         config = ConfigParser()
         config.read_dict({"data": {
@@ -830,6 +830,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
             "num processors": 1,
+            "blinding": "desi_m2",
         }})
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
@@ -846,6 +847,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
             "num processors": 1,
+            "blinding": "none",
         }})
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
