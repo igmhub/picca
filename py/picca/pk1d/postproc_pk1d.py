@@ -15,7 +15,6 @@ from scipy.stats import binned_statistic
 from scipy.optimize import curve_fit
 import fitsio
 from astropy.table import Table, vstack
-import astropy.io.fits
 
 from picca.constants import SPEED_LIGHT
 from picca.constants import ABSORBER_IGM
@@ -324,8 +323,7 @@ def run_postproc_pk1d(data_dir, output_file, zbin_edges, kbin_edges,
     meanP1D_table, metadata_table = compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges,
                                                       weight_method, nomedians, velunits, output_snrfit)
     meanP1D_table.meta['velunits']=velunits
-    hdu0 = astropy.io.fits.PrimaryHDU()
-    hdu1 = astropy.io.fits.table_to_hdu(meanP1D_table)
-    hdu2 = astropy.io.fits.table_to_hdu(metadata_table)
-    hdul = astropy.io.fits.HDUList([hdu0, hdu1, hdu2])
-    hdul.writeto(output_file, overwrite=overwrite)
+    result = fitsio.FITS(output_file, 'rw', clobber=True)
+    result.write(meanP1D_table.as_array())
+    result.write(metadata_table.as_array())
+    result.close()
