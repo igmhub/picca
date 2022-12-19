@@ -188,7 +188,7 @@ class DesiData(Data):
                                     "blinded. 'none' blinding engaged")
                 self.blinding = "none"
         else:
-            if all(self.catalogue["LASTNIGHT"] < 20210520):
+            if all(self.catalogue["LASTNIGHT"] < 20210514):
                 # sv data, no blinding
                 self.blinding = "none"
             elif all(self.catalogue["LASTNIGHT"] < 20210801):
