@@ -202,9 +202,15 @@ class DesiData(Data):
                 if self.blinding not in UNBLINDABLE_STRATEGIES:
                     raise DataError(
                         "In DesiData: Requested unblinding but data requires blinding strategy "
-                        f"{blinding_strategy} and this strategy do not support "
+                        f"{self.blinding} and this strategy do not support "
                         "unblinding. If you believe this is an error, contact "
                         "picca developers")
+
+         if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
+            raise DataError(
+                "Unrecognized blinding strategy. Accepted strategies "
+                f"are {ACCEPTED_BLINDING_STRATEGIES}. "
+                f"Found '{self.blinding}'")
 
         # set blinding strategy
         Forest.blinding = self.blinding
