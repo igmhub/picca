@@ -640,7 +640,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             chi2_list = []
             ndata_list = []
             accepted_fit = []
-            for los_id, cont_fit in self.continuum_fit_parameters.items():
+            for los_id in sorted(self.continuum_fit_parameters):
+                cont_fit = self.continuum_fit_parameters.get(los_id)
                 los_id_list.append(los_id)
                 zero_point_list.append(cont_fit[0])
                 slope_list.append(cont_fit[1])
