@@ -49,7 +49,7 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     The reason why the continuum could not be computed. None when there were
     no problems
 
-    continuum_fit_parameters: (float, float, float)
+    continuum_fit_parameters: (float, float, float, int)
     The zero-point and the slope used in the linear part of the continuum model,
     the chi2 of the fit, and the number of datapoints used in the fit.
     """

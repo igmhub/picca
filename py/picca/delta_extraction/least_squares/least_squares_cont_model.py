@@ -24,6 +24,9 @@ class LeastsSquaresContModel:
     mean_cont_kwargs: dict
     kwargs passed to get_continuum_model
 
+    ndata: int
+    Number of datapoints used in the fit
+
     weights_kwargs: dict
     kwargs passed to get_continuum_weights
     """
