@@ -113,7 +113,7 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
         cont_model = None
         continuum_fit_parameters = (np.nan,
                                     np.nan,
-                                    np.nan, 
+                                    np.nan,
                                     leasts_squares.get_ndata())
 
     return cont_model, bad_continuum_reason, continuum_fit_parameters
