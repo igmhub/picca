@@ -25,27 +25,30 @@ from picca.pk1d.utils import MEANPK_FITRANGE_SNR
 def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     """Read Pk1D data from a single file
 
-    Arguments:
-    ----------
+    Arguments
+    ---------
     filename: string
     Fits file, containing individual "P1D" for each chunk
 
     kbin_edges: array of floats
     Edges of the wavenumber bins to be later used, in Angstrom^-1
 
-    snrcut: array of floats - Default: None
+    snrcut: array of floats or None
     Chunks with mean SNR > snrcut are discarded. If len(snrcut)>1,
     zbins_snrcut must be set, so that the cut is made redshift dependent.
 
-    zbins_snrcut: array of floats - Default: None
+    zbins_snrcut: array of floats or None
     Required if len(snrcut)>1. List of redshifts
     associated to the list of snr cuts.
 
     Return:
     -------
-    p1d_table: Table, one entry per mode(k) per chunk
-    z_array: array[Nchunks]
-    If no chunk is selected, returns None
+    p1d_table: Table
+    One entry per mode(k) per chunk
+
+    z_array: array of floats
+    Nchunks entry.
+    If no chunk is selected, None will be returned instead
     """
 
     p1d_table = []
@@ -109,8 +112,8 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                       nomedians=False, velunits=False, output_snrfit=None):
     """Compute mean P1D in a set of given (z,k) bins, from individual chunks P1Ds
 
-    Arguments:
-    ----------
+    Arguments
+    ---------
     p1d_table: Table
     Individual Pk1Ds of the contributing forest chunks, stacked in one table using "read_pk1d",
     Contains 'k', 'Pk_raw', 'Pk_noise', 'Pk_diff', 'cor_reso', 'Pk', 'forest_z', 'forest_snr',
@@ -119,24 +122,26 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
     z_array: Array of floats
     Mean z of each contributing chunk, stacked in one array using "read_pk1d"
 
-    zbin_edges: Array of floats, Edges of the redshift bins we want to use
+    zbin_edges: Array of floats
+    Edges of the redshift bins we want to use
 
     kbin_edges: Array of floats
     Edges of the wavenumber bins we want to use, either in (Angstrom)-1 or s/km
 
-    weight_method: String, 3 possible options:
+    weight_method: string
+    3 possible options:
         'fit_snr': Compute mean P1D with weights estimated by fitting dispersion vs SNR
-        'simple_snr': Compute mean P1D with weights computed directly from SNR values
-                    (SNR as given in compute_Pk1D outputs)
         'no_weights': Compute mean P1D without weights
+        'simple_snr' (obsolete): Compute mean P1D with weights computed directly from SNR values
+                    (SNR as given in compute_Pk1D outputs)
 
-    nomedians: Bool - Default: False
+    nomedians: Bool
     Skip computation of median quantities
 
-    velunits: Bool - Default: False
+    velunits: Bool
     Compute P1D in velocity units by converting k on-the-fly from AA-1 to s/km
 
-    output_snrfit: string - Default: None
+    output_snrfit: string
     If weight_method='fit_snr', the results of the fit can be saved to an ASCII file.
     The file contains (z k a b standard_dev_points) for the "Pk" variable, for each (z,k) point
 
@@ -289,19 +294,22 @@ def run_postproc_pk1d(data_dir, output_file, zbin_edges, kbin_edges,
                       nomedians=False, velunits=False, overwrite=False, ncpu=8):
     """Read individual Pk1D data from a set of files and compute P1D statistics, stored in a summary FITS file.
 
-    Arguments:
-    ----------
-    data_dir: string, Directory where individual P1D FITS files are located
+    Arguments
+    ---------
+    data_dir: string
+    Directory where individual P1D FITS files are located
 
-    output_file: string, Output file name
+    output_file: string
+    Output file name
 
-    overwrite: Bool - default: False
+    overwrite: Bool
     Overwrite output file if existing
 
-    ncpu: int - default: 8
+    ncpu: int
     The I/O function read_pk1d() is run parallel
 
-    other args: As defined in compute_mean_pk1d() or read_pk1d()
+    Other arguments are as defined
+    in compute_mean_pk1d() or read_pk1d()
     """
 
     if os.path.exists(output_file) and not overwrite:
