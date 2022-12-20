@@ -106,7 +106,8 @@ def split_forest(num_parts,
         if exposures_diff is not None:
             exposures_diff_array.append(exposures_diff[selection].copy())
         else:  # fill exposures_diff_array with zeros
-            exposures_diff_array.append(np.zeros(len(delta[selection])))
+            userprint('WARNING: exposure_diff is None, filling with zeros.')
+            exposures_diff_array.append(np.zeros(delta[selection].shape))
         ivar_array.append(ivar[selection].copy())
         if reso_matrix is not None:
             reso_matrix_array.append(reso_matrix_part)
