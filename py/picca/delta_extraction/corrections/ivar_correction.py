@@ -66,9 +66,8 @@ class IvarCorrection(Correction):
             eta = hdu['eta']
         except OSError as error:
             raise CorrectionError(
-                "Error loading IvarCorrection. "
-                f"File {filename} does not have extension "
-                "'VAR_FUNC'"
+                "Error loading CalibrationCorrection. "
+                f"Failed to find or open file {filename}"
             ) from error
         except ValueError as error:
             raise CorrectionError(
