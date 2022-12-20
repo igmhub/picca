@@ -3,6 +3,7 @@ package"""
 import importlib
 import logging
 import os
+import sys
 
 from numba import njit
 import numpy as np
@@ -248,7 +249,7 @@ def setup_logger(logging_level_console=logging.DEBUG,
     formatter = logging.Formatter('[%(levelname)s]: %(message)s')
 
     # create console handler to logs messages
-    console_handler = logging.StreamHandler()
+    console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging_level_console)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
