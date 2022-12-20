@@ -229,6 +229,11 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                         return (a/(snr-1)**2) + b
                     data_values = p1d_table[c][select]
                     data_snr = p1d_table['forest_snr'][select]
+                    mask = np.isnan(data_values)
+                    if len(mask[mask]) != 0:
+                        userprint('Warning: A nan value was detected in the following table:\n', data_values[mask])                       
+                        data_snr = data_snr[~mask]
+                        data_values = data_values[~mask]
                     # Fit function to observed dispersion:
                     standard_dev,_,_ = binned_statistic(data_snr, data_values,
                                                                  statistic='std', bins=snr_bin_edges)
@@ -238,7 +243,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                     data_snr[ data_snr<1.01] = 1.01
                     variance_estimated = variance_function(data_snr, *coef)
                     weights = 1. / variance_estimated
-                    mean = np.average((p1d_table[c][select]), weights=weights)
+                    mean = np.average(data_values, weights=weights)
                     error = np.sqrt(1. / np.sum(weights))
                     if output_snrfit is not None and c=='Pk':
                         snrfit_table[index, 0:4] = [zbin_centers[izbin], (kbin+kbin_edges[ikbin+1])/2.,
