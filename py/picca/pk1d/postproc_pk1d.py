@@ -19,6 +19,8 @@ from astropy.table import Table, vstack
 from picca.constants import SPEED_LIGHT
 from picca.constants import ABSORBER_IGM
 from picca.utils import userprint
+from picca.pk1d.utils import MEANPK_FITRANGE_SNR
+
 
 def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     """Read Pk1D data from a single file
@@ -216,7 +218,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                     continue
 
                 if weight_method=='fit_snr':
-                    snr_bin_edges = np.arange(1,11,1)  # 9 SNR bins are used for the fit
+                    snr_bin_edges = np.arange(MEANPK_FITRANGE_SNR[0], MEANPK_FITRANGE_SNR[1]+1, 1)
                     snr_bins = (snr_bin_edges[:-1]+snr_bin_edges[1:])/2
                     def variance_function(snr, a, b):
                         return (a/(snr-1)**2) + b
@@ -227,7 +229,7 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                                                                  statistic='std', bins=snr_bin_edges)
                     coef, coef_cov = curve_fit(variance_function, snr_bins, standard_dev**2, bounds=(0,np.inf))
                     # Model variance from fit function
-                    data_snr[data_snr>11] = 11
+                    data_snr[ data_snr>MEANPK_FITRANGE_SNR[1] ] = MEANPK_FITRANGE_SNR[1]
                     data_snr[ data_snr<1.01] = 1.01
                     variance_estimated = variance_function(data_snr, *coef)
                     weights = 1. / variance_estimated
@@ -239,7 +241,8 @@ def compute_mean_pk1d(p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
                         snrfit_table[index, 4:] = standard_dev
 
                 elif weight_method=='simple_snr':
-                    # for forests with snr>snr_limit (hardcoded to 4 as of now), 
+                    #- We keep this for record, we do not recommand to use it
+                    # for forests with snr>snr_limit,
                     # the weight is fixed to (snr_limit - 1)**2 = 9
                     snr_limit = 4 
                     forest_snr = p1d_table['forest_snr'][select]

@@ -5,7 +5,7 @@
 import sys, os, argparse
 import numpy as np
 import fitsio
-from picca.pk1d import postproc_pk1d, postproc_pk1d_oldoutput
+from picca.pk1d import postproc_pk1d, utils
 
 
 def define_wavenumber_array(k_min, k_max, k_dist, velunits, pixsize, rebinfac):
@@ -14,17 +14,16 @@ def define_wavenumber_array(k_min, k_max, k_dist, velunits, pixsize, rebinfac):
         and a forest defined between 1050 and 1200 Angstrom.
         Default velocity binning with same number of pixels"""
 
-    k_min_lin_default = 2 * np.pi / ((1200 - 1050) * (1 + 3.4) / rebinfac)
+    k_min_lin_default = utils.DEFAULT_K_MIN_LIN * rebinfac
     k_max_lin_default = np.pi / pixsize
-    nb_k_bin_lin = int(k_max_lin_default / k_min_lin_default / 4)
-    k_dist_lin_default = (k_max_lin_default - k_min_lin_default) / nb_k_bin_lin
+    nb_k_bins = int(k_max_lin_default / k_min_lin_default / utils.DEFAULT_K_BINNING_FACTOR)
+    k_dist_lin_default = (k_max_lin_default - k_min_lin_default) / nb_k_bins
 
-    k_min_vel_default = 0.000813
-    k_dist_vel_default = 0.000542 * rebinfac
-    k_max_vel_default = k_min_vel_default + nb_k_bin_lin * k_dist_vel_default
+    k_dist_vel_default = utils.DEFAULT_K_BIN_VEL * rebinfac
+    k_max_vel_default = utils.DEFAULT_K_MIN_VEL + nb_k_bins * k_dist_vel_default
 
     if velunits:
-        if k_min is None: k_min = k_min_vel_default
+        if k_min is None: k_min = utils.DEFAULT_K_MIN_VEL
         if k_max is None: k_max = k_max_vel_default
         if k_dist is None: k_dist = k_dist_vel_default
     else:
@@ -157,12 +156,6 @@ def main(cmdargs):
                         required=False,
                         help='Skip computation of median quantities')
 
-    parser.add_argument('--old-output',
-                        action='store_true',
-                        default=False,
-                        required=False,
-                        help='Output the older version of the average P1D')
-
     parser.add_argument('--ncpu',
                         type=int,
                         default=8,
@@ -197,51 +190,29 @@ def main(cmdargs):
                                                                args.velunits,
                                                                args.pixsize,
                                                                args.rebinfac)
-
-
     k_edges = np.arange(kedge_min, kedge_max, kedge_bin)
     z_edges = np.around(np.arange(args.zedge_min, args.zedge_max, args.zedge_bin), 5)
 
-    if args.old_output:
-        if args.output_file is None:
-            med_ext = "" if args.no_median else "_medians"
-            snr_ext = "_snr_cut" if snrcut is not None else ""
-            vel_ext = "_vel" if args.velunits else ""
-            output_file = os.path.join(args.in_dir,
-                    f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
-        else:
-            output_file = args.output_file
-        postproc_pk1d_oldoutput.run_postproc_pk1d(args.in_dir, output_file,
-                                        z_edges,
-                                        k_edges,
-                                        weight_method=args.weight_method,
-                                        snrcut=snrcut,
-                                        zbins_snrcut=zbins_snrcut,
-                                        nomedians=args.no_median,
-                                        velunits=args.velunits,
-                                        overwrite=args.overwrite,
-                                        ncpu = args.ncpu)
-
+    if args.output_file is None:
+        med_ext = "" if args.no_median else "_medians"
+        snr_ext = "_snr_cut" if snrcut is not None else ""
+        vel_ext = "_vel" if args.velunits else ""
+        output_file = os.path.join(args.in_dir,
+                f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
     else:
-        if args.output_file is None:
-            med_ext = "" if args.no_median else "_medians"
-            snr_ext = "_snr_cut" if snrcut is not None else ""
-            vel_ext = "_vel" if args.velunits else ""
-            output_file = os.path.join(args.in_dir,
-                    f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
-        else:
-            output_file = args.output_file
-        postproc_pk1d.run_postproc_pk1d(args.in_dir, output_file,
-                                        z_edges,
-                                        k_edges,
-                                        weight_method=args.weight_method,
-                                        output_snrfit=args.output_snrfit,
-                                        snrcut=snrcut,
-                                        zbins_snrcut=zbins_snrcut,
-                                        nomedians=args.no_median,
-                                        velunits=args.velunits,
-                                        overwrite=args.overwrite,
-                                        ncpu = args.ncpu)
+        output_file = args.output_file
+
+    postproc_pk1d.run_postproc_pk1d(args.in_dir, output_file,
+                                    z_edges,
+                                    k_edges,
+                                    weight_method=args.weight_method,
+                                    output_snrfit=args.output_snrfit,
+                                    snrcut=snrcut,
+                                    zbins_snrcut=zbins_snrcut,
+                                    nomedians=args.no_median,
+                                    velunits=args.velunits,
+                                    overwrite=args.overwrite,
+                                    ncpu = args.ncpu)
 
 
 if __name__ == '__main__':
