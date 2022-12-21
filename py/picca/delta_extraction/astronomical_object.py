@@ -14,7 +14,7 @@ class AstronomicalObject:
     -------------
     get_metadata_dtype
     get_metadata_units
-    
+
     Methods
     -------
     __init__
