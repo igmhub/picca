@@ -17,8 +17,8 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
 from picca.delta_extraction.utils import (
     ACCEPTED_BLINDING_STRATEGIES, UNBLINDABLE_STRATEGIES)
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
-from picca.delta_extraction.utils import update_accepted_options, update_default_options
-
+from picca.delta_extraction.utils import (
+    ABSORBER_IGM, update_accepted_options, update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(
@@ -180,13 +180,13 @@ class DesiData(Data):
         is_mock: boolean
         True if reading mocks, False otherwise
         """
-        # blinding checks
+        # do not blind mocks
         if is_mock:
-            if self.blinding != "none":  # pragma: no branch
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as mocks should not be "
-                                    "blinded. 'none' blinding engaged")
-                self.blinding = "none"
+            self.blinding = "none"
+        # do not blind metal forests (not lya)
+        elif Forest.log_lambda_rest_frame_grid[0] > ABSORBER_IGM["LYA"]:
+            self.blinding = "none"
+        # figure out blinding
         else:
             if all(self.catalogue["LASTNIGHT"] < 20210514):
                 # sv data, no blinding
