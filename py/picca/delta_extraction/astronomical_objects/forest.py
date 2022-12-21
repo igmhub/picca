@@ -231,15 +231,23 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
 class Forest(AstronomicalObject):
     """Forest Object
 
+    Class Methods
+    -------------
+    (see AstronomicalObject in py/picca/delta_extraction/astronomical_objects/forest.py)
+    class_variable_check
+    get_metadata_dtype
+    get_metadata_units
+    set_class_variables
+
     Methods
     -------
     (see AstronomicalObject in py/picca/delta_extraction/astronomical_object.py)
     __init__
-    class_variable_check
     consistency_check
     coadd
     get_data
     get_header
+    get_metadata
     rebin
     set_class_variables
 

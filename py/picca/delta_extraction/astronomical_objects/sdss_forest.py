@@ -5,12 +5,19 @@ from picca.delta_extraction.errors import AstronomicalObjectError
 class SdssForest(Forest):
     """Forest Object
 
+    Class Methods
+    -------------
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
+    get_metadata_dtype
+    get_metadata_units
+
     Methods
     -------
     (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
     __init__
     coadd
     get_header
+    get_metadata
 
     Class Attributes
     ----------------

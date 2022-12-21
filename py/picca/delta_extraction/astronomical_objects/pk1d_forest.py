@@ -10,12 +10,22 @@ from picca.delta_extraction.errors import AstronomicalObjectError
 class Pk1dForest(Forest):
     """Forest Object
 
+    Class Methods
+    -------------
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
+    class_variable_check
+    get_metadata_dtype
+    get_metadata_units
+
     Methods
     -------
     (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
     __init__
-    class_variable_check
     consistency_check
+    coadd
+    get_data
+    get_header
+    get_metadata
     rebin
 
     Class Attributes

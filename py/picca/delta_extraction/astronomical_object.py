@@ -10,12 +10,18 @@ from picca.delta_extraction.errors import AstronomicalObjectError
 class AstronomicalObject:
     """Base class from which all astronomical ojects must inherit.
 
+    Class Methods
+    -------------
+    get_metadata_dtype
+    get_metadata_units
+    
     Methods
     -------
     __init__
     __gt__
     __eq__
     get_header
+    get_metadata
 
     Attributes
     ----------
