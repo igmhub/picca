@@ -355,6 +355,19 @@ class ExpectedFlux:
                       names=['loglam_rest', 'mean_cont', 'weight'],
                       extname='CONT')
 
+    # this method should use self in child classes
+    def hdu_fit_metadata(self, results):  # pylint: disable=no-self-use
+        """Add to the results file an HDU with the fits results
+
+        This function is a placeholder here and should be overloaded by child
+        classes if they require it
+
+        Arguments
+        ---------
+        results: fitsio.FITS
+        The open fits file
+        """
+
     def hdu_stack_deltas(self, results):
         """Add to the results file an HDU with the delta stack
 
@@ -408,3 +421,4 @@ class ExpectedFlux:
             self.hdu_stack_deltas(results)
             self.hdu_var_func(results)
             self.hdu_cont(results)
+            self.hdu_fit_metadata(results)
