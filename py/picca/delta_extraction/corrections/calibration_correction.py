@@ -64,8 +64,7 @@ class CalibrationCorrection(Correction):
         except OSError as error:
             raise CorrectionError(
                 "Error loading CalibrationCorrection. "
-                f"File {filename} does not have extension "
-                "'STACK_DELTAS'"
+                f"Failed to find or open file {filename}"
             ) from error
         except ValueError as error:
             raise CorrectionError(

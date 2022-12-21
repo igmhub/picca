@@ -12,7 +12,7 @@ from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.config import default_config
 from picca.delta_extraction.data import Data
 from picca.delta_extraction.data import defaults as defaults_data
-from picca.delta_extraction.data import accepted_analysis_type
+from picca.delta_extraction.data import accepted_analysis_type, accepted_save_format
 from picca.delta_extraction.data_catalogues.desi_data import DesiData
 from picca.delta_extraction.data_catalogues.desi_data import defaults as defaults_desi_data
 from picca.delta_extraction.data_catalogues.desi_data import accepted_options as accepted_options_desi_data
@@ -465,6 +465,53 @@ class DataTest(AbstractTest):
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
+        # create a Data instance with missing save format
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "input directory": f"{THIS_DIR}/data",
+            "minimum number pixels in forest": 50,
+            "num processors": 1,
+            "out dir": f"{THIS_DIR}/results",
+            "rejection log file": "rejection_log.fits.gz",
+        }})
+        expected_message = (
+            "Missing argument 'save format' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with invalid save format
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "input directory": f"{THIS_DIR}/data",
+            "minimum number pixels in forest": 50,
+            "num processors": 1,
+            "out dir": f"{THIS_DIR}/results",
+            "rejection log file": "rejection_log.fits.gz",
+            "save format": "InvalidFormat",
+        }})
+        expected_message = (
+            "Invalid argument 'save format' required by Data. Found: 'InvalidFormat'. Accepted values: " + ",".join(accepted_save_format)
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
         # create a Data instance with missing minimal snr bao3d
         config = ConfigParser()
         config.read_dict({"data": {
@@ -480,6 +527,7 @@ class DataTest(AbstractTest):
             "num processors": 1,
             "out dir": f"{THIS_DIR}/results",
             "rejection log file": "rejection_log.fits.gz",
+            "save format": "BinTableHDU",
         }})
         expected_message = (
             "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
@@ -506,6 +554,7 @@ class DataTest(AbstractTest):
             "num processors": 1,
             "out dir": f"{THIS_DIR}/results",
             "rejection log file": "rejection_log.fits.gz",
+            "save format": "BinTableHDU",
         }})
         expected_message = (
             "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
@@ -554,9 +603,9 @@ class DataTest(AbstractTest):
         # filter forests
         data.filter_forests()
         self.assertTrue(len(data.forests) == 0)
-        self.assertTrue(len(data.rejection_log_cols[0]) == 1)
-        self.assertTrue(len(data.rejection_log_cols[1]) == 1)
-        self.assertTrue(data.rejection_log_cols[1][0] == "nan_forest")
+        self.assertTrue(len(data.rejection_log.cols[0]) == 1)
+        self.assertTrue(len(data.rejection_log.cols[1]) == 1)
+        self.assertTrue(data.rejection_log.cols[1][0] == "nan_forest")
 
         # create Data instance with insane forest length requirements
         config = ConfigParser()
@@ -581,9 +630,9 @@ class DataTest(AbstractTest):
         # filter forests
         data.filter_forests()
         self.assertTrue(len(data.forests) == 0)
-        self.assertTrue(len(data.rejection_log_cols[0]) == 1)
-        self.assertTrue(len(data.rejection_log_cols[1]) == 1)
-        self.assertTrue(data.rejection_log_cols[1][0] == "short_forest")
+        self.assertTrue(len(data.rejection_log.cols[0]) == 1)
+        self.assertTrue(len(data.rejection_log.cols[1]) == 1)
+        self.assertTrue(data.rejection_log.cols[1][0] == "short_forest")
 
         # create Data instance with insane forest s/n requirements
         config = ConfigParser()
@@ -608,9 +657,9 @@ class DataTest(AbstractTest):
         # filter forests
         data.filter_forests()
         self.assertTrue(len(data.forests) == 0)
-        self.assertTrue(len(data.rejection_log_cols[0]) == 1)
-        self.assertTrue(len(data.rejection_log_cols[1]) == 1)
-        self.assertTrue(data.rejection_log_cols[1][0] == f"low SNR ({forest1.mean_snr})")
+        self.assertTrue(len(data.rejection_log.cols[0]) == 1)
+        self.assertTrue(len(data.rejection_log.cols[1]) == 1)
+        self.assertTrue(data.rejection_log.cols[1][0] == f"low SNR ({forest1.mean_snr})")
 
     def test_desi_data(self):
         """Test DesiData
@@ -661,7 +710,7 @@ class DataTest(AbstractTest):
         config = ConfigParser()
         config.read_dict({"data": {
                         }})
-        expected_message = "Missing argument 'blinding' required by DesiData"
+        expected_message = "Missing argument 'unblind' required by DesiData"
         with self.assertRaises(DataError) as context_manager:
             data._DesiData__parse_config(config["data"])
         self.compare_error_message(context_manager, expected_message)
@@ -669,7 +718,7 @@ class DataTest(AbstractTest):
         # run __parse_config with missing 'use_non_coadded_spectra'
         config = ConfigParser()
         config.read_dict({"data": {
-            "blinding": "none",
+            "unblind": "True",
                         }})
         expected_message = (
             "Missing argument 'use non-coadded spectra' required by DesiData"
@@ -689,15 +738,6 @@ class DataTest(AbstractTest):
             if key in accepted_options_desi_data and key not in config["data"]:
                 config["data"][key] = str(value)
         data._DesiData__parse_config(config["data"])
-
-        # check loading with the wrong blinding
-        config["data"]["blinding"] = "invalid"
-        expected_message = (
-            "Unrecognized blinding strategy. Accepted strategies "
-            f"are {ACCEPTED_BLINDING_STRATEGIES}. Found 'invalid'")
-        with self.assertRaises(DataError) as context_manager:
-            data._DesiData__parse_config(config["data"])
-        self.compare_error_message(context_manager, expected_message)
 
     def test_desi_data_set_blinding(self):
         """Test method set_blinding of DesiData"""
@@ -719,7 +759,7 @@ class DataTest(AbstractTest):
         data = DesiHealpix(config["data"])
         self.assertTrue(data.blinding == "none")
 
-        # create a DesiData instance with sv data only and blinding = corr_yshift
+        # create a DesiData instance with sv data only and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
         config.read_dict({"data": {
@@ -728,7 +768,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
             "num processors": 1,
-            "blinding": "corr_yshift",
+            "blinding": "desi_m2",
         }})
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
@@ -753,9 +793,9 @@ class DataTest(AbstractTest):
                 config["data"][key] = str(value)
 
         data = DesiHealpix(config["data"])
-        self.assertTrue(data.blinding == "corr_yshift")
+        self.assertTrue(data.blinding == "none")
 
-        # create a DesiData instance with main data and blinding = corr_yshift
+        # create a DesiData instance with main data and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
         config.read_dict({"data": {
@@ -764,16 +804,16 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
             "num processors": 1,
-            "blinding": "corr_yshift",
+            "blinding": "desi_m2",
         }})
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
         data = DesiHealpix(config["data"])
-        self.assertTrue(data.blinding == "corr_yshift")
+        self.assertTrue(data.blinding == "none")
 
-        # create a DesiData instance with mock data and blinding = corr_yshift
+        # create a DesiData instance with mock data and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesisimMocks instance
         config = ConfigParser()
         config.read_dict({"data": {
@@ -781,6 +821,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
             "num processors": 1,
+            "blinding": "desi_m2",
         }})
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
@@ -797,6 +838,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
             "num processors": 1,
+            "blinding": "none",
         }})
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
@@ -890,9 +932,10 @@ class DataTest(AbstractTest):
             "minimum number pixels in forest": 50,
             "rejection log file": "rejection.fits",
             "minimal snr bao3d": 0.0,
+            "save format": "BinTableHDU",
         }})
         expected_message = (
-            "Missing argument 'blinding' required by DesiData"
+            "Missing argument 'unblind' required by DesiData"
         )
         with self.assertRaises(DataError) as context_manager:
             DesiHealpix(config["data"])

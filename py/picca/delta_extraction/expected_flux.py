@@ -229,8 +229,7 @@ class ExpectedFlux:
             fill_value=0.0,
             bounds_error=False)
 
-    # this method should use self in child classes
-    def compute_expected_flux(self, forests):  # pylint: disable=no-self-use
+    def compute_expected_flux(self, forests):
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
         computed iteratively following as explained in du Mas des Bourboux et
@@ -297,8 +296,7 @@ class ExpectedFlux:
                                              fill_value=0.0,
                                              bounds_error=False)
 
-    # this method should use self in child classes
-    def compute_forest_variance(self, forest, continuum):  # pylint: disable=no-self-use
+    def compute_forest_variance(self, forest, continuum):
         """Compute the forest variance
 
         Arguments
@@ -355,6 +353,18 @@ class ExpectedFlux:
                       names=['loglam_rest', 'mean_cont', 'weight'],
                       extname='CONT')
 
+    def hdu_fit_metadata(self, results):
+        """Add to the results file an HDU with the fits results
+
+        This function is a placeholder here and should be overloaded by child
+        classes if they require it
+
+        Arguments
+        ---------
+        results: fitsio.FITS
+        The open fits file
+        """
+
     def hdu_stack_deltas(self, results):
         """Add to the results file an HDU with the delta stack
 
@@ -376,8 +386,7 @@ class ExpectedFlux:
                       header=header,
                       extname='STACK_DELTAS')
 
-    # this method should use self in child classes
-    def hdu_var_func(self, results):  # pylint: disable=no-self-use
+    def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
 
         This function is a placeholder here and should be overloaded by child
@@ -408,3 +417,4 @@ class ExpectedFlux:
             self.hdu_stack_deltas(results)
             self.hdu_var_func(results)
             self.hdu_cont(results)
+            self.hdu_fit_metadata(results)

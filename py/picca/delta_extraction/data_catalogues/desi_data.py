@@ -14,20 +14,21 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     accepted_options as accepted_options_quasar_catalogue)
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     defaults as defaults_quasar_catalogue)
-from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
+from picca.delta_extraction.utils import (
+    ACCEPTED_BLINDING_STRATEGIES, UNBLINDABLE_STRATEGIES)
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
-from picca.delta_extraction.utils import update_accepted_options, update_default_options
-
+from picca.delta_extraction.utils import (
+    ABSORBER_IGM, update_accepted_options, update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(
     accepted_options,
-    ["blinding", "use non-coadded spectra", "wave solution"])
+    ["unblind", "use non-coadded spectra", "wave solution"])
 
 defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
-    "blinding": "corr_yshift",
+    "unblind": False,
     "use non-coadded spectra": False,
     "wave solution": "lin",
 })
@@ -104,7 +105,7 @@ class DesiData(Data):
         super().__init__(config)
 
         # load variables from config
-        self.blinding = None
+        self.unblind = None
         self.use_non_coadded_spectra = None
         self.__parse_config(config)
 
@@ -118,12 +119,13 @@ class DesiData(Data):
         # read data
         t0 = time.time()
         self.logger.progress("Reading data")
-        is_mock, is_sv = self.read_data()
+        is_mock = self.read_data()
         t1 = time.time()
         self.logger.progress(f"Time spent reading data: {t1-t0}")
 
         # set blinding
-        self.set_blinding(is_mock, is_sv)
+        self.blinding = None
+        self.set_blinding(is_mock)
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -138,14 +140,9 @@ class DesiData(Data):
         DataError upon missing required variables
         """
         # instance variables
-        self.blinding = config.get("blinding")
-        if self.blinding is None:
-            raise DataError("Missing argument 'blinding' required by DesiData")
-        if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
-            raise DataError(
-                "Unrecognized blinding strategy. Accepted strategies "
-                f"are {ACCEPTED_BLINDING_STRATEGIES}. "
-                f"Found '{self.blinding}'")
+        self.unblind = config.getboolean("unblind")
+        if self.unblind is None:
+            raise DataError("Missing argument 'unblind' required by DesiData")
 
         self.use_non_coadded_spectra = config.getboolean(
             "use non-coadded spectra")
@@ -154,8 +151,6 @@ class DesiData(Data):
                 "Missing argument 'use non-coadded spectra' required by DesiData"
             )
 
-    # pylint: disable=no-self-use
-    # this method should use self in child classes
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
 
@@ -166,9 +161,6 @@ class DesiData(Data):
         is_mock: bool
         True if mocks are read, False otherwise
 
-        is_sv: bool
-        True if all the read data belong to SV. False otherwise
-
         Raise
         -----
         DataError if no quasars were found
@@ -176,7 +168,7 @@ class DesiData(Data):
         raise DataError(
             "Function 'read_data' was not overloaded by child class")
 
-    def set_blinding(self, is_mock, is_sv):
+    def set_blinding(self, is_mock):
         """Set the blinding in Forest.
 
         Update the stored value if necessary.
@@ -185,30 +177,38 @@ class DesiData(Data):
         ----------
         is_mock: boolean
         True if reading mocks, False otherwise
-
-        is_sv: boolean
-        True if reading SV data only, False otherwise
         """
-        # blinding checks
+        # do not blind mocks
         if is_mock:
-            if self.blinding != "none":  # pragma: no branch
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as mocks should not be "
-                                    "blinded. 'none' blinding engaged")
-                self.blinding = "none"
-        elif is_sv:
-            if self.blinding != "none":
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as SV data should not be "
-                                    "blinded. 'none' blinding engaged")
-                self.blinding = "none"
-        # TODO: remove this when we are ready to unblind
+            self.blinding = "none"
+        # do not blind metal forests (not lya)
+        elif Forest.log_lambda_rest_frame_grid[0] > ABSORBER_IGM["LYA"]:
+            self.blinding = "none"
+        # figure out blinding
         else:
-            if self.blinding != "corr_yshift":
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as data should be blinded. "
-                                    "'corr_yshift' blinding engaged")
-                self.blinding = "corr_yshift"
+            if all(self.catalogue["LASTNIGHT"] < 20210514):
+                # sv data, no blinding
+                self.blinding = "none"
+            elif all(self.catalogue["LASTNIGHT"] < 20210801):
+                self.blinding = "desi_m2"
+            elif all(self.catalogue["LASTNIGHT"] < 20220801):
+                self.blinding = "desi_y1"
+            else:
+                self.blinding = "desi_y3"
+
+            if self.unblind:
+                if self.blinding not in UNBLINDABLE_STRATEGIES:
+                    raise DataError(
+                        "In DesiData: Requested unblinding but data requires blinding strategy "
+                        f"{self.blinding} and this strategy do not support "
+                        "unblinding. If you believe this is an error, contact "
+                        "picca developers")
+
+        if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
+            raise DataError(
+                "Unrecognized blinding strategy. Accepted strategies "
+                f"are {ACCEPTED_BLINDING_STRATEGIES}. "
+                f"Found '{self.blinding}'")
 
         # set blinding strategy
         Forest.blinding = self.blinding
@@ -398,8 +398,6 @@ class DesiDataFileHandler():
                 num_data += 1
         return forests_by_targetid, num_data
 
-    # pylint: disable=no-self-use
-    # this method should use self in child classes
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
 

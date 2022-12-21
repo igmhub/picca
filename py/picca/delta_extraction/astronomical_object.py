@@ -6,8 +6,14 @@ import numpy as np
 
 from picca.delta_extraction.errors import AstronomicalObjectError
 
+
 class AstronomicalObject:
     """Base class from which all astronomical ojects must inherit.
+
+    Class Methods
+    -------------
+    get_metadata_dtype
+    get_metadata_units
 
     Methods
     -------
@@ -15,6 +21,7 @@ class AstronomicalObject:
     __gt__
     __eq__
     get_header
+    get_metadata
 
     Attributes
     ----------
@@ -33,6 +40,7 @@ class AstronomicalObject:
     z: float
     Redshift
     """
+
     def __init__(self, **kwargs):
         """Initialize instance
 
@@ -47,23 +55,27 @@ class AstronomicalObject:
         """
         self.dec = kwargs.get("dec")
         if self.dec is None:
-            raise AstronomicalObjectError("Error constructing AstronomicalObject. "
-                                          "Missing variable 'dec'")
+            raise AstronomicalObjectError(
+                "Error constructing AstronomicalObject. "
+                "Missing variable 'dec'")
 
         self.los_id = kwargs.get("los_id")
         if self.los_id is None:
-            raise AstronomicalObjectError("Error constructing AstronomicalObject. "
-                                          "Missing variable 'los_id'")
+            raise AstronomicalObjectError(
+                "Error constructing AstronomicalObject. "
+                "Missing variable 'los_id'")
 
         self.ra = kwargs.get("ra")
         if self.ra is None:
-            raise AstronomicalObjectError("Error constructing AstronomicalObject. "
-                                          "Missing variable 'ra'")
+            raise AstronomicalObjectError(
+                "Error constructing AstronomicalObject. "
+                "Missing variable 'ra'")
 
         self.z = kwargs.get("z")
         if self.z is None:
-            raise AstronomicalObjectError("Error constructing AstronomicalObject. "
-                                          "Missing variable 'z'")
+            raise AstronomicalObjectError(
+                "Error constructing AstronomicalObject. "
+                "Missing variable 'z'")
 
         self.healpix = healpy.ang2pix(16, np.pi / 2 - self.dec, self.ra)
 
@@ -140,3 +152,40 @@ class AstronomicalObject:
         ]
 
         return header
+
+    def get_metadata(self):
+        """Return line-of-sight data as a list. Names and types of the variables
+        are given by AstronomicalObject.get_metadata_dtype. Units are given by
+        AstronomicalObject.get_metadata_units
+
+        Return
+        ------
+        metadata: list
+        A list containing the line-of-sight data
+        """
+        return [self.los_id, self.ra, self.dec, self.z]
+
+    @classmethod
+    def get_metadata_dtype(cls):
+        """Return the types and names of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_dtype: list
+        A list with tuples containing the name and data type of the line-of-sight
+        data
+        """
+        return [('LOS_ID', int), ('RA', float), ('DEC', float), ('Z', float)]
+
+    @classmethod
+    def get_metadata_units(cls):
+        """Return the units of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_units: list
+        A list with the units of the line-of-sight data
+        """
+        return ["", "DEGREES", "DEGREES", ""]
