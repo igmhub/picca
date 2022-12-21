@@ -37,12 +37,15 @@ class data:
         if 'BLINDING' in head:
             self._blinding = head["BLINDING"]
 
-        if self._blinding in ["minimal","corr_yshift"]:
+        if self._blinding in ['desi_m2', 'desi_y1']:
             da = h[1]['DA_BLIND'][:]
             dm = csr_matrix(h[1]['DM_BLIND'][:])
         elif self._blinding == "none":
             da = h[1]['DA'][:]
             dm = csr_matrix(h[1]['DM'][:])
+        elif self._blinding == 'desi_y3':
+            raise ValueError("Running on DESI Y3 data and fitter2 does not support "
+                             "full-shape blinding. Use Vega instead.")
         else:
             raise ValueError("Unknown blinding strategy",self._blinding)
 
