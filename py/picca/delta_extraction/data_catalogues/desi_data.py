@@ -17,8 +17,8 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
 from picca.delta_extraction.utils import (
     ACCEPTED_BLINDING_STRATEGIES, UNBLINDABLE_STRATEGIES)
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
-from picca.delta_extraction.utils import update_accepted_options, update_default_options
-
+from picca.delta_extraction.utils import (
+    ABSORBER_IGM, update_accepted_options, update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(
