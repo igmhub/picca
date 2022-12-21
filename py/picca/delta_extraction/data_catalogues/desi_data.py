@@ -180,13 +180,13 @@ class DesiData(Data):
         is_mock: boolean
         True if reading mocks, False otherwise
         """
-        # blinding checks
+        # do not blind mocks
         if is_mock:
-            if self.blinding != "none":  # pragma: no branch
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as mocks should not be "
-                                    "blinded. 'none' blinding engaged")
-                self.blinding = "none"
+            self.blinding = "none"
+        # do not blind metal forests (not lya)
+        elif Forest.log_lambda_rest_frame_grid[0] < ABSORBER_IGM["LYA"]:
+            self.blinding = "none"
+        # figure out blinding
         else:
             if all(self.catalogue["LASTNIGHT"] < 20210514):
                 # sv data, no blinding
