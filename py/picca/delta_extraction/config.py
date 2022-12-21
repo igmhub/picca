@@ -614,7 +614,7 @@ class Config:
         ConfigError if the output path was already used and the
         overwrite is not selected
         """
-        if not os.path.exists(self.out_dir):
+        if not os.path.exists(f"{self.out_dir}/.config.ini"):
             os.makedirs(self.out_dir, exist_ok=True)
             os.makedirs(self.out_dir + "Delta/", exist_ok=True)
             os.makedirs(self.out_dir + "Log/", exist_ok=True)
