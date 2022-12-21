@@ -92,24 +92,18 @@ class DesiHealpix(DesiData):
         is_mock: bool
         False for DESI data and True for mocks
 
-        is_sv: bool
-        True if all the read data belong to SV. False otherwise
-
         Raise
         -----
         DataError if no quasars were found
         """
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
 
-        is_sv = True
         is_mock = False
         forests_by_targetid = {}
 
         arguments = []
         for group in grouped_catalogue.groups:
             healpix, survey = group["HEALPIX", "SURVEY"][0]
-            if survey not in ["sv", "sv1", "sv2", "sv3"]:
-                is_sv = False
 
             filename, is_mock_aux = self.get_filename(survey, healpix)
             if is_mock_aux:
@@ -147,7 +141,7 @@ class DesiHealpix(DesiData):
             raise DataError("No quasars found, stopping here")
         self.forests = list(forests_by_targetid.values())
 
-        return is_mock, is_sv
+        return is_mock
 
 
 # Class to read in parallel
