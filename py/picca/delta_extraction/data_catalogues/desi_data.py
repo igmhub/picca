@@ -184,7 +184,7 @@ class DesiData(Data):
         if is_mock:
             self.blinding = "none"
         # do not blind metal forests (not lya)
-        elif Forest.log_lambda_rest_frame_grid[0] < ABSORBER_IGM["LYA"]:
+        elif Forest.log_lambda_rest_frame_grid[0] > ABSORBER_IGM["LYA"]:
             self.blinding = "none"
         # figure out blinding
         else:
