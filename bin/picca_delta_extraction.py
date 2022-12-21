@@ -13,6 +13,7 @@ from picca.delta_extraction.survey import Survey
 
 module_logger = logging.getLogger("picca.delta_extraction")
 
+
 def main(args):
     """Compute delta field"""
     t0 = time.time()
@@ -52,18 +53,21 @@ def main(args):
     module_logger.info(f"Total time ellapsed: {t1-t0}")
     module_logger.info("Done")
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=('Compute the delta field '
                      'from a list of spectra'))
 
-    parser.add_argument('config_file',
+    parser.add_argument(
+        'config_file',
         type=str,
         default=None,
-        help=('Configuration file. To learn about all the available options '
-              'check the configuration tutorial in '
-              '$PICCA/tutorials/delta_extraction/picca_delta_extraction_tutorial.ipynb'
+        help=
+        ('Configuration file. To learn about all the available options '
+         'check the configuration tutorial in '
+         '$PICCA/tutorials/delta_extraction/picca_delta_extraction_tutorial.ipynb'
         ))
 
     args = parser.parse_args()
