@@ -151,8 +151,6 @@ class DesiData(Data):
                 "Missing argument 'use non-coadded spectra' required by DesiData"
             )
 
-    # pylint: disable=no-self-use
-    # this method should use self in child classes
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
 
@@ -400,8 +398,6 @@ class DesiDataFileHandler():
                 num_data += 1
         return forests_by_targetid, num_data
 
-    # pylint: disable=no-self-use
-    # this method should use self in child classes
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
 

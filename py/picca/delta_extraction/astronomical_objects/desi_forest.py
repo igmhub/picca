@@ -130,29 +130,49 @@ class DesiForest(Forest):
         return header
 
     def get_metadata(self):
-        metadata = super().get_metadata()
+        """Return line-of-sight data as a list. Names and types of the variables
+        are given by DesiForest.get_metadata_dtype. Units are given by
+        DesiForest.get_metadata_units
 
+        Return
+        ------
+        metadata: list
+        A list containing the line-of-sight data
+        """
+        metadata = super().get_metadata()
         metadata += [
             self.targetid,
             "-".join(str(night) for night in self.night),
             "-".join(str(petal) for petal in self.petal),
             "-".join(str(tile) for tile in self.tile),
         ]
-
         return metadata
 
     @classmethod
     def get_metadata_dtype(cls):
+        """Return the types and names of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_dtype: list
+        A list with tuples containing the name and data type of the line-of-sight
+        data
+        """
         dtype = super().get_metadata_dtype()
-
         dtype += [('TARGETID', int), ('NIGHT', 'S12'), ('PETAL', 'S12'), ('TILE', 'S12')]
-
         return dtype
 
     @classmethod
     def get_metadata_units(cls):
+        """Return the units of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_units: list
+        A list with the units of the line-of-sight data
+        """
         units = super().get_metadata_units()
-
         units += ["", "", "", ""]
-
         return units

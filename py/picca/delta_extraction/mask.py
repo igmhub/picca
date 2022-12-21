@@ -48,8 +48,6 @@ class Mask:
         else:
             self._masker = _remove_pixels
 
-    # pylint: disable=no-self-use
-    # this method should use self in child classes
     def apply_mask(self, forest):
         """Applies the mask. This function should be
         overloaded with the correct functionallity by any child

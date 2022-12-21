@@ -229,8 +229,7 @@ class ExpectedFlux:
             fill_value=0.0,
             bounds_error=False)
 
-    # this method should use self in child classes
-    def compute_expected_flux(self, forests):  # pylint: disable=no-self-use
+    def compute_expected_flux(self, forests):
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
         computed iteratively following as explained in du Mas des Bourboux et
@@ -297,8 +296,7 @@ class ExpectedFlux:
                                              fill_value=0.0,
                                              bounds_error=False)
 
-    # this method should use self in child classes
-    def compute_forest_variance(self, forest, continuum):  # pylint: disable=no-self-use
+    def compute_forest_variance(self, forest, continuum):
         """Compute the forest variance
 
         Arguments
@@ -355,8 +353,7 @@ class ExpectedFlux:
                       names=['loglam_rest', 'mean_cont', 'weight'],
                       extname='CONT')
 
-    # this method should use self in child classes
-    def hdu_fit_metadata(self, results):  # pylint: disable=no-self-use
+    def hdu_fit_metadata(self, results):
         """Add to the results file an HDU with the fits results
 
         This function is a placeholder here and should be overloaded by child
@@ -389,8 +386,7 @@ class ExpectedFlux:
                       header=header,
                       extname='STACK_DELTAS')
 
-    # this method should use self in child classes
-    def hdu_var_func(self, results):  # pylint: disable=no-self-use
+    def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
 
         This function is a placeholder here and should be overloaded by child

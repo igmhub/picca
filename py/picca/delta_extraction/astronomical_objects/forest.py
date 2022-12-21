@@ -587,26 +587,46 @@ class Forest(AstronomicalObject):
         return header
 
     def get_metadata(self):
+        """Return line-of-sight data as a list. Names and types of the variables
+        are given by Forest.get_metadata_dtype. Units are given by
+        Forest.get_metadata_units
+
+        Return
+        ------
+        metadata: list
+        A list containing the line-of-sight data
+        """
         metadata = super().get_metadata()
-
         metadata += [self.mean_snr,]
-
         return metadata
 
     @classmethod
     def get_metadata_dtype(cls):
+        """Return the types and names of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_dtype: list
+        A list with tuples containing the name and data type of the line-of-sight
+        data
+        """
         dtype = super().get_metadata_dtype()
-
         dtype += [('MEANSNR', float),]
-
         return dtype
 
     @classmethod
     def get_metadata_units(cls):
+        """Return the units of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_units: list
+        A list with the units of the line-of-sight data
+        """
         units = super().get_metadata_units()
-
         units += [""]
-
         return units
 
     def rebin(self):
