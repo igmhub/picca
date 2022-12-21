@@ -12,6 +12,12 @@ from picca.delta_extraction.errors import AstronomicalObjectError
 class DesiPk1dForest(DesiForest, Pk1dForest):
     """Forest Object
 
+    Class Methods
+    -------------
+    (see DesiForest in py/picca/delta_extraction/astronomical_objects/desi_forest.py)
+    (see Pk1dForest in py/picca/delta_extraction/astronomical_objects/pk1d_forest.py)
+    update_class_variables
+
     Methods
     -------
     (see DesiForest in py/picca/delta_extraction/astronomical_objects/desi_forest.py)

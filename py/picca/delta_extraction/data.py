@@ -56,9 +56,10 @@ defaults = {
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
 accepted_save_format = ["BinTableHDU", "ImageHDU"]
 
+
 def _save_deltas_one_healpix_image(out_dir, healpix, forests):
     """Saves the deltas that belong to one healpix in ImageHDU format.
-    
+
     Arguments
     ---------
     out_dir: str
@@ -71,13 +72,12 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
 
     Returns:
     ---------
-    forests: List of forests 
+    forests: List of forests
     List of forests to later add to rejection log as accepted.
-    """ 
-    results = fitsio.FITS(
-        f"{out_dir}/Delta/delta-{healpix}.fits.gz",
-        'rw',
-        clobber=True)
+    """
+    results = fitsio.FITS(f"{out_dir}/Delta/delta-{healpix}.fits.gz",
+                          'rw',
+                          clobber=True)
 
     # Saving metadata card
     metadata_header = {
@@ -86,39 +86,40 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
     }
 
     if Forest.wave_solution == "log":
-        metadata_header["DELTA_LOG_LAMBDA"] = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
+        metadata_header["DELTA_LOG_LAMBDA"] = Forest.log_lambda_grid[
+            1] - Forest.log_lambda_grid[0]
     elif Forest.wave_solution == "lin":
-        metadata_header["DELTA_LAMBDA"] = 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]
+        metadata_header["DELTA_LAMBDA"] = 10**Forest.log_lambda_grid[
+            1] - 10**Forest.log_lambda_grid[0]
     else:
         raise DataError("Error in _save_deltas_one_healpix_image"
-                                        "Class variable 'wave_solution' "
-                                        "must be either 'lin' or 'log'. "
-                                        f"Found: '{Forest.wave_solution}'")
+                        "Class variable 'wave_solution' "
+                        "must be either 'lin' or 'log'. "
+                        f"Found: '{Forest.wave_solution}'")
 
     results.write(
         10**Forest.log_lambda_grid,
         extname="LAMBDA",
     )
-    
+
     results.write(
         np.array(
-            [tuple(forest.get_metadata()) for forest in forests], # Structured arrays need to take tuples as input.
+            [tuple(forest.get_metadata()) for forest in forests
+            ],  # Structured arrays need to take tuples as input.
             dtype=forests[0].get_metadata_dtype(),
         ),
-        header= metadata_header, 
+        header=metadata_header,
         #TODO: Figure out how to add comments.
-        units= forests[0].get_metadata_units(),
+        units=forests[0].get_metadata_units(),
         extname="METADATA")
 
     # Filling image information
     delta = np.full((len(forests), len(Forest.log_lambda_grid)), np.nan)
     for i, forest in enumerate(forests):
         delta[i][forest.log_lambda_index] = forest.deltas
-    
+
     results.write(
-        delta,
-        extname="DELTA" if Forest.blinding == "none" else "DELTA_BLIND"
-    )
+        delta, extname="DELTA" if Forest.blinding == "none" else "DELTA_BLIND")
 
     weight = np.full((len(forests), len(Forest.log_lambda_grid)), np.nan)
     for i, forest in enumerate(forests):
@@ -140,6 +141,7 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
 
     return forests
 
+
 def _save_deltas_one_healpix_table(out_dir, healpix, forests):
     """Saves the deltas that belong to one healpix.
 
@@ -155,13 +157,12 @@ def _save_deltas_one_healpix_table(out_dir, healpix, forests):
 
     Returns:
     ---------
-    forests: List of forests 
+    forests: List of forests
     List of forests to later add to rejection log as accepted.
     """
-    results = fitsio.FITS(
-        f"{out_dir}/Delta/delta-{healpix}.fits.gz",
-        'rw',
-        clobber=True)
+    results = fitsio.FITS(f"{out_dir}/Delta/delta-{healpix}.fits.gz",
+                          'rw',
+                          clobber=True)
 
     for forest in forests:
         header = forest.get_header()
@@ -177,7 +178,8 @@ def _save_deltas_one_healpix_table(out_dir, healpix, forests):
 
     return forests
 
-def _save_deltas_one_healpix(out_dir, healpix, forests, format):
+
+def _save_deltas_one_healpix(out_dir, healpix, forests, save_format):
     """Saves the deltas that belong to one healpix.
 
     Arguments
@@ -190,7 +192,7 @@ def _save_deltas_one_healpix(out_dir, healpix, forests, format):
     forests: List of Forests
     List of forests to save into one file.
 
-    format: str
+    save_format: str
     Format to store delta into
 
     Returns:
@@ -199,12 +201,14 @@ def _save_deltas_one_healpix(out_dir, healpix, forests, format):
     List forest to later
     add to rejection log as accepted.
     """
-    if format == 'BinTableHDU':
+    if save_format == "BinTableHDU":
         return _save_deltas_one_healpix_table(out_dir, healpix, forests)
-    elif format == 'ImageHDU':
+    if save_format == "ImageHDU":
         return _save_deltas_one_healpix_image(out_dir, healpix, forests)
-    else:
-        raise DataError('Invalid format', format)
+    raise DataError("Invalid format. Expected one of " +
+                    " ".join(accepted_save_format) +
+                    f" Found: {save_format}")
+
 
 class Data:
     """Abstract class from which all classes loading data must inherit.
@@ -400,19 +404,18 @@ class Data:
 
         self.save_format = config.get("save format")
         if self.save_format is None:
-            raise DataError(
-                "Missing argument 'save format' required by Data")
+            raise DataError("Missing argument 'save format' required by Data")
 
         if self.save_format == "BinTableHDU":
-            self.rejection_log = RejectionLogFromTable(
-                self.out_dir + "Log/" + rejection_log_file)
+            self.rejection_log = RejectionLogFromTable(self.out_dir + "Log/" +
+                                                       rejection_log_file)
         elif self.save_format == "ImageHDU":
-            self.rejection_log = RejectionLogFromImage(
-                self.out_dir + "Log/" + rejection_log_file)
+            self.rejection_log = RejectionLogFromImage(self.out_dir + "Log/" +
+                                                       rejection_log_file)
         else:
             raise DataError("Invalid argument 'save format' required by "
                             f"Data. Found: '{self.save_format}'. Accepted "
-                             "values: " + ",".join(accepted_save_format))
+                            "values: " + ",".join(accepted_save_format))
 
         if self.analysis_type == "BAO 3D":
             self.min_snr = config.getfloat("minimal snr bao3d")
@@ -437,7 +440,8 @@ class Data:
         for index, forest in enumerate(self.forests):
             if forest.bad_continuum_reason is not None:
                 # store information for logs
-                self.rejection_log.add_to_rejection_log(forest, forest.bad_continuum_reason)
+                self.rejection_log.add_to_rejection_log(
+                    forest, forest.bad_continuum_reason)
 
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
@@ -457,7 +461,7 @@ class Data:
 
         remove_indexs = []
         for index, forest in enumerate(self.forests):
-            if np.sum(forest.ivar>0) < self.min_num_pix:
+            if np.sum(forest.ivar > 0) < self.min_num_pix:
                 # store information for logs
                 self.rejection_log.add_to_rejection_log(forest, "short_forest")
                 self.logger.progress(
@@ -469,7 +473,8 @@ class Data:
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to finding nan")
             elif forest.mean_snr < self.min_snr:
-                self.rejection_log.add_to_rejection_log(forest, f"low SNR ({forest.mean_snr})")
+                self.rejection_log.add_to_rejection_log(
+                    forest, f"low SNR ({forest.mean_snr})")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     f"due to low SNR ({forest.mean_snr} < {self.min_snr})")
@@ -518,20 +523,20 @@ class Data:
         for healpix in unique_healpixs:
             this_idx = np.nonzero(healpix == healpixs)[0]
             grouped_forests = sorted([self.forests[i] for i in this_idx])
-            arguments.append((self.out_dir, healpix, grouped_forests, self.save_format))
+            arguments.append(
+                (self.out_dir, healpix, grouped_forests, self.save_format))
 
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
             with context.Pool(processes=self.num_processors) as pool:
                 accepted_forests = pool.starmap(_save_deltas_one_healpix,
-                                              arguments)
+                                                arguments)
         else:
             accepted_forests = []
             for args in arguments:
                 accepted_forests.append(_save_deltas_one_healpix(*args))
 
         accepted_forests = np.concatenate(accepted_forests)
-        
 
         # store information for logs
         for forest in accepted_forests:

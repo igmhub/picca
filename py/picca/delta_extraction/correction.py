@@ -12,8 +12,6 @@ class Correction:
     -------
     apply_correction
     """
-    # pylint: disable=no-self-use
-    # this method should use self in child classes
     def apply_correction(self, forest):
         """Applies the correction. This function should be
         overloaded with the correct functionallity by any child

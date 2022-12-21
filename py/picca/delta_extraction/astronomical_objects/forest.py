@@ -231,15 +231,23 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
 class Forest(AstronomicalObject):
     """Forest Object
 
+    Class Methods
+    -------------
+    (see AstronomicalObject in py/picca/delta_extraction/astronomical_objects/forest.py)
+    class_variable_check
+    get_metadata_dtype
+    get_metadata_units
+    set_class_variables
+
     Methods
     -------
     (see AstronomicalObject in py/picca/delta_extraction/astronomical_object.py)
     __init__
-    class_variable_check
     consistency_check
     coadd
     get_data
     get_header
+    get_metadata
     rebin
     set_class_variables
 
@@ -587,26 +595,46 @@ class Forest(AstronomicalObject):
         return header
 
     def get_metadata(self):
+        """Return line-of-sight data as a list. Names and types of the variables
+        are given by Forest.get_metadata_dtype. Units are given by
+        Forest.get_metadata_units
+
+        Return
+        ------
+        metadata: list
+        A list containing the line-of-sight data
+        """
         metadata = super().get_metadata()
-
         metadata += [self.mean_snr,]
-
         return metadata
 
     @classmethod
     def get_metadata_dtype(cls):
+        """Return the types and names of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_dtype: list
+        A list with tuples containing the name and data type of the line-of-sight
+        data
+        """
         dtype = super().get_metadata_dtype()
-
         dtype += [('MEANSNR', float),]
-
         return dtype
 
     @classmethod
     def get_metadata_units(cls):
+        """Return the units of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_units: list
+        A list with the units of the line-of-sight data
+        """
         units = super().get_metadata_units()
-
         units += [""]
-
         return units
 
     def rebin(self):

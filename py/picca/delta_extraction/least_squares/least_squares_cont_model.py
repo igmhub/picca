@@ -94,8 +94,6 @@ class LeastsSquaresContModel:
             self.ndata =  self.forest.flux[w].size
         return chi2_contribution.sum() - np.log(weights[w]).sum()
 
-    # pylint: disable=no-self-use
-    # We expect this function to be changed by some child classes at some point
     def get_continuum_model(self, forest, zero_point, slope, **kwargs):
         """Get the model for the continuum fit
 
