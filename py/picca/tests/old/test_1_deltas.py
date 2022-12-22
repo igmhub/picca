@@ -280,7 +280,7 @@ class TestDelta(AbstractTest):
         """
             Test the continuum fitting routines on randomly generated eBOSS mock data
         """
-        import picca.bin.picca_deltas as picca_deltas
+        import picca.bin.old.picca_deltas as picca_deltas
 
         userprint("\n")
         ### Send
@@ -317,7 +317,7 @@ class TestDelta(AbstractTest):
             work correctly. The data for this routine is randomly generated as for "send_delta", but
             in DESI SV format instead of an eBOSS format
         """
-        import picca.bin.picca_deltas as picca_deltas
+        import picca.bin.old.picca_deltas as picca_deltas
 
         userprint("\n")
         ### Path
@@ -386,7 +386,7 @@ class TestDelta(AbstractTest):
             Test of picca_deltas for purposes of Pk1d running on a very small set of
             eBOSS like spectra saved on disk
         """
-        import picca.bin.picca_deltas as picca_deltas
+        import picca.bin.old.picca_deltas as picca_deltas
         userprint("\n")
         ### Path
         path_to_etc = self.picca_base + '/etc/'
