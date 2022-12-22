@@ -572,6 +572,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
                             "out dir": f"{THIS_DIR}/results/",
                             "rejection log file": "rejection_log.fits.gz",
+                            "save format": "BinTableHDU",
                             "wave solution": "log",
                             "delta log lambda": 3e-4,
                             "delta log lambda rest frame": 3e-4,
@@ -612,6 +613,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {"minimum number pixels in forest": 10000,
                                    "out dir": f"{THIS_DIR}/results/",
                                    "rejection log file": "rejection_log.fits.gz",
+                                    "save format": "BinTableHDU",
                                    "wave solution": "log",
                                    "delta log lambda": 3e-4,
                                    "delta log lambda rest frame": 3e-4,
@@ -638,6 +640,7 @@ class DataTest(AbstractTest):
         config = ConfigParser()
         config.read_dict({"data": {"out dir": f"{THIS_DIR}/results/",
                                    "rejection log file": "rejection_log.fits.gz",
+                                    "save format": "BinTableHDU",
                                    "wave solution": "log",
                                    "delta log lambda": 3e-4,
                                    "delta log lambda rest frame": 3e-4,
