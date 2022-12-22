@@ -118,7 +118,7 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     try:
         p1d_table['Pk_noraw_miss'] = p1d_table['Pk_noise_miss'] / p1d_table[
             'cor_reso']
-    except IndexError:
+    except KeyError:
         pass
 
     z_array = np.array(z_array)
