@@ -48,7 +48,7 @@ defaults = {
     "lambda min rest frame": 1040.0,
     "minimum number pixels in forest": 50,
     "rejection log file": "rejection_log.fits.gz",
-    "save format": "BinTableHDU",
+    "save format": "ImageHDU",
     "minimal snr pk1d": 1,
     "minimal snr bao3d": 0,
 }
