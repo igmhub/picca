@@ -2,6 +2,7 @@
 
 from picca.fitter2 import chi2, parser
 import argparse
+import warnings
 
 def main(config):
     dic_init = parser.parse_chi2(config)
@@ -21,4 +22,6 @@ if __name__ == '__main__':
 
 
     args = pars.parse_args()
+
+    warnings.warn("Note that the fitter2 module will be removed with the next picca release, please use Vega instead", DeprecationWarning)
     main(args.config)
