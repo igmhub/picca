@@ -28,3 +28,4 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint py/picca/delta_extraction/
+        pylint py/picca/pk1d/
