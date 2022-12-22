@@ -1053,6 +1053,6 @@ def main(cmdargs):
 
 if __name__ == '__main__':
     cmdargs=sys.argv[1:]
-    warnings.warn("Note that the picca_deltas routines will be removed with the next picca release", DeprecationWarning)
+    warnings.warn("Note that the picca_deltas routines will be removed with the next picca release, please use picca_delta_extraction instead", DeprecationWarning)
 
     main(cmdargs)

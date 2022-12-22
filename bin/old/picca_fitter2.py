@@ -23,5 +23,5 @@ if __name__ == '__main__':
 
     args = pars.parse_args()
 
-    warnings.warn("Note that the fitter2 module will be removed with the next picca release", DeprecationWarning)
+    warnings.warn("Note that the fitter2 module will be removed with the next picca release, please use Vega instead", DeprecationWarning)
     main(args.config)

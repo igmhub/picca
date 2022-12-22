@@ -10,7 +10,7 @@ if __name__ == '__main__':
 
     pars.add_argument('config', type=str, default=None,
         help='Config file')
-    warnings.warn("Note that the fitter2 module will be removed with the next picca release", DeprecationWarning)
+    warnings.warn("Note that the fitter2 module will be removed with the next picca release, please use Vega instead", DeprecationWarning)
 
 
     args = pars.parse_args()
