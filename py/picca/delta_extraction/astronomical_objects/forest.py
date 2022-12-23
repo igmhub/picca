@@ -218,7 +218,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     else:  # we have already checked that it will always be "lin" at this point
         log_lambda = np.log10(10**log_lambda_grid[0] + pixel_step *
                     np.arange(binned_arr_size)[wslice_inner])
-    rebin_bins = find_bins(log_lambda, log_lambda_grid, wave_solution)                    
+    rebin_bins = find_bins(log_lambda, log_lambda_grid, wave_solution)
 
     # finally update control variables
     snr = flux * np.sqrt(ivar)
