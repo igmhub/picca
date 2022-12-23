@@ -57,13 +57,6 @@ def main(cmdargs):
                         required=True,
                         help='Directory to delta files')
 
-    parser.add_argument('--from-image',
-                        type=str,
-                        default=None,
-                        required=False,
-                        help='Read delta from image format',
-                        nargs='*')
-
     parser.add_argument('--drq',
                         type=str,
                         default=None,
@@ -299,7 +292,6 @@ def main(cmdargs):
                                                   cosmo=cosmo,
                                                   max_num_spec=args.nspec,
                                                   no_project=args.no_project,
-                                                  from_image=args.from_image,
                                                   nproc=args.nproc,
                                                   rebin_factor=args.rebin_factor)
     xcf.data = data

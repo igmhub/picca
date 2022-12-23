@@ -173,7 +173,6 @@ class TestCor(AbstractTest):
         cmd += " --np 15"
         cmd += " --nt 15"
         cmd += " --nproc 1"
-        cmd += " --from-image"
         print(repr(cmd))
         picca.bin.picca_cf.main(cmd.split()[1:])
 

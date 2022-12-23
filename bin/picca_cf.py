@@ -53,10 +53,6 @@ def main(cmdargs):
                         required=True,
                         help='Directory to delta files')
 
-    parser.add_argument('--from-image',
-                        action="store_true",
-                        help='Read delta from image format')
-
     parser.add_argument('--in-dir2',
                         type=str,
                         default=None,
@@ -261,7 +257,6 @@ def main(cmdargs):
                                                   cosmo,
                                                   max_num_spec=args.nspec,
                                                   no_project=args.no_project,
-                                                  from_image=args.from_image,
                                                   nproc=args.nproc,
                                                   rebin_factor=args.rebin_factor)
     del z_max
@@ -292,7 +287,6 @@ def main(cmdargs):
             cosmo,
             max_num_spec=args.nspec,
             no_project=args.no_project,
-            from_image=args.from_image,
             nproc=args.nproc,
             rebin_factor=args.rebin_factor)
         del z_max2
