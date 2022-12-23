@@ -172,7 +172,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
         rebin_ivar = np.zeros(0)
         w1 = np.zeros(0, dtype=bool_)
         w2 = np.zeros(0, dtype=bool_)
-        return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
+        return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins, bins,
                 rebin_ivar, orig_ivar, w1, w2, w2)
 
     log_lambda = log_lambda[w1]
@@ -218,7 +218,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     else:  # we have already checked that it will always be "lin" at this point
         log_lambda = np.log10(10**log_lambda_grid[0] + pixel_step *
                     np.arange(binned_arr_size)[wslice_inner])
-    bins = find_bins(log_lambda, log_lambda_grid, wave_solution)                    
+    rebin_bins = find_bins(log_lambda, log_lambda_grid, wave_solution)                    
 
     # finally update control variables
     snr = flux * np.sqrt(ivar)
@@ -226,7 +226,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
 
     # return weights and binning solution to be used by child classes if
     # required
-    return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
+    return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins, rebin_bins,
             rebin_ivar, orig_ivar, w1, w2, wslice_inner)
 
 class Forest(AstronomicalObject):
@@ -663,14 +663,14 @@ class Forest(AstronomicalObject):
         AstronomicalObjectError if ivar only has zeros
         """
         (self.log_lambda, self.flux, self.ivar, self.transmission_correction,
-         self.mean_snr, self.log_lambda_index, rebin_ivar, orig_ivar, w1,
+         self.mean_snr, bins, self.log_lambda_index, rebin_ivar, orig_ivar, w1,
          w2, wslice_inner) = rebin(self.log_lambda, self.flux, self.ivar,
                      self.transmission_correction, self.z, Forest.wave_solution,
                      Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid)
 
         # return weights and binning solution to be used by child classes if
         # required
-        return rebin_ivar, orig_ivar, w1, w2, wslice_inner
+        return rebin_ivar, orig_ivar, w1, w2, wslice_inner, bins
 
     @classmethod
     def set_class_variables(cls, lambda_min, lambda_max, lambda_min_rest_frame,
