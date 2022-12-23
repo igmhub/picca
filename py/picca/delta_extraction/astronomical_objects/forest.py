@@ -11,7 +11,7 @@ from picca.delta_extraction.errors import AstronomicalObjectError
 from picca.delta_extraction.utils import find_bins
 
 defaults = {
-    "mask fields": ["flux", "ivar", "transmission_correction", "log_lambda"],
+    "mask fields": ["flux", "ivar", "transmission_correction", "log_lambda", "log_lambda_index"],
 }
 
 @njit
