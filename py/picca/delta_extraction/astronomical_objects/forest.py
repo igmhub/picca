@@ -657,6 +657,9 @@ class Forest(AstronomicalObject):
         w2: array of bool
         Masking array for the rebinned ivar solution
 
+        bins: array of int
+        Bins of log lambda with respect to Forest.log_lambda_grid
+
         Raise
         -----
         AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'

@@ -285,6 +285,9 @@ class Pk1dForest(Forest):
         w2: array of bool
         Masking array for the rebinned ivar solution
 
+        bins: array of int
+        Bins of log_lambda with respect to Forest.log_lambda_grid
+
         Raise
         -----
         AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
@@ -294,7 +297,7 @@ class Pk1dForest(Forest):
             self.exposures_diff = np.array([])
             self.reso = np.array([])
             self.reso_pix = np.array([])
-            return [], [], [], np.array([]), np.array([])
+            return [], [], [], np.array([]), np.array([]), bins
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
