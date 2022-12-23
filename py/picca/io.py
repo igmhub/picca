@@ -1429,11 +1429,11 @@ def read_delta_file(filename, rebin_factor=None):
     """
 
     hdul = fitsio.FITS(filename)
-    # Only table format has TARGETID in header
-    if 'TARGETID' in hdul[1].read_header():
-        deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
-    else:
+    # If there is an extension called lambda format is image
+    if 'LAMBDA' in hdul:
         deltas = Delta.from_image(hdul)
+    else:
+        deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
     
     hdul.close()
 
