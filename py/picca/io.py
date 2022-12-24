@@ -1415,13 +1415,11 @@ def read_blinding(in_dir):
     return blinding
 
 
-def read_delta_file(filename, from_image=False, rebin_factor=None):
+def read_delta_file(filename, rebin_factor=None):
     """Extracts deltas from a single file.
     Args:
         filename: str
             Path to the file to read        
-        from_image: bool
-            If True read deltas in ImageHDU format.
         rebin_factor: int - default: None
             Factor to rebin the lambda grid by. If None, no rebinning is done.
     Returns:
@@ -1431,7 +1429,8 @@ def read_delta_file(filename, from_image=False, rebin_factor=None):
     """
 
     hdul = fitsio.FITS(filename)
-    if from_image:
+    # If there is an extension called lambda format is image
+    if 'LAMBDA' in hdul:
         deltas = Delta.from_image(hdul)
     else:
         deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
@@ -1454,7 +1453,6 @@ def read_deltas(in_dir,
                 cosmo,
                 max_num_spec=None,
                 no_project=False,
-                from_image=False,
                 nproc=None,
                 rebin_factor=None):
     """Reads deltas and computes their redshifts.
@@ -1483,8 +1481,6 @@ def read_deltas(in_dir,
         no_project: bool - default: False
             If True, project the deltas (see equation 5 of du Mas des Bourboux
             et al. 2020)
-        from_image: bool - default: False
-            If True, read deltas in ImageHDU format. 
         nproc: int - default: None
             Number of cpus for parallelization. If None, uses all available.
         rebin_factor: int - default: None
@@ -1516,7 +1512,7 @@ def read_deltas(in_dir,
     if rebin_factor is not None:
         userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
 
-    arguments = [(f, from_image, rebin_factor) for f in files]
+    arguments = [(f, rebin_factor) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
     pool.close()

@@ -527,11 +527,11 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(np.allclose(test_obj.ivar, ivar))
 
         if isinstance(test_obj, DesiPk1dForest):
-            self.assertTrue(len(Forest.mask_fields) == 8)
+            self.assertTrue(len(Forest.mask_fields) == 9)
         elif isinstance(test_obj, Pk1dForest):
-            self.assertTrue(len(Forest.mask_fields) == 7)
+            self.assertTrue(len(Forest.mask_fields) == 8)
         else:
-            self.assertTrue(len(Forest.mask_fields) == 4)
+            self.assertTrue(len(Forest.mask_fields) == 5)
         self.assertTrue(Forest.mask_fields[0] == "flux")
         self.assertTrue(Forest.mask_fields[1] == "ivar")
         self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
