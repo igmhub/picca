@@ -11,7 +11,13 @@ from picca.delta_extraction.errors import AstronomicalObjectError
 from picca.delta_extraction.utils import find_bins
 
 defaults = {
-    "mask fields": ["flux", "ivar", "transmission_correction", "log_lambda", "log_lambda_index"],
+    "mask fields": [
+        "flux",
+        "ivar",
+        "transmission_correction",
+        "log_lambda",
+        "log_lambda_index"
+    ],
 }
 
 @njit
@@ -172,7 +178,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
         rebin_ivar = np.zeros(0)
         w1 = np.zeros(0, dtype=bool_)
         w2 = np.zeros(0, dtype=bool_)
-        return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins, bins,
+        return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
                 rebin_ivar, orig_ivar, w1, w2, w2)
 
     log_lambda = log_lambda[w1]
@@ -666,11 +672,12 @@ class Forest(AstronomicalObject):
         AstronomicalObjectError if ivar only has zeros
         """
         (self.log_lambda, self.flux, self.ivar, self.transmission_correction,
-         self.mean_snr, bins, self.log_lambda_index, rebin_ivar, orig_ivar, w1,
+         self.mean_snr, bins, rebin_ivar, orig_ivar, w1,
          w2, wslice_inner) = rebin(self.log_lambda, self.flux, self.ivar,
                      self.transmission_correction, self.z, Forest.wave_solution,
                      Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid)
 
+        self.log_lambda_index = bins
         # return weights and binning solution to be used by child classes if
         # required
         return rebin_ivar, orig_ivar, w1, w2, wslice_inner, bins

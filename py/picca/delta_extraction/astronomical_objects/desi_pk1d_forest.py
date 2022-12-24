@@ -205,7 +205,7 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         rebin_ivar, orig_ivar, w1, w2, wslice_inner, bins = super().rebin()
         if len(rebin_ivar) == 0 or np.sum(w2) == 0:
             self.resolution_matrix = np.array([[]])
-            return [], [], [], np.array([]), np.array([]), bins
+            return [], [], [], np.array([]), np.array([]), np.array([])
 
         # apply mask due to cuts in bin
         self.resolution_matrix = self.resolution_matrix[:, w1]

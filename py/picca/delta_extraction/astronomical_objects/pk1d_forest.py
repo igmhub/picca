@@ -297,7 +297,7 @@ class Pk1dForest(Forest):
             self.exposures_diff = np.array([])
             self.reso = np.array([])
             self.reso_pix = np.array([])
-            return [], [], [], np.array([]), np.array([]), bins
+            return [], [], [], np.array([]), np.array([]), np.array([])
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
