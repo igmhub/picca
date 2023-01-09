@@ -1419,7 +1419,7 @@ def read_delta_file(filename, rebin_factor=None):
     """Extracts deltas from a single file.
     Args:
         filename: str
-            Path to the file to read        
+            Path to the file to read
         rebin_factor: int - default: None
             Factor to rebin the lambda grid by. If None, no rebinning is done.
     Returns:
@@ -1434,7 +1434,7 @@ def read_delta_file(filename, rebin_factor=None):
         deltas = Delta.from_image(hdul)
     else:
         deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
-    
+
     hdul.close()
 
     # Rebin
@@ -1638,7 +1638,7 @@ def read_objects(filename,
     for index, healpix in enumerate(unique_healpix):
         userprint("{} of {}".format(index, len(unique_healpix)))
         w = healpixs == healpix
-        if 'desi' in mode:
+        if 'TARGETID' in catalog.colnames:
             if 'FIBER' in catalog.colnames:
                 fibercol = "FIBER"
             else:
