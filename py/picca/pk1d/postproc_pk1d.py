@@ -430,8 +430,7 @@ def run_postproc_pk1d(data_dir,
                                                       zbin_edges, kbin_edges,
                                                       weight_method, nomedians,
                                                       velunits, output_snrfit)
-    mean_p1d_table.meta['velunits'] = velunits
     result = fitsio.FITS(output_file, 'rw', clobber=True)
-    result.write(mean_p1d_table.as_array())
+    result.write(mean_p1d_table.as_array(), header={'velunits': velunits})
     result.write(metadata_table.as_array())
     result.close()
