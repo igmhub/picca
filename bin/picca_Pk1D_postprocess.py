@@ -120,6 +120,12 @@ def main(cmdargs):
                         help='Weighting scheme for the mean P1D computation,'
                              'Possible options: no_weights, simple_snr, fit_snr')
 
+    parser.add_argument('--apply_z_weights',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='[TMP] QMLE-like z weighting')
+
     parser.add_argument('--output-snrfit',
                         type=str,
                         default=None,
@@ -206,6 +212,7 @@ def main(cmdargs):
                                     z_edges,
                                     k_edges,
                                     weight_method=args.weight_method,
+                                    apply_z_weights=args.apply_z_weights,
                                     output_snrfit=args.output_snrfit,
                                     snrcut=snrcut,
                                     zbins_snrcut=zbins_snrcut,
