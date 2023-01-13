@@ -181,8 +181,10 @@ class ExpectedFlux:
                 "Missing argument 'out dir' required by ExpectedFlux")
         self.out_dir += "Log/"
 
-    def compute_delta_stack(self, forests, stack_from_deltas=False):
+    def _compute_delta_stack_kernel(self, forests, stack_from_deltas=False):
         """Compute a stack of the delta field as a function of wavelength
+        This function is meant to be called in parallel from the main
+        compute_delta_stack function
 
         Arguments
         ---------
@@ -213,6 +215,35 @@ class ExpectedFlux:
                              Forest.wave_solution)
             stack_delta += np.bincount(bins, weights=delta * weights, minlength=stack_delta.size)
             stack_weight += np.bincount(bins, weights=weights, minlength=stack_delta.size)
+
+        return stack_delta, stack_weight
+
+    def compute_delta_stack(self, forests, stack_from_deltas=False):
+        """Compute a stack of the delta field as a function of wavelength
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+
+        stack_from_deltas: bool - default: False
+        Flag to determine whether to stack from deltas or compute them
+        """
+        stack_delta = np.zeros_like(Forest.log_lambda_grid)
+        stack_weight = np.zeros_like(Forest.log_lambda_grid)
+
+        if self.num_processors > 1:
+            context = multiprocessing.get_context('fork')
+            with context.Pool(processes=self.num_processors) as pool:
+                split_forests = np.array_split(forests, self.num_processors)
+                arguments = [[chunk, stack_from_deltas] for chunk in split_forests]
+                results = pool.starmap(self._compute_delta_stack_kernel, arguments)
+
+            for chunk_stack_delta, chunk_stack_weight in results:
+                stack_delta += chunk_stack_delta
+                stack_weight += chunk_stack_weight
+        else:
+            stack_delta, stack_weight = self._compute_delta_stack_kernel(forests, stack_from_deltas)
 
         w = stack_weight > 0
         stack_delta[w] /= stack_weight[w]
