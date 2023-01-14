@@ -201,12 +201,13 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     rebin_transmission_correction = np.bincount(
             bins, weights=(ivar * transmission_correction), minlength=binned_arr_size)
     rebin_ivar = np.bincount(bins, weights=ivar, minlength=binned_arr_size)
+    ivar_normalization = np.bincount(bins, minlength=binned_arr_size)
 
     # this condition should always be non-zero for at least one pixel
     # this does not mean that all rebin_ivar pixels will be non-zero,
     # as we could have a masked region of the spectra
     w2_ = (rebin_ivar > 0.) & wslice_inner
-    w2  = w2_[wslice_inner]
+    w2 = w2_[wslice_inner]
     flux = np.zeros(final_arr_size)
     transmission_correction = np.zeros(final_arr_size)
     ivar = np.zeros(final_arr_size)
@@ -215,7 +216,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     flux[w2] = rebin_flux[w2_] / rebin_ivar[w2_]
     transmission_correction[w2] = rebin_transmission_correction[
         w2_] / rebin_ivar[w2_]
-    ivar[w2] = rebin_ivar[w2_]
+    ivar[w2] = rebin_ivar[w2_] / ivar_normalization[w2_]
 
     # then rebin wavelength
     if wave_solution == "log":
