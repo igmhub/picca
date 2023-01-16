@@ -117,14 +117,16 @@ def main(cmdargs):
     parser.add_argument('--weight-method',
                         type=str,
                         default='no_weights',
-                        help='Weighting scheme for the mean P1D computation,'
+                        help='SNR weighting scheme for the mean P1D computation,'
                              'Possible options: no_weights, simple_snr, fit_snr')
 
     parser.add_argument('--apply_z_weights',
                         action='store_true',
                         default=False,
                         required=False,
-                        help='[TMP] QMLE-like z weighting')
+                        help='If set, apply a z weighting scheme analog to that used for QMLE (eg. 2008.06421). '
+                             'Each chunk with mean redshift z contributes two nearest bins z_i (resp. z_j=z_i+dz), '
+                             'with weights |z-z_j|/dz (resp. |z-z_i|/dz).')
 
     parser.add_argument('--output-snrfit',
                         type=str,

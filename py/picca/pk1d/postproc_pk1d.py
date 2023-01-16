@@ -160,6 +160,9 @@ def compute_mean_pk1d(p1d_table,
         'simple_snr' (obsolete): Compute mean P1D with weights computed directly from SNR values
                     (SNR as given in compute_Pk1D outputs)
 
+    apply_z_weights: Bool
+    If True, each chunk contributes to two nearest redshift bins with a linear weighting scheme.
+
     nomedians: Bool
     Skip computation of median quantities
 
@@ -238,26 +241,27 @@ def compute_mean_pk1d(p1d_table,
 
         for ikbin, kbin in enumerate(kbin_edges[:-1]):  # Main loop 2) k bins
 
-            if apply_z_weights:  # must select more chunks for each bin
+            if apply_z_weights:  # special chunk selection in that case
                 delta_z = zbin_centers[1:]-zbin_centers[:-1]
-                assert np.allclose(delta_z, delta_z[0], atol=1.e-3)   # TMP (?), method may work only for regular z bins
+                if not np.allclose(delta_z, delta_z[0], atol=1.e-3):
+                    raise ValueError("Option apply_z_weights is set: redshift bins should all have equal widths.")
                 delta_z = delta_z[0]
 
                 select = (p1d_table['k'] < kbin_edges[ikbin + 1]) & (
                             p1d_table['k'] > kbin_edges[ikbin]
                         )
-                if izbin==0:
-                    select = select & (p1d_table['forest_z'] < zbin_centers[1])
-                elif izbin==nbins_z-1:
-                    select = select & (p1d_table['forest_z'] > zbin_centers[-2])
+                if (izbin==0) or (izbin==nbins_z-1):
+                    # First and last bin: in order to avoid edge effects,
+                    #    use only chunks within the bin
+                    select = select & (
+                        p1d_table['forest_z'] > zbin_edges[izbin]) & (
+                        p1d_table['forest_z'] < zbin_edges[izbin+1])
                 else:
                     select = select & (
                         p1d_table['forest_z'] < zbin_centers[izbin+1]) & (
                         p1d_table['forest_z'] > zbin_centers[izbin-1])
 
                 redshift_weights = 1.0 - np.abs(p1d_table['forest_z'][select]-zbin_centers[izbin])/delta_z
-                assert np.all(redshift_weights <= 1)   # TMP debug
-                assert np.all(redshift_weights >= 0)
 
             else:
                 select = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
@@ -342,9 +346,10 @@ def compute_mean_pk1d(p1d_table,
                     if apply_z_weights:
                         weights *= redshift_weights
                     mean = np.average(data_values, weights=weights)
-                    error = np.sqrt(1. / np.sum(weights))
                     if apply_z_weights:   # Analytic expression for the re-weighted average:
                         error = np.sum(weights*redshift_weights)/(np.sum(weights))**2
+                    else:
+                        error = np.sqrt(1. / np.sum(weights))
                     if output_snrfit is not None and col == 'Pk':
                         snrfit_table[index,
                                      0:4] = [
@@ -378,7 +383,7 @@ def compute_mean_pk1d(p1d_table,
                     error = np.std(p1d_table[col][select]) / np.sqrt(num_chunks - 1)
                     if apply_z_weights:
                         mean = np.average(p1d_table[col][select], weights=redshift_weights)
-                        # TMP: we dont change the formula for the error as of now [TBD]
+                        # Note, we dont change the formula for the error as of now.
 
                 else:
                     raise ValueError(
