@@ -236,10 +236,12 @@ def compute_mean_pk1d(p1d_table,
             mean_p1d_table['index_zbin'][i_min:i_max] = izbin
             continue
 
+        select_z = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
+                    p1d_table['forest_z'] > zbin_edges[izbin])
+
         for ikbin, kbin in enumerate(kbin_edges[:-1]):  # Main loop 2) k bins
 
-            select = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
-                p1d_table['forest_z'] > zbin_edges[izbin]) & (
+            select = select_z & (
                     p1d_table['k'] < kbin_edges[ikbin + 1]) & (
                         p1d_table['k'] > kbin_edges[ikbin]
                     )  # select a specific (z,k) bin
