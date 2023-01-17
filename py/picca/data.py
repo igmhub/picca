@@ -958,7 +958,6 @@ class Delta(QSO):
             Neighbouring deltas/quasars
         fname: string or None
             String identifying Delta as part of a group
-        delta_log_lambda
 
     Methods:
         __init__: Initializes class instances.
