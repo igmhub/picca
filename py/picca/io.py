@@ -1435,8 +1435,6 @@ def read_delta_file(filename, rebin_factor=None):
     else:
         deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
     
-    hdul.close()
-
     # Rebin
     if rebin_factor is not None:
         if 'LAMBDA' in hdul:
@@ -1452,6 +1450,8 @@ def read_delta_file(filename, rebin_factor=None):
             
         for i in range(len(deltas)):
             deltas[i].rebin(rebin_factor, dwave=dwave)
+            
+    hdul.close()
 
     return deltas
 
