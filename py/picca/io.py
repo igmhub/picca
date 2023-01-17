@@ -1524,12 +1524,9 @@ def read_deltas(in_dir,
         userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
 
     arguments = [(f, rebin_factor) for f in files]
-    results = []
-    for argument in arguments:
-        results.append(read_delta_file(*argument))
-    # pool = Pool(processes=nproc)
-    # results = pool.starmap(read_delta_file, arguments)
-    # pool.close()
+    pool = Pool(processes=nproc)
+    results = pool.starmap(read_delta_file, arguments)
+    pool.close()
 
     deltas = []
     num_data = 0
