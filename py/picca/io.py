@@ -1439,8 +1439,19 @@ def read_delta_file(filename, rebin_factor=None):
 
     # Rebin
     if rebin_factor is not None:
+        if 'LAMBDA' in hdul:
+            card = 'METADATA'
+        else:
+            card = 1
+
+        if hdul[card].read_header()['WAVE_SOLUTION'] != 'lin':
+            raise ValueError('Delta rebinning only implemented for linear \
+                    lambda bins')
+        
+        dwave = hdul[card].read_header()['DELTA_LAMBDA']
+            
         for i in range(len(deltas)):
-            deltas[i].rebin(rebin_factor)
+            deltas[i].rebin(rebin_factor, dwave=dwave)
 
     return deltas
 
@@ -1513,9 +1524,12 @@ def read_deltas(in_dir,
         userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
 
     arguments = [(f, rebin_factor) for f in files]
-    pool = Pool(processes=nproc)
-    results = pool.starmap(read_delta_file, arguments)
-    pool.close()
+    results = []
+    for argument in arguments:
+        results.append(read_delta_file(*argument))
+    # pool = Pool(processes=nproc)
+    # results = pool.starmap(read_delta_file, arguments)
+    # pool.close()
 
     deltas = []
     num_data = 0
