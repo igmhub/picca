@@ -5,12 +5,19 @@ from picca.delta_extraction.errors import AstronomicalObjectError
 class SdssForest(Forest):
     """Forest Object
 
+    Class Methods
+    -------------
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
+    get_metadata_dtype
+    get_metadata_units
+
     Methods
     -------
     (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
     __init__
     coadd
     get_header
+    get_metadata
 
     Class Attributes
     ----------------
@@ -134,29 +141,49 @@ class SdssForest(Forest):
         return header
 
     def get_metadata(self):
-        metadata = super().get_metadata()
+        """Return line-of-sight data as a list. Names and types of the variables
+        are given by SdssForest.get_metadata_dtype. Units are given by
+        SdssForest.get_metadata_units
 
+        Return
+        ------
+        metadata: list
+        A list containing the line-of-sight data
+        """
+        metadata = super().get_metadata()
         metadata += [
             self.thingid,
             "-".join(f"{plate:04d}" for plate in self.plate),
             "-".join(f"{mjd:05d}" for mjd in self.mjd),
             "-".join(f"{fiberid:04d}" for fiberid in self.fiberid),
         ]
-
         return metadata
 
     @classmethod
     def get_metadata_dtype(cls):
+        """Return the types and names of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_dtype: list
+        A list with tuples containing the name and data type of the line-of-sight
+        data
+        """
         dtype = super().get_metadata_dtype()
-
         dtype += [('THING_ID', int), ('PLATE', 'S12'), ('MJD', 'S12'), ('FIBERID', 'S12')]
-
         return dtype
 
     @classmethod
     def get_metadata_units(cls):
+        """Return the units of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_units: list
+        A list with the units of the line-of-sight data
+        """
         units = super().get_metadata_units()
-
         units += ["", "", "DAYS", ""]
-
         return units

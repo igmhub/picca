@@ -20,6 +20,7 @@ from picca.data import Forest, Delta
 from picca import prep_del, io, constants, bal_tools
 from picca.utils import userprint
 from picca.constants import ACCEPTED_BLINDING_STRATEGIES
+import warnings
 
 
 def cont_fit(forests):
@@ -1052,4 +1053,6 @@ def main(cmdargs):
 
 if __name__ == '__main__':
     cmdargs=sys.argv[1:]
+    warnings.warn("Note that the picca_deltas routines will be removed with the next picca release, please use picca_delta_extraction instead", DeprecationWarning)
+
     main(cmdargs)

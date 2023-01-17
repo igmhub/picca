@@ -11,7 +11,13 @@ from picca.delta_extraction.errors import AstronomicalObjectError
 from picca.delta_extraction.utils import find_bins
 
 defaults = {
-    "mask fields": ["flux", "ivar", "transmission_correction", "log_lambda"],
+    "mask fields": [
+        "flux",
+        "ivar",
+        "transmission_correction",
+        "log_lambda",
+        "log_lambda_index"
+    ],
 }
 
 @njit
@@ -173,7 +179,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
         w1 = np.zeros(0, dtype=bool_)
         w2 = np.zeros(0, dtype=bool_)
         return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
-                rebin_ivar, orig_ivar, w1, w2, w2)
+                bins, rebin_ivar, orig_ivar, w1, w2, w2)
 
     log_lambda = log_lambda[w1]
     flux = flux[w1]
@@ -218,6 +224,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     else:  # we have already checked that it will always be "lin" at this point
         log_lambda = np.log10(10**log_lambda_grid[0] + pixel_step *
                     np.arange(binned_arr_size)[wslice_inner])
+    rebin_bins = find_bins(log_lambda, log_lambda_grid, wave_solution)
 
     # finally update control variables
     snr = flux * np.sqrt(ivar)
@@ -225,21 +232,29 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
 
     # return weights and binning solution to be used by child classes if
     # required
-    return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
+    return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins, rebin_bins,
             rebin_ivar, orig_ivar, w1, w2, wslice_inner)
 
 class Forest(AstronomicalObject):
     """Forest Object
 
+    Class Methods
+    -------------
+    (see AstronomicalObject in py/picca/delta_extraction/astronomical_objects/forest.py)
+    class_variable_check
+    get_metadata_dtype
+    get_metadata_units
+    set_class_variables
+
     Methods
     -------
     (see AstronomicalObject in py/picca/delta_extraction/astronomical_object.py)
     __init__
-    class_variable_check
     consistency_check
     coadd
     get_data
     get_header
+    get_metadata
     rebin
     set_class_variables
 
@@ -587,26 +602,46 @@ class Forest(AstronomicalObject):
         return header
 
     def get_metadata(self):
+        """Return line-of-sight data as a list. Names and types of the variables
+        are given by Forest.get_metadata_dtype. Units are given by
+        Forest.get_metadata_units
+
+        Return
+        ------
+        metadata: list
+        A list containing the line-of-sight data
+        """
         metadata = super().get_metadata()
-
         metadata += [self.mean_snr,]
-
         return metadata
 
     @classmethod
     def get_metadata_dtype(cls):
+        """Return the types and names of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_dtype: list
+        A list with tuples containing the name and data type of the line-of-sight
+        data
+        """
         dtype = super().get_metadata_dtype()
-
         dtype += [('MEANSNR', float),]
-
         return dtype
 
     @classmethod
     def get_metadata_units(cls):
+        """Return the units of the line-of-sight data returned by
+        method self.get_metadata
+
+        Return
+        ------
+        metadata_units: list
+        A list with the units of the line-of-sight data
+        """
         units = super().get_metadata_units()
-
         units += [""]
-
         return units
 
     def rebin(self):
@@ -628,20 +663,23 @@ class Forest(AstronomicalObject):
         w2: array of bool
         Masking array for the rebinned ivar solution
 
+        bins: array of int
+        Bins of log lambda with respect to Forest.log_lambda_grid
+
         Raise
         -----
         AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         AstronomicalObjectError if ivar only has zeros
         """
         (self.log_lambda, self.flux, self.ivar, self.transmission_correction,
-         self.mean_snr, self.log_lambda_index, rebin_ivar, orig_ivar, w1,
+         self.mean_snr, bins, self.log_lambda_index, rebin_ivar, orig_ivar, w1,
          w2, wslice_inner) = rebin(self.log_lambda, self.flux, self.ivar,
                      self.transmission_correction, self.z, Forest.wave_solution,
                      Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid)
 
         # return weights and binning solution to be used by child classes if
         # required
-        return rebin_ivar, orig_ivar, w1, w2, wslice_inner
+        return rebin_ivar, orig_ivar, w1, w2, wslice_inner, bins
 
     @classmethod
     def set_class_variables(cls, lambda_min, lambda_max, lambda_min_rest_frame,

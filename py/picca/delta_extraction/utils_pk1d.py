@@ -62,8 +62,7 @@ def exp_diff(hdul, log_lambda):
 
             # exclude masks 25 (COMBINEREJ), 23 (BRIGHTSKY)?
             rebin_ivar_exp = np.bincount(log_lambda_bins,
-                                         weights=ivar_exp *
-                                         (mask & 2**25 == 0))
+                                         weights=ivar_exp * (mask & 2**25 == 0))
             rebin_flux_exp = np.bincount(log_lambda_bins,
                                          weights=(ivar_exp * flux_exp *
                                                   (mask & 2**25 == 0)))
@@ -72,10 +71,8 @@ def exp_diff(hdul, log_lambda):
                 flux_total_odd[:len(rebin_ivar_exp) - 1] += rebin_flux_exp[:-1]
                 ivar_total_odd[:len(rebin_ivar_exp) - 1] += rebin_ivar_exp[:-1]
             else:
-                flux_total_even[:len(rebin_ivar_exp) -
-                                1] += rebin_flux_exp[:-1]
-                ivar_total_even[:len(rebin_ivar_exp) -
-                                1] += rebin_ivar_exp[:-1]
+                flux_total_even[:len(rebin_ivar_exp) - 1] += rebin_flux_exp[:-1]
+                ivar_total_even[:len(rebin_ivar_exp) - 1] += rebin_ivar_exp[:-1]
 
     w = ivar_total_odd > 0
     flux_total_odd[w] /= ivar_total_odd[w]
@@ -91,8 +88,6 @@ def exp_diff(hdul, log_lambda):
     exposures_diff = 0.5 * (flux_total_even - flux_total_odd) * alpha
 
     return exposures_diff
-
-
 
 
 def exp_diff_desi(spec_dict, mask_targetid):
@@ -117,22 +112,21 @@ def exp_diff_desi(spec_dict, mask_targetid):
     # Putting the lowest ivar exposure at the end if the number of exposures is odd
     argsort = np.arange(num_exp)
     if num_exp % 2 == 1:
-        argmin_ivar = np.argmin(np.mean(ivar_unsorted,axis=1))
-        argsort[-1],argsort[argmin_ivar] = argsort[argmin_ivar],argsort[-1]
+        argmin_ivar = np.argmin(np.mean(ivar_unsorted, axis=1))
+        argsort[-1], argsort[argmin_ivar] = argsort[argmin_ivar], argsort[-1]
 
-    flux = np.atleast_2d(spec_dict["FLUX"][mask_targetid])[argsort,:]
-    ivar = ivar_unsorted[argsort,:]
+    flux = np.atleast_2d(spec_dict["FLUX"][mask_targetid])[argsort, :]
+    ivar = ivar_unsorted[argsort, :]
     if num_exp < 2:
         module_logger.debug("Not enough exposures for diff, Spectra rejected")
         return None
     if num_exp > 100:
-        module_logger.debug(
-            "More than 100 exposures, potentially wrong file "
-            "type and using wavelength axis here, skipping?")
+        module_logger.debug("More than 100 exposures, potentially wrong file "
+                            "type and using wavelength axis here, skipping?")
         return None
 
     # Computing ivar and flux for odd and even exposures
-    ivar_total  = np.zeros(flux.shape[1])
+    ivar_total = np.zeros(flux.shape[1])
     flux_total_odd = np.zeros(flux.shape[1])
     ivar_total_odd = np.zeros(flux.shape[1])
     flux_total_even = np.zeros(flux.shape[1])
@@ -155,13 +149,12 @@ def exp_diff_desi(spec_dict, mask_targetid):
     flux_total_even[w_even] /= ivar_total_even[w_even]
 
     # Computing alpha correction
-    w=w_odd&w_even&(ivar_total>0)
-    alpha_array  = np.ones(flux.shape[1])
-    alpha_array[w] = (1/np.sqrt(ivar_total[w]))/(0.5 *
-        np.sqrt((1/ivar_total_even[w]) + (1/ivar_total_odd[w])))
+    w = w_odd & w_even & (ivar_total > 0)
+    alpha_array = np.ones(flux.shape[1])
+    alpha_array[w] = (1 / np.sqrt(ivar_total[w])) / (0.5 * np.sqrt(
+        (1 / ivar_total_even[w]) + (1 / ivar_total_odd[w])))
     diff = 0.5 * (flux_total_even - flux_total_odd) * alpha_array
     return diff
-
 
 
 def spectral_resolution(wdisp,
@@ -203,18 +196,19 @@ def spectral_resolution(wdisp,
         # fiberids greater than 500 corresponds to the second spectrograph
         fiberid = fiberid % 500
         if fiberid < 100:
-            correction = (1. + (correction - 1) * .25 +
-                          (correction - 1) * .75 * (fiberid) / 100.)
+            correction = (1. + (correction - 1) * .25 + (correction - 1) * .75 *
+                          (fiberid) / 100.)
         elif fiberid > 400:
-            correction = (1. + (correction - 1) * .25 +
-                          (correction - 1) * .75 * (500 - fiberid) / 100.)
+            correction = (1. + (correction - 1) * .25 + (correction - 1) * .75 *
+                          (500 - fiberid) / 100.)
 
         # apply the correction
         reso *= correction
 
     return reso
 
-@njit#("f8[:](float32[:, :], i8)")
+
+@njit  #("f8[:](float32[:, :], i8)")
 def _find_nonzero_abs_min_per_row(reso_matrix, num_rows):
     """Find the non-zero absolute minimum of the resolution matrix
     for each row
@@ -243,6 +237,7 @@ def _find_nonzero_abs_min_per_row(reso_matrix, num_rows):
 
     return nonzero_abs_min_per_row
 
+
 def spectral_resolution_desi(reso_matrix, lambda_):
     """Compute the spectral resolution for DESI spectra
 
@@ -261,12 +256,13 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     """
     if lambda_ is None:
         return None
-    
+
     delta_log_lambda = np.empty_like(lambda_)
     delta_log_lambda[:-1] = np.diff(np.log10(lambda_))
     #note that this would be the same result as before (except for the missing bug) in
     #case of log-uniform binning, but for linear binning pixel size chenges wrt lambda
-    delta_log_lambda[-1] = delta_log_lambda[-2] + (delta_log_lambda[-2] - delta_log_lambda[-3])
+    delta_log_lambda[-1] = delta_log_lambda[-2] + (delta_log_lambda[-2] -
+                                                   delta_log_lambda[-3])
 
     num_diags, num_rows = reso_matrix.shape
     num_offdiags = num_diags // 2
@@ -275,14 +271,15 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     # new resolution model is then Gaussian + constant
     # using an arbitrary epsilon is not stable
     # use nonzero absolute minimum of the row
-    nonzero_abs_min_per_row = _find_nonzero_abs_min_per_row(reso_matrix, num_rows)
+    nonzero_abs_min_per_row = _find_nonzero_abs_min_per_row(
+        reso_matrix, num_rows)
 
     # mask out rows that are all zeros
     w = nonzero_abs_min_per_row > 0
     if not np.any(w):
         return np.zeros_like(lambda_), np.zeros_like(lambda_)
 
-    reso = reso_matrix[:, w] #- shift[w]
+    reso = reso_matrix[:, w]  #- shift[w]
 
     #assume reso = A*exp(-(x-central_pixel_pos)**2 / 2 / sigma**2)
     #=> sigma = sqrt((x-central_pixel_pos)/2)**2 / log(A/reso)
@@ -290,20 +287,24 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     # the following averages over estimates for four symmetric values of x
     indices = np.array([-2, -1, 1, 2], dtype=int)
     with warnings.catch_warnings():
-        warnings.filterwarnings('ignore') #this ignores all warnings in this part of the code, could in principle specify the exact warnings to be supressed
-        ratios = reso[num_offdiags, :]/reso[num_offdiags+indices, :]
+        # this ignores all warnings in this part of the code, could in principle
+        # specify the exact warnings to be supressed
+        warnings.filterwarnings(
+            'ignore'
+        )
+        ratios = reso[num_offdiags, :] / reso[num_offdiags + indices, :]
         ratios = np.log(ratios)
         w2 = ratios > 0
         norm = np.sum(w2, axis=0)
         new_ratios = np.zeros_like(ratios)
-        new_ratios[w2] = 1./np.sqrt(ratios[w2])
+        new_ratios[w2] = 1. / np.sqrt(ratios[w2])
         # ratios = 1./np.sqrt(np.log(ratios))
 
         rms_in_pixel = np.empty_like(lambda_)
-        rms_in_pixel[w] = np.abs(indices).dot(new_ratios)/np.sqrt(2.)/norm
+        rms_in_pixel[w] = np.abs(indices).dot(new_ratios) / np.sqrt(2.) / norm
         rms_in_pixel[~w] = rms_in_pixel[w].mean()
-        
+
         reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
-                        np.log(10.0))   #this is FWHM
+                            np.log(10.0))  #this is FWHM
 
     return rms_in_pixel, reso_in_km_per_s

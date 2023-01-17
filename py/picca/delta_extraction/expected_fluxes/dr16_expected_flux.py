@@ -74,7 +74,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
     continuum_fit_parameters: dict
     A dictionary containing the continuum fit parameters for each line of sight.
     Keys are the identifier for the line of sight and values are tuples with
-    the best-fit zero point and slope of the linear part of the fit.
+    the best-fit zero point and slope of the linear part of the fit, the chi2
+    of the fit, and the number of datapoints used in the fit..
 
     get_eta: scipy.interpolate.interp1d
     Interpolation function to compute mapping function eta. See equation 4 of
@@ -424,7 +425,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     forest.continuum = cont_model
                     self.continuum_fit_parameters[
                         forest.los_id] = continuum_fit_parameters
-                #forests = [self.compute_continuum(f) for f in forests]
             t1 = time.time()
             self.logger.info(f"Time spent computing quasar continua: {t1-t0}")
 
@@ -621,6 +621,54 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                       valid_fit[w],
                                       fill_value="extrapolate",
                                       kind="nearest")
+
+    def hdu_fit_metadata(self, results):
+        """Add to the results file an HDU with the fits results
+
+        This function is a placeholder here and should be overloaded by child
+        classes if they require it
+
+        Arguments
+        ---------
+        results: fitsio.FITS
+        The open fits file
+        """
+        if self.continuum_fit_parameters is not None:
+            los_id_list = []
+            zero_point_list = []
+            slope_list = []
+            chi2_list = []
+            ndata_list = []
+            accepted_fit = []
+            for los_id in sorted(self.continuum_fit_parameters):
+                cont_fit = self.continuum_fit_parameters.get(los_id)
+                los_id_list.append(los_id)
+                zero_point_list.append(cont_fit[0])
+                slope_list.append(cont_fit[1])
+                chi2_list.append(cont_fit[2])
+                ndata_list.append(cont_fit[3])
+                if any(np.isnan(cont_fit)):
+                    accepted_fit.append("no")
+                else:
+                    accepted_fit.append("yes")
+            values = [
+                np.array(los_id_list),
+                np.array(zero_point_list),
+                np.array(slope_list),
+                np.array(chi2_list),
+                np.array(ndata_list, dtype=int),
+                np.array(accepted_fit),
+            ]
+            names = [
+                "los_id",
+                "zero_point",
+                "slope",
+                "chi2",
+                "num_datapoints",
+                "accepted_fit",
+            ]
+
+            results.write(values, names=names, extname='FIT_METADATA')
 
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions

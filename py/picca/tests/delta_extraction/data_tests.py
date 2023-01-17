@@ -511,7 +511,7 @@ class DataTest(AbstractTest):
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
-        
+
         # create a Data instance with missing minimal snr bao3d
         config = ConfigParser()
         config.read_dict({"data": {
@@ -572,6 +572,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
                             "out dir": f"{THIS_DIR}/results/",
                             "rejection log file": "rejection_log.fits.gz",
+                            "save format": "BinTableHDU",
                             "wave solution": "log",
                             "delta log lambda": 3e-4,
                             "delta log lambda rest frame": 3e-4,
@@ -612,6 +613,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {"minimum number pixels in forest": 10000,
                                    "out dir": f"{THIS_DIR}/results/",
                                    "rejection log file": "rejection_log.fits.gz",
+                                    "save format": "BinTableHDU",
                                    "wave solution": "log",
                                    "delta log lambda": 3e-4,
                                    "delta log lambda rest frame": 3e-4,
@@ -638,6 +640,7 @@ class DataTest(AbstractTest):
         config = ConfigParser()
         config.read_dict({"data": {"out dir": f"{THIS_DIR}/results/",
                                    "rejection log file": "rejection_log.fits.gz",
+                                    "save format": "BinTableHDU",
                                    "wave solution": "log",
                                    "delta log lambda": 3e-4,
                                    "delta log lambda rest frame": 3e-4,
@@ -710,7 +713,7 @@ class DataTest(AbstractTest):
         config = ConfigParser()
         config.read_dict({"data": {
                         }})
-        expected_message = "Missing argument 'blinding' required by DesiData"
+        expected_message = "Missing argument 'unblind' required by DesiData"
         with self.assertRaises(DataError) as context_manager:
             data._DesiData__parse_config(config["data"])
         self.compare_error_message(context_manager, expected_message)
@@ -718,7 +721,7 @@ class DataTest(AbstractTest):
         # run __parse_config with missing 'use_non_coadded_spectra'
         config = ConfigParser()
         config.read_dict({"data": {
-            "blinding": "none",
+            "unblind": "True",
                         }})
         expected_message = (
             "Missing argument 'use non-coadded spectra' required by DesiData"
@@ -738,15 +741,6 @@ class DataTest(AbstractTest):
             if key in accepted_options_desi_data and key not in config["data"]:
                 config["data"][key] = str(value)
         data._DesiData__parse_config(config["data"])
-
-        # check loading with the wrong blinding
-        config["data"]["blinding"] = "invalid"
-        expected_message = (
-            "Unrecognized blinding strategy. Accepted strategies "
-            f"are {ACCEPTED_BLINDING_STRATEGIES}. Found 'invalid'")
-        with self.assertRaises(DataError) as context_manager:
-            data._DesiData__parse_config(config["data"])
-        self.compare_error_message(context_manager, expected_message)
 
     def test_desi_data_set_blinding(self):
         """Test method set_blinding of DesiData"""
@@ -768,7 +762,7 @@ class DataTest(AbstractTest):
         data = DesiHealpix(config["data"])
         self.assertTrue(data.blinding == "none")
 
-        # create a DesiData instance with sv data only and blinding = corr_yshift
+        # create a DesiData instance with sv data only and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
         config.read_dict({"data": {
@@ -777,7 +771,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
             "num processors": 1,
-            "blinding": "corr_yshift",
+            "blinding": "desi_m2",
         }})
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
@@ -802,9 +796,9 @@ class DataTest(AbstractTest):
                 config["data"][key] = str(value)
 
         data = DesiHealpix(config["data"])
-        self.assertTrue(data.blinding == "corr_yshift")
+        self.assertTrue(data.blinding == "none")
 
-        # create a DesiData instance with main data and blinding = corr_yshift
+        # create a DesiData instance with main data and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
         config.read_dict({"data": {
@@ -813,16 +807,16 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
             "num processors": 1,
-            "blinding": "corr_yshift",
+            "blinding": "desi_m2",
         }})
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
         data = DesiHealpix(config["data"])
-        self.assertTrue(data.blinding == "corr_yshift")
+        self.assertTrue(data.blinding == "none")
 
-        # create a DesiData instance with mock data and blinding = corr_yshift
+        # create a DesiData instance with mock data and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesisimMocks instance
         config = ConfigParser()
         config.read_dict({"data": {
@@ -830,6 +824,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
             "num processors": 1,
+            "blinding": "desi_m2",
         }})
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
@@ -846,6 +841,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
             "num processors": 1,
+            "blinding": "none",
         }})
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
@@ -942,7 +938,7 @@ class DataTest(AbstractTest):
             "save format": "BinTableHDU",
         }})
         expected_message = (
-            "Missing argument 'blinding' required by DesiData"
+            "Missing argument 'unblind' required by DesiData"
         )
         with self.assertRaises(DataError) as context_manager:
             DesiHealpix(config["data"])

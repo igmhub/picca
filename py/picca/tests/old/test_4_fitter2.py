@@ -7,7 +7,7 @@ import glob
 import shutil
 
 from picca.utils import userprint
-import picca.bin.picca_fitter2 as picca_fitter2
+import picca.bin.old.picca_fitter2 as picca_fitter2
 
 from picca.tests.test_helpers import AbstractTest
 

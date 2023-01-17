@@ -1083,7 +1083,11 @@ class Delta(QSO):
 
         if pk1d_type:
             ivar = hdu['IVAR'][:].astype(float)
-            exposures_diff = hdu['DIFF'][:].astype(float)
+            try:
+                exposures_diff = hdu['DIFF'][:].astype(float)
+            except (KeyError, ValueError):
+                userprint('WARNING: no DIFF in hdu while pk1d_type=True, filling with zeros.')
+                exposures_diff = np.zeros(delta.shape)
             mean_snr = header['MEANSNR']
             mean_reso = header['MEANRESO']
             try:

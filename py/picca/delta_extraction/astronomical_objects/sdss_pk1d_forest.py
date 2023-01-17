@@ -7,6 +7,11 @@ from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 class SdssPk1dForest(SdssForest, Pk1dForest):
     """Forest Object
 
+    Class Methods
+    -------------
+    (see SdssForest in py/picca/delta_extraction/astronomical_objects/sdss_forest.py)
+    (see Pk1dForest in py/picca/delta_extraction/astronomical_objects/pk1d_forest.py)
+
     Methods
     -------
     (see SdssForest in py/picca/delta_extraction/astronomical_objects/sdss_forest.py)

@@ -153,8 +153,11 @@ Before submitting a PR please make sure to:
 1. Check the tutorials. Update them if necessary (typically the tutorial `picca_delta_extraction_configuration_tutorial` will need to be updated.
 2. Update the data model
 3. For every file you have modified run
-```yapf --style google file.py -i 
-```
-to ensure the coding styles are maintained.
+   ```
+   yapf --style google file.py -i 
+   ```
+   to ensure the coding styles are maintained.
 4. Consider using pylint to help in the debug process. From the repo folder run
-```pylint py/picca/delta_extraction/**/*py```
+   ```
+   pylint py/picca/delta_extraction/**/*py
+   ```
