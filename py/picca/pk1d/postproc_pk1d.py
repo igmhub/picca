@@ -21,6 +21,7 @@ from scipy.stats import binned_statistic
 from scipy.optimize import curve_fit
 import fitsio
 from astropy.table import Table, vstack
+from astropy.stats import bootstrap
 
 from picca.constants import SPEED_LIGHT
 from picca.constants import ABSORBER_IGM
@@ -385,63 +386,68 @@ def compute_mean_pk1d(p1d_table,
                     mean_p1d_table['median' + col][index] = median
 
                     
-    if compute_cov:
+                              
+    if (compute_cov) | (compute_bootstrap):
+
+        # Initialize cov_table of len = (nzbins * nkbins * nkbins) corresponding to hdu[3] in final ouput
+        cov_table = Table()
+        cov_table['zbin'] = np.zeros(nbins_z * nbins_k * nbins_k)
+        cov_table['index_zbin'] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
+        cov_table['N'] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
+        cov_table['covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)
         
-        print("Computing covariance matrix")
+        if compute_bootstrap:
+            cov_table['boot_covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)
+            cov_table['error_boot_covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)        
         
-        k_index = np.full(len(p1d_table['k']),np.nan)
+        k_index = np.full(len(p1d_table['k']), -1 , dtype=int)
         for ikbin, kbin in enumerate(kbin_edges[:-1]):  # First loop 1) k bins
             select = (p1d_table['k'] < kbin_edges[ikbin + 1]) & (
-                        p1d_table['k'] > kbin_edges[ikbin])  # select a specific k bin
+                      p1d_table['k'] > kbin_edges[ikbin])  # select a specific k bin
             k_index[select] = ikbin
-            
-        for izbin, _ in enumerate(zbin_edges[:-1]):  # Main loop 1) z bins
-            
-            if n_chunks[izbin] == 0:  # Fill rows with NaNs
-                i_min = izbin * nbins_k * nbins_k
-                i_max = (izbin + 1) * nbins_k * nbins_k
-                cov_table['zbin'][i_min:i_max] = zbin_centers[izbin]
-                cov_table['index_zbin'][i_min:i_max] = izbin
-                continue
-
-
+    else:
+        cov_table = None
+        
+    if compute_cov:
+        print("Computing covariance matrix")
+        
+        for izbin, _ in enumerate(zbin_edges[:-1]):  # Main loop 1) z bins - can be paralelized 
+            forestids = np.unique(p1d_table["forest_id"][select_z])
             select_z = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
                         p1d_table['forest_z'] > zbin_edges[izbin])
+            zbin_array, index_zbin_array, N_array, covariance_array = compute_cov(izbin,select_z,forestids,p1d_table,
+                                                                                  mean_p1d_table,zbin_centers,n_chunks,
+                                                                                  k_index,kbin_edges,nbins_k)
+            i_min = izbin * nbins_k * nbins_k
+            i_max = (izbin + 1) * nbins_k * nbins_k
+            cov_table['zbin'][i_min:i_max] = zbin_array
+            cov_table['index_zbin'][i_min:i_max] = index_zbin_array            
+            cov_table['N'][i_min:i_max] = N_array
+            cov_table['covariance'][i_min:i_max] = covariance_array
 
+            
+    if compute_bootstrap:
+        print("Computing covariance matrix with bootstrap method")
+        
+        for izbin, _ in enumerate(zbin_edges[:-1]):  # Main loop 1) z bins - can be paralelized
+            select_z = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
+                        p1d_table['forest_z'] > zbin_edges[izbin])
+            
             forestids = np.unique(p1d_table["forest_id"][select_z])
-            for forestid in forestids: # Main loop 2) id forest bins
-                select_id = select_z & (p1d_table["forest_id"] == forestid)
-                selected_pk = p1d_table['Pk'][select_id]
-                selected_ikbin = k_index[select_id]
+            print(forestids)
+            bootid = bootstrap(forestids, number_bootstrap)
+            boot_cov = []
+            for iboot in range(number_bootstrap): # Main loop 2) number of bootstrap samples - can be paralelized
+                print(bootid[iboot])
+                zbin_array, index_zbin_array, N_array, covariance_array = compute_cov(izbin,select_z,bootid[iboot],p1d_table,
+                                                                                      mean_p1d_table,zbin_centers,n_chunks,
+                                                                                      k_index,kbin_edges,nbins_k)                
+                boot_cov.append(covariance_array)
                 
-                for ipk in range(len(selected_pk)):  # Main loop 3) selected pk
-                    for ipk2 in range(ipk,len(selected_pk)):  # Main loop 4) selected pk 
-
-                        ikbin1 = selected_ikbin[ipk]
-                        ikbin2 = selected_ikbin[ipk2]
-                        
-                        index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin1) + ikbin2  # index to be filled in table
-                        cov_table['covariance'][index] = cov_table['covariance'][index] + selected_pk[ipk] * selected_pk[ipk2]
-                        cov_table['N'][index] = cov_table['N'][index] + 1
-
-                            
-            for ikbin, _ in enumerate(kbin_edges[:-1]):  # Third loop 2) k bins
-                for ikbin2, _ in enumerate(ikbin,kbin_edges[:-1]):  # Third loop 3) k bins
-                            
-                    mean1 = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin]
-                    mean2 = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin2]
-                    
-                    index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin1) + ikbin2  # index to be filled in table
-                    cov_12 = ((cov_table['covariance'][index]/cov_table['N'][index]) - mean1 * mean2)/np.sqrt(cov_table['N'][index])
-                    cov_table['covariance'][index] = cov_12
-                    cov_table['zbin'][index] = zbin_centers[izbin]
-                    cov_table['index_zbin'][index] = izbin                
-    
-                    if ikbin2 != ikbin1:
-                        index_2 = (nbins_k * nbins_k * izbin) + ikbin1 + (nbins_k * ikbin2)  # index to be filled in table
-                        cov_table['covariance'][index_2] = cov_12
-                        cov_table['zbin'][index_2] = zbin_centers[izbin]
-                        cov_table['index_zbin'][index_2] = izbin     
+            i_min = izbin * nbins_k * nbins_k
+            i_max = (izbin + 1) * nbins_k * nbins_k
+            cov_table['boot_covariance'][i_min:i_max] = np.mean(boot_cov,axis=0)
+            cov_table['error_boot_covariance'][i_min:i_max] = np.std(boot_cov,axis=0)
 
 
                             
@@ -455,6 +461,71 @@ def compute_mean_pk1d(p1d_table,
                    'z k a b standard_dev_points')
 
     return mean_p1d_table, metadata_table, cov_table
+
+
+
+def compute_cov(izbin,
+                select_z,
+                forestids,
+                p1d_table,
+                mean_p1d_table,
+                zbin_centers,
+                n_chunks,
+                k_index,
+                kbin_edges,
+                nbins_k):
+    
+        zbin_array = np.zeros(nbins_k * nbins_k)
+        index_zbin_array = np.zeros(nbins_k * nbins_k, dtype=int)
+        N_array = np.zeros(nbins_k * nbins_k, dtype=int)
+        covariance_array = np.zeros(nbins_k * nbins_k)
+            
+        if n_chunks[izbin] == 0:  # Fill rows with NaNs
+            zbin_array[:] = zbin_centers[izbin]
+            index_zbin_array[:] = izbin
+            N_array[:] = 0
+            covariance_array[:] = np.nan
+            return zbin_array, index_zbin_array, N_array, covariance_array
+
+
+        for forestid in forestids: # First loop 1) id forest bins
+                select_id = select_z & (p1d_table["forest_id"] == forestid)
+                selected_pk = p1d_table['Pk'][select_id]
+                selected_ikbin = k_index[select_id]
+                
+                for ipk in range(len(selected_pk)):  # First loop 2) selected pk
+                    for ipk2 in range(ipk,len(selected_pk)):  # First loop 3) selected pk 
+
+                        ikbin1 = selected_ikbin[ipk]
+                        ikbin2 = selected_ikbin[ipk2]
+                        if (ikbin1 != -1)&(ikbin2 != -1):
+                            index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin1) + ikbin2  # index to be filled in table
+                            covariance_array[index] = covariance_array[index] + selected_pk[ipk] * selected_pk[ipk2]
+                            N_array[index] = N_array[index] + 1
+
+                            
+        for ikbin, _ in enumerate(kbin_edges[:-1]):  # Second loop 1) k bins
+            for ikbin2, _ in enumerate(ikbin,kbin_edges[:-1]):  # Second loop 2) k bins
+                            
+                mean1 = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin]
+                mean2 = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin2]
+                    
+                index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin1) + ikbin2  # index to be filled in table
+                cov_12 = ((covariance_array[index]/N_array[index]) - mean1 * mean2)/np.sqrt(N_array[index])
+                covariance_array[index] = cov_12
+                zbin_array[index] = zbin_centers[izbin]
+                index_zbin_array[index] = izbin                
+    
+                if ikbin2 != ikbin1:
+                    index_2 = (nbins_k * nbins_k * izbin) + ikbin1 + (nbins_k * ikbin2)  # index to be filled in table
+                    covariance_array[index_2] = cov_12
+                    zbin_array[index_2] = zbin_centers[izbin]
+                    index_zbin_array[index_2] = izbin
+                    
+        return zbin_array, index_zbin_array, N_array, covariance_array
+
+
+
 
 
 def run_postproc_pk1d(data_dir,
