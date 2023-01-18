@@ -411,7 +411,7 @@ def compute_mean_pk1d(p1d_table,
     if compute_cov:
         print("Computing covariance matrix")
         
-        for izbin, _ in enumerate(zbin_edges[:-1]):  # Main loop 1) z bins - can be paralelized 
+        for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
             forestids = np.unique(p1d_table["forest_id"][select_z])
             select_z = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
                         p1d_table['forest_z'] > zbin_edges[izbin])
@@ -429,7 +429,7 @@ def compute_mean_pk1d(p1d_table,
     if compute_bootstrap:
         print("Computing covariance matrix with bootstrap method")
         
-        for izbin, _ in enumerate(zbin_edges[:-1]):  # Main loop 1) z bins - can be paralelized
+        for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
             select_z = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
                         p1d_table['forest_z'] > zbin_edges[izbin])
             
