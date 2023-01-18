@@ -244,13 +244,13 @@ def compute_mean_pk1d(p1d_table,
             if apply_z_weights:  # special chunk selection in that case
                 delta_z = zbin_centers[1:]-zbin_centers[:-1]
                 if not np.allclose(delta_z, delta_z[0], atol=1.e-3):
-                    raise ValueError("Option apply_z_weights is set: redshift bins should all have equal widths.")
+                    raise ValueError("z bins should have equal widths with apply_z_weights.")
                 delta_z = delta_z[0]
 
                 select = (p1d_table['k'] < kbin_edges[ikbin + 1]) & (
                             p1d_table['k'] > kbin_edges[ikbin]
                         )
-                if (izbin==0) or (izbin==nbins_z-1):
+                if izbin in (0, nbins_z-1):
                     # First and last bin: in order to avoid edge effects,
                     #    use only chunks within the bin
                     select = select & (
@@ -261,7 +261,8 @@ def compute_mean_pk1d(p1d_table,
                         p1d_table['forest_z'] < zbin_centers[izbin+1]) & (
                         p1d_table['forest_z'] > zbin_centers[izbin-1])
 
-                redshift_weights = 1.0 - np.abs(p1d_table['forest_z'][select]-zbin_centers[izbin])/delta_z
+                redshift_weights = 1.0 - np.abs(p1d_table['forest_z'][select]-
+                                                zbin_centers[izbin]) / delta_z
 
             else:
                 select = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
