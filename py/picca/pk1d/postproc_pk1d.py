@@ -134,7 +134,10 @@ def compute_mean_pk1d(p1d_table,
                       weight_method,
                       nomedians=False,
                       velunits=False,
-                      output_snrfit=None):
+                      output_snrfit=None,
+                      compute_cov=False,
+                      compute_bootstrap=False,
+                      number_bootstrap=50):
     """Compute mean P1D in a set of given (z,k) bins, from individual chunks P1Ds
 
     Arguments
@@ -213,6 +216,19 @@ def compute_mean_pk1d(p1d_table,
     metadata_table['k_min'] = kbin_edges[0] * np.ones(nbins_z)
     metadata_table['k_max'] = kbin_edges[-1] * np.ones(nbins_z)
 
+    # Initialize cov_table of len = (nzbins * nkbins * nkbins) corresponding to hdu[3] in final ouput
+    if compute_cov:
+        cov_table = Table()
+        cov_table['zbin'] = np.zeros(nbins_z * nbins_k * nbins_k)
+        cov_table['index_zbin'] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
+        cov_table['N'] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
+        cov_table['covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)
+        if compute_bootstrap:
+            cov_table['boot_covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)
+            cov_table['error_boot_covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)
+    else:
+        cov_table = None
+
     # Number of chunks in each redshift bin
     n_chunks, _, _ = binned_statistic(
         z_array,
@@ -242,7 +258,7 @@ def compute_mean_pk1d(p1d_table,
         for ikbin, kbin in enumerate(kbin_edges[:-1]):  # Main loop 2) k bins
 
             select = select_z & (
-                    p1d_table['k'] < kbin_edges[ikbin + 1]) & (
+                     p1d_table['k'] < kbin_edges[ikbin + 1]) & (
                         p1d_table['k'] > kbin_edges[ikbin]
                     )  # select a specific (z,k) bin
 
@@ -368,6 +384,68 @@ def compute_mean_pk1d(p1d_table,
                     median = np.median((p1d_table[col][select]))
                     mean_p1d_table['median' + col][index] = median
 
+                    
+    if compute_cov:
+        
+        print("Computing covariance matrix")
+        
+        k_index = np.full(len(p1d_table['k']),np.nan)
+        for ikbin, kbin in enumerate(kbin_edges[:-1]):  # First loop 1) k bins
+            select = (p1d_table['k'] < kbin_edges[ikbin + 1]) & (
+                        p1d_table['k'] > kbin_edges[ikbin])  # select a specific k bin
+            k_index[select] = ikbin
+            
+        for izbin, _ in enumerate(zbin_edges[:-1]):  # Main loop 1) z bins
+            
+            if n_chunks[izbin] == 0:  # Fill rows with NaNs
+                i_min = izbin * nbins_k * nbins_k
+                i_max = (izbin + 1) * nbins_k * nbins_k
+                cov_table['zbin'][i_min:i_max] = zbin_centers[izbin]
+                cov_table['index_zbin'][i_min:i_max] = izbin
+                continue
+
+
+            select_z = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
+                        p1d_table['forest_z'] > zbin_edges[izbin])
+
+            forestids = np.unique(p1d_table["forest_id"][select_z])
+            for forestid in forestids: # Main loop 2) id forest bins
+                select_id = select_z & (p1d_table["forest_id"] == forestid)
+                selected_pk = p1d_table['Pk'][select_id]
+                selected_ikbin = k_index[select_id]
+                
+                for ipk in range(len(selected_pk)):  # Main loop 3) selected pk
+                    for ipk2 in range(ipk,len(selected_pk)):  # Main loop 4) selected pk 
+
+                        ikbin1 = selected_ikbin[ipk]
+                        ikbin2 = selected_ikbin[ipk2]
+                        
+                        index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin1) + ikbin2  # index to be filled in table
+                        cov_table['covariance'][index] = cov_table['covariance'][index] + selected_pk[ipk] * selected_pk[ipk2]
+                        cov_table['N'][index] = cov_table['N'][index] + 1
+
+                            
+            for ikbin, _ in enumerate(kbin_edges[:-1]):  # Third loop 2) k bins
+                for ikbin2, _ in enumerate(ikbin,kbin_edges[:-1]):  # Third loop 3) k bins
+                            
+                    mean1 = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin]
+                    mean2 = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin2]
+                    
+                    index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin1) + ikbin2  # index to be filled in table
+                    cov_12 = ((cov_table['covariance'][index]/cov_table['N'][index]) - mean1 * mean2)/np.sqrt(cov_table['N'][index])
+                    cov_table['covariance'][index] = cov_12
+                    cov_table['zbin'][index] = zbin_centers[izbin]
+                    cov_table['index_zbin'][index] = izbin                
+    
+                    if ikbin2 != ikbin1:
+                        index_2 = (nbins_k * nbins_k * izbin) + ikbin1 + (nbins_k * ikbin2)  # index to be filled in table
+                        cov_table['covariance'][index_2] = cov_12
+                        cov_table['zbin'][index_2] = zbin_centers[izbin]
+                        cov_table['index_zbin'][index_2] = izbin     
+
+
+                            
+
     if output_snrfit is not None:
         np.savetxt(output_snrfit,
                    snrfit_table,
@@ -376,7 +454,7 @@ def compute_mean_pk1d(p1d_table,
                    'SNR bin edges used: 1,  2,  3,  4,  5,  6,  7,  8,  9, 10\n'
                    'z k a b standard_dev_points')
 
-    return mean_p1d_table, metadata_table
+    return mean_p1d_table, metadata_table, cov_table
 
 
 def run_postproc_pk1d(data_dir,
@@ -390,7 +468,10 @@ def run_postproc_pk1d(data_dir,
                       nomedians=False,
                       velunits=False,
                       overwrite=False,
-                      ncpu=8):
+                      ncpu=8,
+                      compute_cov=False,
+                      compute_bootstrap=False,
+                      number_bootstrap=50):
     """Read individual Pk1D data from a set of files and compute P1D statistics,
     stored in a summary FITS file.
 
@@ -429,12 +510,16 @@ def run_postproc_pk1d(data_dir,
         tuple(output_readpk1d[i][1] for i in range(len(output_readpk1d))))
 
     userprint('Individual P1Ds read, now computing statistics.')
-    mean_p1d_table, metadata_table = compute_mean_pk1d(p1d_table, z_array,
-                                                      zbin_edges, kbin_edges,
-                                                      weight_method, nomedians,
-                                                      velunits, output_snrfit)
+    mean_p1d_table, metadata_table, cov_table = compute_mean_pk1d(p1d_table, z_array,
+                                                                  zbin_edges, kbin_edges,
+                                                                  weight_method, nomedians,
+                                                                  velunits, output_snrfit,
+                                                                  compute_cov,compute_bootstrap,
+                                                                  number_bootstrap)
     mean_p1d_table.meta['velunits'] = velunits
     result = fitsio.FITS(output_file, 'rw', clobber=True)
     result.write(mean_p1d_table.as_array())
     result.write(metadata_table.as_array())
+    if cov_table is not None:
+        result.write(cov_table.as_array())
     result.close()
