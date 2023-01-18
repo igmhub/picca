@@ -496,28 +496,28 @@ def compute_cov(izbin,
                 for ipk in range(len(selected_pk)):  # First loop 2) selected pk
                     for ipk2 in range(ipk,len(selected_pk)):  # First loop 3) selected pk 
 
-                        ikbin1 = selected_ikbin[ipk]
+                        ikbin = selected_ikbin[ipk]
                         ikbin2 = selected_ikbin[ipk2]
-                        if (ikbin1 != -1)&(ikbin2 != -1):
-                            index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin1) + ikbin2  # index to be filled in table
+                        if (ikbin != -1)&(ikbin2 != -1):
+                            index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin) + ikbin2  # index to be filled in table
                             covariance_array[index] = covariance_array[index] + selected_pk[ipk] * selected_pk[ipk2]
                             N_array[index] = N_array[index] + 1
 
                             
-        for ikbin, _ in enumerate(kbin_edges[:-1]):  # Second loop 1) k bins
-            for ikbin2, _ in enumerate(ikbin,kbin_edges[:-1]):  # Second loop 2) k bins
+        for ikbin in range(nbins_k):  # Second loop 1) k bins
+            for ikbin2 in range(ikbin,nbins_k):  # Second loop 2) k bins
                             
                 mean1 = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin]
                 mean2 = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin2]
                     
-                index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin1) + ikbin2  # index to be filled in table
+                index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin) + ikbin2  # index to be filled in table
                 cov_12 = ((covariance_array[index]/N_array[index]) - mean1 * mean2)/np.sqrt(N_array[index])
                 covariance_array[index] = cov_12
                 zbin_array[index] = zbin_centers[izbin]
                 index_zbin_array[index] = izbin                
     
-                if ikbin2 != ikbin1:
-                    index_2 = (nbins_k * nbins_k * izbin) + ikbin1 + (nbins_k * ikbin2)  # index to be filled in table
+                if ikbin2 != ikbin:
+                    index_2 = (nbins_k * nbins_k * izbin) + ikbin + (nbins_k * ikbin2)  # index to be filled in table
                     covariance_array[index_2] = cov_12
                     zbin_array[index_2] = zbin_centers[izbin]
                     index_zbin_array[index_2] = izbin
