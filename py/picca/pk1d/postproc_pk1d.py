@@ -136,7 +136,7 @@ def compute_mean_pk1d(p1d_table,
                       nomedians=False,
                       velunits=False,
                       output_snrfit=None,
-                      compute_cov=False,
+                      compute_covariance=False,
                       compute_bootstrap=False,
                       number_bootstrap=50):
     """Compute mean P1D in a set of given (z,k) bins, from individual chunks P1Ds
@@ -218,7 +218,7 @@ def compute_mean_pk1d(p1d_table,
     metadata_table['k_max'] = kbin_edges[-1] * np.ones(nbins_z)
 
     # Initialize cov_table of len = (nzbins * nkbins * nkbins) corresponding to hdu[3] in final ouput
-    if compute_cov:
+    if compute_covariance:
         cov_table = Table()
         cov_table['zbin'] = np.zeros(nbins_z * nbins_k * nbins_k)
         cov_table['index_zbin'] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
@@ -387,7 +387,7 @@ def compute_mean_pk1d(p1d_table,
 
                     
                               
-    if (compute_cov) | (compute_bootstrap):
+    if (compute_covariance) | (compute_bootstrap):
 
         # Initialize cov_table of len = (nzbins * nkbins * nkbins) corresponding to hdu[3] in final ouput
         cov_table = Table()
@@ -408,7 +408,7 @@ def compute_mean_pk1d(p1d_table,
     else:
         cov_table = None
         
-    if compute_cov:
+    if compute_covariance:
         print("Computing covariance matrix")
         
         for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
@@ -540,7 +540,7 @@ def run_postproc_pk1d(data_dir,
                       velunits=False,
                       overwrite=False,
                       ncpu=8,
-                      compute_cov=False,
+                      compute_covariance=False,
                       compute_bootstrap=False,
                       number_bootstrap=50):
     """Read individual Pk1D data from a set of files and compute P1D statistics,
@@ -585,7 +585,7 @@ def run_postproc_pk1d(data_dir,
                                                                   zbin_edges, kbin_edges,
                                                                   weight_method, nomedians,
                                                                   velunits, output_snrfit,
-                                                                  compute_cov,compute_bootstrap,
+                                                                  compute_covariance,compute_bootstrap,
                                                                   number_bootstrap)
     mean_p1d_table.meta['velunits'] = velunits
     mean_p1d_table.meta['N_qso'] = np.unique(p1d_table["forest_id"])
