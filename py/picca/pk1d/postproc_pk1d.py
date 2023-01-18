@@ -517,6 +517,7 @@ def run_postproc_pk1d(data_dir,
                                                                   compute_cov,compute_bootstrap,
                                                                   number_bootstrap)
     mean_p1d_table.meta['velunits'] = velunits
+    mean_p1d_table.meta['N_qso'] = np.unique(p1d_table["forest_id"])
     result = fitsio.FITS(output_file, 'rw', clobber=True)
     result.write(mean_p1d_table.as_array())
     result.write(metadata_table.as_array())
