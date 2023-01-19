@@ -81,6 +81,10 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
             chunk_table['forest_z'] = float(chunk_header['MEANZ'])
             chunk_table['forest_snr'] = float(chunk_header['MEANSNR'])
             chunk_table['forest_id'] = int(chunk_header['LOS_ID'])
+            try:
+                chunk_table['chunk_id'] = f"{chunk_header['LOS_ID']}_{chunk_header['CHUNK_ID']}"
+            except:
+                continue
 
             if snrcut is not None:
                 if len(snrcut) > 1:
@@ -190,6 +194,8 @@ def compute_mean_pk1d(p1d_table,
         stats_array += ['median']
 
     p1d_table_cols = p1d_table.colnames
+    p1d_table_cols.remove('forest_id')
+    if 'chunk_id' in p1d_table_cols: p1d_table_cols.remove('chunk_id')
 
     # Convert data into velocity units
     if velunits:
@@ -412,12 +418,12 @@ def compute_mean_pk1d(p1d_table,
         print("Computing covariance matrix")
         
         for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
-            forestids = np.unique(p1d_table["forest_id"][select_z])
+            chunkids = np.unique(p1d_table["chunk_id"][select_z])
             select_z = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
                         p1d_table['forest_z'] > zbin_edges[izbin])
-            zbin_array, index_zbin_array, N_array, covariance_array = compute_cov(izbin,select_z,forestids,p1d_table,
+            zbin_array, index_zbin_array, N_array, covariance_array = compute_cov(izbin,select_z,chunkids,p1d_table,
                                                                                   mean_p1d_table,zbin_centers,n_chunks,
-                                                                                  k_index,kbin_edges,nbins_k)
+                                                                                  k_index,nbins_k)
             i_min = izbin * nbins_k * nbins_k
             i_max = (izbin + 1) * nbins_k * nbins_k
             cov_table['zbin'][i_min:i_max] = zbin_array
@@ -433,15 +439,15 @@ def compute_mean_pk1d(p1d_table,
             select_z = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
                         p1d_table['forest_z'] > zbin_edges[izbin])
             
-            forestids = np.unique(p1d_table["forest_id"][select_z])
-            print(forestids)
-            bootid = bootstrap(forestids, number_bootstrap)
+            chunkids = np.unique(p1d_table["chunk_id"][select_z])
+            bootid = bootstrap(np.arange(chunkids.size), number_bootstrap)
             boot_cov = []
             for iboot in range(number_bootstrap): # Main loop 2) number of bootstrap samples - can be paralelized
-                print(bootid[iboot])
-                zbin_array, index_zbin_array, N_array, covariance_array = compute_cov(izbin,select_z,bootid[iboot],p1d_table,
-                                                                                      mean_p1d_table,zbin_centers,n_chunks,
-                                                                                      k_index,kbin_edges,nbins_k)                
+                zbin_array, index_zbin_array, N_array, covariance_array = compute_cov(izbin,select_z,
+                                                                                      chunkids[bootid[iboot].astype(int)],
+                                                                                      p1d_table,mean_p1d_table,
+                                                                                      zbin_centers,n_chunks,
+                                                                                      k_index,nbins_k)                
                 boot_cov.append(covariance_array)
                 
             i_min = izbin * nbins_k * nbins_k
@@ -450,7 +456,7 @@ def compute_mean_pk1d(p1d_table,
             cov_table['error_boot_covariance'][i_min:i_max] = np.std(boot_cov,axis=0)
 
 
-                            
+
 
     if output_snrfit is not None:
         np.savetxt(output_snrfit,
@@ -466,13 +472,12 @@ def compute_mean_pk1d(p1d_table,
 
 def compute_cov(izbin,
                 select_z,
-                forestids,
+                chunkids,
                 p1d_table,
                 mean_p1d_table,
                 zbin_centers,
                 n_chunks,
                 k_index,
-                kbin_edges,
                 nbins_k):
     
         zbin_array = np.zeros(nbins_k * nbins_k)
@@ -488,40 +493,46 @@ def compute_cov(izbin,
             return zbin_array, index_zbin_array, N_array, covariance_array
 
 
-        for forestid in forestids: # First loop 1) id forest bins
-                select_id = select_z & (p1d_table["forest_id"] == forestid)
-                selected_pk = p1d_table['Pk'][select_id]
-                selected_ikbin = k_index[select_id]
+        for chunkid in chunkids: # First loop 1) id forest bins
+            select_id = select_z & (p1d_table["chunk_id"] == chunkid)
+            selected_pk = p1d_table['Pk'][select_id]
+            selected_ikbin = k_index[select_id]
                 
-                for ipk in range(len(selected_pk)):  # First loop 2) selected pk
+            for ipk in range(len(selected_pk)):  # First loop 2) selected pk
+                ikbin = selected_ikbin[ipk]
+                if (ikbin != -1):
                     for ipk2 in range(ipk,len(selected_pk)):  # First loop 3) selected pk 
-
-                        ikbin = selected_ikbin[ipk]
                         ikbin2 = selected_ikbin[ipk2]
-                        if (ikbin != -1)&(ikbin2 != -1):
-                            index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin) + ikbin2  # index to be filled in table
+                        
+                        if (ikbin2 != -1):
+                            # index of the (ikbin,ikbin2) coefficient on the top of the matrix
+                            index = (nbins_k * ikbin) + ikbin2 
                             covariance_array[index] = covariance_array[index] + selected_pk[ipk] * selected_pk[ipk2]
                             N_array[index] = N_array[index] + 1
 
                             
         for ikbin in range(nbins_k):  # Second loop 1) k bins
-            for ikbin2 in range(ikbin,nbins_k):  # Second loop 2) k bins
-                            
-                mean1 = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin]
-                mean2 = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin2]
+            mean_ikbin = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin]
+            
+            for ikbin2 in range(ikbin,nbins_k):  # Second loop 2) k bins          
+                mean_ikbin2 = mean_p1d_table['meanPk'][(nbins_k * izbin) + ikbin2]
                     
-                index = (nbins_k * nbins_k * izbin) + (nbins_k * ikbin) + ikbin2  # index to be filled in table
-                cov_12 = ((covariance_array[index]/N_array[index]) - mean1 * mean2)/np.sqrt(N_array[index])
-                covariance_array[index] = cov_12
+                # index of the (ikbin,ikbin2) coefficient on the top of the matrix
+                index = (nbins_k * ikbin) + ikbin2  
+                covariance_array[index] = ((covariance_array[index]/N_array[index]) - mean_ikbin * mean_ikbin2)/N_array[index]
+
                 zbin_array[index] = zbin_centers[izbin]
-                index_zbin_array[index] = izbin                
-    
+                index_zbin_array[index] = izbin
+                
                 if ikbin2 != ikbin:
-                    index_2 = (nbins_k * nbins_k * izbin) + ikbin + (nbins_k * ikbin2)  # index to be filled in table
-                    covariance_array[index_2] = cov_12
+                    # index of the (ikbin,ikbin2) coefficient on the bottom of the matrix
+                    index_2 =  (nbins_k * ikbin2)  + ikbin
+                    covariance_array[index_2] = covariance_array[index]
+                    N_array[index_2] = N_array[index]
+
                     zbin_array[index_2] = zbin_centers[izbin]
-                    index_zbin_array[index_2] = izbin
-                    
+                    index_zbin_array[index_2] = izbin                   
+
         return zbin_array, index_zbin_array, N_array, covariance_array
 
 
@@ -588,11 +599,9 @@ def run_postproc_pk1d(data_dir,
                                                                   compute_covariance,compute_bootstrap,
                                                                   number_bootstrap)
 
-    metadata_table.meta['VELUNITS'] = velunits
-    metadata_table.meta['NQSO'] = np.unique(p1d_table["forest_id"])
     result = fitsio.FITS(output_file, 'rw', clobber=True)
-    result.write(mean_p1d_table)
-    result.write(metadata_table)
+    result.write(mean_p1d_table.as_array())
+    result.write(metadata_table.as_array(),header = {'VELUNITS': velunits, 'NQSO': np.unique(p1d_table["forest_id"])})
     if cov_table is not None:
-        result.write(cov_table)
+        result.write(cov_table.as_array())
     result.close()
