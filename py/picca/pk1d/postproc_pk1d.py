@@ -81,10 +81,8 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
             chunk_table['forest_z'] = float(chunk_header['MEANZ'])
             chunk_table['forest_snr'] = float(chunk_header['MEANSNR'])
             chunk_table['forest_id'] = int(chunk_header['LOS_ID'])
-            try:
+            if 'CHUNK_ID' in chunk_header:
                 chunk_table['chunk_id'] = f"{chunk_header['LOS_ID']}_{chunk_header['CHUNK_ID']}"
-            except:
-                continue
 
             if snrcut is not None:
                 if len(snrcut) > 1:
