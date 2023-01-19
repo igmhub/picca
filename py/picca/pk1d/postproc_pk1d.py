@@ -599,7 +599,7 @@ def run_postproc_pk1d(data_dir,
 
     result = fitsio.FITS(output_file, 'rw', clobber=True)
     result.write(mean_p1d_table.as_array())
-    result.write(metadata_table.as_array(),header = {'VELUNITS': velunits, 'NQSO': np.unique(p1d_table["forest_id"])})
+    result.write(metadata_table.as_array(),header = {'VELUNITS': velunits, 'NQSO': len(np.unique(p1d_table["forest_id"]))})
     if cov_table is not None:
         result.write(cov_table.as_array())
     result.close()
