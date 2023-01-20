@@ -1,6 +1,6 @@
 """This module defines a set of functions to postprocess files produced by compute_pk1d.py.
 
-This module provides 3 functions:
+This module provides 3 main functions:
     - read_pk1d:
         Read all HDUs in an individual "P1D" FITS file and stacks
         all data in one table
@@ -28,6 +28,27 @@ from picca.utils import userprint
 from picca.pk1d.utils import MEANPK_FITRANGE_SNR
 
 
+def fitfunc_variance_pk1d(snr, amp, zero_point):
+    """Model function for the variance of Pk1D as a function of SNR
+
+    Arguments
+    ---------
+    snr: float
+    signal-to-noise ratio
+
+    amp: float
+    first parameter
+
+    zero_point: float
+    second parameter
+
+    Return
+    ------
+    The variance model
+    """
+    return (amp / (snr - 1)**2) + zero_point
+
+
 def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     """Read Pk1D data from a single file
 
@@ -47,8 +68,8 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     Required if len(snrcut)>1. List of redshifts
     associated to the list of snr cuts.
 
-    Return:
-    -------
+    Return
+    ------
     p1d_table: Table
     One entry per mode(k) per chunk
 
@@ -295,27 +316,6 @@ def compute_mean_pk1d(p1d_table,
                                               MEANPK_FITRANGE_SNR[1] + 1, 1)
                     snr_bins = (snr_bin_edges[:-1] + snr_bin_edges[1:]) / 2
 
-                    def variance_function(snr, amp, zero_point):
-                        # TODO: fix docstrings
-                        """Compute variance
-
-                        Arguments
-                        ---------
-                        snr: float
-                        signal-to-noise ratio
-
-                        amp: float
-                        ?
-
-                        zero_point: float
-                        ?
-
-                        Return
-                        ------
-                        The variance
-                        """
-                        return (amp / (snr - 1)**2) + zero_point
-
                     data_values = p1d_table[col][select]
                     data_snr = p1d_table['forest_snr'][select]
                     mask = np.isnan(data_values)
@@ -332,7 +332,7 @@ def compute_mean_pk1d(p1d_table,
                                                           bins=snr_bin_edges)
                     # the *_ is to ignore the rest of the return arguments
                     coef, *_ = curve_fit(
-                        variance_function,
+                        fitfunc_variance_pk1d,
                         snr_bins,
                         standard_dev**2,
                         bounds=(0, np.inf)
@@ -342,7 +342,7 @@ def compute_mean_pk1d(p1d_table,
                     data_snr[data_snr >
                              MEANPK_FITRANGE_SNR[1]] = MEANPK_FITRANGE_SNR[1]
                     data_snr[data_snr < 1.01] = 1.01
-                    variance_estimated = variance_function(data_snr, *coef)
+                    variance_estimated = fitfunc_variance_pk1d(data_snr, *coef)
                     weights = 1. / variance_estimated
                     if apply_z_weights:
                         weights *= redshift_weights
