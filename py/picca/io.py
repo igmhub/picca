@@ -1435,12 +1435,23 @@ def read_delta_file(filename, rebin_factor=None):
     else:
         deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
     
-    hdul.close()
-
     # Rebin
     if rebin_factor is not None:
+        if 'LAMBDA' in hdul:
+            card = 'METADATA'
+        else:
+            card = 1
+
+        if hdul[card].read_header()['WAVE_SOLUTION'] != 'lin':
+            raise ValueError('Delta rebinning only implemented for linear \
+                    lambda bins')
+        
+        dwave = hdul[card].read_header()['DELTA_LAMBDA']
+            
         for i in range(len(deltas)):
-            deltas[i].rebin(rebin_factor)
+            deltas[i].rebin(rebin_factor, dwave=dwave)
+            
+    hdul.close()
 
     return deltas
 
