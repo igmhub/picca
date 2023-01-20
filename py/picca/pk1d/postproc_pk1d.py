@@ -348,7 +348,7 @@ def compute_mean_pk1d(p1d_table,
                         weights *= redshift_weights
                     mean = np.average(data_values, weights=weights)
                     if apply_z_weights:   # Analytic expression for the re-weighted average:
-                        error = np.sum(weights*redshift_weights)/(np.sum(weights))**2
+                        error = np.sqrt(np.sum(weights*redshift_weights))/np.sum(weights)
                     else:
                         error = np.sqrt(1. / np.sum(weights))
                     if output_snrfit is not None and col == 'Pk':
