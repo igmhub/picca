@@ -379,12 +379,15 @@ def compute_mean_pk1d(p1d_table,
                     error = np.sqrt(alpha / (np.sum(weights) * (num_chunks - 1)))
 
                 elif weight_method == 'no_weights':
-                    mean = np.mean(p1d_table[col][select])
-                    # unbiased estimate: num_chunks-1
-                    error = np.std(p1d_table[col][select]) / np.sqrt(num_chunks - 1)
                     if apply_z_weights:
                         mean = np.average(p1d_table[col][select], weights=redshift_weights)
-                        # Note, we dont change the formula for the error as of now.
+                        # simple analytic expression:
+                        error = np.std(p1d_table[col][select]) * (
+                                np.sqrt(np.sum(redshift_weights**2)) / np.sum(redshift_weights) )
+                    else:
+                        mean = np.mean(p1d_table[col][select])
+                        # unbiased estimate: num_chunks-1
+                        error = np.std(p1d_table[col][select]) / np.sqrt(num_chunks - 1)
 
                 else:
                     raise ValueError(
