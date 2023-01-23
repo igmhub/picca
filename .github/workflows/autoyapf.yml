@@ -1,1 +1,3 @@
+name: Autoyapf
 
+on: [push, pull_request]
