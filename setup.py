@@ -9,7 +9,7 @@ from pathlib import Path
 scripts = sorted(glob.glob('bin/picca*'))
 
 description = (f"Package for Igm Cosmological-Correlations Analyses\n"
-              "commit hash: {git.Repo('.').head.object.hexsha}")
+               f"commit hash: {git.Repo('.').head.object.hexsha}")
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
