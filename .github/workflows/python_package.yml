@@ -3,12 +3,7 @@
 
 name: Pytest
 on:
-  push:
-  pull_request:
-  workflow_run:
-      workflows: ["Autoyapf"]
-      types:
-        - completed
+  [push, pull_request]
 env:
   SETUP_XVFB: True  # avoid issues if mpl tries to open a GUI window
 
