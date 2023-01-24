@@ -30,7 +30,8 @@ setup(
     package_dir={'': 'py'},
     package_data={
         'picca': [
-            'fitter2/models/*/*.fits', 'delta_extraction/expected_fluxes/raw_stats/*fits.gz'
+            'fitter2/models/*/*.fits',
+            'delta_extraction/expected_fluxes/raw_stats/*fits.gz'
         ]
     },
     install_requires=[
