@@ -210,12 +210,13 @@ def main(cmdargs):
                               'following the given seed. Do not shuffle if '
                               'None'))
 
-    parser.add_argument('--rebin-factor',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Rebin factor for deltas. If not None, deltas will '
-                             'be rebinned by that factor')
+    parser.add_argument(
+        '--rebin-factor',
+        type=int,
+        default=None,
+        required=False,
+        help='Rebin factor for deltas. If not None, deltas will '
+        'be rebinned by that factor')
 
     args = parser.parse_args(cmdargs)
 
@@ -249,16 +250,17 @@ def main(cmdargs):
     t0 = time.time()
 
     ### Read data 1
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  cf.nside,
-                                                  cf.lambda_abs,
-                                                  cf.alpha,
-                                                  cf.z_ref,
-                                                  cosmo,
-                                                  max_num_spec=args.nspec,
-                                                  no_project=args.no_project,
-                                                  nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor)
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir,
+        cf.nside,
+        cf.lambda_abs,
+        cf.alpha,
+        cf.z_ref,
+        cosmo,
+        max_num_spec=args.nspec,
+        no_project=args.no_project,
+        nproc=args.nproc,
+        rebin_factor=args.rebin_factor)
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -313,7 +315,9 @@ def main(cmdargs):
     pool.close()
 
     t2 = time.time()
-    userprint(f'picca_cf.py - Time computing correlation function: {(t2-t1)/60:.3f} minutes')
+    userprint(
+        f'picca_cf.py - Time computing correlation function: {(t2-t1)/60:.3f} minutes'
+    )
 
     # group data from parallelisation
     correlation_function_data = np.array(correlation_function_data)
@@ -382,15 +386,17 @@ def main(cmdargs):
         'value': args.fid_Ok,
         'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'WL',
-        'value': args.fid_wl,
-        'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        'name':
+            'WL',
+        'value':
+            args.fid_wl,
+        'comment':
+            'Equation of state of dark energy of fiducial LambdaCDM cosmology'
     }, {
         'name': "BLINDING",
         'value': blinding,
         'comment': 'String specifying the blinding strategy'
-    }
-    ]
+    }]
     results.write(
         [r_par, r_trans, z, num_pairs],
         names=['RP', 'RT', 'Z', 'NB'],
@@ -418,6 +424,7 @@ def main(cmdargs):
     t3 = time.time()
     userprint(f'picca_cf.py - Time total : {(t3-t0)/60:.3f} minutes')
 
+
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)

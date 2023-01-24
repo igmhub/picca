@@ -34,7 +34,9 @@ accepted_general_options = [
     "overwrite", "logging level console", "logging level file", "log",
     "out dir", "num processors"
 ]
-accepted_masks_options = ["num masks", "keep pixels", "type {int}", "module name {int}"]
+accepted_masks_options = [
+    "num masks", "keep pixels", "type {int}", "module name {int}"
+]
 
 default_config = {
     "general": {
@@ -567,7 +569,8 @@ class Config:
                 self.config.read_dict({f"mask arguments {mask_index}": {}})
             mask_args = self.config[f"mask arguments {mask_index}"]
             # Always overwrite with general term. No need to complicate
-            mask_args["keep pixels"] = section.get("keep pixels", fallback="false")
+            mask_args["keep pixels"] = section.get("keep pixels",
+                                                   fallback="false")
 
             # check that arguments are valid
             for key in mask_args:

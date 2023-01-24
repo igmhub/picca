@@ -26,12 +26,11 @@ def main(cmdargs):
         required=True,
         help='Correlation produced via picca_cf.py, picca_xcf.py, ...')
 
-    parser.add_argument(
-        '--out',
-        type=str,
-        default=None,
-        required=True,
-        help='Output file name')
+    parser.add_argument('--out',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output file name')
 
     parser.add_argument(
         '--dmat',
@@ -64,11 +63,10 @@ def main(cmdargs):
         required=False,
         help='Remove a correlation from shuffling the distribution of los')
 
-    parser.add_argument(
-        '--do-not-smooth-cov',
-        action='store_true',
-        default=False,
-        help='Do not smooth the covariance matrix')
+    parser.add_argument('--do-not-smooth-cov',
+                        action='store_true',
+                        default=False,
+                        help='Do not smooth the covariance matrix')
 
     parser.add_argument(
         '--blind-corr-type',
@@ -135,7 +133,7 @@ def main(cmdargs):
         correlation = hdul[1]['CO'][:]
         hdul.close()
         if ((correlation.min() < -1.) or (correlation.min() > 1.) or
-                (correlation.max() < -1.) or (correlation.max() > 1.) or
+            (correlation.max() < -1.) or (correlation.max() > 1.) or
                 np.any(np.diag(correlation) != 1.)):
             userprint(("WARNING: The correlation-matrix has some incorrect "
                        "values"))
@@ -179,8 +177,9 @@ def main(cmdargs):
                       "is unblinded. These files should not mix. Exiting...")
             sys.exit(1)
         elif 'DM_BLIND' in hdul[1].get_colnames():
-            userprint("Non-blinded correlations were given but distortion matrix "
-                      "is blinded. These files should not mix. Exiting...")
+            userprint(
+                "Non-blinded correlations were given but distortion matrix "
+                "is blinded. These files should not mix. Exiting...")
             sys.exit(1)
         else:
             dmat = hdul[1]['DM'][:]
@@ -208,48 +207,59 @@ def main(cmdargs):
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [
-    {
-        'name': "BLINDING",
-        'value': blinding,
-        'comment': 'String specifying the blinding strategy'
-    },
-    {
-        'name': 'RPMIN',
-        'value': r_par_min,
-        'comment': 'Minimum r-parallel'
-    }, {
-        'name': 'RPMAX',
-        'value': r_par_max,
-        'comment': 'Maximum r-parallel'
-    }, {
-        'name': 'RTMAX',
-        'value': r_trans_max,
-        'comment': 'Maximum r-transverse'
-    }, {
-        'name': 'NP',
-        'value': num_bins_r_par,
-        'comment': 'Number of bins in r-parallel'
-    }, {
-        'name': 'NT',
-        'value': num_bins_r_trans,
-        'comment': 'Number of bins in r-transverse'
-    }, {
-        'name': 'OMEGAM',
-        'value': head['OMEGAM'],
-        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'OMEGAR',
-        'value': head['OMEGAR'],
-        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'OMEGAK',
-        'value': head['OMEGAK'],
-        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'WL',
-        'value': head['WL'],
-        'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    },
+        {
+            'name': "BLINDING",
+            'value': blinding,
+            'comment': 'String specifying the blinding strategy'
+        },
+        {
+            'name': 'RPMIN',
+            'value': r_par_min,
+            'comment': 'Minimum r-parallel'
+        },
+        {
+            'name': 'RPMAX',
+            'value': r_par_max,
+            'comment': 'Maximum r-parallel'
+        },
+        {
+            'name': 'RTMAX',
+            'value': r_trans_max,
+            'comment': 'Maximum r-transverse'
+        },
+        {
+            'name': 'NP',
+            'value': num_bins_r_par,
+            'comment': 'Number of bins in r-parallel'
+        },
+        {
+            'name': 'NT',
+            'value': num_bins_r_trans,
+            'comment': 'Number of bins in r-transverse'
+        },
+        {
+            'name': 'OMEGAM',
+            'value': head['OMEGAM'],
+            'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+        },
+        {
+            'name': 'OMEGAR',
+            'value': head['OMEGAR'],
+            'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+        },
+        {
+            'name': 'OMEGAK',
+            'value': head['OMEGAK'],
+            'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+        },
+        {
+            'name':
+                'WL',
+            'value':
+                head['WL'],
+            'comment':
+                'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        },
     ]
     comment = [
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
@@ -259,18 +269,27 @@ def main(cmdargs):
     # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
         blinding_dir = '/global/cfs/projectdirs/desi/science/lya/y1-kp6/blinding/'
-        blinding_templates = {'desi_m2': {'standard': 'm2_blinding_v1.2_standard_29_03_2022.h5',
-                                          'grid': 'm2_blinding_v1.2_regular_grid_29_03_2022.h5'},
-                              'desi_y1': {'standard': 'y1_blinding_v2_standard_17_12_2022.h5',
-                                          'grid': 'y1_blinding_v2_regular_grid_17_12_2022.h5'},
-                              'desi_y3': {'standard': 'y3_blinding_v3_standard_18_12_2022.h5',
-                                          'grid': 'y3_blinding_v3_regular_grid_18_12_2022.h5'}}
+        blinding_templates = {
+            'desi_m2': {
+                'standard': 'm2_blinding_v1.2_standard_29_03_2022.h5',
+                'grid': 'm2_blinding_v1.2_regular_grid_29_03_2022.h5'
+            },
+            'desi_y1': {
+                'standard': 'y1_blinding_v2_standard_17_12_2022.h5',
+                'grid': 'y1_blinding_v2_regular_grid_17_12_2022.h5'
+            },
+            'desi_y3': {
+                'standard': 'y3_blinding_v3_standard_18_12_2022.h5',
+                'grid': 'y3_blinding_v3_regular_grid_18_12_2022.h5'
+            }
+        }
 
         if blinding in blinding_templates:
             userprint(f"Blinding using seed for {blinding}")
         else:
-            raise ValueError(f"Expected blinding to be one of {blinding_templates.keys()}."
-                             f" Found {blinding}.")
+            raise ValueError(
+                f"Expected blinding to be one of {blinding_templates.keys()}."
+                f" Found {blinding}.")
 
         if args.blind_corr_type is None:
             raise ValueError("Blinding requires argument --blind_corr_type.")
@@ -285,20 +304,25 @@ def main(cmdargs):
             rp_interp_grid = np.arange(-197.99, 202.01, 4)
             rt_interp_grid = np.arange(2., 202, 4)
         else:
-            raise ValueError("Unknown correlation type: {}".format(args.blind_corr_type))
+            raise ValueError("Unknown correlation type: {}".format(
+                args.blind_corr_type))
 
         if corr_size == len(xi):
             # Read the blinding file and get the right template
-            blinding_filename = blinding_dir + blinding_templates[blinding]['standard']
+            blinding_filename = blinding_dir + blinding_templates[blinding][
+                'standard']
         else:
             # Read the regular grid blinding file and get the right template
-            blinding_filename = blinding_dir + blinding_templates[blinding]['grid']
+            blinding_filename = blinding_dir + blinding_templates[blinding][
+                'grid']
 
         if not os.path.isfile(blinding_filename):
-            raise RuntimeError("Missing blinding file. Make sure you are running at"
-                               " NERSC or contact picca developers")
+            raise RuntimeError(
+                "Missing blinding file. Make sure you are running at"
+                " NERSC or contact picca developers")
         blinding_file = h5py.File(blinding_filename, 'r')
-        hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
+        hex_diff = np.array(
+            blinding_file['blinding'][args.blind_corr_type]).astype(str)
         diff_grid = np.array([float.fromhex(x) for x in hex_diff])
 
         if corr_size == len(xi):
@@ -306,14 +330,18 @@ def main(cmdargs):
         else:
             # Interpolate the blinding template on the regular grid
             interp = scipy.interpolate.RectBivariateSpline(
-                    rp_interp_grid, rt_interp_grid,
-                    diff_grid.reshape(len(rp_interp_grid), len(rt_interp_grid)), kx=3, ky=3)
+                rp_interp_grid,
+                rt_interp_grid,
+                diff_grid.reshape(len(rp_interp_grid), len(rt_interp_grid)),
+                kx=3,
+                ky=3)
             diff = interp.ev(r_par, r_trans)
 
         # Check that the shapes match
         if np.shape(xi) != np.shape(diff):
-            raise RuntimeError("Unknown binning or wrong correlation type. Cannot blind."
-                               " Please raise an issue or contact picca developers.")
+            raise RuntimeError(
+                "Unknown binning or wrong correlation type. Cannot blind."
+                " Please raise an issue or contact picca developers.")
 
         # Add blinding
         xi = xi + diff

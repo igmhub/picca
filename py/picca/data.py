@@ -14,6 +14,7 @@ from . import constants
 from .utils import userprint, unred
 from .dla import DLA
 
+
 class QSO(object):
     """Class to represent quasar objects.
 
@@ -96,7 +97,9 @@ class QSO(object):
         self.los_id = los_id
         #this is for legacy purposes only
         self.thingid = los_id
-        warnings.warn("currently a thingid entry is created in QSO.__init__, this feature will be removed", DeprecationWarning)
+        warnings.warn(
+            "currently a thingid entry is created in QSO.__init__, this feature will be removed",
+            DeprecationWarning)
 
         # variables computed in function io.read_objects
         self.weight = None
@@ -159,7 +162,7 @@ class QSO(object):
                 cos = -1.
             angl = np.arccos(cos)
             if ((np.absolute(ra - self.ra) < constants.SMALL_ANGLE_CUT_OFF) &
-                    (np.absolute(dec - self.dec) < constants.SMALL_ANGLE_CUT_OFF)):
+                (np.absolute(dec - self.dec) < constants.SMALL_ANGLE_CUT_OFF)):
                 angl = np.sqrt((dec - self.dec)**2 + (self.cos_dec *
                                                       (ra - self.ra))**2)
         return angl
@@ -448,7 +451,6 @@ class Forest(QSO):
         """
         QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
 
-
         ## cut to specified range
         bins = (np.floor((log_lambda - Forest.log_lambda_min) /
                          Forest.delta_log_lambda + 0.5).astype(int))
@@ -656,7 +658,7 @@ class Forest(QSO):
                 Table containing minimum and maximum wavelenths of absorption
                 lines to mask (in both rest frame and observed frame)
         """
-        if len(mask_table)==0:
+        if len(mask_table) == 0:
             return
 
         select_rest_frame_mask = mask_table['frame'] == 'RF'
@@ -665,7 +667,7 @@ class Forest(QSO):
         mask_rest_frame = mask_table[select_rest_frame_mask]
         mask_obs_frame = mask_table[select_obs_mask]
 
-        if len(mask_rest_frame)+len(mask_obs_frame)==0:
+        if len(mask_rest_frame) + len(mask_obs_frame) == 0:
             return
 
         if self.log_lambda is None:
@@ -736,7 +738,6 @@ class Forest(QSO):
             Wavelengths to be masked in DLA rest-frame wavelength
         """
 
-
         if self.log_lambda is None:
             return
         if self.dla_transmission is None:
@@ -745,13 +746,15 @@ class Forest(QSO):
         self.dla_transmission *= DLA(self, z_abs, nhi).transmission
 
         w = self.dla_transmission > Forest.dla_mask_limit
-        if len(mask_table)>0:
+        if len(mask_table) > 0:
             select_dla_mask = mask_table['frame'] == 'RF_DLA'
             mask = mask_table[select_dla_mask]
-            if len(mask)>0:
+            if len(mask) > 0:
                 for mask_range in mask:
-                    w &= ((self.log_lambda - np.log10(1. + z_abs) < mask_range['log_wave_min']) |
-                          (self.log_lambda - np.log10(1. + z_abs) > mask_range['log_wave_max']))
+                    w &= ((self.log_lambda - np.log10(1. + z_abs) <
+                           mask_range['log_wave_min']) |
+                          (self.log_lambda - np.log10(1. + z_abs) >
+                           mask_range['log_wave_max']))
 
         # do the actual masking
         parameters = [
@@ -883,9 +886,7 @@ class Forest(QSO):
         p0 = (self.flux * self.ivar).sum() / self.ivar.sum()
         p1 = 0.0
 
-        minimizer = iminuit.Minuit(chi2,
-                                   p0=p0,
-                                   p1=p1)
+        minimizer = iminuit.Minuit(chi2, p0=p0, p1=p1)
         minimizer.errors["p0"] = p0 / 2.
         minimizer.errors["p1"] = p0 / 2.
         minimizer.errordef = 1.
@@ -968,10 +969,27 @@ class Delta(QSO):
 
     """
 
-    def __init__(self, los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
-                 weights, cont, delta, order, ivar, exposures_diff, mean_snr,
-                 mean_reso, mean_z, resolution_matrix=None,
-                 mean_resolution_matrix=None, mean_reso_pix=None):
+    def __init__(self,
+                 los_id,
+                 ra,
+                 dec,
+                 z_qso,
+                 plate,
+                 mjd,
+                 fiberid,
+                 log_lambda,
+                 weights,
+                 cont,
+                 delta,
+                 order,
+                 ivar,
+                 exposures_diff,
+                 mean_snr,
+                 mean_reso,
+                 mean_z,
+                 resolution_matrix=None,
+                 mean_resolution_matrix=None,
+                 mean_reso_pix=None):
         """Initializes class instances.
 
         Args:
@@ -1086,7 +1104,9 @@ class Delta(QSO):
             try:
                 exposures_diff = hdu['DIFF'][:].astype(float)
             except (KeyError, ValueError):
-                userprint('WARNING: no DIFF in hdu while pk1d_type=True, filling with zeros.')
+                userprint(
+                    'WARNING: no DIFF in hdu while pk1d_type=True, filling with zeros.'
+                )
                 exposures_diff = np.zeros(delta.shape)
             mean_snr = header['MEANSNR']
             mean_reso = header['MEANRESO']
@@ -1127,9 +1147,9 @@ class Delta(QSO):
             fiberid = header['FIBERID']
         elif 'LOS_ID' in header:
             los_id = header['LOS_ID']
-            plate=los_id
-            mjd=los_id
-            fiberid=los_id
+            plate = los_id
+            mjd = los_id
+            fiberid = los_id
         else:
             raise Exception("Could not find THING_ID or LOS_ID")
 
@@ -1143,8 +1163,8 @@ class Delta(QSO):
 
         return cls(los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
-                   mean_reso, mean_z, resolution_matrix,
-                   mean_resolution_matrix, mean_reso_pix)
+                   mean_reso, mean_z, resolution_matrix, mean_resolution_matrix,
+                   mean_reso_pix)
 
     @classmethod
     def from_ascii(cls, line):
@@ -1203,7 +1223,8 @@ class Delta(QSO):
             a Delta instance
         """
         if pk1d_type:
-            raise ValueError("ImageHDU format not implemented for Pk1D forests.")
+            raise ValueError(
+                "ImageHDU format not implemented for Pk1D forests.")
 
         header = hdul["METADATA"].read_header()
         N_forests = hdul["METADATA"].get_nrows()
@@ -1245,12 +1266,12 @@ class Delta(QSO):
             los_id = hdul["METADATA"]["THING_ID"][:]
             plate = hdul["METADATA"]["PLATE"][:]
             mjd = hdul["METADATA"]["MJD"][:]
-            fiberid=hdul["METADATA"]["FIBERID"][:]
+            fiberid = hdul["METADATA"]["FIBERID"][:]
         elif "LOS_ID" in hdul["METADATA"].get_colnames():
             los_id = hdul["METADATA"]["LOS_ID"][:]
-            plate=los_id
-            mjd=los_id
-            fiberid=los_id
+            plate = los_id
+            mjd = los_id
+            fiberid = los_id
         else:
             raise Exception("Could not find THING_ID or LOS_ID")
 
@@ -1263,27 +1284,41 @@ class Delta(QSO):
             order = np.full(N_forests, 1)
 
         deltas = []
-        for (los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i, log_lambda,
-            weights_i, cont_i, delta_i, order_i, ivar_i, exposures_diff_i, mean_snr_i,
-            mean_reso_i, mean_z_i, resolution_matrix_i,
-            mean_resolution_matrix_i, mean_reso_pix_i, w_i
-        ) in zip(los_id, ra, dec, z_qso, plate, mjd, fiberid, repeat(log_lambda),
-                   weights, cont, delta, order, ivar, exposures_diff, mean_snr,
-                   mean_reso, mean_z, resolution_matrix,
-                   mean_resolution_matrix, mean_reso_pix, w):
-            deltas.append(cls(
-                los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i, log_lambda[w_i],
-                weights_i[w_i] if weights_i is not None else None, 
-                cont_i[w_i], 
-                delta_i[w_i],
-                order_i, 
-                ivar_i[w_i] if ivar_i is not None else None,
-                exposures_diff_i[w_i] if exposures_diff_i is not None else None, 
-                mean_snr_i, mean_reso_i, mean_z_i,
-                resolution_matrix_i if resolution_matrix_i is not None else None,
-                mean_resolution_matrix_i if mean_resolution_matrix_i is not None else None,
-                mean_reso_pix_i,
-            ))
+        for (los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i,
+             log_lambda, weights_i, cont_i, delta_i, order_i, ivar_i,
+             exposures_diff_i, mean_snr_i, mean_reso_i, mean_z_i,
+             resolution_matrix_i, mean_resolution_matrix_i, mean_reso_pix_i,
+             w_i) in zip(los_id, ra, dec, z_qso, plate, mjd, fiberid,
+                         repeat(log_lambda), weights, cont, delta, order, ivar,
+                         exposures_diff, mean_snr, mean_reso, mean_z,
+                         resolution_matrix, mean_resolution_matrix,
+                         mean_reso_pix, w):
+            deltas.append(
+                cls(
+                    los_id_i,
+                    ra_i,
+                    dec_i,
+                    z_qso_i,
+                    plate_i,
+                    mjd_i,
+                    fiberid_i,
+                    log_lambda[w_i],
+                    weights_i[w_i] if weights_i is not None else None,
+                    cont_i[w_i],
+                    delta_i[w_i],
+                    order_i,
+                    ivar_i[w_i] if ivar_i is not None else None,
+                    exposures_diff_i[w_i]
+                    if exposures_diff_i is not None else None,
+                    mean_snr_i,
+                    mean_reso_i,
+                    mean_z_i,
+                    resolution_matrix_i
+                    if resolution_matrix_i is not None else None,
+                    mean_resolution_matrix_i
+                    if mean_resolution_matrix_i is not None else None,
+                    mean_reso_pix_i,
+                ))
 
         return deltas
 
@@ -1333,9 +1368,12 @@ class Delta(QSO):
 
         new_indx = np.searchsorted(edges, wave)
 
-        binned_delta = np.bincount(new_indx, weights=self.delta*self.weights,
-                                   minlength=edges.size+1)[1:-1]
-        binned_weight = np.bincount(new_indx, weights=self.weights, minlength=edges.size+1)[1:-1]
+        binned_delta = np.bincount(new_indx,
+                                   weights=self.delta * self.weights,
+                                   minlength=edges.size + 1)[1:-1]
+        binned_weight = np.bincount(new_indx,
+                                    weights=self.weights,
+                                    minlength=edges.size + 1)[1:-1]
 
         mask = binned_weight != 0
         binned_delta[mask] /= binned_weight[mask]

@@ -2,6 +2,7 @@
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import AstronomicalObjectError
 
+
 class DesiForest(Forest):
     """Forest Object
 
@@ -39,6 +40,7 @@ class DesiForest(Forest):
     tile: list of int
     Identifier of the tile used in the observation. None for no info
     """
+
     def __init__(self, **kwargs):
         """Initialize instance
 
@@ -92,9 +94,10 @@ class DesiForest(Forest):
         AstronomicalObjectError if other is not a DesiForest instance
         """
         if not isinstance(other, DesiForest):
-            raise AstronomicalObjectError("Error coadding DesiForest. Expected "
-                                          "DesiForest instance in other. Found: "
-                                          f"{type(other).__name__}")
+            raise AstronomicalObjectError(
+                "Error coadding DesiForest. Expected "
+                "DesiForest instance in other. Found: "
+                f"{type(other).__name__}")
         self.night += other.night
         self.petal += other.petal
         self.tile += other.tile
@@ -167,7 +170,8 @@ class DesiForest(Forest):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('TARGETID', int), ('NIGHT', 'S12'), ('PETAL', 'S12'), ('TILE', 'S12')]
+        dtype += [('TARGETID', int), ('NIGHT', 'S12'), ('PETAL', 'S12'),
+                  ('TILE', 'S12')]
         return dtype
 
     @classmethod

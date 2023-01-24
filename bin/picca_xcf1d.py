@@ -54,11 +54,10 @@ def main(cmdargs):
                         required=True,
                         help='Catalog of objects in DRQ format')
 
-    parser.add_argument(
-                        '--mode',
+    parser.add_argument('--mode',
                         type=str,
                         default='sdss',
-                        choices=['sdss','desi'],
+                        choices=['sdss', 'desi'],
                         required=False,
                         help='type of catalog supplied, default sdss')
 
@@ -321,5 +320,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)

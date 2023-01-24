@@ -10,6 +10,7 @@ from picca.delta_extraction.errors import CorrectionError
 
 accepted_options = ["filename"]
 
+
 class IvarCorrection(Correction):
     """Class to correct inverse variance errors measured from other spectral
     regions.
@@ -28,6 +29,7 @@ class IvarCorrection(Correction):
     logger: logging.Logger
     Logger object
     """
+
     def __init__(self, config):
         """Initialize class instance.
 
@@ -46,15 +48,17 @@ class IvarCorrection(Correction):
 
         filename = config.get("filename")
         if filename is None:
-            raise CorrectionError("Missing argument 'filename' required by SdssIvarCorrection")
+            raise CorrectionError(
+                "Missing argument 'filename' required by SdssIvarCorrection")
         try:
             hdu = fitsio.read(filename, ext="VAR_FUNC")
             if "loglam" in hdu.dtype.names:
                 log_lambda = hdu['loglam']
             elif "lambda" in hdu.dtype.names:
-                self.logger.warning("DeprecationWarning: Reading correction using 'lambda'. "
-                                    "Newer versions of picca always save 'log_lambda' and "
-                                    "so this option will be removed in the future.")
+                self.logger.warning(
+                    "DeprecationWarning: Reading correction using 'lambda'. "
+                    "Newer versions of picca always save 'log_lambda' and "
+                    "so this option will be removed in the future.")
                 log_lambda = np.log10(hdu['lambda'])
             else:
                 raise CorrectionError("Error loading IvarCorrection. In "
@@ -67,14 +71,12 @@ class IvarCorrection(Correction):
         except OSError as error:
             raise CorrectionError(
                 "Error loading CalibrationCorrection. "
-                f"Failed to find or open file {filename}"
-            ) from error
+                f"Failed to find or open file {filename}") from error
         except ValueError as error:
             raise CorrectionError(
                 "Error loading IvarCorrection. "
                 f"File {filename} does not have fields "
-                "'loglam' and/or 'eta' in HDU 'VAR_FUNC'"
-            ) from error
+                "'loglam' and/or 'eta' in HDU 'VAR_FUNC'") from error
 
         self.correct_ivar = interp1d(log_lambda,
                                      eta,

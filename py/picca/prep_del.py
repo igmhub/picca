@@ -221,9 +221,10 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
             Returns:
                 The obtained chi2
             """
-            variance = eta * var_pipe_values + var_lss + fudge*fudge_ref / var_pipe_values
+            variance = eta * var_pipe_values + var_lss + fudge * fudge_ref / var_pipe_values
             chi2_contribution = (
-                var_delta[index * num_var_bins:(index + 1) * num_var_bins] - variance)
+                var_delta[index * num_var_bins:(index + 1) * num_var_bins] -
+                variance)
             weights = var2_delta[index * num_var_bins:(index + 1) *
                                  num_var_bins]
             w = num_qso[index * num_var_bins:(index + 1) * num_var_bins] > 100
@@ -265,9 +266,9 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
 
         #note that this has been changed for debugging purposes
         userprint(f" {log_lambda[index]:.3e} "
-                  f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "+
-                  f"{chi2_in_bin[index]:.2e} {int(num_pixels[index]):d} ") 
-                  #f"{error_eta[index]:.2e} {error_var_lss[index]:.2e} {error_fudge[index]:.2e}")
+                  f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} " +
+                  f"{chi2_in_bin[index]:.2e} {int(num_pixels[index]):d} ")
+        #f"{error_eta[index]:.2e} {error_var_lss[index]:.2e} {error_fudge[index]:.2e}")
 
     return (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
             var_delta.reshape(num_bins, -1), var2_delta.reshape(num_bins, -1),

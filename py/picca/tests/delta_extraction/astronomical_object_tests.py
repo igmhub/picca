@@ -17,6 +17,7 @@ from picca.tests.delta_extraction.abstract_test import AbstractTest
 from picca.tests.delta_extraction.test_utils import (reset_forest, setup_forest,
                                                      setup_pk1d_forest)
 
+
 def _isin_float(elements, test_elements):
     """ Helper function to find indices where 'test_elements'
     are numerically close 'elements'.
@@ -40,25 +41,29 @@ def _isin_float(elements, test_elements):
         mask |= np.isclose(elements, test_e)
     return mask
 
+
 # define auxiliar variables
 LOG_LAMBDA = np.array([
-    3.5562825, 3.5563225, 3.5565825, 3.5566225, 3.5568825, 3.5569225,
-    3.5571825, 3.5572225, 3.5574825, 3.5575225
+    3.5562825, 3.5563225, 3.5565825, 3.5566225, 3.5568825, 3.5569225, 3.5571825,
+    3.5572225, 3.5574825, 3.5575225
 ])
-FILLED_LAMBDA_LOG_POINTS = np.array([3.5563025, 3.5566025, 3.5569025, 3.5572025, 3.5575025])
+FILLED_LAMBDA_LOG_POINTS = np.array(
+    [3.5563025, 3.5566025, 3.5569025, 3.5572025, 3.5575025])
 
-LOG_LAMBDA_LIN = np.log10(np.array([
-3610.0, 3610.4, 3650.0, 3650.4, 3670.0, 3670.4, 3680.0, 3680.4, 3700.0, 3700.4
-]))
+LOG_LAMBDA_LIN = np.log10(
+    np.array([
+        3610.0, 3610.4, 3650.0, 3650.4, 3670.0, 3670.4, 3680.0, 3680.4, 3700.0,
+        3700.4
+    ]))
 FILLED_LAMBDA_LIN_POINTS = np.log10(np.array([3610, 3650, 3670, 3680, 3700]))
 
 # others
 SIZE = 10
 RESO_NDIAGS = 7
-forest_dtype = np.dtype([('flux','f8'), ('ivar','f8'),
-    ('exposures_diff','f8'), ('reso','f8'),
-    ('reso_pix','f8'), ('resolution_matrix','f8', RESO_NDIAGS)
-])
+forest_dtype = np.dtype([('flux', 'f8'), ('ivar', 'f8'),
+                         ('exposures_diff', 'f8'), ('reso', 'f8'),
+                         ('reso_pix', 'f8'),
+                         ('resolution_matrix', 'f8', RESO_NDIAGS)])
 BASE_FOREST = np.ones(SIZE, dtype=forest_dtype)
 
 # Values for three types of spectra
@@ -131,7 +136,11 @@ kwargs_astronomical_object_gt = {
     },
 }
 
-def get_kwargs_input(wave_solution, which_spectrum, is_p1d=False, is_desi=False):
+
+def get_kwargs_input(wave_solution,
+                     which_spectrum,
+                     is_p1d=False,
+                     is_desi=False):
     """ This function creates the sparse input spectrum. BASE_FOREST values are
     scaled with SPECTRA_VALUES_DICT for a given which_spectrum.
 
@@ -163,7 +172,7 @@ def get_kwargs_input(wave_solution, which_spectrum, is_p1d=False, is_desi=False)
         in_wave = LOG_LAMBDA
 
     spectrum_vals = SPECTRA_VALUES_DICT[which_spectrum]
-    update_dict = { "log_lambda": in_wave }
+    update_dict = {"log_lambda": in_wave}
 
     keys_to_update = ["flux", "ivar"]
     if is_p1d:
@@ -172,7 +181,7 @@ def get_kwargs_input(wave_solution, which_spectrum, is_p1d=False, is_desi=False)
             keys_to_update += ["resolution_matrix"]
 
     for key in keys_to_update:
-        update_dict[key] = BASE_FOREST[key]*spectrum_vals[key]
+        update_dict[key] = BASE_FOREST[key] * spectrum_vals[key]
     if "resolution_matrix" in keys_to_update:
         update_dict["resolution_matrix"] = update_dict["resolution_matrix"].T
 
@@ -180,7 +189,12 @@ def get_kwargs_input(wave_solution, which_spectrum, is_p1d=False, is_desi=False)
 
     return base_kwargs_forest
 
-def get_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False, is_desi=False):
+
+def get_kwargs_rebin(wave_solution,
+                     which_spectrum,
+                     rebin=1,
+                     is_p1d=False,
+                     is_desi=False):
     """ This function creates the truth for rebinned spectrum. Masked pixels are present
     with flux, ivar and exposures_diff set to 0, whereas resolution related values are not.
 
@@ -211,11 +225,11 @@ def get_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False, is_de
 
     if wave_solution == "lin":
         step = 1. * rebin
-        rebin_wave = np.log10(np.arange(3610, 3700+step/2., step=step))
+        rebin_wave = np.log10(np.arange(3610, 3700 + step / 2., step=step))
         filled_points = FILLED_LAMBDA_LIN_POINTS
     else:
         step = 1e-4 * rebin
-        rebin_wave = np.arange(3.5563025, 3.5575025+step/2., step=step)
+        rebin_wave = np.arange(3.5563025, 3.5575025 + step / 2., step=step)
         filled_points = FILLED_LAMBDA_LOG_POINTS
 
     w_filled_points = _isin_float(rebin_wave, filled_points)
@@ -227,7 +241,7 @@ def get_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False, is_de
     spectrum_vals = SPECTRA_VALUES_DICT[which_spectrum]
     update_dict = {
         "log_lambda": rebin_wave,
-        "ivar":rebin_forest_array["ivar"]*spectrum_vals["ivar_rebin"]
+        "ivar": rebin_forest_array["ivar"] * spectrum_vals["ivar_rebin"]
     }
 
     keys_to_update = ["flux"]
@@ -237,7 +251,7 @@ def get_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False, is_de
             keys_to_update += ["resolution_matrix"]
 
     for key in keys_to_update:
-        update_dict[key] = rebin_forest_array[key]*spectrum_vals[key]
+        update_dict[key] = rebin_forest_array[key] * spectrum_vals[key]
 
     # Fix the shape for picca expected
     if "resolution_matrix" in keys_to_update:
@@ -245,6 +259,7 @@ def get_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False, is_de
     rebin_kwargs_forest.update(update_dict)
 
     return rebin_kwargs_forest
+
 
 # define contructors for DesiForest
 def get_desi_kwargs_input(wave_solution, which_spectrum, is_p1d=False):
@@ -268,8 +283,10 @@ def get_desi_kwargs_input(wave_solution, which_spectrum, is_p1d=False):
     A copy of kwargs_astronomical_object as base and truth updated.
 
     """
-    kwargs_desi_forest = get_kwargs_input(wave_solution, which_spectrum,
-        is_p1d=is_p1d, is_desi=True)
+    kwargs_desi_forest = get_kwargs_input(wave_solution,
+                                          which_spectrum,
+                                          is_p1d=is_p1d,
+                                          is_desi=True)
     del kwargs_desi_forest["los_id"]
     if which_spectrum == "1":
         kwargs_desi_forest.update({
@@ -289,6 +306,7 @@ def get_desi_kwargs_input(wave_solution, which_spectrum, is_p1d=False):
         return None
 
     return kwargs_desi_forest
+
 
 def get_desi_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False):
     """ This function creates the rebinned spectrum for DESI.
@@ -315,8 +333,11 @@ def get_desi_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False):
     A copy of kwargs_astronomical_object as base and truth updated.
 
     """
-    kwargs_desi_forest = get_kwargs_rebin(wave_solution, which_spectrum,
-        rebin=rebin, is_p1d=is_p1d, is_desi=True)
+    kwargs_desi_forest = get_kwargs_rebin(wave_solution,
+                                          which_spectrum,
+                                          rebin=rebin,
+                                          is_p1d=is_p1d,
+                                          is_desi=True)
     del kwargs_desi_forest["los_id"]
     if which_spectrum == "COADD":
         kwargs_desi_forest.update({
@@ -336,6 +357,7 @@ def get_desi_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False):
     kwargs_desi_forest["los_id"] = TARGETID
 
     return kwargs_desi_forest
+
 
 # define contructors for SdssForest
 def get_sdss_kwargs_input(wave_solution, which_spectrum, is_p1d=False):
@@ -359,27 +381,30 @@ def get_sdss_kwargs_input(wave_solution, which_spectrum, is_p1d=False):
     A copy of kwargs_astronomical_object as base and truth updated.
 
     """
-    kwargs_sdss_forest = get_kwargs_input(wave_solution, which_spectrum, is_p1d=is_p1d)
+    kwargs_sdss_forest = get_kwargs_input(wave_solution,
+                                          which_spectrum,
+                                          is_p1d=is_p1d)
     del kwargs_sdss_forest["los_id"]
 
     if which_spectrum == "1":
         kwargs_sdss_forest.update({
-        "thingid": THINGID,
-        "plate": 0,
-        "fiberid": 0,
-        "mjd": 0,
-    })
+            "thingid": THINGID,
+            "plate": 0,
+            "fiberid": 0,
+            "mjd": 0,
+        })
     elif which_spectrum == "2":
         kwargs_sdss_forest.update({
-        "thingid": THINGID,
-        "plate": 1,
-        "fiberid": 2,
-        "mjd": 3,
-    })
+            "thingid": THINGID,
+            "plate": 1,
+            "fiberid": 2,
+            "mjd": 3,
+        })
     else:
         return None
 
     return kwargs_sdss_forest
+
 
 def get_sdss_kwargs_rebin(wave_solution, which_spectrum, rebin=3, is_p1d=False):
     """ This function creates the rebinned spectrum for SDSS.
@@ -406,8 +431,11 @@ def get_sdss_kwargs_rebin(wave_solution, which_spectrum, rebin=3, is_p1d=False):
     A copy of kwargs_astronomical_object as base and truth updated.
 
     """
-    kwargs_sdss_forest_rebin = get_kwargs_rebin(wave_solution, which_spectrum,
-        rebin=rebin, is_p1d=is_p1d, is_desi=False)
+    kwargs_sdss_forest_rebin = get_kwargs_rebin(wave_solution,
+                                                which_spectrum,
+                                                rebin=rebin,
+                                                is_p1d=is_p1d,
+                                                is_desi=False)
 
     if which_spectrum == "COADD":
         kwargs_sdss_forest_rebin.update({
@@ -427,6 +455,7 @@ def get_sdss_kwargs_rebin(wave_solution, which_spectrum, rebin=3, is_p1d=False):
     kwargs_sdss_forest_rebin["los_id"] = THINGID
 
     return kwargs_sdss_forest_rebin
+
 
 # pylint: disable-msg=too-many-public-methods
 # this is a test class
@@ -471,6 +500,7 @@ class AstronomicalObjectTest(AbstractTest):
     test_sdss_pk1d_forest_get_data
     test_sdss_pk1d_forest_get_header
     """
+
     def assert_astronomical_object(self, test_obj, kwargs):
         """Assert the correct properties of a test AstronomicalObject
 
@@ -536,10 +566,11 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(Forest.mask_fields[1] == "ivar")
         self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
         self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        true_transmission_correction = np.where(ivar>0, 1, 0)
-        self.assertTrue(np.allclose(test_obj.transmission_correction,
-            true_transmission_correction))
-        mean_snr = np.sum(flux * np.sqrt(ivar))/np.sum(ivar>0)
+        true_transmission_correction = np.where(ivar > 0, 1, 0)
+        self.assertTrue(
+            np.allclose(test_obj.transmission_correction,
+                        true_transmission_correction))
+        mean_snr = np.sum(flux * np.sqrt(ivar)) / np.sum(ivar > 0)
         self.assertTrue(np.isclose(test_obj.mean_snr, mean_snr))
 
         if isinstance(test_obj, SdssForest):
@@ -566,7 +597,8 @@ class AstronomicalObjectTest(AbstractTest):
                 np.allclose(test_obj.exposures_diff,
                             kwargs.get("exposures_diff")))
             self.assertTrue(np.allclose(test_obj.reso, kwargs.get("reso")))
-            self.assertTrue(np.allclose(test_obj.reso_pix, kwargs.get("reso_pix")))
+            self.assertTrue(
+                np.allclose(test_obj.reso_pix, kwargs.get("reso_pix")))
 
             log_lambda = kwargs.get("log_lambda")
             mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
@@ -634,16 +666,15 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(names[3] == "CONT")
         self.assertTrue(np.allclose(cols[3], continuum))
         self.assertTrue(units[3] == "Flux units")
-        self.assertTrue(
-            comments[3] == ("Quasar continuum. "
-                            "Check input spectra for units"))
+        self.assertTrue(comments[3] == ("Quasar continuum. "
+                                        "Check input spectra for units"))
 
         if isinstance(test_obj, Pk1dForest):
             self.assertTrue(names[4] == "IVAR")
             self.assertTrue(np.allclose(cols[4], test_obj.ivar))
             self.assertTrue(units[4] == "Flux units")
-            self.assertTrue(
-                comments[4] == "Inverse variance. Check input spectra for units")
+            self.assertTrue(comments[4] ==
+                            "Inverse variance. Check input spectra for units")
 
             self.assertTrue(names[5] == "DIFF")
             self.assertTrue(np.allclose(cols[5], test_obj.exposures_diff))
@@ -680,8 +711,10 @@ class AstronomicalObjectTest(AbstractTest):
             self.assertTrue(header[index + 3].get("name") == "WAVE_SOLUTION")
             if Forest.wave_solution == "log":
                 self.assertTrue(header[index + 3].get("value") == "log")
-                self.assertTrue(header[index + 4].get("name") == "DELTA_LOG_LAMBDA")
-                self.assertTrue(np.isclose(header[index + 4].get("value"), 3e-4))
+                self.assertTrue(header[index +
+                                       4].get("name") == "DELTA_LOG_LAMBDA")
+                self.assertTrue(np.isclose(header[index + 4].get("value"),
+                                           3e-4))
             elif Forest.wave_solution == "lin":
                 self.assertTrue(header[index + 3].get("value") == "lin")
                 self.assertTrue(header[index + 4].get("name") == "DELTA_LAMBDA")
@@ -741,8 +774,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # missing dec
         expected_message = (
-            "Error constructing AstronomicalObject. Missing variable 'dec'"
-        )
+            "Error constructing AstronomicalObject. Missing variable 'dec'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj = AstronomicalObject(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -750,8 +782,7 @@ class AstronomicalObjectTest(AbstractTest):
         # missing los_id
         kwargs["dec"] = 0.0
         expected_message = (
-            "Error constructing AstronomicalObject. Missing variable 'los_id'"
-        )
+            "Error constructing AstronomicalObject. Missing variable 'los_id'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj = AstronomicalObject(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -759,8 +790,7 @@ class AstronomicalObjectTest(AbstractTest):
         # missing ra
         kwargs["los_id"] = 1234
         expected_message = (
-            "Error constructing AstronomicalObject. Missing variable 'ra'"
-        )
+            "Error constructing AstronomicalObject. Missing variable 'ra'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj = AstronomicalObject(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -768,8 +798,7 @@ class AstronomicalObjectTest(AbstractTest):
         # missing z
         kwargs["ra"] = 0.0
         expected_message = (
-            "Error constructing AstronomicalObject. Missing variable 'z'"
-        )
+            "Error constructing AstronomicalObject. Missing variable 'z'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj = AstronomicalObject(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -816,8 +845,7 @@ class AstronomicalObjectTest(AbstractTest):
         expected_message = (
             "Error constructing Forest. Class variable 'log_lambda_grid' must "
             "be set prior to initialize instances of this type. This probably "
-            "means you did not run Forest.set_class_variables"
-        )
+            "means you did not run Forest.set_class_variables")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             DesiForest(**kwargs_desi_forest)
         self.compare_error_message(context_manager, expected_message)
@@ -871,8 +899,7 @@ class AstronomicalObjectTest(AbstractTest):
                 ]),
         }
         expected_message = (
-            "Error constructing DesiForest. Missing variable 'targetid'"
-        )
+            "Error constructing DesiForest. Missing variable 'targetid'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             DesiForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -890,8 +917,7 @@ class AstronomicalObjectTest(AbstractTest):
             "fiber": 0,
         }
         expected_message = (
-            "Error constructing Forest. Missing variable 'log_lambda'"
-        )
+            "Error constructing Forest. Missing variable 'log_lambda'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             DesiForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -900,7 +926,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test the coadd function in DesiForest"""
         # set class variables
         setup_forest(wave_solution="lin")
-        kwargs_desi_forest  = get_desi_kwargs_input("lin", "1")
+        kwargs_desi_forest = get_desi_kwargs_input("lin", "1")
         kwargs_desi_forest2 = get_desi_kwargs_input("lin", "2")
         kwargs_desi_forest_coadd = get_desi_kwargs_rebin("lin", "COADD")
 
@@ -924,12 +950,10 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj_other.rebin()
 
         # coadding them whould raise an error
-        expected_message = (
-            "Attempting to coadd two Forests "
-            "with different los_id. This should "
-            f"not happen. this.los_id={test_obj.los_id}, "
-            f"other.los_id={test_obj_other.los_id}."
-        )
+        expected_message = ("Attempting to coadd two Forests "
+                            "with different los_id. This should "
+                            f"not happen. this.los_id={test_obj.los_id}, "
+                            f"other.los_id={test_obj_other.los_id}.")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
         self.compare_error_message(context_manager, expected_message)
@@ -943,8 +967,7 @@ class AstronomicalObjectTest(AbstractTest):
         # coadding them should raise an error
         expected_message = (
             "Error coadding DesiForest. Expected DesiForest instance in other. "
-            "Found: Forest"
-        )
+            "Found: Forest")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
         self.compare_error_message(context_manager, expected_message)
@@ -953,7 +976,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method get_data for DesiForest."""
         # set class variables
         setup_forest(wave_solution="lin")
-        kwargs_desi_forest  = get_desi_kwargs_input("lin", "1")
+        kwargs_desi_forest = get_desi_kwargs_input("lin", "1")
 
         # create a DesiForest
         test_obj = DesiForest(**kwargs_desi_forest)
@@ -965,7 +988,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method get_header for DesiForest."""
         # set class variables
         setup_forest(wave_solution="lin")
-        kwargs_desi_forest  = get_desi_kwargs_input("lin", "1")
+        kwargs_desi_forest = get_desi_kwargs_input("lin", "1")
         kwargs_desi_forest2 = get_desi_kwargs_input("lin", "2")
 
         # create a DesiForest
@@ -988,12 +1011,13 @@ class AstronomicalObjectTest(AbstractTest):
         This includes a test of function rebin.
         """
         kwargs_desi_pk1d_forest = get_desi_kwargs_input("lin", "1", is_p1d=True)
-        kwargs_desi_pk1d_forest_rebin = get_desi_kwargs_rebin("lin", "1", is_p1d=True)
+        kwargs_desi_pk1d_forest_rebin = get_desi_kwargs_rebin("lin",
+                                                              "1",
+                                                              is_p1d=True)
         # create a DesiPk1dForest class variables are not yet set
         expected_message = (
             "Error constructing Pk1dForest. Class variable 'lambda_abs_igm' "
-            "must be set prior to initialize instances of this type"
-        )
+            "must be set prior to initialize instances of this type")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             DesiPk1dForest(**kwargs_desi_pk1d_forest)
         self.compare_error_message(context_manager, expected_message)
@@ -1005,8 +1029,7 @@ class AstronomicalObjectTest(AbstractTest):
         expected_message = (
             "Error constructing Forest. Class variable 'log_lambda_grid' must "
             "be set prior to initialize instances of this type. This probably "
-            "means you did not run Forest.set_class_variables"
-        )
+            "means you did not run Forest.set_class_variables")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             DesiPk1dForest(**kwargs_desi_pk1d_forest)
         self.compare_error_message(context_manager, expected_message)
@@ -1046,44 +1069,63 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a DesiForest with missing DesiPk1dForest variables
         kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15) * 4,
-            "lambda":np.array([
+            "ra":
+                0.15,
+            "dec":
+                0.0,
+            "z":
+                2.1,
+            "flux":
+                np.ones(15),
+            "ivar":
+                np.ones(15) * 4,
+            "lambda":
+                np.array([
                     3610, 3610.4, 3650, 3650.4, 3670, 3670.4, 3680, 3680.4,
-                    3700, 3700.4 ]),
-            "targetid": 100000000,
-            "reso": np.ones(10),
-            "reso_pix": np.ones(10),
+                    3700, 3700.4
+                ]),
+            "targetid":
+                100000000,
+            "reso":
+                np.ones(10),
+            "reso_pix":
+                np.ones(10),
         }
         expected_message = (
             "Error constructing DesiPk1dForest. Missing variable "
-            "'resolution_matrix'"
-        )
+            "'resolution_matrix'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             DesiPk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
 
         # create a DesiPk1dForest with missing DesiForest variables
         kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15) * 4,
-            "lambda": np.array([
+            "ra":
+                0.15,
+            "dec":
+                0.0,
+            "z":
+                2.1,
+            "flux":
+                np.ones(15),
+            "ivar":
+                np.ones(15) * 4,
+            "lambda":
+                np.array([
                     3610, 3610.4, 3650, 3650.4, 3670, 3670.4, 3680, 3680.4,
-                    3700, 3700.4]),
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-            "reso_pix": np.ones(10),
-            "resolution_matrix": np.ones([7, 10])
+                    3700, 3700.4
+                ]),
+            "exposures_diff":
+                np.ones(10),
+            "reso":
+                np.ones(10),
+            "reso_pix":
+                np.ones(10),
+            "resolution_matrix":
+                np.ones([7, 10])
         }
         expected_message = (
-            "Error constructing DesiForest. Missing variable 'targetid'"
-        )
+            "Error constructing DesiForest. Missing variable 'targetid'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             DesiPk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1104,8 +1146,7 @@ class AstronomicalObjectTest(AbstractTest):
             "resolution_matrix": np.ones([7, 10])
         }
         expected_message = (
-            "Error constructing Pk1dForest. Missing variable 'exposures_diff'"
-        )
+            "Error constructing Pk1dForest. Missing variable 'exposures_diff'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             DesiPk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1127,8 +1168,7 @@ class AstronomicalObjectTest(AbstractTest):
             "resolution_matrix": np.ones([7, 10])
         }
         expected_message = (
-            "Error constructing Forest. Missing variable 'log_lambda'"
-        )
+            "Error constructing Forest. Missing variable 'log_lambda'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             DesiPk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1140,8 +1180,12 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         kwargs_desi_pk1d_forest = get_desi_kwargs_input("lin", "1", is_p1d=True)
-        kwargs_desi_pk1d_forest2 = get_desi_kwargs_input("lin", "2", is_p1d=True)
-        kwargs_desi_pk1d_forest_coadd = get_desi_kwargs_rebin("lin", "COADD", is_p1d=True)
+        kwargs_desi_pk1d_forest2 = get_desi_kwargs_input("lin",
+                                                         "2",
+                                                         is_p1d=True)
+        kwargs_desi_pk1d_forest_coadd = get_desi_kwargs_rebin("lin",
+                                                              "COADD",
+                                                              is_p1d=True)
 
         # create a DesiPk1dForest
         test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
@@ -1162,12 +1206,10 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj_other = DesiPk1dForest(**kwargs)
 
         # coadding them whould raise an error
-        expected_message = (
-            "Attempting to coadd two Forests "
-            "with different los_id. This should "
-            f"not happen. this.los_id={test_obj.los_id}, "
-            f"other.los_id={test_obj_other.los_id}."
-        )
+        expected_message = ("Attempting to coadd two Forests "
+                            "with different los_id. This should "
+                            f"not happen. this.los_id={test_obj.los_id}, "
+                            f"other.los_id={test_obj_other.los_id}.")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
         self.compare_error_message(context_manager, expected_message)
@@ -1181,8 +1223,7 @@ class AstronomicalObjectTest(AbstractTest):
         # coadding them should raise an error
         expected_message = (
             "Error coadding DesiPk1dForest. Expected DesiPk1dForest instance in other. "
-            "Found: Forest"
-        )
+            "Found: Forest")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
         self.compare_error_message(context_manager, expected_message)
@@ -1196,11 +1237,10 @@ class AstronomicalObjectTest(AbstractTest):
         # create a DesiPk1dForest with flux and resolution_matrix with
         # incompatible sizes
         kwargs = kwargs_desi_pk1d_forest.copy()
-        kwargs["resolution_matrix"] = kwargs["resolution_matrix"][:,::2]
+        kwargs["resolution_matrix"] = kwargs["resolution_matrix"][:, ::2]
         expected_message = (
             "Error constructing DesiPk1dForest. 'resolution_matrix' and 'flux' "
-            "don't have the same size"
-        )
+            "don't have the same size")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             DesiPk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1223,7 +1263,9 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
         setup_pk1d_forest("LYA")
         kwargs_desi_pk1d_forest = get_desi_kwargs_input("lin", "1", is_p1d=True)
-        kwargs_desi_pk1d_forest2 = get_desi_kwargs_input("lin", "2", is_p1d=True)
+        kwargs_desi_pk1d_forest2 = get_desi_kwargs_input("lin",
+                                                         "2",
+                                                         is_p1d=True)
 
         # create a DesiPk1dForest
         test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
@@ -1247,8 +1289,7 @@ class AstronomicalObjectTest(AbstractTest):
         expected_message = (
             "Error constructing Forest. Class variable 'log_lambda_grid' must "
             "be set prior to initialize instances of this type. This probably "
-            "means you did not run Forest.set_class_variables"
-        )
+            "means you did not run Forest.set_class_variables")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs_forest_log)
         self.compare_error_message(context_manager, expected_message)
@@ -1273,24 +1314,22 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Forest with extra variables
         kwargs = kwargs_forest_log.copy()
-        kwargs.update({ "test_variable": "test" })
+        kwargs.update({"test_variable": "test"})
         test_obj = Forest(**kwargs)
         self.assert_forest_object(test_obj, kwargs)
 
         # create a Forest with missing log_lambda
         kwargs = {}
         expected_message = (
-            "Error constructing Forest. Missing variable 'log_lambda'"
-        )
+            "Error constructing Forest. Missing variable 'log_lambda'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
 
         # create a Forest with missing flux
-        kwargs = { "log_lambda": np.ones(15) }
+        kwargs = {"log_lambda": np.ones(15)}
         expected_message = (
-            "Error constructing Forest. Missing variable 'flux'"
-        )
+            "Error constructing Forest. Missing variable 'flux'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1301,8 +1340,7 @@ class AstronomicalObjectTest(AbstractTest):
             "flux": np.ones(15),
         }
         expected_message = (
-            "Error constructing Forest. Missing variable 'ivar'"
-        )
+            "Error constructing Forest. Missing variable 'ivar'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1314,8 +1352,7 @@ class AstronomicalObjectTest(AbstractTest):
             "ivar": np.ones(15) * 4,
         }
         expected_message = (
-            "Error constructing AstronomicalObject. Missing variable 'dec'"
-        )
+            "Error constructing AstronomicalObject. Missing variable 'dec'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1345,8 +1382,7 @@ class AstronomicalObjectTest(AbstractTest):
         expected_message = (
             "Error constructing Forest. Class variable 'log_lambda_grid' must "
             "be set prior to initialize instances of this type. This probably "
-            "means you did not run Forest.set_class_variables"
-        )
+            "means you did not run Forest.set_class_variables")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs_forest_log)
         self.compare_error_message(context_manager, expected_message)
@@ -1357,8 +1393,7 @@ class AstronomicalObjectTest(AbstractTest):
             "Error constructing Forest. Class variable "
             "'log_lambda_rest_frame_grid' must be set prior to initialize "
             "instances of this type. This probably means you did not run "
-            "Forest.set_class_variables"
-        )
+            "Forest.set_class_variables")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs_forest_log)
         self.compare_error_message(context_manager, expected_message)
@@ -1369,19 +1404,16 @@ class AstronomicalObjectTest(AbstractTest):
             "Error constructing Forest. Class variable "
             "'mask_fields' must be set prior to initialize "
             "instances of this type. This probably means you did not run "
-            "Forest.set_class_variables"
-        )
+            "Forest.set_class_variables")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs_forest_log)
         self.compare_error_message(context_manager, expected_message)
 
         # create a Forest with incorrect Forest.mask_fields
         Forest.mask_fields = "flux"
-        expected_message = (
-            "Error constructing Forest. "
-            "Expected list in class variable 'mask fields'. "
-            "Found 'flux'."
-        )
+        expected_message = ("Error constructing Forest. "
+                            "Expected list in class variable 'mask fields'. "
+                            "Found 'flux'.")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs_forest_log)
         self.compare_error_message(context_manager, expected_message)
@@ -1392,8 +1424,7 @@ class AstronomicalObjectTest(AbstractTest):
             "Error constructing Forest. Class variable "
             "'wave_solution' must be set prior to initialize "
             "instances of this type. This probably means you did not run "
-            "Forest.set_class_variables"
-        )
+            "Forest.set_class_variables")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs_forest_log)
         self.compare_error_message(context_manager, expected_message)
@@ -1409,8 +1440,8 @@ class AstronomicalObjectTest(AbstractTest):
         kwargs_forest_gt = kwargs_astronomical_object_gt.copy()
         for kwargs in kwargs_forest_gt.values():
             kwargs.update({
-                "flux": BASE_FOREST['flux']*SPECTRA_VALUES_DICT["1"]['flux'],
-                "ivar": BASE_FOREST['ivar']*SPECTRA_VALUES_DICT["1"]['ivar'],
+                "flux": BASE_FOREST['flux'] * SPECTRA_VALUES_DICT["1"]['flux'],
+                "ivar": BASE_FOREST['ivar'] * SPECTRA_VALUES_DICT["1"]['ivar'],
                 "log_lambda": LOG_LAMBDA,
             })
 
@@ -1429,8 +1460,8 @@ class AstronomicalObjectTest(AbstractTest):
             "ra": 0.15,
             "dec": 0.0,
             "z": 2.1,
-            "flux": BASE_FOREST['flux']*SPECTRA_VALUES_DICT["1"]['flux'],
-            "ivar": BASE_FOREST['ivar']*SPECTRA_VALUES_DICT["1"]['ivar'],
+            "flux": BASE_FOREST['flux'] * SPECTRA_VALUES_DICT["1"]['flux'],
+            "ivar": BASE_FOREST['ivar'] * SPECTRA_VALUES_DICT["1"]['ivar'],
             "log_lambda": LOG_LAMBDA,
         }
         other = Forest(**kwargs)
@@ -1448,8 +1479,7 @@ class AstronomicalObjectTest(AbstractTest):
         kwargs["ivar"] = kwargs["ivar"][::2]
         expected_message = (
             "Error constructing Forest. 'flux' and 'ivar' don't have the "
-            "same size"
-        )
+            "same size")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1460,8 +1490,7 @@ class AstronomicalObjectTest(AbstractTest):
         kwargs["ivar"] = kwargs["ivar"][::2]
         expected_message = (
             "Error constructing Forest. 'flux' and 'log_lambda' don't have the "
-            "same size"
-        )
+            "same size")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1496,8 +1525,7 @@ class AstronomicalObjectTest(AbstractTest):
         reset_forest()
         expected_message = (
             "Error in Forest.rebin(). Class variable 'wave_solution' "
-            "must be either 'lin' or 'log'."
-        )
+            "must be either 'lin' or 'log'.")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.rebin()
         self.compare_error_message(context_manager, expected_message)
@@ -1506,7 +1534,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test the coadd function in Forest."""
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
-        kwargs_forest_log  = get_kwargs_input("log", "1")
+        kwargs_forest_log = get_kwargs_input("log", "1")
         kwargs_forest_log2 = get_kwargs_input("log", "2")
         kwargs_forest_log_coadd = get_kwargs_rebin("log", "COADD", rebin=3)
 
@@ -1529,12 +1557,10 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj_other.rebin()
 
         # coadding them whould raise an error
-        expected_message = (
-            "Attempting to coadd two Forests "
-            "with different los_id. This should "
-            f"not happen. this.los_id={test_obj.los_id}, "
-            f"other.los_id={test_obj_other.los_id}."
-        )
+        expected_message = ("Attempting to coadd two Forests "
+                            "with different los_id. This should "
+                            f"not happen. this.los_id={test_obj.los_id}, "
+                            f"other.los_id={test_obj_other.los_id}.")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
         self.compare_error_message(context_manager, expected_message)
@@ -1546,8 +1572,7 @@ class AstronomicalObjectTest(AbstractTest):
         # coadding them whould raise an error
         expected_message = (
             "Error coadding Forest. Expected Forest instance in other. Found: "
-            "AstronomicalObject"
-        )
+            "AstronomicalObject")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
         self.compare_error_message(context_manager, expected_message)
@@ -1556,7 +1581,7 @@ class AstronomicalObjectTest(AbstractTest):
         reset_forest()
         setup_forest(wave_solution="lin")
 
-        kwargs_forest_lin  = get_kwargs_input("lin", "1")
+        kwargs_forest_lin = get_kwargs_input("lin", "1")
         kwargs_forest_lin2 = get_kwargs_input("lin", "2")
         kwargs_forest_lin_coadd = get_kwargs_rebin("lin", "COADD", rebin=1)
 
@@ -1576,7 +1601,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method get_data for Forest."""
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
-        kwargs_forest_log  = get_kwargs_input("log", "1")
+        kwargs_forest_log = get_kwargs_input("log", "1")
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
@@ -1586,7 +1611,7 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables; case: linear wavelength solution
         reset_forest()
         setup_forest(wave_solution="lin")
-        kwargs_forest_lin  = get_kwargs_input("lin", "1")
+        kwargs_forest_lin = get_kwargs_input("lin", "1")
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_lin)
@@ -1603,8 +1628,7 @@ class AstronomicalObjectTest(AbstractTest):
         reset_forest()
         expected_message = (
             "Error in Forest.get_data(). Class variable 'wave_solution' "
-            "must be either 'lin' or 'log'. Found: 'None'"
-        )
+            "must be either 'lin' or 'log'. Found: 'None'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.get_data()
         self.compare_error_message(context_manager, expected_message)
@@ -1613,7 +1637,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method get_header for Forest."""
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
-        kwargs_forest_log  = get_kwargs_input("log", "1")
+        kwargs_forest_log = get_kwargs_input("log", "1")
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
@@ -1625,7 +1649,7 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables; case: linear wavelength solution
         reset_forest()
         setup_forest(wave_solution="lin")
-        kwargs_forest_lin  = get_kwargs_input("lin", "1")
+        kwargs_forest_lin = get_kwargs_input("lin", "1")
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_lin)
@@ -1638,8 +1662,7 @@ class AstronomicalObjectTest(AbstractTest):
         reset_forest()
         expected_message = (
             "Error in Forest.get_header(). Class variable 'wave_solution' "
-            "must be either 'lin' or 'log'. Found: 'None'"
-        )
+            "must be either 'lin' or 'log'. Found: 'None'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.get_header()
         self.compare_error_message(context_manager, expected_message)
@@ -1666,8 +1689,9 @@ class AstronomicalObjectTest(AbstractTest):
             3.04453334, 3.04953334, 3.05453334, 3.05953334, 3.06453334,
             3.06953334, 3.07453334
         ])
-        self.assertTrue(np.allclose(Forest.log_lambda_rest_frame_grid,
-                                    log_lambda_rest_frame_grid))
+        self.assertTrue(
+            np.allclose(Forest.log_lambda_rest_frame_grid,
+                        log_lambda_rest_frame_grid))
 
         self.assertTrue(Forest.mask_fields, defaults_forest.get("mask fields"))
         self.assertTrue(Forest.wave_solution == "log")
@@ -1677,18 +1701,17 @@ class AstronomicalObjectTest(AbstractTest):
                                    "lin")
 
         log_lambda_grid = np.array([
-            3.5563025 , 3.56820172, 3.5797836 , 3.59106461, 3.60205999,
+            3.5563025, 3.56820172, 3.5797836, 3.59106461, 3.60205999,
             3.61278386, 3.62324929, 3.63346846, 3.64345268, 3.65321251,
-            3.66275783, 3.67209786, 3.68124124, 3.69019608, 3.69897   ,
-            3.70757018, 3.71600334, 3.72427587, 3.73239376, 3.74036269
+            3.66275783, 3.67209786, 3.68124124, 3.69019608, 3.69897, 3.70757018,
+            3.71600334, 3.72427587, 3.73239376, 3.74036269
         ])
         self.assertTrue(np.allclose(Forest.log_lambda_grid, log_lambda_grid))
 
-        log_lambda_rest_frame_grid = np.array([
-            3.0374265 , 3.07554696
-        ])
-        self.assertTrue(np.allclose(Forest.log_lambda_rest_frame_grid,
-                                    log_lambda_rest_frame_grid))
+        log_lambda_rest_frame_grid = np.array([3.0374265, 3.07554696])
+        self.assertTrue(
+            np.allclose(Forest.log_lambda_rest_frame_grid,
+                        log_lambda_rest_frame_grid))
 
         self.assertTrue(Forest.mask_fields, defaults_forest.get("mask fields"))
         self.assertTrue(Forest.wave_solution == "lin")
@@ -1696,8 +1719,7 @@ class AstronomicalObjectTest(AbstractTest):
         # specifying wrong bining should raise and error
         expected_message = (
             "Error in setting Forest class variables. 'wave_solution' "
-            "must be either 'lin' or 'log'. Found: wrong"
-        )
+            "must be either 'lin' or 'log'. Found: wrong")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 100, 100,
                                        "wrong")
@@ -1710,8 +1732,7 @@ class AstronomicalObjectTest(AbstractTest):
         # create a Pk1dForest with missing Pk1dForest class variables
         expected_message = (
             "Error constructing Pk1dForest. Class variable 'lambda_abs_igm' "
-            "must be set prior to initialize instances of this type"
-        )
+            "must be set prior to initialize instances of this type")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Pk1dForest(**kwargs_pk1d_forest_log)
         self.compare_error_message(context_manager, expected_message)
@@ -1723,8 +1744,7 @@ class AstronomicalObjectTest(AbstractTest):
         expected_message = (
             "Error constructing Forest. Class variable 'log_lambda_grid' "
             "must be set prior to initialize instances of this type. This "
-            "probably means you did not run Forest.set_class_variables"
-        )
+            "probably means you did not run Forest.set_class_variables")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Pk1dForest(**kwargs_pk1d_forest_log)
         self.compare_error_message(context_manager, expected_message)
@@ -1760,8 +1780,7 @@ class AstronomicalObjectTest(AbstractTest):
             "ivar": np.ones(15) * 4,
         }
         expected_message = (
-            "Error constructing Pk1dForest. Missing variable 'exposures_diff'"
-        )
+            "Error constructing Pk1dForest. Missing variable 'exposures_diff'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Pk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1773,12 +1792,10 @@ class AstronomicalObjectTest(AbstractTest):
             "z": 2.1,
             "flux": np.ones(15),
             "ivar": np.ones(15) * 4,
-            "exposures_diff":
-                np.ones(15),
+            "exposures_diff": np.ones(15),
         }
         expected_message = (
-            "Error constructing Pk1dForest. Missing variable 'reso'"
-        )
+            "Error constructing Pk1dForest. Missing variable 'reso'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Pk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1790,14 +1807,11 @@ class AstronomicalObjectTest(AbstractTest):
             "z": 2.1,
             "flux": np.ones(15),
             "ivar": np.ones(15) * 4,
-            "exposures_diff":
-                np.ones(15),
-            "reso":
-                np.ones(15),
+            "exposures_diff": np.ones(15),
+            "reso": np.ones(15),
         }
         expected_message = (
-            "Error constructing Pk1dForest. Missing variable 'reso_pix'"
-        )
+            "Error constructing Pk1dForest. Missing variable 'reso_pix'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Pk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1807,9 +1821,12 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
-        kwargs_pk1d_forest_log  = get_kwargs_input("log", "1", is_p1d=True)
+        kwargs_pk1d_forest_log = get_kwargs_input("log", "1", is_p1d=True)
         kwargs_pk1d_forest_log2 = get_kwargs_input("log", "2", is_p1d=True)
-        kwargs_pk1d_forest_log_coadd = get_kwargs_rebin("log", "COADD", rebin=3, is_p1d=True)
+        kwargs_pk1d_forest_log_coadd = get_kwargs_rebin("log",
+                                                        "COADD",
+                                                        rebin=3,
+                                                        is_p1d=True)
 
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
@@ -1830,12 +1847,10 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj_other.rebin()
 
         # coadding them should raise an error
-        expected_message = (
-            "Attempting to coadd two Forests "
-            "with different los_id. This should "
-            f"not happen. this.los_id={test_obj.los_id}, "
-            f"other.los_id={test_obj_other.los_id}."
-        )
+        expected_message = ("Attempting to coadd two Forests "
+                            "with different los_id. This should "
+                            f"not happen. this.los_id={test_obj.los_id}, "
+                            f"other.los_id={test_obj_other.los_id}.")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
         self.compare_error_message(context_manager, expected_message)
@@ -1845,9 +1860,12 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
         setup_pk1d_forest("LYA")
 
-        kwargs_pk1d_forest_lin  = get_kwargs_input("lin", "1", is_p1d=True)
+        kwargs_pk1d_forest_lin = get_kwargs_input("lin", "1", is_p1d=True)
         kwargs_pk1d_forest_lin2 = get_kwargs_input("lin", "2", is_p1d=True)
-        kwargs_pk1d_forest_lin_coadd = get_kwargs_rebin("lin", "COADD", rebin=1, is_p1d=True)
+        kwargs_pk1d_forest_lin_coadd = get_kwargs_rebin("lin",
+                                                        "COADD",
+                                                        rebin=1,
+                                                        is_p1d=True)
 
         # create a Forest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)
@@ -1870,8 +1888,7 @@ class AstronomicalObjectTest(AbstractTest):
         # coadding them should raise an error
         expected_message = (
             "Error coadding Pk1dForest. Expected Pk1dForest instance in other. "
-            "Found: Forest"
-        )
+            "Found: Forest")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
         self.compare_error_message(context_manager, expected_message)
@@ -1880,15 +1897,14 @@ class AstronomicalObjectTest(AbstractTest):
         """Test method consistency_check from Pk1dForest"""
         setup_forest("log")
         setup_pk1d_forest("LYA")
-        kwargs_pk1d_forest_log  = get_kwargs_input("log", "1", is_p1d=True)
+        kwargs_pk1d_forest_log = get_kwargs_input("log", "1", is_p1d=True)
 
         # create a Pk1dForest with flux and ivar of different sizes
         kwargs = kwargs_pk1d_forest_log.copy()
         kwargs["ivar"] = kwargs["ivar"][::2]
         expected_message = (
             "Error constructing Forest. 'flux' and 'ivar' don't have the "
-            "same size"
-        )
+            "same size")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Pk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1898,8 +1914,7 @@ class AstronomicalObjectTest(AbstractTest):
         kwargs["exposures_diff"] = kwargs["exposures_diff"][::2]
         expected_message = (
             "Error constructing Pk1dForest. 'flux' and 'exposures_diff' don't "
-            "have the same size"
-        )
+            "have the same size")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Pk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -1932,7 +1947,7 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
-        kwargs_pk1d_forest_log  = get_kwargs_input("log", "1", is_p1d=True)
+        kwargs_pk1d_forest_log = get_kwargs_input("log", "1", is_p1d=True)
         kwargs_pk1d_forest_lin = get_kwargs_input("lin", "1", is_p1d=True)
 
         # create a Pk1dForest
@@ -1965,8 +1980,7 @@ class AstronomicalObjectTest(AbstractTest):
         expected_message = (
             "Error constructing Forest. Class variable 'log_lambda_grid' "
             "must be set prior to initialize instances of this type. This "
-            "probably means you did not run Forest.set_class_variables"
-        )
+            "probably means you did not run Forest.set_class_variables")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssForest(**kwargs_sdss_forest)
         self.compare_error_message(context_manager, expected_message)
@@ -1999,8 +2013,7 @@ class AstronomicalObjectTest(AbstractTest):
             "ivar": np.ones(15) * 4,
         }
         expected_message = (
-            "Error constructing SdssForest. Missing variable 'fiberid'"
-        )
+            "Error constructing SdssForest. Missing variable 'fiberid'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -2015,8 +2028,7 @@ class AstronomicalObjectTest(AbstractTest):
             "fiberid": 0,
         }
         expected_message = (
-            "Error constructing SdssForest. Missing variable 'mjd'"
-        )
+            "Error constructing SdssForest. Missing variable 'mjd'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -2032,8 +2044,7 @@ class AstronomicalObjectTest(AbstractTest):
             "mjd": 0,
         }
         expected_message = (
-            "Error constructing SdssForest. Missing variable 'plate'"
-        )
+            "Error constructing SdssForest. Missing variable 'plate'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -2050,8 +2061,7 @@ class AstronomicalObjectTest(AbstractTest):
             "plate": 0,
         }
         expected_message = (
-            "Error constructing SdssForest. Missing variable 'thingid'"
-        )
+            "Error constructing SdssForest. Missing variable 'thingid'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -2069,8 +2079,7 @@ class AstronomicalObjectTest(AbstractTest):
             "mjd": 0,
         }
         expected_message = (
-            "Error constructing Forest. Missing variable 'log_lambda'"
-        )
+            "Error constructing Forest. Missing variable 'log_lambda'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -2102,12 +2111,10 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj_other.rebin()
 
         # coadding them should raise an error
-        expected_message = (
-            "Attempting to coadd two Forests "
-            "with different los_id. This should "
-            f"not happen. this.los_id={test_obj.los_id}, "
-            f"other.los_id={test_obj_other.los_id}."
-        )
+        expected_message = ("Attempting to coadd two Forests "
+                            "with different los_id. This should "
+                            f"not happen. this.los_id={test_obj.los_id}, "
+                            f"other.los_id={test_obj_other.los_id}.")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
         self.compare_error_message(context_manager, expected_message)
@@ -2121,8 +2128,7 @@ class AstronomicalObjectTest(AbstractTest):
         # coadding them should raise an error
         expected_message = (
             "Error coadding SdssForest. Expected SdssForest instance in other. "
-            "Found: Forest"
-        )
+            "Found: Forest")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
         self.compare_error_message(context_manager, expected_message)
@@ -2165,13 +2171,14 @@ class AstronomicalObjectTest(AbstractTest):
         This includes a test of function rebin.
         """
         kwargs_sdss_pk1d_forest = get_sdss_kwargs_input("log", "1", is_p1d=True)
-        kwargs_sdss_pk1d_forest_rebin = get_sdss_kwargs_rebin("log", "1", is_p1d=True)
+        kwargs_sdss_pk1d_forest_rebin = get_sdss_kwargs_rebin("log",
+                                                              "1",
+                                                              is_p1d=True)
 
         # expected error as Pk1dForest class variables are not yet set
         expected_message = (
             "Error constructing Pk1dForest. Class variable 'lambda_abs_igm' "
-            "must be set prior to initialize instances of this type"
-        )
+            "must be set prior to initialize instances of this type")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssPk1dForest(**kwargs_sdss_pk1d_forest)
         self.compare_error_message(context_manager, expected_message)
@@ -2183,8 +2190,7 @@ class AstronomicalObjectTest(AbstractTest):
         expected_message = (
             "Error constructing Forest. Class variable 'log_lambda_grid' "
             "must be set prior to initialize instances of this type. This "
-            "probably means you did not run Forest.set_class_variables"
-        )
+            "probably means you did not run Forest.set_class_variables")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssPk1dForest(**kwargs_sdss_pk1d_forest)
         self.compare_error_message(context_manager, expected_message)
@@ -2211,21 +2217,30 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a SdssPk1dForest with missing SdssForest variables
         kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15) * 4,
-            "log_lambda": np.array([
+            "ra":
+                0.15,
+            "dec":
+                0.0,
+            "z":
+                2.1,
+            "flux":
+                np.ones(15),
+            "ivar":
+                np.ones(15) * 4,
+            "log_lambda":
+                np.array([
                     3.5565, 3.55655, 3.5567, 3.55675, 3.5569, 3.55695, 3.5571,
-                    3.55715, 3.5573, 3.55735 ]),
-            "exposures_diff": np.ones(15),
-            "reso": np.ones(15),
-            "reso_pix": np.ones(15),
+                    3.55715, 3.5573, 3.55735
+                ]),
+            "exposures_diff":
+                np.ones(15),
+            "reso":
+                np.ones(15),
+            "reso_pix":
+                np.ones(15),
         }
         expected_message = (
-            "Error constructing SdssForest. Missing variable 'fiberid'"
-        )
+            "Error constructing SdssForest. Missing variable 'fiberid'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssPk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -2243,8 +2258,7 @@ class AstronomicalObjectTest(AbstractTest):
             "mjd": 0,
         }
         expected_message = (
-            "Error constructing Pk1dForest. Missing variable 'exposures_diff'"
-        )
+            "Error constructing Pk1dForest. Missing variable 'exposures_diff'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssPk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -2265,8 +2279,7 @@ class AstronomicalObjectTest(AbstractTest):
             "reso_pix": np.ones(15),
         }
         expected_message = (
-            "Error constructing Forest. Missing variable 'log_lambda'"
-        )
+            "Error constructing Forest. Missing variable 'log_lambda'")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssPk1dForest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
@@ -2278,8 +2291,12 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         kwargs_sdss_pk1d_forest = get_sdss_kwargs_input("log", "1", is_p1d=True)
-        kwargs_sdss_pk1d_forest2 = get_sdss_kwargs_input("log", "2", is_p1d=True)
-        kwargs_sdss_pk1d_forest_coadd = get_sdss_kwargs_rebin("log", "COADD", is_p1d=True)
+        kwargs_sdss_pk1d_forest2 = get_sdss_kwargs_input("log",
+                                                         "2",
+                                                         is_p1d=True)
+        kwargs_sdss_pk1d_forest_coadd = get_sdss_kwargs_rebin("log",
+                                                              "COADD",
+                                                              is_p1d=True)
 
         # create a SdssPk1dForest
         test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
@@ -2300,12 +2317,10 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj_other.rebin()
 
         # coadding them should raise an error
-        expected_message = (
-            "Attempting to coadd two Forests "
-            "with different los_id. This should "
-            f"not happen. this.los_id={test_obj.los_id}, "
-            f"other.los_id={test_obj_other.los_id}."
-        )
+        expected_message = ("Attempting to coadd two Forests "
+                            "with different los_id. This should "
+                            f"not happen. this.los_id={test_obj.los_id}, "
+                            f"other.los_id={test_obj_other.los_id}.")
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
         self.compare_error_message(context_manager, expected_message)
@@ -2327,7 +2342,9 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
         kwargs_sdss_pk1d_forest = get_sdss_kwargs_input("log", "1", is_p1d=True)
-        kwargs_sdss_pk1d_forest2 = get_sdss_kwargs_input("log", "2", is_p1d=True)
+        kwargs_sdss_pk1d_forest2 = get_sdss_kwargs_input("log",
+                                                         "2",
+                                                         is_p1d=True)
 
         # create an SdssPk1dForest
         test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)

@@ -34,7 +34,7 @@ from .pk1d.prep_pk1d import exp_diff, spectral_resolution
 from .pk1d.prep_pk1d import spectral_resolution_desi
 
 
-def read_dlas(filename,obj_id_name='THING_ID'):
+def read_dlas(filename, obj_id_name='THING_ID'):
     """Reads the DLA catalog from a fits file.
 
     ASCII or DESI files can be converted using:
@@ -173,7 +173,6 @@ def read_drq(drq_filename,
         if 'SV3_DESI_TARGET' in catalog.colnames:
             keep_columns += ['SV3_DESI_TARGET']
 
-
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
@@ -254,7 +253,6 @@ def read_drq(drq_filename,
     #-- Convert angles to radians
     catalog['RA'] = np.radians(catalog['RA'])
     catalog['DEC'] = np.radians(catalog['DEC'])
-
 
     return catalog
 
@@ -370,25 +368,39 @@ def read_data(in_dir,
 
     # read data taking the mode into account
     blinding = "none"
-    if mode in ["desi_mocks","desi_healpix","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
-        if mode in ["desi_mocks", "desi"]: #I still don't think we need two different modes since we are checking if truth files exist...
+    if mode in [
+            "desi_mocks", "desi_healpix", "desi", "desi_survey_tilebased",
+            "spcframe", "spplate", "spec", "corrected-spec"
+    ]:
+        if mode in [
+                "desi_mocks", "desi"
+        ]:  #I still don't think we need two different modes since we are checking if truth files exist...
             desi_nside = 16
             desi_prefix = f'spectra-{desi_nside}'
-            pix_data, is_mock = read_from_desi(in_dir, catalog, desi_prefix, desi_nside, pk1d=pk1d)
+            pix_data, is_mock = read_from_desi(in_dir,
+                                               catalog,
+                                               desi_prefix,
+                                               desi_nside,
+                                               pk1d=pk1d)
 
-            if (not is_mock) and ('DESI_TARGET' in catalog.colnames) and np.any((catalog['DESI_TARGET']>0)):
+            if (not is_mock) and ('DESI_TARGET' in catalog.colnames) and np.any(
+                (catalog['DESI_TARGET'] > 0)):
                 print("your catalog contains DESI survey tiles!")
                 blinding = blinding_desi
 
         elif mode == "desi_healpix":
-            pix_data=[]
+            pix_data = []
             desi_nside = 64
-            survey_type=np.unique(catalog['SURVEY'])
-            for survey in survey_type :
-                catalog_ = catalog[catalog['SURVEY']==survey]
-                desi_prefix=f'coadd-{survey}-dark'
-                in_dir_=f'{in_dir}/{survey}/dark'
-                pix_data_, is_mock = read_from_desi(in_dir_, catalog_, desi_prefix, desi_nside, pk1d=pk1d)
+            survey_type = np.unique(catalog['SURVEY'])
+            for survey in survey_type:
+                catalog_ = catalog[catalog['SURVEY'] == survey]
+                desi_prefix = f'coadd-{survey}-dark'
+                in_dir_ = f'{in_dir}/{survey}/dark'
+                pix_data_, is_mock = read_from_desi(in_dir_,
+                                                    catalog_,
+                                                    desi_prefix,
+                                                    desi_nside,
+                                                    pk1d=pk1d)
                 pix_data.extend(pix_data_)
 
             if (not is_mock) and ('main' in survey_type):
@@ -396,10 +408,17 @@ def read_data(in_dir,
                 blinding = blinding_desi
 
         elif mode == "desi_survey_tilebased":
-            if np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
+            if np.any((catalog['TILEID'] < 60000) &
+                      (catalog['TILEID'] >= 1000)):
                 print("you are trying to run on DESI survey tiles!")
                 blinding = blinding_desi
-            pix_data, num_pix_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights, usehealpix=True)
+            pix_data, num_pix_data = read_from_minisv_desi(
+                in_dir,
+                catalog,
+                pk1d=pk1d,
+                useall=useall,
+                usesinglenights=usesinglenights,
+                usehealpix=True)
         elif mode == "spcframe":
             pix_data = read_from_spcframe(in_dir,
                                           catalog,
@@ -478,9 +497,14 @@ def read_data(in_dir,
                 data[healpix] = pix_data
                 num_data += len(pix_data)
 
-    elif mode in ["desi_sv_no_coadd",'desiminisv']: #keeping the old name here for backward compatibility
+    elif mode in ["desi_sv_no_coadd", 'desiminisv'
+                 ]:  #keeping the old name here for backward compatibility
         nside = 8
-        data, num_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights)
+        data, num_data = read_from_minisv_desi(in_dir,
+                                               catalog,
+                                               pk1d=pk1d,
+                                               useall=useall,
+                                               usesinglenights=usesinglenights)
 
     else:
         userprint("I don't know mode: {}".format(mode))
@@ -1044,12 +1068,14 @@ def read_from_desi(in_dir, catalog, desi_prefix, in_nside=64, pk1d=None):
         # the truth file is used to check if we are reading in mocks
         # in case we are, and we are computing pk1d, we also use them to load
         # the resolution matrix
-        filename_truth=f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-{healpix}.fits"
+        filename_truth = f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-{healpix}.fits"
         if not os.path.isfile(filename_truth):
             is_mock = False
-            userprint(f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
+            userprint(
+                f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}"
+            )
         else:
-            filename = f"{in_dir}/{healpix//100}/{healpix}/{desi_prefix}-{healpix}.fits"#spectra-{in_nside}-{healpix}.fits"
+            filename = f"{in_dir}/{healpix//100}/{healpix}/{desi_prefix}-{healpix}.fits"  #spectra-{in_nside}-{healpix}.fits"
         try:
             userprint(f"Reading {filename}")
             hdul = fitsio.FITS(filename)
@@ -1061,7 +1087,7 @@ def read_from_desi(in_dir, catalog, desi_prefix, in_nside=64, pk1d=None):
         fibermap = hdul['FIBERMAP'].read()
         targetid_spec = fibermap["TARGETID"]
 
-        reso_from_truth=False
+        reso_from_truth = False
         #-- First read all wavelength, flux, ivar, mask, and resolution
         #-- from this file
         spec_data = {}
@@ -1084,15 +1110,20 @@ def read_from_desi(in_dir, catalog, desi_prefix, in_nside=64, pk1d=None):
                 elif pk1d is not None:
                     try:
                         with fitsio.FITS(filename_truth) as hdul_truth:
-                            spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
+                            spec["RESO"] = hdul_truth[
+                                f"{color}_RESOLUTION"].read()
                     except IOError:
                         userprint(f"Error reading truth file {filename_truth}")
                     except KeyError:
-                        userprint(f"Error reading resolution from truth file for pix {healpix}")
+                        userprint(
+                            f"Error reading resolution from truth file for pix {healpix}"
+                        )
                     else:
                         if not reso_from_truth:
-                            userprint('Did not find resolution matrix in spectrum files, using resolution from truth files')
-                            reso_from_truth=True
+                            userprint(
+                                'Did not find resolution matrix in spectrum files, using resolution from truth files'
+                            )
+                            reso_from_truth = True
                 spec_data[color] = spec
             except OSError:
                 userprint(f"ERROR: while reading {color} band from {filename}")
@@ -1110,7 +1141,9 @@ def read_from_desi(in_dir, catalog, desi_prefix, in_nside=64, pk1d=None):
                 userprint(f"Error reading {entry[id_name]}")
                 continue
             elif len(w_t) > 1:
-                userprint(f"Warning: more than one spectrum in this file for {entry[id_name]}")
+                userprint(
+                    f"Warning: more than one spectrum in this file for {entry[id_name]}"
+                )
             else:
                 w_t = w_t[0]
 
@@ -1148,7 +1181,12 @@ def read_from_desi(in_dir, catalog, desi_prefix, in_nside=64, pk1d=None):
     return data, is_mock
 
 
-def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, useall=False, usehealpix=False):
+def read_from_minisv_desi(in_dir,
+                          catalog,
+                          pk1d=None,
+                          usesinglenights=False,
+                          useall=False,
+                          usehealpix=False):
     """Reads the spectra and formats its data as Forest instances.
     Unlike the read_from_desi routine, this orders things by tile/petal
     Routine used to treat the DESI mini-SV data.
@@ -1168,8 +1206,8 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
     data = {}
     num_data = 0
     if usesinglenights or "cumulative" in in_dir:
-        files_in = sorted(glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
-                         recursive=True))
+        files_in = sorted(
+            glob.glob(os.path.join(in_dir, "**/coadd-*.fits"), recursive=True))
 
         if "cumulative" in in_dir:
             petal_tile_night = [
@@ -1186,30 +1224,30 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
 
         filenames = []
         for f_in in files_in:
-          for ptn in petal_tile_night_unique:
-            if ptn in os.path.basename(f_in):
-                filenames.append(f_in)
-                break
+            for ptn in petal_tile_night_unique:
+                if ptn in os.path.basename(f_in):
+                    filenames.append(f_in)
+                    break
     else:
         if useall:
-            files_in = sorted(glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
-                         recursive=True))
+            files_in = sorted(
+                glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
+                          recursive=True))
         else:
-            files_in = sorted(glob.glob(os.path.join(in_dir, "**/deep/**/coadd-*.fits"),
-                         recursive=True))
+            files_in = sorted(
+                glob.glob(os.path.join(in_dir, "**/deep/**/coadd-*.fits"),
+                          recursive=True))
         petal_tile = [
-            f"{entry['PETAL_LOC']}-{entry['TILEID']}"
-            for entry in catalog
+            f"{entry['PETAL_LOC']}-{entry['TILEID']}" for entry in catalog
         ]
         #this uniqueness check is to ensure each petal/tile combination only appears once in the filelist
         petal_tile_unique = np.unique(petal_tile)
         filenames = []
         for f_in in files_in:
-          for pt in petal_tile_unique:
-            if pt in os.path.basename(f_in):
-                filenames.append(f_in)
-                break
-
+            for pt in petal_tile_unique:
+                if pt in os.path.basename(f_in):
+                    filenames.append(f_in)
+                    break
 
     #filenames = []
     #for entry in catalog:
@@ -1238,16 +1276,25 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         ra = np.radians(ra)
         dec = np.radians(dec)
         if usehealpix:
-            in_nside=8
+            in_nside = 8
             try:
-                in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
+                in_healpixs = healpy.ang2pix(in_nside,
+                                             np.pi / 2. - dec,
+                                             ra,
+                                             nest=True)
             except ValueError:
-                select_nan_radec=np.logical_not(np.isfinite(dec)&np.isfinite(ra))
-                dec[select_nan_radec]=0
-                ra[select_nan_radec]=0
-                in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
-                in_healpixs[select_nan_radec]=-12345
-                userprint("found non-finite ra/dec values, setting their healpix id to -12345")
+                select_nan_radec = np.logical_not(
+                    np.isfinite(dec) & np.isfinite(ra))
+                dec[select_nan_radec] = 0
+                ra[select_nan_radec] = 0
+                in_healpixs = healpy.ang2pix(in_nside,
+                                             np.pi / 2. - dec,
+                                             ra,
+                                             nest=True)
+                in_healpixs[select_nan_radec] = -12345
+                userprint(
+                    "found non-finite ra/dec values, setting their healpix id to -12345"
+                )
 
         petal_spec = fibermap['PETAL_LOC'][0]
 
@@ -1305,7 +1352,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         select = ((catalog['TILEID'] == tile_spec) &
                   (catalog['PETAL_LOC'] == petal_spec))
         if 'NIGHT' in catalog.colnames and not "LAST_NIGHT" in catalog.colnames:
-            select &=(catalog['NIGHT'] == night_spec)
+            select &= (catalog['NIGHT'] == night_spec)
         userprint(
             f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}')
 
@@ -1318,7 +1365,9 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 userprint(f"Error reading {entry['TARGETID']}")
                 continue
             elif len(w_t) > 1:
-                userprint(f"Warning: more than one spectrum in this file for {entry['TARGETID']}")
+                userprint(
+                    f"Warning: more than one spectrum in this file for {entry['TARGETID']}"
+                )
             else:
                 w_t = w_t[0]
 
@@ -1337,12 +1386,13 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                     reso_in_km_per_s = None
                     exposures_diff = None
 
-                forest_temp = Forest(spec['log_lambda'], flux, ivar,
-                                     entry['TARGETID'], entry['RA'],
-                                     entry['DEC'], entry['Z'], entry['TILEID'],
-                                     entry['NIGHT'] if 'NIGHT' in entry.colnames else entry["LAST_NIGHT"] if 'LAST_NIGHT' in entry.colnames else -1,
-                                     entry['FIBER'],
-                                     exposures_diff, reso_in_km_per_s)
+                forest_temp = Forest(
+                    spec['log_lambda'], flux, ivar, entry['TARGETID'],
+                    entry['RA'], entry['DEC'], entry['Z'], entry['TILEID'],
+                    entry['NIGHT']
+                    if 'NIGHT' in entry.colnames else entry["LAST_NIGHT"]
+                    if 'LAST_NIGHT' in entry.colnames else -1, entry['FIBER'],
+                    exposures_diff, reso_in_km_per_s)
                 if forest is None:
                     forest = copy.deepcopy(forest_temp)
                 else:
@@ -1357,15 +1407,16 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 if in_healpixs[w_t] not in data:
                     data[in_healpixs[w_t]] = []
                 #this might be slow, but would coadd objects with the same targetid even if on multiple tiles
-                do_append=True
+                do_append = True
                 for forest_existing in data[in_healpixs[w_t]]:
-                    if forest_existing.thingid==forest.thingid:
+                    if forest_existing.thingid == forest.thingid:
                         #the method call works as long as only valid forests are stored below
                         forest_existing.coadd(forest)
-                        do_append=False
+                        do_append = False
                         break
                 #need to make sure that the forest is valid and the object isn't already in
-                if do_append and forest.log_lambda is not None and len(forest.log_lambda)>0:
+                if do_append and forest.log_lambda is not None and len(
+                        forest.log_lambda) > 0:
                     data[in_healpixs[w_t]].append(forest)
                     num_data += 1
 
@@ -1375,8 +1426,9 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         raise ValueError("No Quasars found, stopping here")
     if usehealpix:
         #need to hand a list to the routine above
-        data=[forest for healpix_list in data.values() for forest in healpix_list]
-
+        data = [
+            forest for healpix_list in data.values() for forest in healpix_list
+        ]
 
     return data, num_data
 
@@ -1400,8 +1452,8 @@ def read_blinding(in_dir):
     elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
         files += glob.glob(in_dir)
     else:
-        files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir
-                                                           + '/*.fits.gz')
+        files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
+                                                           '/*.fits.gz')
     filename = files[0]
     hdul = fitsio.FITS(filename)
     header = hdul[1].read_header()
@@ -1434,7 +1486,7 @@ def read_delta_file(filename, rebin_factor=None):
         deltas = Delta.from_image(hdul)
     else:
         deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
-    
+
     # Rebin
     if rebin_factor is not None:
         if 'LAMBDA' in hdul:
@@ -1445,12 +1497,12 @@ def read_delta_file(filename, rebin_factor=None):
         if hdul[card].read_header()['WAVE_SOLUTION'] != 'lin':
             raise ValueError('Delta rebinning only implemented for linear \
                     lambda bins')
-        
+
         dwave = hdul[card].read_header()['DELTA_LAMBDA']
-            
+
         for i in range(len(deltas)):
             deltas[i].rebin(rebin_factor, dwave=dwave)
-            
+
     hdul.close()
 
     return deltas
@@ -1516,8 +1568,8 @@ def read_deltas(in_dir,
     elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
         files += sorted(glob.glob(in_dir))
     else:
-        files += sorted(glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
-                                                            '/*.fits.gz'))
+        files += sorted(
+            glob.glob(in_dir + '/*.fits') + glob.glob(in_dir + '/*.fits.gz'))
     files = sorted(files)
 
     if rebin_factor is not None:
@@ -1573,6 +1625,7 @@ def read_deltas(in_dir,
 
     return data, num_data, z_min, z_max
 
+
 def read_objects(filename,
                  nside,
                  z_min,
@@ -1623,7 +1676,11 @@ def read_objects(filename,
     """
     objs = {}
 
-    catalog = read_drq(filename, z_min=z_min, z_max=z_max, keep_bal=keep_bal, mode=mode)
+    catalog = read_drq(filename,
+                       z_min=z_min,
+                       z_max=z_max,
+                       keep_bal=keep_bal,
+                       mode=mode)
 
     phi = catalog['RA']
     theta = np.pi / 2. - catalog['DEC']
@@ -1635,16 +1692,17 @@ def read_objects(filename,
     unique_healpix = np.unique(healpixs)
 
     if mode == 'desi_mocks':
-        nightcol='TARGETID'
+        nightcol = 'TARGETID'
     elif 'desi' in mode:
         if 'LAST_NIGHT' in catalog.colnames:
-            nightcol='LAST_NIGHT'
+            nightcol = 'LAST_NIGHT'
         elif 'NIGHT' in catalog.colnames:
-            nightcol='NIGHT'
+            nightcol = 'NIGHT'
         elif 'SURVEY' in catalog.colnames:
-            nightcol='TARGETID'
+            nightcol = 'TARGETID'
         else:
-            raise Exception("The catalog does not have a NIGHT or LAST_NIGHT entry")
+            raise Exception(
+                "The catalog does not have a NIGHT or LAST_NIGHT entry")
 
     for index, healpix in enumerate(unique_healpix):
         userprint("{} of {}".format(index, len(unique_healpix)))
@@ -1656,7 +1714,7 @@ def read_objects(filename,
                 fibercol = "TARGETID"
             objs[healpix] = [
                 QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
-                entry['TARGETID'], entry[nightcol], entry[fibercol])
+                    entry['TARGETID'], entry[nightcol], entry[fibercol])
                 for entry in catalog[w]
             ]
         else:

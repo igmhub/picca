@@ -289,9 +289,7 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     with warnings.catch_warnings():
         # this ignores all warnings in this part of the code, could in principle
         # specify the exact warnings to be supressed
-        warnings.filterwarnings(
-            'ignore'
-        )
+        warnings.filterwarnings('ignore')
         ratios = reso[num_offdiags, :] / reso[num_offdiags + indices, :]
         ratios = np.log(ratios)
         w2 = ratios > 0

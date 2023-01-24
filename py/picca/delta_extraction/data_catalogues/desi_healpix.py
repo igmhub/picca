@@ -201,12 +201,12 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
 
         hdul_truth = None
         reso_from_truth = False
-        if self.analysis_type == "PK 1D" and any(f"{c}_RESOLUTION" not in hdul for c in colors):
+        if self.analysis_type == "PK 1D" and any(
+                f"{c}_RESOLUTION" not in hdul for c in colors):
             self.logger.debug(
-                    "no resolution in files, reading from truth files"
-                )
+                "no resolution in files, reading from truth files")
             basename_truth = os.path.basename(filename).replace(
-                            'spectra-', 'truth-')
+                'spectra-', 'truth-')
             pathname_truth = os.path.dirname(filename)
             filename_truth = f"{pathname_truth}/{basename_truth}"
             if os.path.exists(filename_truth):
@@ -219,11 +219,10 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             if hdul_truth is not None:
                 return hdul_truth[f"{color}_RESOLUTION"].read()
 
-            raise DataError(
-                    f"Error while reading {color} band from "
-                    f"{filename}. Analysis type is 'PK 1D', "
-                    "but file does not contain HDU "
-                    f"'{color}_RESOLUTION'")
+            raise DataError(f"Error while reading {color} band from "
+                            f"{filename}. Analysis type is 'PK 1D', "
+                            "but file does not contain HDU "
+                            f"'{color}_RESOLUTION'")
 
         for color in colors:
             spec = {}

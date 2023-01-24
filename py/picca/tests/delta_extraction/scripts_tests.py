@@ -10,7 +10,8 @@ from picca.tests.delta_extraction.abstract_test import AbstractTest
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-PICCA_BIN = THIS_DIR.split("py/picca")[0]+"bin/"
+PICCA_BIN = THIS_DIR.split("py/picca")[0] + "bin/"
+
 
 class ScriptsTest(AbstractTest):
     """Test script
@@ -22,6 +23,7 @@ class ScriptsTest(AbstractTest):
     compare_fits (from AbstractTest)
     setUp (from AbstractTest)
     """
+
     def run_delta_extraction(self, config_file, out_dir, test_dir):
         """ Run delta_extraction.py with the specified configuration
         and test its results
@@ -31,22 +33,27 @@ class ScriptsTest(AbstractTest):
         command : list
         A list of items with the script to run and its options
         """
-        command = ["python",
-                   "{}/picca_delta_extraction.py".format(PICCA_BIN),
-                   config_file,
-                   ]
+        command = [
+            "python",
+            "{}/picca_delta_extraction.py".format(PICCA_BIN),
+            config_file,
+        ]
         print("Running command: ", " ".join(command))
 
         try:
-            subprocess.run(command, check=True, capture_output=True,
+            subprocess.run(command,
+                           check=True,
+                           capture_output=True,
                            env=dict(os.environ, THIS_DIR=THIS_DIR))
         except CalledProcessError as e:
             print(e.stderr)
             raise e
 
         # compare attributes
-        test_files = sorted(glob.glob(f"{test_dir}/Log/delta_attributes*.fits.gz"))
-        out_files = sorted(glob.glob(f"{out_dir}/Log/delta_attributes*.fits.gz"))
+        test_files = sorted(
+            glob.glob(f"{test_dir}/Log/delta_attributes*.fits.gz"))
+        out_files = sorted(
+            glob.glob(f"{out_dir}/Log/delta_attributes*.fits.gz"))
         for test_file, out_file in zip(test_files, out_files):
             self.assertTrue(test_file.split("/")[-1] == out_file.split("/")[-1])
             self.compare_fits(test_file, out_file)
@@ -127,7 +134,8 @@ class ScriptsTest(AbstractTest):
     def test_delta_lya_nomask_nodla(self):
         """End-to-end test using 'LYA' setup wihtout masking sky lines nor DLAs"""
         config_file = "{}/data/delta_lya_nomask_nodla.ini".format(THIS_DIR)
-        out_dir = "{}/results/delta_extraction_lya_nomask_nodla".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_lya_nomask_nodla".format(
+            THIS_DIR)
         test_dir = "{}/data/delta_extraction_lya_nomask_nodla".format(THIS_DIR)
 
         self.run_delta_extraction(config_file, out_dir, test_dir)

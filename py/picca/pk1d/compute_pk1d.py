@@ -526,6 +526,7 @@ class Pk1D:
     pk_diff: array of float or None
     Power spectrum of exposures_diff for the different Fourier modes
     """
+
     def __init__(self,
                  ra,
                  dec,

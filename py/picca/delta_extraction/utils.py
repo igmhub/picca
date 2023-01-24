@@ -83,10 +83,10 @@ ABSORBER_IGM = {
     "LY10": 919.3514,
 }
 
-ACCEPTED_BLINDING_STRATEGIES = [
-    "none", "desi_m2", "desi_y1", "desi_y3"]
+ACCEPTED_BLINDING_STRATEGIES = ["none", "desi_m2", "desi_y1", "desi_y3"]
 # TODO: add tags here when we are allowed to unblind them
 UNBLINDABLE_STRATEGIES = []
+
 
 def class_from_string(class_name, module_name):
     """Return a class from a string. The class must be saved in a module
@@ -180,6 +180,7 @@ def find_bins(original_array, grid_array, wave_solution):
                 break
     return found_bin
 
+
 PROGRESS_LEVEL_NUM = 15
 logging.addLevelName(PROGRESS_LEVEL_NUM, "PROGRESS")
 
@@ -269,6 +270,7 @@ def setup_logger(logging_level_console=logging.DEBUG,
     # sets up numba logger
     #logging.getLogger('numba').setLevel(logging.WARNING)
 
+
 def update_accepted_options(accepted_options, new_options, remove=False):
     """Update the content of the list of accepted options
 
@@ -298,6 +300,7 @@ def update_accepted_options(accepted_options, new_options, remove=False):
         accepted_options = sorted(list(set(accepted_options + new_options)))
 
     return accepted_options
+
 
 def update_default_options(default_options, new_options):
     """Update the content of the list of accepted options

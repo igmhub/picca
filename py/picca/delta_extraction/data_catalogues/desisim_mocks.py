@@ -3,8 +3,9 @@
 import logging
 
 from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
-from picca.delta_extraction.data_catalogues.desi_healpix import (# pylint: disable=unused-import
+from picca.delta_extraction.data_catalogues.desi_healpix import (  # pylint: disable=unused-import
     defaults, accepted_options)
+
 
 class DesisimMocks(DesiHealpix):
     """Reads the spectra from DESI using healpix mode and formats its data as a
@@ -69,7 +70,6 @@ class DesisimMocks(DesiHealpix):
         is_mock: bool
         True, as we are reading mocks
         """
-        filename = (
-            f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
-            f"{self.in_nside}-{healpix}.fits")
+        filename = (f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
+                    f"{self.in_nside}-{healpix}.fits")
         return filename, True

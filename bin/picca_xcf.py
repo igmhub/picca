@@ -66,10 +66,9 @@ def main(cmdargs):
     parser.add_argument('--mode',
                         type=str,
                         required=False,
-                        choices=['desi','desi_healpix','desi_mocks','sdss'],
+                        choices=['desi', 'desi_healpix', 'desi_mocks', 'sdss'],
                         default='sdss',
-                        help='Mode for reading the catalog (default sdss)'
-                        )
+                        help='Mode for reading the catalog (default sdss)')
 
     parser.add_argument('--rp-min',
                         type=float,
@@ -230,13 +229,13 @@ def main(cmdargs):
         help=('Shuffle the distribution of forests on the sky following the '
               'given seed. Do not shuffle if None'))
 
-    parser.add_argument('--rebin-factor',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Rebin factor for deltas. If not None, deltas will '
-                             'be rebinned by that factor')
-
+    parser.add_argument(
+        '--rebin-factor',
+        type=int,
+        default=None,
+        required=False,
+        help='Rebin factor for deltas. If not None, deltas will '
+        'be rebinned by that factor')
 
     args = parser.parse_args(cmdargs)
     if args.nproc is None:
@@ -278,22 +277,28 @@ def main(cmdargs):
         userprint("z_max_obj = {}".format(args.z_max_obj), end="")
 
     ### Read objects
-    objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
-                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo, mode=args.mode)
+    objs, z_min2 = io.read_objects(args.drq,
+                                   args.nside,
+                                   args.z_min_obj,
+                                   args.z_max_obj,
+                                   args.z_evol_obj,
+                                   args.z_ref,
+                                   cosmo,
+                                   mode=args.mode)
     xcf.objs = objs
 
     ### Read deltas
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  args.nside,
-                                                  xcf.lambda_abs,
-                                                  args.z_evol_del,
-                                                  args.z_ref,
-                                                  cosmo=cosmo,
-                                                  max_num_spec=args.nspec,
-                                                  no_project=args.no_project,
-                                                  nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor)
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir,
+        args.nside,
+        xcf.lambda_abs,
+        args.z_evol_del,
+        args.z_ref,
+        cosmo=cosmo,
+        max_num_spec=args.nspec,
+        no_project=args.no_project,
+        nproc=args.nproc,
+        rebin_factor=args.rebin_factor)
     xcf.data = data
     xcf.num_data = num_data
     userprint("")
@@ -351,7 +356,9 @@ def main(cmdargs):
     pool.close()
 
     t2 = time.time()
-    userprint(f'picca_xcf.py - Time computing cross-correlation function: {(t2-t1)/60:.3f} minutes')
+    userprint(
+        f'picca_xcf.py - Time computing cross-correlation function: {(t2-t1)/60:.3f} minutes'
+    )
 
     # group data from parallelisation
     correlation_function_data = np.array(correlation_function_data)
@@ -418,15 +425,17 @@ def main(cmdargs):
         'value': args.fid_Ok,
         'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'WL',
-        'value': args.fid_wl,
-        'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        'name':
+            'WL',
+        'value':
+            args.fid_wl,
+        'comment':
+            'Equation of state of dark energy of fiducial LambdaCDM cosmology'
     }, {
         'name': "BLINDING",
         'value': blinding,
         'comment': 'String specifying the blinding strategy'
-    }
-    ]
+    }]
     results.write(
         [r_par, r_trans, z, num_pairs],
         names=['RP', 'RT', 'Z', 'NB'],
@@ -454,6 +463,7 @@ def main(cmdargs):
     t3 = time.time()
     userprint(f'picca_xcf.py - Time total: {(t3-t0)/60:.3f} minutes')
 
+
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)

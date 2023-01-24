@@ -67,11 +67,10 @@ def main(cmdargs):
                         required=True,
                         help='Catalog of objects in DRQ format')
 
-    parser.add_argument(
-                        '--mode',
+    parser.add_argument('--mode',
                         type=str,
                         default='sdss',
-                        choices=['sdss','desi','desi_mocks','desi_healpix'],
+                        choices=['sdss', 'desi', 'desi_mocks', 'desi_healpix'],
                         required=False,
                         help='type of catalog supplied, default sdss')
 
@@ -245,15 +244,15 @@ def main(cmdargs):
                         required=False,
                         help='Maximum number of spectra to read')
 
-    parser.add_argument('--rebin-factor',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Rebin factor for deltas. If not None, deltas will '
-                             'be rebinned by that factor')
+    parser.add_argument(
+        '--rebin-factor',
+        type=int,
+        default=None,
+        required=False,
+        help='Rebin factor for deltas. If not None, deltas will '
+        'be rebinned by that factor')
 
     args = parser.parse_args(cmdargs)
-
 
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -292,15 +291,16 @@ def main(cmdargs):
     t0 = time.time()
 
     # read deltas
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  args.nside,
-                                                  xcf.lambda_abs,
-                                                  args.z_evol_del,
-                                                  args.z_ref,
-                                                  cosmo,
-                                                  max_num_spec=args.nspec,
-                                                  nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor)
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir,
+        args.nside,
+        xcf.lambda_abs,
+        args.z_evol_del,
+        args.z_ref,
+        cosmo,
+        max_num_spec=args.nspec,
+        nproc=args.nproc,
+        rebin_factor=args.rebin_factor)
 
     xcf.data = data
     xcf.num_data = num_data
@@ -318,16 +318,22 @@ def main(cmdargs):
         userprint("z_max_obj = {}".format(args.z_max_obj), end="")
 
     # read objets
-    objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
-                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo, mode=args.mode)
+    objs, z_min2 = io.read_objects(args.drq,
+                                   args.nside,
+                                   args.z_min_obj,
+                                   args.z_max_obj,
+                                   args.z_evol_obj,
+                                   args.z_ref,
+                                   cosmo,
+                                   mode=args.mode)
     xcf.objs = objs
 
     # compute maximum angular separation
     xcf.ang_max = utils.compute_ang_max(cosmo, xcf.r_trans_max, z_min, z_min2)
 
     t1 = time.time()
-    userprint(f'picca_metal_xdmat.py - Time reading data: {(t1-t0)/60:.3f} minutes')
+    userprint(
+        f'picca_metal_xdmat.py - Time reading data: {(t1-t0)/60:.3f} minutes')
 
     xcf.counter = Value('i', 0)
     xcf.lock = Lock()
@@ -394,77 +400,72 @@ def main(cmdargs):
         num_pairs_used_all.append(num_pairs_used)
 
     t2 = time.time()
-    userprint(f'picca_metal_xdmat.py - Time computing all metal matrix: {(t2-t1)/60:.3f} minutes')
+    userprint(
+        f'picca_metal_xdmat.py - Time computing all metal matrix: {(t2-t1)/60:.3f} minutes'
+    )
 
     # save the results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [
-        {
-            'name': 'RPMIN',
-            'value': xcf.r_par_min,
-            'comment': 'Minimum r-parallel [h^-1 Mpc]'
-        },
-        {
-            'name': 'RPMAX',
-            'value': xcf.r_par_max,
-            'comment': 'Maximum r-parallel [h^-1 Mpc]'
-        },
-        {
-            'name': 'RTMAX',
-            'value': xcf.r_trans_max,
-            'comment': 'Maximum r-transverse [h^-1 Mpc]'
-        },
-        {
-            'name': 'NP',
-            'value': xcf.num_bins_r_par,
-            'comment': 'Number of bins in r-parallel'
-        },
-        {
-            'name': 'NT',
-            'value': xcf.num_bins_r_trans,
-            'comment': 'Number of bins in r-transverse'
-        },
-        {
-            'name': 'COEFMOD',
-            'value': args.coef_binning_model,
-            'comment': 'Coefficient for model binning'
-        },
-        {
-            'name': 'ZCUTMIN',
-            'value': xcf.z_cut_min,
-            'comment': 'Minimum redshift of pairs'
-        },
-        {
-            'name': 'ZCUTMAX',
-            'value': xcf.z_cut_max,
-            'comment': 'Maximum redshift of pairs'
-        },
-        {
-            'name': 'REJ',
-            'value': xcf.reject,
-            'comment': 'Rejection factor'
-        }, {
-            'name': 'OMEGAM',
-            'value': args.fid_Om,
-            'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAR',
-            'value': args.fid_Or,
-            'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAK',
-            'value': args.fid_Ok,
-            'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'WL',
-            'value': args.fid_wl,
-            'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-        }, {
-            'name': "BLINDING",
-            'value': blinding,
-            'comment': 'String specifying the blinding strategy'
-        }
-        ]
+    header = [{
+        'name': 'RPMIN',
+        'value': xcf.r_par_min,
+        'comment': 'Minimum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RPMAX',
+        'value': xcf.r_par_max,
+        'comment': 'Maximum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RTMAX',
+        'value': xcf.r_trans_max,
+        'comment': 'Maximum r-transverse [h^-1 Mpc]'
+    }, {
+        'name': 'NP',
+        'value': xcf.num_bins_r_par,
+        'comment': 'Number of bins in r-parallel'
+    }, {
+        'name': 'NT',
+        'value': xcf.num_bins_r_trans,
+        'comment': 'Number of bins in r-transverse'
+    }, {
+        'name': 'COEFMOD',
+        'value': args.coef_binning_model,
+        'comment': 'Coefficient for model binning'
+    }, {
+        'name': 'ZCUTMIN',
+        'value': xcf.z_cut_min,
+        'comment': 'Minimum redshift of pairs'
+    }, {
+        'name': 'ZCUTMAX',
+        'value': xcf.z_cut_max,
+        'comment': 'Maximum redshift of pairs'
+    }, {
+        'name': 'REJ',
+        'value': xcf.reject,
+        'comment': 'Rejection factor'
+    }, {
+        'name': 'OMEGAM',
+        'value': args.fid_Om,
+        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAR',
+        'value': args.fid_Or,
+        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAK',
+        'value': args.fid_Ok,
+        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name':
+            'WL',
+        'value':
+            args.fid_wl,
+        'comment':
+            'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    }, {
+        'name': "BLINDING",
+        'value': blinding,
+        'comment': 'String specifying the blinding strategy'
+    }]
     len_names = np.array([len(name) for name in names]).max()
     names = np.array(names, dtype='S' + str(len_names))
     results.write(
@@ -524,5 +525,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)

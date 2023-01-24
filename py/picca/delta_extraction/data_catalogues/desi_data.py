@@ -14,24 +14,25 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     accepted_options as accepted_options_quasar_catalogue)
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     defaults as defaults_quasar_catalogue)
-from picca.delta_extraction.utils import (
-    ACCEPTED_BLINDING_STRATEGIES, UNBLINDABLE_STRATEGIES)
+from picca.delta_extraction.utils import (ACCEPTED_BLINDING_STRATEGIES,
+                                          UNBLINDABLE_STRATEGIES)
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
-from picca.delta_extraction.utils import (
-    ABSORBER_IGM, update_accepted_options, update_default_options)
+from picca.delta_extraction.utils import (ABSORBER_IGM, update_accepted_options,
+                                          update_default_options)
 
-accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
+accepted_options = update_accepted_options(accepted_options,
+                                           accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(
-    accepted_options,
-    ["unblind", "use non-coadded spectra", "wave solution"])
+    accepted_options, ["unblind", "use non-coadded spectra", "wave solution"])
 
-defaults = update_default_options(defaults, {
-    "delta lambda": 0.8,
-    "delta log lambda": 3e-4,
-    "unblind": False,
-    "use non-coadded spectra": False,
-    "wave solution": "lin",
-})
+defaults = update_default_options(
+    defaults, {
+        "delta lambda": 0.8,
+        "delta log lambda": 3e-4,
+        "unblind": False,
+        "use non-coadded spectra": False,
+        "wave solution": "lin",
+    })
 defaults = update_default_options(defaults, defaults_quasar_catalogue)
 
 

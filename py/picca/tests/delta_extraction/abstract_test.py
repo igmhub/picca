@@ -162,9 +162,9 @@ class AbstractTest(unittest.TestCase):
                     self.assertTrue(key in new_header)
                     if not key in ["CHECKSUM", "DATASUM"]:
                         if (orig_header[key] != new_header[key] and
-                                (isinstance(orig_header[key], str) or not
-                                     np.isclose(orig_header[key],
-                                                new_header[key]))):
+                            (isinstance(orig_header[key], str) or
+                             not np.isclose(orig_header[key], new_header[key]))
+                           ):
                             print(f"\nOriginal file: {orig_file}")
                             print(f"New file: {new_file}")
                             print(f"\n For header {orig_header['EXTNAME']}")

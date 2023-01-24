@@ -104,16 +104,13 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
 
     if bad_continuum_reason is None:
         continuum_fit_parameters = (minimizer.values["zero_point"],
-                                    minimizer.values["slope"],
-                                    minimizer.fval,
+                                    minimizer.values["slope"], minimizer.fval,
                                     leasts_squares.get_ndata())
     ## if the continuum is negative or minuit didn't converge, then
     ## set continuum fit parameters to None
     else:
         cont_model = None
-        continuum_fit_parameters = (np.nan,
-                                    np.nan,
-                                    np.nan,
+        continuum_fit_parameters = (np.nan, np.nan, np.nan,
                                     leasts_squares.get_ndata())
 
     return cont_model, bad_continuum_reason, continuum_fit_parameters

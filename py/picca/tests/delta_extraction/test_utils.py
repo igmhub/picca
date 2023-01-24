@@ -9,6 +9,7 @@ from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.utils import ABSORBER_IGM
 
+
 # reset Forest and Pk1dForest class variables
 def reset_forest():
     """Reset the class variables of Forest and Pk1dForest"""
@@ -17,6 +18,7 @@ def reset_forest():
     Forest.log_lambda_rest_frame_grid = np.array([])
     Forest.mask_fields = []
     Pk1dForest.lambda_abs_igm = None
+
 
 # setup Forest class variables
 def setup_forest(wave_solution, rebin=1, pixel_step=None):
@@ -46,10 +48,12 @@ def setup_forest(wave_solution, rebin=1, pixel_step=None):
     pixel_step *= rebin
     pixel_step_rf = pixel_step
 
-    Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step, pixel_step_rf,
-                               wave_solution)
+    Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step,
+                               pixel_step_rf, wave_solution)
+
 
 setup_forest("log", rebin=3)
+
 
 # setup Pk1dForest class variables
 def setup_pk1d_forest(absorber):
@@ -61,6 +65,7 @@ def setup_pk1d_forest(absorber):
     Key of ABSORBER_IGM selecting the absorber
     """
     Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(absorber)
+
 
 setup_pk1d_forest("LYA")
 
@@ -75,7 +80,7 @@ kwargs1 = {
     "dec": 0.0,
     "z": 2.5,
     "flux": np.ones_like(forest1_log_lambda),
-    "ivar": np.ones_like(forest1_log_lambda)*4,
+    "ivar": np.ones_like(forest1_log_lambda) * 4,
     "log_lambda": forest1_log_lambda,
     "thingid": 10000,
     "plate": 0,
@@ -87,7 +92,7 @@ forest1.rebin()
 # forest 1 properties
 assert np.allclose(forest1.flux, np.ones_like(forest1_log_lambda))
 assert np.allclose(forest1.log_lambda, forest1_log_lambda)
-assert np.allclose(forest1.ivar, np.ones_like(forest1_log_lambda)*4)
+assert np.allclose(forest1.ivar, np.ones_like(forest1_log_lambda) * 4)
 assert np.allclose(forest1.transmission_correction,
                    np.ones_like(forest1_log_lambda))
 
@@ -102,7 +107,7 @@ kwargs2 = {
     "dec": 0.0,
     "z": 2.5,
     "flux": np.ones_like(forest2_log_lambda),
-    "ivar": np.ones_like(forest2_log_lambda)*4,
+    "ivar": np.ones_like(forest2_log_lambda) * 4,
     "log_lambda": forest2_log_lambda,
     "thingid": 10001,
     "plate": 0,
@@ -114,7 +119,7 @@ forest2.rebin()
 # forest 2 properties
 assert np.allclose(forest2.flux, np.ones_like(forest2_log_lambda))
 assert np.allclose(forest2.log_lambda, forest2_log_lambda)
-assert np.allclose(forest2.ivar, np.ones_like(forest2_log_lambda)*4)
+assert np.allclose(forest2.ivar, np.ones_like(forest2_log_lambda) * 4)
 assert np.allclose(forest2.transmission_correction,
                    np.ones_like(forest2_log_lambda))
 
@@ -129,7 +134,7 @@ kwargs3 = {
     "dec": 0.0,
     "z": 2.5,
     "flux": np.ones_like(forest3_log_lambda),
-    "ivar": np.ones_like(forest3_log_lambda)*4,
+    "ivar": np.ones_like(forest3_log_lambda) * 4,
     "log_lambda": forest3_log_lambda,
     "thingid": 10002,
     "plate": 0,
@@ -141,19 +146,15 @@ forest3.rebin()
 # forest 2 properties
 assert np.allclose(forest3.flux, np.ones_like(forest3_log_lambda))
 assert np.allclose(forest3.log_lambda, forest3_log_lambda)
-assert np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda)*4)
+assert np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda) * 4)
 assert np.allclose(forest3.transmission_correction,
                    np.ones_like(forest3_log_lambda))
-
-
 
 # Dictionary to load data
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 kwargs_data = {
-    "input directory":
-        f"{THIS_DIR}/data",
-    "out dir":
-        f"{THIS_DIR}/results",
+    "input directory": f"{THIS_DIR}/data",
+    "out dir": f"{THIS_DIR}/results",
     "rejection log file": "rejection_log.fits.gz",
     "z max": 3.5,
     "z min": 2.1,
@@ -162,26 +163,21 @@ kwargs_data = {
 # Dictionary to load DesiHealpix
 desi_healpix_kwargs = kwargs_data.copy()
 desi_healpix_kwargs.update({
-    "catalogue":
-        f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
     "num processors": 1,
 })
 
 # Dictionary to load SdssData
 sdss_data_kwargs = kwargs_data.copy()
 sdss_data_kwargs.update({
-    "drq catalogue":
-        f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+    "drq catalogue": f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
     "num processors": 1,
 })
 sdss_data_kwargs_filter_forest = {
-    "input directory":
-        f"{THIS_DIR}/data",
-    "out dir":
-        f"{THIS_DIR}/results",
+    "input directory": f"{THIS_DIR}/data",
+    "out dir": f"{THIS_DIR}/results",
     "rejection log file": "sdss_data_rejection_log.fits.gz",
-    "drq catalogue":
-        f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+    "drq catalogue": f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
     "mode": "spec",
     "lambda min": 3600.0,
     "lambda max": 7235.0,
@@ -191,13 +187,10 @@ sdss_data_kwargs_filter_forest = {
 }
 
 desi_mock_data_kwargs = {
-    "input directory":
-        f"{THIS_DIR}/data",
-    "out dir":
-        f"{THIS_DIR}/results",
+    "input directory": f"{THIS_DIR}/data",
+    "out dir": f"{THIS_DIR}/results",
     "rejection log file": "rejection_log.fits.gz",
-    "catalogue":
-        f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+    "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
     "z max": 3.5,
     "z min": 2.1,
     "wave solution": "lin",
@@ -207,6 +200,7 @@ desi_mock_data_kwargs = {
 }
 
 reset_forest()
+
 
 def reset_logger():
     """This function reset the logger picca.delta_extraction by closing
@@ -219,8 +213,10 @@ def reset_logger():
         logger.removeHandler(handler)
     logger.addHandler(logging.NullHandler())
 
+
 class WarningsHandler(logging.Handler):
     """Handler to raise Errors when logging warnings"""
+
     def __init__(self, ErrorType):
         """Initialize instance
 
@@ -247,6 +243,7 @@ class WarningsHandler(logging.Handler):
         if record.levelno >= logging.WARN:
             raise self.ErrorType(record.getMessage())
         return record
+
 
 def setup_test_logger(logger_name, ErrorType, reset=False):
     """This function set up the logger for the package

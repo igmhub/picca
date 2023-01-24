@@ -93,8 +93,8 @@ class Pk1dForest(Forest):
         self.mean_reso = self.reso.mean()
         self.mean_z = (
             (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-             np.power(10., self.log_lambda[0])) / 2. /
-            Pk1dForest.lambda_abs_igm - 1.0)
+             np.power(10., self.log_lambda[0])) / 2. / Pk1dForest.lambda_abs_igm
+            - 1.0)
         self.mean_reso_pix = self.reso_pix.mean()
 
         self.consistency_check()
@@ -121,7 +121,6 @@ class Pk1dForest(Forest):
             Forest.mask_fields += ["reso"]
         if "reso_pix" not in Forest.mask_fields:
             Forest.mask_fields += ["reso_pix"]
-
 
     def coadd(self, other):
         """Coadd the information of another forest.
@@ -227,9 +226,7 @@ class Pk1dForest(Forest):
         A list containing the line-of-sight data
         """
         metadata = super().get_metadata()
-        metadata += [
-            self.mean_z, self.mean_reso, self.mean_reso_pix
-        ]
+        metadata += [self.mean_z, self.mean_reso, self.mean_reso_pix]
         return metadata
 
     @classmethod
@@ -244,7 +241,8 @@ class Pk1dForest(Forest):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('MEANZ', float), ('MEANRESO', float), ('MEANRESO_PIX', float)]
+        dtype += [('MEANZ', float), ('MEANRESO', float),
+                  ('MEANRESO_PIX', float)]
         return dtype
 
     @classmethod
@@ -310,10 +308,14 @@ class Pk1dForest(Forest):
 
         # rebin exposures_diff and reso
         rebin_exposures_diff = np.bincount(bins,
-            weights=orig_ivar[w1] * self.exposures_diff, minlength=binned_arr_size)
+                                           weights=orig_ivar[w1] *
+                                           self.exposures_diff,
+                                           minlength=binned_arr_size)
         rebin_reso = np.bincount(bins,
-                                 weights=orig_ivar[w1] * self.reso, minlength=binned_arr_size)
-        rebin_reso_pix = np.bincount(bins, weights=orig_ivar[w1] * self.reso_pix,
+                                 weights=orig_ivar[w1] * self.reso,
+                                 minlength=binned_arr_size)
+        rebin_reso_pix = np.bincount(bins,
+                                     weights=orig_ivar[w1] * self.reso_pix,
                                      minlength=binned_arr_size)
 
         # Remove empty bins but not ivar
@@ -331,8 +333,8 @@ class Pk1dForest(Forest):
         self.mean_reso = self.reso[w2].mean()
         self.mean_z = (
             (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-             np.power(10., self.log_lambda[0])) / 2. /
-            Pk1dForest.lambda_abs_igm - 1.0)
+             np.power(10., self.log_lambda[0])) / 2. / Pk1dForest.lambda_abs_igm
+            - 1.0)
         self.mean_reso_pix = self.reso_pix[w2].mean()
 
         # maybe replace empty resolution values with the mean?

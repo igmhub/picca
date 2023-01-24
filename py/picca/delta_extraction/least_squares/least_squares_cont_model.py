@@ -31,10 +31,7 @@ class LeastsSquaresContModel:
     kwargs passed to get_continuum_weights
     """
 
-    def __init__(self,
-                 forest,
-                 mean_cont_kwargs=None,
-                 weights_kwargs=None):
+    def __init__(self, forest, mean_cont_kwargs=None, weights_kwargs=None):
         """Initialize class instances
 
         Arguments
@@ -81,17 +78,17 @@ class LeastsSquaresContModel:
         chi2: float
         The chi2 for this run
         """
-        cont_model = self.get_continuum_model(
-            self.forest, zero_point, slope, **self.mean_cont_kwargs)
+        cont_model = self.get_continuum_model(self.forest, zero_point, slope,
+                                              **self.mean_cont_kwargs)
 
-        weights = self.get_continuum_weights(
-            self.forest, cont_model, **self.weights_kwargs)
+        weights = self.get_continuum_weights(self.forest, cont_model,
+                                             **self.weights_kwargs)
 
         w = weights > 0
         chi2_contribution = (self.forest.flux - cont_model)**2 * weights
 
         if self.ndata is None:
-            self.ndata =  self.forest.flux[w].size
+            self.ndata = self.forest.flux[w].size
         return chi2_contribution.sum() - np.log(weights[w]).sum()
 
     def get_continuum_model(self, forest, zero_point, slope, **kwargs):
@@ -173,8 +170,9 @@ class LeastsSquaresContModel:
         The continuum model weights
         """
         if "use_constant_weight" not in kwargs:
-            raise LeastSquaresError("Function get_continuum_weights requires "
-                                    "'use_constant_weight' in the **kwargs dictionary")
+            raise LeastSquaresError(
+                "Function get_continuum_weights requires "
+                "'use_constant_weight' in the **kwargs dictionary")
         # Assign 0 weight to pixels with ivar==0
         w = forest.ivar > 0
         weights = np.empty_like(forest.log_lambda)
@@ -185,8 +183,9 @@ class LeastsSquaresContModel:
         else:
             for key in ["eta", "var_lss", "fudge"]:
                 if key not in kwargs:
-                    raise LeastSquaresError("Function get_continuum_weights requires "
-                                            f"'{key}' in the **kwargs dictionary")
+                    raise LeastSquaresError(
+                        "Function get_continuum_weights requires "
+                        f"'{key}' in the **kwargs dictionary")
             var_pipe = 1. / forest.ivar[w] / cont_model[w]**2
             var_lss = kwargs["var_lss"]
             eta = kwargs["eta"]

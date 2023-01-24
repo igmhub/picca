@@ -3,6 +3,7 @@ Corrections must inherit
 """
 from picca.delta_extraction.errors import CorrectionError
 
+
 class Correction:
     """Abstract class from which all Corrections must inherit.
     Classes that inherit from this should be initialized using
@@ -12,6 +13,7 @@ class Correction:
     -------
     apply_correction
     """
+
     def apply_correction(self, forest):
         """Applies the correction. This function should be
         overloaded with the correct functionallity by any child

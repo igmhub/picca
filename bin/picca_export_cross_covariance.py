@@ -8,6 +8,7 @@ import fitsio
 
 from picca.utils import compute_cov, userprint
 
+
 def main(cmdargs):
 
     parser = argparse.ArgumentParser(
@@ -135,5 +136,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)

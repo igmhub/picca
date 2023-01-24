@@ -330,5 +330,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)

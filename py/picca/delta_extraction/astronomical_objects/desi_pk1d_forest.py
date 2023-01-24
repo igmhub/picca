@@ -215,21 +215,25 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
 
         # Do a simple average when ivar=0
         orig_ivar_2 = orig_ivar[w1]
-        w__ = orig_ivar_2>0
+        w__ = orig_ivar_2 > 0
         orig_ivar_2[~w__] = 1
         rebin_reso_ivar = np.bincount(bins,
-                                      weights=orig_ivar_2, minlength=binned_arr_size)
+                                      weights=orig_ivar_2,
+                                      minlength=binned_arr_size)
 
         # rebin resolution_matrix
         rebin_reso_matrix_aux = np.zeros(
             (self.resolution_matrix.shape[0], binned_arr_size))
         for index, reso_matrix_col in enumerate(self.resolution_matrix):
-            rebin_reso_matrix_aux[index, :] = np.bincount(
-                bins, weights=orig_ivar_2 * reso_matrix_col)
+            rebin_reso_matrix_aux[index, :] = np.bincount(bins,
+                                                          weights=orig_ivar_2 *
+                                                          reso_matrix_col)
 
         # apply mask due to rebinned inverse vairane
-        self.resolution_matrix = rebin_reso_matrix_aux[:, wslice_inner] / rebin_reso_ivar[
-            np.newaxis, wslice_inner]
+        self.resolution_matrix = rebin_reso_matrix_aux[:,
+                                                       wslice_inner] / rebin_reso_ivar[
+                                                           np.newaxis,
+                                                           wslice_inner]
 
         # return weights and binning solution to be used by child classes if
         # required
@@ -241,6 +245,8 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         necessary fields for this class to work properly.
         """
         cls.class_variable_check()
-        for field in ["exposures_diff", "reso", "reso_pix", "resolution_matrix"]:
+        for field in [
+                "exposures_diff", "reso", "reso_pix", "resolution_matrix"
+        ]:
             if field not in Forest.mask_fields:
                 cls.mask_fields.append(field)

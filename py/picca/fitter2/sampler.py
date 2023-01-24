@@ -15,7 +15,8 @@ class sampler:
         # Setup the data we need and extract the PolyChord config
         self.zeff = dic_init['data sets']['zeff']
         self.data = dic_init['data sets']['data']
-        self.par_names = np.unique([name for d in self.data for name in d.par_names])
+        self.par_names = np.unique(
+            [name for d in self.data for name in d.par_names])
         self.outfile = os.path.expandvars(dic_init['outfile'])
         self.polychord_setup = dic_init['Polychord']
 
@@ -54,18 +55,27 @@ class sampler:
         dumper - extracts info during runtime - empty for now
         '''
         par_names = {name: name for d in self.data for name in d.pars_init}
-        val_dict = {name: val for d in self.data for name, val in d.pars_init.items()}
-        lim_dict = {name: lim for d in self.data for name, lim in d.par_limit.items()}
-        fix_dict = {name: fix for d in self.data for name, fix in d.par_fixed.items()}
+        val_dict = {
+            name: val for d in self.data for name, val in d.pars_init.items()
+        }
+        lim_dict = {
+            name: lim for d in self.data for name, lim in d.par_limit.items()
+        }
+        fix_dict = {
+            name: fix for d in self.data for name, fix in d.par_fixed.items()
+        }
 
         # Select the parameters we sample
-        sampled_pars_ind = np.array([i for i, val in enumerate(fix_dict.values()) if not val])
+        sampled_pars_ind = np.array(
+            [i for i, val in enumerate(fix_dict.values()) if not val])
         npar = len(sampled_pars_ind)
         nder = 0
 
         # Get the limits for the free params
-        limits = np.array([list(lim_dict.values())[i] for i in sampled_pars_ind])
-        names = np.array([list(par_names.values())[i] for i in sampled_pars_ind])
+        limits = np.array(
+            [list(lim_dict.values())[i] for i in sampled_pars_ind])
+        names = np.array(
+            [list(par_names.values())[i] for i in sampled_pars_ind])
 
         def log_lik(theta):
             ''' Wrapper for likelihood function passed to Polychord '''
@@ -89,13 +99,15 @@ class sampler:
 
         # Get the settings we need and add defaults
         # These are the same as PolyChord recommends
-        nlive = self.polychord_setup.getint('nlive', int(25*npar))
+        nlive = self.polychord_setup.getint('nlive', int(25 * npar))
         seed = self.polychord_setup.getint('seed', int(0))
-        num_repeats = self.polychord_setup.getint('num_repeats', int(5*npar))
+        num_repeats = self.polychord_setup.getint('num_repeats', int(5 * npar))
         precision = self.polychord_setup.getfloat('precision', float(0.001))
-        boost_posterior = self.polychord_setup.getfloat('boost_posterior', float(0.0))
+        boost_posterior = self.polychord_setup.getfloat('boost_posterior',
+                                                        float(0.0))
         resume = self.polychord_setup.getboolean('resume', True)
-        cluster_posteriors = self.polychord_setup.getboolean('cluster_posteriors', False)
+        cluster_posteriors = self.polychord_setup.getboolean(
+            'cluster_posteriors', False)
         do_clustering = self.polychord_setup.getboolean('do_clustering', False)
         path = self.polychord_setup.get('path')
         filename = self.polychord_setup.get('name')
@@ -104,7 +116,8 @@ class sampler:
         write_prior = self.polychord_setup.getboolean('write_prior', False)
 
         # Initialize and run PolyChord
-        settings = PolyChordSettings(npar, nder,
+        settings = PolyChordSettings(npar,
+                                     nder,
                                      base_dir=path,
                                      file_root=filename,
                                      seed=seed,

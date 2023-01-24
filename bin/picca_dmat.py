@@ -225,13 +225,13 @@ def main(cmdargs):
         help=('rp can be positive or negative depending on the relative '
               'position between absorber1 and absorber2'))
 
-    parser.add_argument('--rebin-factor',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Rebin factor for deltas. If not None, deltas will '
-                             'be rebinned by that factor')
-
+    parser.add_argument(
+        '--rebin-factor',
+        type=int,
+        default=None,
+        required=False,
+        help='Rebin factor for deltas. If not None, deltas will '
+        'be rebinned by that factor')
 
     args = parser.parse_args(cmdargs)
 
@@ -260,7 +260,6 @@ def main(cmdargs):
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir)
 
-
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
@@ -271,16 +270,17 @@ def main(cmdargs):
     t0 = time.time()
 
     ### Read data 1
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  cf.nside,
-                                                  cf.lambda_abs,
-                                                  cf.alpha,
-                                                  cf.z_ref,
-                                                  cosmo,
-                                                  max_num_spec=args.nspec,
-                                                  no_project=args.no_project,
-                                                  nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor)
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir,
+        cf.nside,
+        cf.lambda_abs,
+        cf.alpha,
+        cf.z_ref,
+        cosmo,
+        max_num_spec=args.nspec,
+        no_project=args.no_project,
+        nproc=args.nproc,
+        rebin_factor=args.rebin_factor)
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -341,8 +341,9 @@ def main(cmdargs):
         dmat_data = list(dmat_data)
 
     t2 = time.time()
-    userprint(f'picca_dmat.py - Time computing distortion matrix: {(t2-t1)/60:.3f} minutes')
-
+    userprint(
+        f'picca_dmat.py - Time computing distortion matrix: {(t2-t1)/60:.3f} minutes'
+    )
 
     # merge the results from different CPUs
     dmat_data = np.array(dmat_data)
@@ -365,83 +366,74 @@ def main(cmdargs):
 
     # save results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [
-        {
-            'name': 'RPMIN',
-            'value': cf.r_par_min,
-            'comment': 'Minimum r-parallel [h^-1 Mpc]'
-        },
-        {
-            'name': 'RPMAX',
-            'value': cf.r_par_max,
-            'comment': 'Maximum r-parallel [h^-1 Mpc]'
-        },
-        {
-            'name': 'RTMAX',
-            'value': cf.r_trans_max,
-            'comment': 'Maximum r-transverse [h^-1 Mpc]'
-        },
-        {
-            'name': 'NP',
-            'value': cf.num_bins_r_par,
-            'comment': 'Number of bins in r-parallel'
-        },
-        {
-            'name': 'NT',
-            'value': cf.num_bins_r_trans,
-            'comment': 'Number of bins in r-transverse'
-        },
-        {
-            'name': 'COEFMOD',
-            'value': args.coef_binning_model,
-            'comment': 'Coefficient for model binning'
-        },
-        {
-            'name': 'ZCUTMIN',
-            'value': cf.z_cut_min,
-            'comment': 'Minimum redshift of pairs'
-        },
-        {
-            'name': 'ZCUTMAX',
-            'value': cf.z_cut_max,
-            'comment': 'Maximum redshift of pairs'
-        },
-        {
-            'name': 'REJ',
-            'value': cf.reject,
-            'comment': 'Rejection factor'
-        },
-        {
-            'name': 'NPALL',
-            'value': num_pairs,
-            'comment': 'Number of pairs'
-        },
-        {
-            'name': 'NPUSED',
-            'value': num_pairs_used,
-            'comment': 'Number of used pairs'
-        }, {
-            'name': 'OMEGAM',
-            'value': args.fid_Om,
-            'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAR',
-            'value': args.fid_Or,
-            'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAK',
-            'value': args.fid_Ok,
-            'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'WL',
-            'value': args.fid_wl,
-            'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-        }, {
-            'name': "BLINDING",
-            'value': blinding,
-            'comment': 'String specifying the blinding strategy'
-        }
-        ]
+    header = [{
+        'name': 'RPMIN',
+        'value': cf.r_par_min,
+        'comment': 'Minimum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RPMAX',
+        'value': cf.r_par_max,
+        'comment': 'Maximum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RTMAX',
+        'value': cf.r_trans_max,
+        'comment': 'Maximum r-transverse [h^-1 Mpc]'
+    }, {
+        'name': 'NP',
+        'value': cf.num_bins_r_par,
+        'comment': 'Number of bins in r-parallel'
+    }, {
+        'name': 'NT',
+        'value': cf.num_bins_r_trans,
+        'comment': 'Number of bins in r-transverse'
+    }, {
+        'name': 'COEFMOD',
+        'value': args.coef_binning_model,
+        'comment': 'Coefficient for model binning'
+    }, {
+        'name': 'ZCUTMIN',
+        'value': cf.z_cut_min,
+        'comment': 'Minimum redshift of pairs'
+    }, {
+        'name': 'ZCUTMAX',
+        'value': cf.z_cut_max,
+        'comment': 'Maximum redshift of pairs'
+    }, {
+        'name': 'REJ',
+        'value': cf.reject,
+        'comment': 'Rejection factor'
+    }, {
+        'name': 'NPALL',
+        'value': num_pairs,
+        'comment': 'Number of pairs'
+    }, {
+        'name': 'NPUSED',
+        'value': num_pairs_used,
+        'comment': 'Number of used pairs'
+    }, {
+        'name': 'OMEGAM',
+        'value': args.fid_Om,
+        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAR',
+        'value': args.fid_Or,
+        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAK',
+        'value': args.fid_Ok,
+        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name':
+            'WL',
+        'value':
+            args.fid_wl,
+        'comment':
+            'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    }, {
+        'name': "BLINDING",
+        'value': blinding,
+        'comment': 'String specifying the blinding strategy'
+    }]
     dmat_name = "DM"
     if blinding != "none":
         dmat_name += "_BLIND"
@@ -463,5 +455,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)

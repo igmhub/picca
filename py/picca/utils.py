@@ -265,7 +265,7 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
                                    length=5.,
                                    amp=1.,
                                    index_delta_r_par=index_delta_r_par)
-        minimizer.fixed['index_delta_r_par']=True
+        minimizer.fixed['index_delta_r_par'] = True
         minimizer.errors['length'] = 0.2
         minimizer.errors['amp'] = 0.2
         minimizer.errordef = 1.
@@ -470,4 +470,3 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     corr = 1. / (10.**(0.4 * curve))
 
     return corr
-

@@ -3,15 +3,18 @@ Masks must inherit
 """
 from picca.delta_extraction.errors import MaskError
 
+
 def _remove_pixels(forest, param, w):
     if param in ['resolution_matrix']:
         setattr(forest, param, getattr(forest, param)[:, w])
     else:
         setattr(forest, param, getattr(forest, param)[w])
 
+
 def _set_ivar_to_zero(forest, param, w):
     if param == 'ivar':
         forest.ivar[~w] = 0
+
 
 class Mask:
     """Abstract class from which all Masks must inherit.
@@ -37,6 +40,7 @@ class Mask:
     If keep_masked_pixels=True, then points to _set_ivar_to_zero.
     Otherwise, points to _remove_pixels.
     """
+
     def __init__(self, config):
         """Initialize class instance"""
         self.los_id = {}
@@ -62,4 +66,5 @@ class Mask:
         ------
         MaskError if function was not overloaded by child class
         """
-        raise MaskError("Function 'apply_mask' was not overloaded by child class")
+        raise MaskError(
+            "Function 'apply_mask' was not overloaded by child class")

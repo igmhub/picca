@@ -12,14 +12,16 @@ from picca.delta_extraction.quasar_catalogue import QuasarCatalogue, accepted_op
 
 from picca.delta_extraction.utils import update_accepted_options
 
-accepted_options = update_accepted_options(
-    accepted_options,
-    ["best obs", "BI max", "drq catalogue", "input directory", "keep BAL", "spAll"])
+accepted_options = update_accepted_options(accepted_options, [
+    "best obs", "BI max", "drq catalogue", "input directory", "keep BAL",
+    "spAll"
+])
 
 defaults = {
     "best obs": False,
     "keep BAL": False,
 }
+
 
 class DrqCatalogue(QuasarCatalogue):
     """Read the DRQ quasar catalogue SDSS
@@ -57,6 +59,7 @@ class DrqCatalogue(QuasarCatalogue):
     spall: str
     Path to the spAll file required for multiple observations
     """
+
     def __init__(self, config):
         """Initialize class instance
 
@@ -139,7 +142,8 @@ class DrqCatalogue(QuasarCatalogue):
                                                     "").replace("full", "")
                 filenames = glob.glob(f"{folder}/spAll-*.fits")
                 if len(filenames) > 1:
-                    self.logger.error("Found multiple 'spAll' files. Quiting...")
+                    self.logger.error(
+                        "Found multiple 'spAll' files. Quiting...")
                     for filename in filenames:
                         self.logger.error(f"found: {filename}")
                     raise QuasarCatalogueError("Missing argument 'spAll' "
@@ -189,21 +193,28 @@ class DrqCatalogue(QuasarCatalogue):
 
         ## Sanity checks
         w = np.ones(len(catalogue), dtype=bool)
-        self.logger.progress(f"start                 : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"start                 : nb object in cat = {np.sum(w)}")
         w &= catalogue["THING_ID"] > 0
-        self.logger.progress(f"and THING_ID > 0      : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"and THING_ID > 0      : nb object in cat = {np.sum(w)}")
         w &= catalogue['RA'] != catalogue['DEC']
-        self.logger.progress(f"and ra != dec         : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"and ra != dec         : nb object in cat = {np.sum(w)}")
         w &= catalogue['RA'] != 0.
-        self.logger.progress(f"and ra != 0.          : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"and ra != 0.          : nb object in cat = {np.sum(w)}")
         w &= catalogue['DEC'] != 0.
-        self.logger.progress(f"and dec != 0.         : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"and dec != 0.         : nb object in cat = {np.sum(w)}")
 
         ## Redshift range
         w &= catalogue['Z'] >= self.z_min
-        self.logger.progress(f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
         w &= catalogue['Z'] < self.z_max
-        self.logger.progress(f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
 
         ## BAL visual
         if not self.keep_bal and self.bi_max is None:
@@ -214,7 +225,8 @@ class DrqCatalogue(QuasarCatalogue):
                     f"and BAL_FLAG_VI == 0  : nb object in cat = {np.sum(w)}")
                 keep_columns += ['BAL_FLAG_VI']
             else:
-                self.logger.warning(f"BAL_FLAG_VI not found in {self.drq_filename}.")
+                self.logger.warning(
+                    f"BAL_FLAG_VI not found in {self.drq_filename}.")
                 self.logger.ok_warning("Ignoring")
 
         ## BAL CIV
@@ -223,12 +235,14 @@ class DrqCatalogue(QuasarCatalogue):
                 bi = catalogue['BI_CIV']
                 w &= bi <= self.bi_max
                 self.logger.progress(
-                    f"and BI_CIV <= {self.bi_max}  : nb object in cat = {np.sum(w)}")
+                    f"and BI_CIV <= {self.bi_max}  : nb object in cat = {np.sum(w)}"
+                )
                 keep_columns += ['BI_CIV']
             else:
-                raise QuasarCatalogueError("Error in reading DRQ Catalogue. "
-                                           "'BI max' was passed but field BI_CIV "
-                                           "was not present in the HDU")
+                raise QuasarCatalogueError(
+                    "Error in reading DRQ Catalogue. "
+                    "'BI max' was passed but field BI_CIV "
+                    "was not present in the HDU")
 
         # DLA Column density
         if 'NHI' in catalogue.colnames:
@@ -264,18 +278,18 @@ class DrqCatalogue(QuasarCatalogue):
         self.logger.progress(f"reading spAll from {self.spall}")
         try:
             catalogue = Table.read(self.spall, hdu=1)
-            catalogue.keep_columns(["THING_ID", "PLATE", "MJD",
-                                    "FIBERID", "PLATEQUALITY",
-                                    "ZWARNING"])
+            catalogue.keep_columns([
+                "THING_ID", "PLATE", "MJD", "FIBERID", "PLATEQUALITY",
+                "ZWARNING"
+            ])
         except IOError as error:
-            raise QuasarCatalogueError(
-                "Error in reading DRQ Catalogue. Error "
-                f"reading file {self.spall}. IOError "
-                f"message: {str(error)}"
-            ) from error
+            raise QuasarCatalogueError("Error in reading DRQ Catalogue. Error "
+                                       f"reading file {self.spall}. IOError "
+                                       f"message: {str(error)}") from error
 
         w = np.in1d(catalogue["THING_ID"], drq_catalogue["THING_ID"])
-        self.logger.progress(f"Found {np.sum(w)} spectra with required THING_ID")
+        self.logger.progress(
+            f"Found {np.sum(w)} spectra with required THING_ID")
         w &= catalogue["PLATEQUALITY"] == "good"
         self.logger.progress(f"Found {np.sum(w)} spectra with 'good' plate")
         ## Removing spectra with the following ZWARNING bits set:
@@ -291,8 +305,9 @@ class DrqCatalogue(QuasarCatalogue):
         for z_warn_bit, z_warn_bit_name in bad_z_warn_bit.items():
             wbit = (catalogue["ZWARNING"] & 2**z_warn_bit == 0)
             w &= wbit
-            self.logger.progress(f"Found {np.sum(w)} spectra without {z_warn_bit} "
-                                 f"bit set: {z_warn_bit_name}")
+            self.logger.progress(
+                f"Found {np.sum(w)} spectra without {z_warn_bit} "
+                f"bit set: {z_warn_bit_name}")
         self.logger.progress(f"# unique objs: {len(drq_catalogue)}")
         self.logger.progress(f"# spectra: {w.sum()}")
         catalogue = catalogue[w]
@@ -303,10 +318,14 @@ class DrqCatalogue(QuasarCatalogue):
         # DRQ properies and on spAll catalogue to avoid
         # conflicts with the creation of DrqObjects at a later
         # stage
-        select_cols = [name for name in catalogue.colnames
-                       if name not in ["PLATEQUALITY", "ZWARNING"]]
-        select_cols_drq = [name for name in drq_catalogue.colnames
-                           if name not in ["PLATE", "FIBERID", "MJD"]]
+        select_cols = [
+            name for name in catalogue.colnames
+            if name not in ["PLATEQUALITY", "ZWARNING"]
+        ]
+        select_cols_drq = [
+            name for name in drq_catalogue.colnames
+            if name not in ["PLATE", "FIBERID", "MJD"]
+        ]
         catalogue = join(catalogue[select_cols],
                          drq_catalogue[select_cols_drq],
                          join_type="left")

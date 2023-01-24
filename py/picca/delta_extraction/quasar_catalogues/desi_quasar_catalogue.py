@@ -13,8 +13,7 @@ from picca.delta_extraction.quasar_catalogue import QuasarCatalogue, accepted_op
 from picca.delta_extraction.utils import update_accepted_options
 
 accepted_options = update_accepted_options(
-    accepted_options,
-    ["catalogue", "in_nside", "keep surveys"])
+    accepted_options, ["catalogue", "in_nside", "keep surveys"])
 
 defaults = {
     "keep surveys": "all",
@@ -22,6 +21,7 @@ defaults = {
 }
 
 accepted_surveys = ["sv1", "sv2", "sv3", "main", "special", "all"]
+
 
 class DesiQuasarCatalogue(QuasarCatalogue):
     """Reads the z_truth catalogue from DESI
@@ -48,6 +48,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
     Only keep the entries in the catalogue that have a "SURVEY" specified in
     this list. Ignored if "SURVEY" column is not present in the catalogue.
     """
+
     def __init__(self, config):
         """Initialize class instance
 
@@ -91,7 +92,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         keep_surveys = config.get("keep surveys")
         if keep_surveys is None:
             raise QuasarCatalogueError(
-                "Missing argument 'keep surveys' required by DesiQuasarCatalogue")
+                "Missing argument 'keep surveys' required by DesiQuasarCatalogue"
+            )
         self.keep_surveys = keep_surveys.split()
         for survey in self.keep_surveys:
             if survey not in accepted_surveys:
@@ -184,25 +186,30 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         ## Sanity checks
         self.logger.progress('')
         w = np.ones(len(catalogue), dtype=bool)
-        self.logger.progress(f"start                 : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"start                 : nb object in cat = {np.sum(w)}")
 
         ## Redshift range
         w &= catalogue['Z'] >= self.z_min
-        self.logger.progress(f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
         w &= catalogue['Z'] < self.z_max
-        self.logger.progress(f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
 
         # Filter all the objects in the catalogue not belonging to the specified
         # surveys.
         if 'SURVEY' in keep_columns:
             w &= np.isin(catalogue["SURVEY"], self.keep_surveys)
-            self.logger.progress(f"and in selected surveys {self.keep_surveys}  "
-                                 f"       : nb object in cat = {np.sum(w)}")
+            self.logger.progress(
+                f"and in selected surveys {self.keep_surveys}  "
+                f"       : nb object in cat = {np.sum(w)}")
 
         # make sure we do not have an empty catalogue
         if np.sum(w) == 0:
-            raise QuasarCatalogueError("Empty quasar catalogue. Revise filtering "
-                                       "choices")
+            raise QuasarCatalogueError(
+                "Empty quasar catalogue. Revise filtering "
+                "choices")
 
         # Convert angles to radians
         np.radians(catalogue['RA'], out=catalogue['RA'])

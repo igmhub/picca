@@ -128,8 +128,8 @@ class LeastsSquaresVarStats:
             self.var_delta[self.running_indexs[0]:self.running_indexs[1]] -
             variance)
         weights = self.var2_delta[self.running_indexs[0]:self.running_indexs[1]]
-        w = self.num_qso[self.running_indexs[0]:
-                         self.running_indexs[1]] > self.min_num_qso_in_fit
+        w = self.num_qso[self.running_indexs[0]:self.
+                         running_indexs[1]] > self.min_num_qso_in_fit
         return np.sum(chi2_contribution[w]**2 / weights[w])
 
     def initialize_delta_arrays(self, forests):
@@ -152,13 +152,13 @@ class LeastsSquaresVarStats:
             if forest.continuum is None:
                 continue
 
-            w =  forest.ivar > 0
+            w = forest.ivar > 0
             var_pipe = np.empty_like(forest.log_lambda)
-            var_pipe[w]  = 1 / forest.ivar[w] / forest.continuum[w]**2
+            var_pipe[w] = 1 / forest.ivar[w] / forest.continuum[w]**2
             var_pipe[~w] = np.inf
 
             w &= ((np.log10(var_pipe) > VAR_PIPE_MIN) &
-                 (np.log10(var_pipe) < VAR_PIPE_MAX))
+                  (np.log10(var_pipe) < VAR_PIPE_MAX))
 
             # select the pipeline variance bins
             var_pipe_bins = np.floor(
@@ -177,9 +177,15 @@ class LeastsSquaresVarStats:
             delta = forest.flux[w] / forest.continuum[w] - 1
 
             # add contributions to delta statistics
-            mean_delta += np.bincount(bins, weights=delta, minlength=mean_delta.size)
-            var_delta  += np.bincount(bins, weights=delta**2, minlength=mean_delta.size)
-            var2_delta += np.bincount(bins, weights=delta**4, minlength=mean_delta.size)
+            mean_delta += np.bincount(bins,
+                                      weights=delta,
+                                      minlength=mean_delta.size)
+            var_delta += np.bincount(bins,
+                                     weights=delta**2,
+                                     minlength=mean_delta.size)
+            var2_delta += np.bincount(bins,
+                                      weights=delta**4,
+                                      minlength=mean_delta.size)
 
             num_pixels += np.bincount(bins, minlength=mean_delta.size)
             num_qso[np.unique(bins)] += 1

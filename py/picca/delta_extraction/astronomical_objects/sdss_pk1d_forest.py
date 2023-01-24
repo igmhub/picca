@@ -4,6 +4,7 @@ in the Pk1D analysis
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 
+
 class SdssPk1dForest(SdssForest, Pk1dForest):
     """Forest Object
 

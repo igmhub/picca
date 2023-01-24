@@ -394,7 +394,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             )
             t0 = time.time()
             self.logger.info(
-                f"Computing quasar continua using {self.num_processors} processors")
+                f"Computing quasar continua using {self.num_processors} processors"
+            )
             if self.num_processors > 1:
                 with context.Pool(processes=self.num_processors) as pool:
                     arguments = [(forest, self.get_mean_cont, self.get_eta,
@@ -433,7 +434,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 t0 = time.time()
                 self.compute_mean_cont(forests)
                 t1 = time.time()
-                self.logger.info(f"Time spent computing the mean continuum: {t1-t0}")
+                self.logger.info(
+                    f"Time spent computing the mean continuum: {t1-t0}")
 
                 # Compute observer-frame mean quantities (var_lss, eta, fudge)
                 if not (self.use_ivar_as_weight or self.use_constant_weight):
@@ -508,8 +510,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         A list of Forest from which to compute the deltas.
         """
 
-        super()._compute_mean_cont(forests,
-            lambda forest: forest.flux/(forest.continuum+1e-16))
+        super()._compute_mean_cont(
+            forests, lambda forest: forest.flux / (forest.continuum + 1e-16))
 
     def compute_var_stats(self, forests):
         """Compute variance functions and statistics
@@ -718,7 +720,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 stack_delta = self.get_stack_delta(forest.log_lambda)
                 mean_expected_flux *= stack_delta
 
-            weights = 1. / self.compute_forest_variance(forest, mean_expected_flux)
+            weights = 1. / self.compute_forest_variance(forest,
+                                                        mean_expected_flux)
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,

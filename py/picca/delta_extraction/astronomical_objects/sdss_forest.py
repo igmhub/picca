@@ -2,6 +2,7 @@
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import AstronomicalObjectError
 
+
 class SdssForest(Forest):
     """Forest Object
 
@@ -39,6 +40,7 @@ class SdssForest(Forest):
     thingid: int
     Thingid of the object
     """
+
     def __init__(self, **kwargs):
         """Initialize instance
 
@@ -95,9 +97,10 @@ class SdssForest(Forest):
         AstronomicalObjectError if other is not a DesiForest instance
         """
         if not isinstance(other, SdssForest):
-            raise AstronomicalObjectError("Error coadding SdssForest. Expected "
-                                          "SdssForest instance in other. Found: "
-                                          f"{type(other).__name__}")
+            raise AstronomicalObjectError(
+                "Error coadding SdssForest. Expected "
+                "SdssForest instance in other. Found: "
+                f"{type(other).__name__}")
 
         self.fiberid += other.fiberid
         self.mjd += other.mjd
@@ -171,7 +174,8 @@ class SdssForest(Forest):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('THING_ID', int), ('PLATE', 'S12'), ('MJD', 'S12'), ('FIBERID', 'S12')]
+        dtype += [('THING_ID', int), ('PLATE', 'S12'), ('MJD', 'S12'),
+                  ('FIBERID', 'S12')]
         return dtype
 
     @classmethod

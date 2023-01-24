@@ -154,8 +154,9 @@ class CorrectionTest(AbstractTest):
         # create DustCorrection instance with missing options
         config = ConfigParser()
         config.read_dict({"corrections": {}})
-        expected_message = ("Missing argument 'extinction_conversion_r' required "
-                            "by DustCorrection")
+        expected_message = (
+            "Missing argument 'extinction_conversion_r' required "
+            "by DustCorrection")
         with self.assertRaises(CorrectionError) as context_manager:
             correction = DustCorrection(config["corrections"])
         self.compare_error_message(context_manager, expected_message)
@@ -258,6 +259,7 @@ class CorrectionTest(AbstractTest):
         with self.assertRaises(CorrectionError) as context_manager:
             correction = OpticalDepthCorrection(config["corrections"])
         self.compare_error_message(context_manager, expected_message)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -96,8 +96,8 @@ def main(cmdargs):
 
     ### Auto or cross correlation?
     if ((args.DD_file is None and args.xDD_file is None) or
-            (args.DD_file is not None and args.xDD_file is not None) or
-            (args.cov is not None and not args.get_cov_from_poisson)):
+        (args.DD_file is not None and args.xDD_file is not None) or
+        (args.cov is not None and not args.get_cov_from_poisson)):
         userprint(('ERROR: No data files, or both auto and cross data files, '
                    'or two different method for covariance'))
         sys.exit()
@@ -313,23 +313,25 @@ def main(cmdargs):
         'value': nside,
         'comment': 'Healpix nside'
     }, {
-        'name': 'OMEGAM', 
-        'value': fid_Om, 
+        'name': 'OMEGAM',
+        'value': fid_Om,
         'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'OMEGAR', 
-        'value': fid_Or, 
+        'name': 'OMEGAR',
+        'value': fid_Or,
         'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'OMEGAK', 
-        'value': fid_Ok, 
+        'name': 'OMEGAK',
+        'value': fid_Ok,
         'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'WL', 
-        'value': fid_wl, 
-        'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    }
-    ]
+        'name':
+            'WL',
+        'value':
+            fid_wl,
+        'comment':
+            'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    }]
     names = ['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB']
     comment = [
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
@@ -364,5 +366,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)

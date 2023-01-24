@@ -2,6 +2,7 @@ from __future__ import print_function, division
 
 from . import parser, chi2
 
+
 class fitter2:
     '''
     Main interface for the fitter2. Creates cf models and runs the chi2.

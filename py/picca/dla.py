@@ -12,6 +12,7 @@ np.random.seed(0)
 num_points = 10000
 gaussian_dist = np.random.normal(size=num_points) * np.sqrt(2)
 
+
 class DLA:
     """Class to represent Damped Lyman-alpha Absorbers.
 

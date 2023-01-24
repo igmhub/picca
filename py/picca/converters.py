@@ -327,9 +327,10 @@ def desi_from_ztarget_to_drq(in_path,
 
     # apply error to z
     if gauss_redshift_error is not None:
-        SPEED_LIGHT = speed_light/1000. # [km/s]
+        SPEED_LIGHT = speed_light / 1000.  # [km/s]
         np.random.seed(0)
-        dz = gauss_redshift_error/SPEED_LIGHT*(1.+cat['Z'])*np.random.normal(0, 1, cat['Z'].size)
+        dz = gauss_redshift_error / SPEED_LIGHT * (
+            1. + cat['Z']) * np.random.normal(0, 1, cat['Z'].size)
         cat['Z'] += dz
 
     # apply downsampling
@@ -344,17 +345,17 @@ def desi_from_ztarget_to_drq(in_path,
             if select_fraction < 1.0:
                 np.random.seed(0)
                 w = np.random.choice(np.arange(cat['RA'].size),
-                                 size=int(cat['RA'].size * select_fraction),
-                                 replace=False)
+                                     size=int(cat['RA'].size * select_fraction),
+                                     replace=False)
                 for key in cat:
                     cat[key] = cat[key][w]
                 userprint((" and downsampling : nb object in cat = {}, nb z > "
-                       "{} = {}").format(cat['RA'].size, downsampling_z_cut,
-                                        z_cut_num))
+                           "{} = {}").format(cat['RA'].size, downsampling_z_cut,
+                                             z_cut_num))
             else:
                 userprint(("WARNING:: Trying to downsample, when nb QSOs with "
-                           "z > {} = {} and downsampling = {}").format
-                           (downsampling_z_cut, z_cut_num, downsampling_num))
+                           "z > {} = {} and downsampling = {}").format(
+                               downsampling_z_cut, z_cut_num, downsampling_num))
 
     # sort by THING_ID
     w = np.argsort(cat['THING_ID'])

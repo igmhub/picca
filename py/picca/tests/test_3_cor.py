@@ -14,7 +14,6 @@ from picca.utils import userprint
 import picca.cf
 import picca.xcf
 
-
 import picca.bin.picca_co
 import picca.bin.picca_cf1d
 import picca.bin.picca_cf_angl
@@ -38,7 +37,6 @@ class TestCor(AbstractTest):
     """
         Tests the Correlation Function Computations
     """
-
 
     def produce_folder(self):
         """
@@ -327,7 +325,6 @@ class TestCor(AbstractTest):
         """
         importlib.reload(picca.cf)
 
-
         userprint("\n")
         ### Send
         cmd = "picca_dmat.py"
@@ -463,7 +460,6 @@ class TestCor(AbstractTest):
         """
         importlib.reload(picca.xcf)
 
-
         userprint("\n")
         ### Send
         cmd = "picca_xdmat.py"
@@ -552,7 +548,6 @@ class TestCor(AbstractTest):
             Test the export of the cross correlation function
         """
 
-
         userprint("\n")
         ### Send
         cmd = "picca_export.py"
@@ -569,7 +564,6 @@ class TestCor(AbstractTest):
         """
             Test the export of cross_covariances between correlation function and cross correlation function
         """
-
 
         userprint("\n")
         ### Send

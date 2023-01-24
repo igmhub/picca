@@ -5,7 +5,6 @@ import numpy as np
 import fitsio
 import healpy
 
-
 from picca.utils import userprint
 
 from picca.tests.test_helpers import AbstractTest
@@ -15,6 +14,7 @@ class TestDelta(AbstractTest):
     """
         Test case for picca_deltas.py
     """
+
     def produce_folder(self):
         """
             Create the necessary folders
@@ -307,9 +307,11 @@ class TestDelta(AbstractTest):
             #TODO: note that for the moment we are more tolerant towards absolute changes in the metadata
             #      else p1 values would cause tests to break all the time, might be worth looking into the
             #      underlying issue at some later time
-            self.compare_fits(path1, path2, "picca_deltas.py", rel_tolerance=5e-4)
+            self.compare_fits(path1,
+                              path2,
+                              "picca_deltas.py",
+                              rel_tolerance=5e-4)
         return
-
 
     def send_delta_Pk1D_minisv(self):
         """
@@ -427,6 +429,7 @@ class TestDelta(AbstractTest):
             self.compare_fits(path1, path2, "picca_deltas.py")
 
         return
+
 
 if __name__ == '__main__':
     unittest.main()

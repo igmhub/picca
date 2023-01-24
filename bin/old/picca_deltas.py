@@ -60,7 +60,8 @@ def get_metadata(data):
     for healpix in data:
         for forest in data[healpix]:
             if "delta" in forest.__dict__ and not forest.delta is None:
-                mean_delta2 = np.average(forest.delta*forest.delta, weights=forest.ivar)
+                mean_delta2 = np.average(forest.delta * forest.delta,
+                                         weights=forest.ivar)
                 mean_delta2_values.append(mean_delta2)
             else:
                 mean_delta2_values.append(-100)
@@ -169,16 +170,19 @@ def main(cmdargs):
 
     parser.add_argument('--mode',
                         type=str,
-                        choices=['pix', 'spec','spcframe','spplate','desi',
-                                 'desi_healpix','desi_survey_tilebased',
-                                 'desi_sv_no_coadd','desi_mocks','desiminisv'],
+                        choices=[
+                            'pix', 'spec', 'spcframe', 'spplate', 'desi',
+                            'desi_healpix', 'desi_survey_tilebased',
+                            'desi_sv_no_coadd', 'desi_mocks', 'desiminisv'
+                        ],
                         default='pix',
                         required=False,
                         help=('''Open mode of the spectra files: pix, spec,
                               spcframe, spplate, desi_mocks (formerly known as desi),
                               desi_healpix (for healpix based coadded data),
                               desi_survey_tilebased (for tilebased data with coadding),
-                              desi_sv_no_coadd (without coadding across tiles, will output in tile format)'''))
+                              desi_sv_no_coadd (without coadding across tiles, will output in tile format)'''
+                             ))
 
     parser.add_argument('--best-obs',
                         action='store_true',
@@ -404,8 +408,8 @@ def main(cmdargs):
                         default=None,
                         required=False,
                         help=('BAL catalog location, used if BAL information is'
-                            ' not included in the quasar catalog.  Use with '
-                            '--keep-bal to mask BAL features'))
+                              ' not included in the quasar catalog.  Use with '
+                              '--keep-bal to mask BAL features'))
 
     parser.add_argument('--metadata',
                         type=str,
@@ -415,11 +419,11 @@ def main(cmdargs):
 
     parser.add_argument('--survey',
                         type=str.lower,
-                        choices=('desi','eboss'),
+                        choices=('desi', 'eboss'),
                         default='desi',
                         required=False,
                         help=('Survey the catalog comes from. Defines which '
-                            'naming conventions to use when masking BALs.'))
+                              'naming conventions to use when masking BALs.'))
 
     parser.add_argument('--use-single-nights',
                         action='store_true',
@@ -447,7 +451,9 @@ def main(cmdargs):
 
     # comment this when ready to unblind
     if args.blinding_desi == "none":
-        userprint("WARINING: --blinding-desi is being ignored. 'corr_yshift' blinding engaged")
+        userprint(
+            "WARINING: --blinding-desi is being ignored. 'corr_yshift' blinding engaged"
+        )
         args.blinding_desi = "corr_yshift"
 
     # setup forest class variables
@@ -493,7 +499,6 @@ def main(cmdargs):
                                 kind="nearest")
     Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp, 1 + np.zeros(2))
 
-
     #-- Check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
         if (args.order != 0) and (args.order != 1):
@@ -530,8 +535,7 @@ def main(cmdargs):
     log_file = open(os.path.expandvars(args.log), 'w')
 
     # Read data
-    (data, num_data, nside,
-     healpy_pix_ordering,
+    (data, num_data, nside, healpy_pix_ordering,
      blinding) = io.read_data(os.path.expandvars(args.in_dir),
                               args.drq,
                               args.mode,
@@ -549,7 +553,7 @@ def main(cmdargs):
                               usesinglenights=args.use_single_nights,
                               blinding_desi=args.blinding_desi)
 
-     #-- Add order info
+    #-- Add order info
     for pix in data:
         for forest in data[pix]:
             if not forest is None:
@@ -612,7 +616,7 @@ def main(cmdargs):
     if not args.dla_vac is None:
         userprint("INFO: Adding DLAs")
         if 'desi' in args.mode:
-            dlas= io.read_dlas(args.dla_vac, obj_id_name='TARGETID')
+            dlas = io.read_dlas(args.dla_vac, obj_id_name='TARGETID')
         else:
             dlas = io.read_dlas(args.dla_vac)
         num_dlas = 0
@@ -626,20 +630,20 @@ def main(cmdargs):
 
     ### Mask BALs
     if 'desi' in args.mode:
-            bal_catalog_to_read = args.drq
+        bal_catalog_to_read = args.drq
     else:
-            bal_catalog_to_read = args.bal_catalog
+        bal_catalog_to_read = args.bal_catalog
     if args.keep_bal is True:
         userprint("INFO: Masking BALs")
-        bal_cat = bal_tools.read_bal(bal_catalog_to_read,args.mode)
+        bal_cat = bal_tools.read_bal(bal_catalog_to_read, args.mode)
         num_bal = 0
         for healpix in data:
             for forest in data[healpix]:
                 bal_mask = bal_tools.add_bal_mask(bal_cat, forest.thingid,
-                        args.mode)
+                                                  args.mode)
                 forest.mask(bal_mask)
             if len(bal_mask) > 0:
-                    num_bal += 1
+                num_bal += 1
         log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
 
     ## Apply cuts
@@ -817,17 +821,21 @@ def main(cmdargs):
             header["NSIDE"] = nside
             header["PIXORDER"] = healpy_pix_ordering
             header["FITORDER"] = args.order
-            results.write([stack_log_lambda, get_stack_delta(stack_log_lambda),
-                           get_stack_delta_weights(stack_log_lambda)],
+            results.write([
+                stack_log_lambda,
+                get_stack_delta(stack_log_lambda),
+                get_stack_delta_weights(stack_log_lambda)
+            ],
                           names=['loglam', 'stack', 'weight'],
                           header=header,
                           extname='STACK')
             results.write(
-                [log_lambda,
-                 Forest.get_eta(log_lambda),
-                 Forest.get_var_lss(log_lambda),
-                 Forest.get_fudge(log_lambda),
-                 num_pixels],
+                [
+                    log_lambda,
+                    Forest.get_eta(log_lambda),
+                    Forest.get_var_lss(log_lambda),
+                    Forest.get_fudge(log_lambda), num_pixels
+                ],
                 names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'],
                 extname='WEIGHT')
             results.write([
@@ -836,8 +844,8 @@ def main(cmdargs):
             ],
                           names=['loglam_rest', 'mean_cont', 'weight'],
                           extname='CONT')
-            var_pipe_values_out = np.broadcast_to(var_pipe_values.reshape(1, -1),
-                                              var_delta.shape)
+            var_pipe_values_out = np.broadcast_to(
+                var_pipe_values.reshape(1, -1), var_delta.shape)
             results.write([
                 var_pipe_values_out, var_delta, var2_delta, count, num_qso,
                 chi2_in_bin
@@ -882,7 +890,9 @@ def main(cmdargs):
     ### Read metadata from forests and export it
     if not args.metadata is None:
         tab_cont = get_metadata(data)
-        tab_cont.write(os.path.expandvars(args.metadata), format="fits", overwrite=True)
+        tab_cont.write(os.path.expandvars(args.metadata),
+                       format="fits",
+                       overwrite=True)
 
     ### Save delta
     for healpix in sorted(deltas.keys()):
@@ -1024,13 +1034,14 @@ def main(cmdargs):
                     ]
                 else:
                     cols = [
-                        delta.log_lambda, delta.delta, delta.ivar, delta.weights, delta.cont
+                        delta.log_lambda, delta.delta, delta.ivar,
+                        delta.weights, delta.cont
                     ]
                     names = ['LOGLAM', delta_name, 'IVAR', 'WEIGHT', 'CONT']
                     units = ['log Angstrom', '', '', '', '']
                     comments = [
-                        'Log lambda', 'Delta field', 'Inverse variance', 'Pixel weights',
-                        'Continuum'
+                        'Log lambda', 'Delta field', 'Inverse variance',
+                        'Pixel weights', 'Continuum'
                     ]
 
                 results.write(cols,
@@ -1052,7 +1063,9 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    warnings.warn("Note that the picca_deltas routines will be removed with the next picca release, please use picca_delta_extraction instead", DeprecationWarning)
+    cmdargs = sys.argv[1:]
+    warnings.warn(
+        "Note that the picca_deltas routines will be removed with the next picca release, please use picca_delta_extraction instead",
+        DeprecationWarning)
 
     main(cmdargs)

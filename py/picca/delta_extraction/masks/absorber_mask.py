@@ -14,7 +14,10 @@ defaults = {
     "los_id name": "THING_ID",
 }
 
-accepted_options = ["absorber mask width", "filename", "keep pixels", "los_id name"]
+accepted_options = [
+    "absorber mask width", "filename", "keep pixels", "los_id name"
+]
+
 
 class AbsorberMask(Mask):
     """Class to mask Absorbers
@@ -35,6 +38,7 @@ class AbsorberMask(Mask):
     logger: logging.Logger
     Logger object
     """
+
     def __init__(self, config):
         """Initialize class instance.
 
@@ -67,14 +71,12 @@ class AbsorberMask(Mask):
         except OSError as error:
             raise MaskError(
                 "Error loading AbsorberMask. File "
-                f"{filename} does not have extension 'ABSORBERCAT'"
-            ) from error
+                f"{filename} does not have extension 'ABSORBERCAT'") from error
         except ValueError as error:
             aux = "', '".join(columns_list)
             raise MaskError(
                 f"Error loading AbsorberMask. File {filename} does not have "
-                f"fields '{aux}' in HDU 'ABSORBERCAT'"
-            ) from error
+                f"fields '{aux}' in HDU 'ABSORBERCAT'") from error
 
         # group absorbers on the same line of sight together
         self.los_ids = {}
@@ -114,7 +116,8 @@ class AbsorberMask(Mask):
             # find out which pixels to mask
             w = np.ones(forest.log_lambda.size, dtype=bool)
             for lambda_absorber in self.los_ids.get(forest.los_id):
-                w &= (np.fabs(1.e4 * (forest.log_lambda - np.log10(lambda_absorber))) >
+                w &= (np.fabs(1.e4 *
+                              (forest.log_lambda - np.log10(lambda_absorber))) >
                       self.absorber_mask_width)
 
             # do the actual masking

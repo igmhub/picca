@@ -21,11 +21,17 @@ from .data import Delta
 from .utils import userprint
 
 
-def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lambda_min=3600.,
-                           lambda_max=5500., lambda_min_rest_frame=1040., 
-                           lambda_max_rest_frame=1200., delta_log_lambda=None,
-                           delta_lambda=None, lin_spaced=False):
-
+def read_transmission_file(filename,
+                           num_bins,
+                           objs_thingid,
+                           tracer='F_LYA',
+                           lambda_min=3600.,
+                           lambda_max=5500.,
+                           lambda_min_rest_frame=1040.,
+                           lambda_max_rest_frame=1200.,
+                           delta_log_lambda=None,
+                           delta_lambda=None,
+                           lin_spaced=False):
     """Make delta objects from all skewers in a transmission file.
     Args:
         filename: str
@@ -89,7 +95,8 @@ def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lam
     if tracer in hdul:
         trans = hdul[tracer].read()
     else:
-        raise ValueError(f'Tracer {tracer} could not be found in the transmission files.')
+        raise ValueError(
+            f'Tracer {tracer} could not be found in the transmission files.')
 
     num_obj = z.size
     healpix = filename.split('-')[-1].split('.')[0]
@@ -149,15 +156,21 @@ def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lam
         deltas[healpix].append(
             Delta(thingid[index2], ra[index2], dec[index2], z[index2],
                   thingid[index2], thingid[index2], thingid[index2],
-                  rebin_log_lambda, rebin_ivar, None, rebin_flux, 1, None,
-                  None, None, None, None, None))
+                  rebin_log_lambda, rebin_ivar, None, rebin_flux, 1, None, None,
+                  None, None, None, None))
 
     return deltas, stack_flux, stack_weight
 
 
-def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out_filename,
-                                  x_min, delta_x, use_old_weights=False, lin_spaced=False):
-
+def write_delta_from_transmission(deltas,
+                                  mean_flux,
+                                  flux_variance,
+                                  healpix,
+                                  out_filename,
+                                  x_min,
+                                  delta_x,
+                                  use_old_weights=False,
+                                  lin_spaced=False):
     """Write deltas to file for a given HEALPix pixel.
     Args:
         deltas: list
@@ -231,13 +244,23 @@ def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out
     return
 
 
-def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=None,
-                                   tracer='F_LYA', lambda_min=3600., lambda_max=5500.,
+def convert_transmission_to_deltas(obj_path,
+                                   out_dir,
+                                   in_dir=None,
+                                   in_filenames=None,
+                                   tracer='F_LYA',
+                                   lambda_min=3600.,
+                                   lambda_max=5500.,
                                    lambda_min_rest_frame=1040.,
                                    lambda_max_rest_frame=1200.,
-                                   delta_log_lambda=None, delta_lambda=None, lin_spaced=False,
-                                   max_num_spec=None, nproc=None, use_old_weights=False,
-                                   use_splines=False, out_healpix_order='RING'):
+                                   delta_log_lambda=None,
+                                   delta_lambda=None,
+                                   lin_spaced=False,
+                                   max_num_spec=None,
+                                   nproc=None,
+                                   use_old_weights=False,
+                                   use_splines=False,
+                                   out_healpix_order='RING'):
     """Convert transmission files to picca delta files
 
     Args:
@@ -297,8 +320,8 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     # rather than transmission files for ohio-p1d mocks
     hdr = hdu.read_header()
     if 'HPXNSIDE' in hdr and 'HPXNEST' in hdr:
-        in_nside  = hdr['HPXNSIDE']
-        is_nested = hdr['HPXNEST'] # true or false
+        in_nside = hdr['HPXNSIDE']
+        is_nested = hdr['HPXNEST']  # true or false
     else:
         in_nside = None
         is_nested = None
@@ -320,13 +343,14 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
 
     # Load list of transmission files
     if ((in_dir is None and in_filenames is None) or
-            (in_dir is not None and in_filenames is not None)):
+        (in_dir is not None and in_filenames is not None)):
         userprint(("ERROR: No transmisson input files or both 'in_dir' and "
                    "'in_filenames' given"))
         sys.exit()
     elif in_dir is not None:
         # ohio-p1d transmissions are named lya-transmissions*
-        files = np.array(sorted(glob.glob(in_dir + '/*/*/*transmission*.fits*')))
+        files = np.array(sorted(glob.glob(in_dir +
+                                          '/*/*/*transmission*.fits*')))
 
         if in_nside is None:
             hdul = fitsio.FITS(files[0])
@@ -402,8 +426,8 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
 
     rebin_lambda = (x_min + np.arange(num_bins) * delta_x)
     mask = (mean_flux < 1) & (mean_flux > 0)
-    mean_flux_spline = scipy.interpolate.UnivariateSpline(rebin_lambda[mask][10:-10],
-                                                          mean_flux[mask][10:-10], k=5)
+    mean_flux_spline = scipy.interpolate.UnivariateSpline(
+        rebin_lambda[mask][10:-10], mean_flux[mask][10:-10], k=5)
     mean_flux_from_spline = mean_flux_spline(rebin_lambda)
 
     # set mapping between input healpix and output healpix
@@ -415,20 +439,25 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
         raise ValueError('Input HEALPix scheme not known, cannot'
                          'convert to scheme {}'.format(out_healpix_order))
     elif is_nested and out_healpix_order.lower() == 'ring':
-        out_healpix_method = lambda in_nside, healpix: healpy.nest2ring(int(in_nside), int(healpix))
+        out_healpix_method = lambda in_nside, healpix: healpy.nest2ring(
+            int(in_nside), int(healpix))
     elif not is_nested and out_healpix_order.lower() == 'nest':
-        out_healpix_method = lambda in_nside, healpix: healpy.ring2nest(int(in_nside), int(healpix))
+        out_healpix_method = lambda in_nside, healpix: healpy.ring2nest(
+            int(in_nside), int(healpix))
     else:
-        raise ValueError('HEALPix scheme {} not recognised'.format(
-            out_healpix_order))
+        raise ValueError(
+            'HEALPix scheme {} not recognised'.format(out_healpix_order))
 
     #  save results
     out_filenames = {}
     for healpix in sorted(deltas):
         out_healpix = out_healpix_method(in_nside, healpix)
 
-        print(f'Input nested? {is_nested} // in_healpix={healpix} // out_healpix={out_healpix}')
-        out_filenames[healpix] = out_dir + '/delta-{}'.format(out_healpix) + '.fits.gz'
+        print(
+            f'Input nested? {is_nested} // in_healpix={healpix} // out_healpix={out_healpix}'
+        )
+        out_filenames[healpix] = out_dir + '/delta-{}'.format(
+            out_healpix) + '.fits.gz'
 
     # Compute variance
     stack_variance = np.zeros(len(mean_flux))
@@ -450,17 +479,21 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     flux_variance[w] /= var_weights[w]
 
     mask = (flux_variance > 0)
-    flux_variance_spline = scipy.interpolate.UnivariateSpline(rebin_lambda[mask][10:-10],
-                                                              flux_variance[mask][10:-10], k=5)
+    flux_variance_spline = scipy.interpolate.UnivariateSpline(
+        rebin_lambda[mask][10:-10], flux_variance[mask][10:-10], k=5)
     flux_variance_from_spline = flux_variance_spline(rebin_lambda)
 
     if use_splines:
-        arguments = [(deltas[hpix], mean_flux_from_spline, flux_variance_from_spline, hpix,
-                      out_filenames[hpix], x_min, delta_x, use_old_weights,
-                      lin_spaced) for hpix in deltas.keys()]
+        arguments = [(deltas[hpix], mean_flux_from_spline,
+                      flux_variance_from_spline, hpix, out_filenames[hpix],
+                      x_min, delta_x, use_old_weights, lin_spaced)
+                     for hpix in deltas.keys()]
     else:
-        arguments = [(deltas[hpix], mean_flux, flux_variance, hpix, out_filenames[hpix],
-                      x_min, delta_x, use_old_weights, lin_spaced) for hpix in deltas.keys()]
+        arguments = [
+            (deltas[hpix], mean_flux, flux_variance, hpix, out_filenames[hpix],
+             x_min, delta_x, use_old_weights, lin_spaced)
+            for hpix in deltas.keys()
+        ]
 
     userprint("Writing deltas...")
     with Pool(processes=nproc) as pool:
@@ -472,9 +505,14 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     userprint(f"Writing statistics to {filename}")
 
     results = fitsio.FITS(filename, 'rw', clobber=True)
-    cols = [rebin_lambda, mean_flux, mean_flux_from_spline, stack_weight,
-            flux_variance, flux_variance_from_spline, var_weights]
-    names = ['LAMBDA', 'MEANFLUX', 'MEANFLUX_SPLINE', 'WEIGHTS', 'VAR', 'VAR_SPLINE', 'VARWEIGHTS']
+    cols = [
+        rebin_lambda, mean_flux, mean_flux_from_spline, stack_weight,
+        flux_variance, flux_variance_from_spline, var_weights
+    ]
+    names = [
+        'LAMBDA', 'MEANFLUX', 'MEANFLUX_SPLINE', 'WEIGHTS', 'VAR', 'VAR_SPLINE',
+        'VARWEIGHTS'
+    ]
     header = {}
     header['L_MIN'] = lambda_min
     header['L_MAX'] = lambda_max

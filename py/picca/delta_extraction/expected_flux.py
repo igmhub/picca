@@ -207,27 +207,30 @@ class ExpectedFlux:
                 delta = np.zeros_like(forest.log_lambda)
                 w = forest.ivar > 0
                 delta[w] = forest.flux[w] / forest.continuum[w]
-                weights = 1. / self.compute_forest_variance(forest, forest.continuum)
+                weights = 1. / self.compute_forest_variance(
+                    forest, forest.continuum)
 
             bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
                              Forest.wave_solution)
-            stack_delta += np.bincount(bins, weights=delta * weights, minlength=stack_delta.size)
-            stack_weight += np.bincount(bins, weights=weights, minlength=stack_delta.size)
+            stack_delta += np.bincount(bins,
+                                       weights=delta * weights,
+                                       minlength=stack_delta.size)
+            stack_weight += np.bincount(bins,
+                                        weights=weights,
+                                        minlength=stack_delta.size)
 
         w = stack_weight > 0
         stack_delta[w] /= stack_weight[w]
 
-        self.get_stack_delta = interp1d(
-            Forest.log_lambda_grid[w],
-            stack_delta[w],
-            kind="nearest",
-            fill_value="extrapolate")
-        self.get_stack_delta_weights = interp1d(
-            Forest.log_lambda_grid[w],
-            stack_weight[w],
-            kind="nearest",
-            fill_value=0.0,
-            bounds_error=False)
+        self.get_stack_delta = interp1d(Forest.log_lambda_grid[w],
+                                        stack_delta[w],
+                                        kind="nearest",
+                                        fill_value="extrapolate")
+        self.get_stack_delta_weights = interp1d(Forest.log_lambda_grid[w],
+                                                stack_weight[w],
+                                                kind="nearest",
+                                                fill_value=0.0,
+                                                bounds_error=False)
 
     def compute_expected_flux(self, forests):
         """Compute the mean expected flux of the forests.
@@ -247,8 +250,9 @@ class ExpectedFlux:
         raise ExpectedFluxError("Function 'compute_expected_flux' was not "
                                 "overloaded by child class")
 
-    def _compute_mean_cont(self, forests,
-        which_cont=lambda forest: forest.continuum):
+    def _compute_mean_cont(self,
+                           forests,
+                           which_cont=lambda forest: forest.continuum):
         """Compute the mean quasar continuum over the whole sample.
         Then updates the value of self.get_mean_cont to contain it
 
@@ -274,11 +278,15 @@ class ExpectedFlux:
                              Forest.log_lambda_rest_frame_grid,
                              Forest.wave_solution)
 
-            weights = 1. / self.compute_forest_variance(forest, forest.continuum)
+            weights = 1. / self.compute_forest_variance(forest,
+                                                        forest.continuum)
             forest_continuum = which_cont(forest)
-            mean_cont += np.bincount(bins, weights=forest_continuum * weights,
-                minlength=mean_cont.size)
-            mean_cont_weight += np.bincount(bins, weights=weights, minlength=mean_cont.size)
+            mean_cont += np.bincount(bins,
+                                     weights=forest_continuum * weights,
+                                     minlength=mean_cont.size)
+            mean_cont_weight += np.bincount(bins,
+                                            weights=weights,
+                                            minlength=mean_cont.size)
 
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]

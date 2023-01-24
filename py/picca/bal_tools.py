@@ -12,7 +12,8 @@ from astropy.table import Table
 
 from . import constants
 
-def read_bal(filename,mode):  ##Based on read_dla from picca/py/picca/io.py
+
+def read_bal(filename, mode):  ##Based on read_dla from picca/py/picca/io.py
     """Copies just the BAL information from the catalog.
 
     Args:
@@ -30,20 +31,19 @@ def read_bal(filename,mode):  ##Based on read_dla from picca/py/picca/io.py
     if 'desi' in mode:
         id_name = 'TARGETID'
         ext_name = 'ZCATALOG'
-    
+
     else:
         id_name = 'THING_ID'
         ext_name = 'BALCAT'
 
-    column_list = [
-        id_name, 'VMIN_CIV_450', 'VMAX_CIV_450', 'AI_CIV'
-    ]
+    column_list = [id_name, 'VMIN_CIV_450', 'VMAX_CIV_450', 'AI_CIV']
 
     hdul = fitsio.FITS(filename)
     bal_catalog = {col: hdul[ext_name][col][:] for col in column_list}
     hdul.close()
 
     return bal_catalog
+
 
 def add_bal_mask(bal_catalog, objectid, mode):
     """Creates a list of wavelengths to be masked out by forest.mask
@@ -82,7 +82,8 @@ def add_bal_mask(bal_catalog, objectid, mode):
 
     light_speed = constants.SPEED_LIGHT
 
-    bal_mask = Table(names=['log_wave_min','log_wave_max','frame'], dtype=['f4','f4','S2'])
+    bal_mask = Table(names=['log_wave_min', 'log_wave_max', 'frame'],
+                     dtype=['f4', 'f4', 'S2'])
     min_velocities = []  ##list of minimum velocities
     max_velocities = []  ##list of maximum velocities
 
@@ -105,12 +106,14 @@ def add_bal_mask(bal_catalog, objectid, mode):
     ##Calculate mask width for each velocity pair, for each emission line
     for vel in range(len(min_velocities)):
         for line in lines.values():
-            min_wavelength = np.log10(line * (1 - min_velocities[vel] / light_speed))
-            max_wavelength = np.log10(line * (1 - max_velocities[vel] / light_speed))
+            min_wavelength = np.log10(line *
+                                      (1 - min_velocities[vel] / light_speed))
+            max_wavelength = np.log10(line *
+                                      (1 - max_velocities[vel] / light_speed))
             #VMIN and VMAX were switched between the eBOSS and DESI BAL catalogs.
             if 'desi' in mode:
-                bal_mask.add_row([max_wavelength,min_wavelength,'RF'])
+                bal_mask.add_row([max_wavelength, min_wavelength, 'RF'])
             else:
-                bal_mask.add_row([min_wavelength,max_wavelength,'RF'])
+                bal_mask.add_row([min_wavelength, max_wavelength, 'RF'])
 
     return bal_mask

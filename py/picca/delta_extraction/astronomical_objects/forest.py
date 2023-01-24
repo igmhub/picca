@@ -12,13 +12,11 @@ from picca.delta_extraction.utils import find_bins
 
 defaults = {
     "mask fields": [
-        "flux",
-        "ivar",
-        "transmission_correction",
-        "log_lambda",
+        "flux", "ivar", "transmission_correction", "log_lambda",
         "log_lambda_index"
     ],
 }
+
 
 @njit
 def get_inner_region_slice(bincounts):
@@ -47,7 +45,7 @@ def get_inner_region_slice(bincounts):
 
     # Find last non-zero index from right
     for idx in range(bincounts.size, 0, -1):
-        if bincounts[idx-1] != 0:
+        if bincounts[idx - 1] != 0:
             last_nonzero_idx = idx
             break
 
@@ -55,6 +53,7 @@ def get_inner_region_slice(bincounts):
     wslice_inner[first_nonzero_idx:last_nonzero_idx] = 1
 
     return wslice_inner
+
 
 @njit()
 def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
@@ -197,33 +196,37 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     final_arr_size = np.sum(wslice_inner)
 
     # rebin flux, ivar and transmission_correction
-    rebin_flux = np.bincount(bins, weights=ivar * flux, minlength=binned_arr_size)
+    rebin_flux = np.bincount(bins,
+                             weights=ivar * flux,
+                             minlength=binned_arr_size)
     rebin_transmission_correction = np.bincount(
-            bins, weights=(ivar * transmission_correction), minlength=binned_arr_size)
+        bins,
+        weights=(ivar * transmission_correction),
+        minlength=binned_arr_size)
     rebin_ivar = np.bincount(bins, weights=ivar, minlength=binned_arr_size)
 
     # this condition should always be non-zero for at least one pixel
     # this does not mean that all rebin_ivar pixels will be non-zero,
     # as we could have a masked region of the spectra
     w2_ = (rebin_ivar > 0.) & wslice_inner
-    w2  = w2_[wslice_inner]
+    w2 = w2_[wslice_inner]
     flux = np.zeros(final_arr_size)
     transmission_correction = np.zeros(final_arr_size)
     ivar = np.zeros(final_arr_size)
 
     # Remove the empty pixels at the lower end
     flux[w2] = rebin_flux[w2_] / rebin_ivar[w2_]
-    transmission_correction[w2] = rebin_transmission_correction[
-        w2_] / rebin_ivar[w2_]
+    transmission_correction[
+        w2] = rebin_transmission_correction[w2_] / rebin_ivar[w2_]
     ivar[w2] = rebin_ivar[w2_]
 
     # then rebin wavelength
     if wave_solution == "log":
-        log_lambda = (log_lambda_grid[0] + pixel_step *
-                    np.arange(binned_arr_size)[wslice_inner])
+        log_lambda = (log_lambda_grid[0] +
+                      pixel_step * np.arange(binned_arr_size)[wslice_inner])
     else:  # we have already checked that it will always be "lin" at this point
         log_lambda = np.log10(10**log_lambda_grid[0] + pixel_step *
-                    np.arange(binned_arr_size)[wslice_inner])
+                              np.arange(binned_arr_size)[wslice_inner])
     rebin_bins = find_bins(log_lambda, log_lambda_grid, wave_solution)
 
     # finally update control variables
@@ -232,8 +235,9 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
 
     # return weights and binning solution to be used by child classes if
     # required
-    return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins, rebin_bins,
-            rebin_ivar, orig_ivar, w1, w2, wslice_inner)
+    return (log_lambda, flux, ivar, transmission_correction, mean_snr, bins,
+            rebin_bins, rebin_ivar, orig_ivar, w1, w2, wslice_inner)
+
 
 class Forest(AstronomicalObject):
     """Forest Object
@@ -322,7 +326,7 @@ class Forest(AstronomicalObject):
     blinding = "none"
     log_lambda_grid = np.array([])  #None
     log_lambda_rest_frame_grid = np.array([])  #None
-    log_lambda_index = np.array([]) #None
+    log_lambda_index = np.array([])  #None
     mask_fields = []  #None
     wave_solution = None
 
@@ -612,7 +616,9 @@ class Forest(AstronomicalObject):
         A list containing the line-of-sight data
         """
         metadata = super().get_metadata()
-        metadata += [self.mean_snr,]
+        metadata += [
+            self.mean_snr,
+        ]
         return metadata
 
     @classmethod
@@ -627,7 +633,9 @@ class Forest(AstronomicalObject):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('MEANSNR', float),]
+        dtype += [
+            ('MEANSNR', float),
+        ]
         return dtype
 
     @classmethod
@@ -674,8 +682,9 @@ class Forest(AstronomicalObject):
         (self.log_lambda, self.flux, self.ivar, self.transmission_correction,
          self.mean_snr, bins, self.log_lambda_index, rebin_ivar, orig_ivar, w1,
          w2, wslice_inner) = rebin(self.log_lambda, self.flux, self.ivar,
-                     self.transmission_correction, self.z, Forest.wave_solution,
-                     Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid)
+                                   self.transmission_correction, self.z,
+                                   Forest.wave_solution, Forest.log_lambda_grid,
+                                   Forest.log_lambda_rest_frame_grid)
 
         # return weights and binning solution to be used by child classes if
         # required

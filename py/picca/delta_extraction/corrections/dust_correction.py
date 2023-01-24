@@ -14,6 +14,7 @@ defaults = {
     "extinction_conversion_r": 3.793,
 }
 
+
 class DustCorrection(Correction):
     """Class to correct for dust absortpion
 
@@ -27,6 +28,7 @@ class DustCorrection(Correction):
     extinction_bv_map: dict
     B-V extinction due to dust. Keys are THING_ID
     """
+
     def __init__(self, config):
         """Initialize class instance.
 
@@ -55,18 +57,14 @@ class DustCorrection(Correction):
             thingid = hdu['THING_ID']
             ext = hdu['EXTINCTION'][:, 1] / extinction_conversion_r
         except OSError as error:
-            raise CorrectionError(
-                "Error loading DustCorrection. "
-                f"File {filename} does not have extension "
-                "'CATALOG'"
-            ) from error
+            raise CorrectionError("Error loading DustCorrection. "
+                                  f"File {filename} does not have extension "
+                                  "'CATALOG'") from error
         except ValueError as error:
-            raise CorrectionError(
-                "Error loading DustCorrection. "
-                f"File {filename} does not have fields "
-                "'THING_ID' and/or 'EXTINCTION' in HDU "
-                "'CATALOG'"
-            ) from error
+            raise CorrectionError("Error loading DustCorrection. "
+                                  f"File {filename} does not have fields "
+                                  "'THING_ID' and/or 'EXTINCTION' in HDU "
+                                  "'CATALOG'") from error
         self.extinction_bv_map = dict(zip(thingid, ext))
 
     def apply_correction(self, forest):
@@ -96,6 +94,7 @@ class DustCorrection(Correction):
         forest.ivar *= correction**2
         if hasattr(forest, "exposures_diff"):
             forest.exposures_diff /= correction
+
 
 # pylint: disable=invalid-name,locally-disabled
 # we keep variable names since this function is adopted from elsewhere

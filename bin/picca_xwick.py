@@ -61,11 +61,10 @@ def main(cmdargs):
                         required=True,
                         help='Catalog of objects in DRQ format')
 
-    parser.add_argument(
-                        '--mode',
+    parser.add_argument('--mode',
                         type=str,
                         default='sdss',
-                        choices=['sdss','desi'],
+                        choices=['sdss', 'desi'],
                         required=False,
                         help='type of catalog supplied, default sdss')
 
@@ -231,12 +230,13 @@ def main(cmdargs):
                         required=False,
                         help='Maximum number of spectra to read')
 
-    parser.add_argument('--rebin-factor',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Rebin factor for deltas. If not None, deltas will '
-                             'be rebinned by that factor')    
+    parser.add_argument(
+        '--rebin-factor',
+        type=int,
+        default=None,
+        required=False,
+        help='Rebin factor for deltas. If not None, deltas will '
+        'be rebinned by that factor')
 
     args = parser.parse_args(cmdargs)
     if args.nproc is None:
@@ -273,15 +273,16 @@ def main(cmdargs):
                             blinding=blinding)
 
     ### Read deltas
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  args.nside,
-                                                  xcf.lambda_abs,
-                                                  args.z_evol_del,
-                                                  args.z_ref,
-                                                  cosmo=cosmo,
-                                                  max_num_spec=args.nspec,
-                                                  nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor)
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir,
+        args.nside,
+        xcf.lambda_abs,
+        args.z_evol_del,
+        args.z_ref,
+        cosmo=cosmo,
+        max_num_spec=args.nspec,
+        nproc=args.nproc,
+        rebin_factor=args.rebin_factor)
     for deltas in data.values():
         for delta in deltas:
             delta.fname = 'D1'
@@ -309,9 +310,14 @@ def main(cmdargs):
         sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
 
     ### Read objects
-    objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
-                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo, mode=args.mode)
+    objs, z_min2 = io.read_objects(args.drq,
+                                   args.nside,
+                                   args.z_min_obj,
+                                   args.z_max_obj,
+                                   args.z_evol_obj,
+                                   args.z_ref,
+                                   cosmo,
+                                   mode=args.mode)
     xcf.objs = objs
     sys.stderr.write("\n")
     userprint("done, npix = {}".format(len(objs)))
@@ -418,78 +424,70 @@ def main(cmdargs):
     t_tot = t1 + t2 + t3 + t4 + t5 + t6
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [
-        {
-            'name': 'RPMIN',
-            'value': xcf.r_par_min,
-            'comment': 'Minimum r-parallel [h^-1 Mpc]'
-        },
-        {
-            'name': 'RPMAX',
-            'value': xcf.r_par_max,
-            'comment': 'Maximum r-parallel [h^-1 Mpc]'
-        },
-        {
-            'name': 'RTMAX',
-            'value': xcf.r_trans_max,
-            'comment': 'Maximum r-transverse [h^-1 Mpc]'
-        },
-        {
-            'name': 'NP',
-            'value': xcf.num_bins_r_par,
-            'comment': 'Number of bins in r-parallel'
-        },
-        {
-            'name': 'NT',
-            'value': xcf.num_bins_r_trans,
-            'comment': 'Number of bins in r-transverse'
-        },
-        {
-            'name': 'ZCUTMIN',
-            'value': xcf.z_cut_min,
-            'comment': 'Minimum redshift of pairs'
-        },
-        {
-            'name': 'ZCUTMAX',
-            'value': xcf.z_cut_max,
-            'comment': 'Maximum redshift of pairs'
-        },
-        {
-            'name': 'REJ',
-            'value': xcf.reject,
-            'comment': 'Rejection factor'
-        },
-        {
-            'name': 'NPALL',
-            'value': npairs,
-            'comment': 'Number of pairs'
-        },
-        {
-            'name': 'NPUSED',
-            'value': npairs_used,
-            'comment': 'Number of used pairs'
-        }, {
-            'name': 'OMEGAM',
-            'value': args.fid_Om,
-            'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAR',
-            'value': args.fid_Or,
-            'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAK',
-            'value': args.fid_Ok,
-            'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'WL',
-            'value': args.fid_wl,
-            'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-        }, {
-            'name': "BLINDING",
-            'value': blinding,
-            'comment': 'String specifying the blinding strategy'
-        }
-        ]
+    header = [{
+        'name': 'RPMIN',
+        'value': xcf.r_par_min,
+        'comment': 'Minimum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RPMAX',
+        'value': xcf.r_par_max,
+        'comment': 'Maximum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RTMAX',
+        'value': xcf.r_trans_max,
+        'comment': 'Maximum r-transverse [h^-1 Mpc]'
+    }, {
+        'name': 'NP',
+        'value': xcf.num_bins_r_par,
+        'comment': 'Number of bins in r-parallel'
+    }, {
+        'name': 'NT',
+        'value': xcf.num_bins_r_trans,
+        'comment': 'Number of bins in r-transverse'
+    }, {
+        'name': 'ZCUTMIN',
+        'value': xcf.z_cut_min,
+        'comment': 'Minimum redshift of pairs'
+    }, {
+        'name': 'ZCUTMAX',
+        'value': xcf.z_cut_max,
+        'comment': 'Maximum redshift of pairs'
+    }, {
+        'name': 'REJ',
+        'value': xcf.reject,
+        'comment': 'Rejection factor'
+    }, {
+        'name': 'NPALL',
+        'value': npairs,
+        'comment': 'Number of pairs'
+    }, {
+        'name': 'NPUSED',
+        'value': npairs_used,
+        'comment': 'Number of used pairs'
+    }, {
+        'name': 'OMEGAM',
+        'value': args.fid_Om,
+        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAR',
+        'value': args.fid_Or,
+        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAK',
+        'value': args.fid_Ok,
+        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name':
+            'WL',
+        'value':
+            args.fid_wl,
+        'comment':
+            'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    }, {
+        'name': "BLINDING",
+        'value': blinding,
+        'comment': 'String specifying the blinding strategy'
+    }]
     comment = [
         'Sum of weight', 'Covariance', 'Nomber of pairs', 'T1', 'T2', 'T3',
         'T4', 'T5', 'T6'
@@ -504,5 +502,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)

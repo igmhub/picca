@@ -13,19 +13,20 @@ import fitsio
 from ..utils import userprint
 from . import data, utils, priors
 
+
 def parse_chi2(filename):
     cp = ConfigParser.ConfigParser()
-    cp.optionxform=str
+    cp.optionxform = str
     cp.read(filename)
 
     dic_init = {}
 
     dic_init['fiducial'] = {}
 
-    p = cp.get('fiducial','filename')
+    p = cp.get('fiducial', 'filename')
     p = os.path.expandvars(p)
     if not os.path.isfile(p):
-        p = resource_filename('picca', 'fitter2')+'/models/{}'.format(p)
+        p = resource_filename('picca', 'fitter2') + '/models/{}'.format(p)
     userprint('INFO: reading input Pk {}'.format(p))
 
     h = fitsio.FITS(p)
@@ -37,27 +38,34 @@ def parse_chi2(filename):
     dic_init['fiducial']['pk'] = h[1]['PK'][:]
     dic_init['fiducial']['pksb'] = h[1]['PKSB'][:]
     h.close()
-    try: ## For Python2.7 compatibility
-        dic_init['fiducial']['full-shape'] = int(cp['fiducial']['full-shape'])==1
+    try:  ## For Python2.7 compatibility
+        dic_init['fiducial']['full-shape'] = int(
+            cp['fiducial']['full-shape']) == 1
     except (KeyError, AttributeError):
         dic_init['fiducial']['full-shape'] = False
     if dic_init['fiducial']['full-shape']:
-        userprint('WARNING!!!: Using full-shape fit to the correlation function. Sailor you are reaching unexplored territories, precede at your own risk.')
+        userprint(
+            'WARNING!!!: Using full-shape fit to the correlation function. Sailor you are reaching unexplored territories, precede at your own risk.'
+        )
 
-    zeff = float(cp.get('data sets','zeff'))
+    zeff = float(cp.get('data sets', 'zeff'))
     dic_init['data sets'] = {}
     dic_init['data sets']['zeff'] = zeff
-    dic_init['data sets']['data'] = [data.data(parse_data(os.path.expandvars(d),zeff,dic_init['fiducial'])) for d in cp.get('data sets','ini files').split()]
+    dic_init['data sets']['data'] = [
+        data.data(parse_data(os.path.expandvars(d), zeff, dic_init['fiducial']))
+        for d in cp.get('data sets', 'ini files').split()
+    ]
 
-    utils.cosmo_fit_func = getattr(utils, cp.get('cosmo-fit type','cosmo fit func'))
+    utils.cosmo_fit_func = getattr(utils,
+                                   cp.get('cosmo-fit type', 'cosmo fit func'))
 
-    dic_init['outfile'] = cp.get('output','filename')
+    dic_init['outfile'] = cp.get('output', 'filename')
 
     if 'verbosity' in cp.sections():
-        dic_init['verbosity'] = int(cp.get('verbosity','level'))
+        dic_init['verbosity'] = int(cp.get('verbosity', 'level'))
 
     if 'hesse' in cp.sections():
-        dic_init['hesse'] = int(cp.get('hesse','level'))==1
+        dic_init['hesse'] = int(cp.get('hesse', 'level')) == 1
 
     if 'fast mc' in cp.sections():
         dic_init['fast mc'] = {}
@@ -65,28 +73,31 @@ def parse_chi2(filename):
         dic_init['fast mc']['fiducial']['values'] = {}
         dic_init['fast mc']['fiducial']['fix'] = {}
         for item, value in cp.items('fast mc'):
-            if item in ['niterations','seed']:
+            if item in ['niterations', 'seed']:
                 dic_init['fast mc'][item] = int(value)
-            elif item=='forecast':
+            elif item == 'forecast':
                 dic_init['fast mc'][item] = bool(value)
-            elif item=='covscaling':
+            elif item == 'covscaling':
                 value = value.split()
                 dic_init['fast mc'][item] = np.array(value).astype(float)
-                if not len(dic_init['fast mc'][item])==len(dic_init['data sets']['data']):
+                if not len(dic_init['fast mc'][item]) == len(
+                        dic_init['data sets']['data']):
                     raise AssertionError()
             else:
                 value = value.split()
-                dic_init['fast mc']['fiducial']['values'][item] = float(value[0])
-                if not value[1] in ['fixed','free']:
+                dic_init['fast mc']['fiducial']['values'][item] = float(
+                    value[0])
+                if not value[1] in ['fixed', 'free']:
                     raise AssertionError()
-                dic_init['fast mc']['fiducial']['fix']['fix_'+item] = value[1]  == 'fixed'
+                dic_init['fast mc']['fiducial']['fix'][
+                    'fix_' + item] = value[1] == 'fixed'
 
     if cp.has_section('minos'):
         dic_init['minos'] = {}
         for item, value in cp.items('minos'):
-            if item=='sigma':
+            if item == 'sigma':
                 value = float(value)
-            elif item=='parameters':
+            elif item == 'parameters':
                 value = value.split()
             dic_init['minos'][item] = value
 
@@ -104,9 +115,10 @@ def parse_chi2(filename):
 
     return dic_init
 
-def parse_data(filename,zeff,fiducial):
+
+def parse_data(filename, zeff, fiducial):
     cp = ConfigParser.ConfigParser()
-    cp.optionxform=str
+    cp.optionxform = str
     cp.read(filename)
 
     dic_init = {}
@@ -146,23 +158,27 @@ def parse_data(filename,zeff,fiducial):
     for item, value in cp.items('parameters'):
         value = value.split()
         dic_init['parameters']['values'][item] = float(value[0])
-        dic_init['parameters']['errors']['error_'+item] = float(value[1])
+        dic_init['parameters']['errors']['error_' + item] = float(value[1])
         lim_inf = None
         lim_sup = None
-        if value[2] != 'None': lim_inf = float(value[2])
-        if value[3] != 'None': lim_sup = float(value[3])
-        dic_init['parameters']['limits']['limit_'+item]=(lim_inf,lim_sup)
+        if value[2] != 'None':
+            lim_inf = float(value[2])
+        if value[3] != 'None':
+            lim_sup = float(value[3])
+        dic_init['parameters']['limits']['limit_' + item] = (lim_inf, lim_sup)
         assert value[4] == 'fixed' or value[4] == 'free'
-        dic_init['parameters']['fix']['fix_'+item] = value[4] == 'fixed'
+        dic_init['parameters']['fix']['fix_' + item] = value[4] == 'fixed'
 
     if 'metals' in cp.sections():
-        dic_init['metals']={}
+        dic_init['metals'] = {}
         for item, value in cp.items('metals'):
             dic_init['metals'][item] = value
         if 'in tracer1' in dic_init['metals']:
-            dic_init['metals']['in tracer1'] = dic_init['metals']['in tracer1'].split()
+            dic_init['metals']['in tracer1'] = dic_init['metals'][
+                'in tracer1'].split()
         if 'in tracer2' in dic_init['metals']:
-            dic_init['metals']['in tracer2'] = dic_init['metals']['in tracer2'].split()
+            dic_init['metals']['in tracer2'] = dic_init['metals'][
+                'in tracer2'].split()
 
     if 'broadband' in cp.sections():
         dic_init['broadband'] = []
@@ -175,15 +191,15 @@ def parse_data(filename,zeff,fiducial):
             assert value[1] == 'pre' or value[1] == 'pos'
             dic_bb['pre'] = value[1]
 
-            assert value[2]=='rp,rt' or value[2]=='r,mu'
+            assert value[2] == 'rp,rt' or value[2] == 'r,mu'
             dic_bb['rp_rt'] = value[2]
 
-            if len(value)==6:
+            if len(value) == 6:
                 dic_bb['func'] = value[5]
             else:
                 dic_bb['func'] = 'broadband'
 
-            deg_r_min,deg_r_max,ddeg_r = value[3].split(':')
+            deg_r_min, deg_r_max, ddeg_r = value[3].split(':')
             dic_bb['deg_r_min'] = int(deg_r_min)
             dic_bb['deg_r_max'] = int(deg_r_max)
             dic_bb['ddeg_r'] = int(ddeg_r)
@@ -197,24 +213,32 @@ def parse_data(filename,zeff,fiducial):
     if 'priors' in cp.sections():
         for item, value in cp.items('priors'):
             if item in priors.prior_dic.keys():
-                userprint("WARNING: prior on {} will be overwritten".format(item))
+                userprint(
+                    "WARNING: prior on {} will be overwritten".format(item))
             value = value.split()
-            priors.prior_dic[item] = partial(getattr(priors, value[0]), prior_pars=np.array(value[1:]).astype(float), name=item)
+            priors.prior_dic[item] = partial(getattr(priors, value[0]),
+                                             prior_pars=np.array(
+                                                 value[1:]).astype(float),
+                                             name=item)
 
     return dic_init
 
+
 def parse_chi2scan(items):
 
-    assert len(items)==1 or len(items)==2
+    assert len(items) == 1 or len(items) == 2
 
     dic_init = {}
     for item, value in items:
         dic = {}
         value = value.split()
-        dic['min']    = float(value[0])
-        dic['max']    = float(value[1])
+        dic['min'] = float(value[0])
+        dic['max'] = float(value[1])
         dic['nb_bin'] = int(value[2])
-        dic['grid']   = np.linspace(dic['min'],dic['max'],num=dic['nb_bin'],endpoint=True)
+        dic['grid'] = np.linspace(dic['min'],
+                                  dic['max'],
+                                  num=dic['nb_bin'],
+                                  endpoint=True)
         dic_init[item] = dic
 
     return dic_init

@@ -254,12 +254,13 @@ def main(cmdargs):
                         required=False,
                         help='Maximum number of spectra to read')
 
-    parser.add_argument('--rebin-factor',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Rebin factor for deltas. If not None, deltas will '
-                             'be rebinned by that factor')
+    parser.add_argument(
+        '--rebin-factor',
+        type=int,
+        default=None,
+        required=False,
+        help='Rebin factor for deltas. If not None, deltas will '
+        'be rebinned by that factor')
 
     args = parser.parse_args(cmdargs)
 
@@ -299,15 +300,16 @@ def main(cmdargs):
                             blinding=blinding)
 
     # read data 1
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  cf.nside,
-                                                  cf.lambda_abs,
-                                                  cf.alpha,
-                                                  cf.z_ref,
-                                                  cosmo,
-                                                  max_num_spec=args.nspec,
-                                                  nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor)
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir,
+        cf.nside,
+        cf.lambda_abs,
+        cf.alpha,
+        cf.z_ref,
+        cosmo,
+        max_num_spec=args.nspec,
+        nproc=args.nproc,
+        rebin_factor=args.rebin_factor)
     for deltas in data.values():
         for delta in deltas:
             delta.fname = 'D1'
@@ -429,7 +431,7 @@ def main(cmdargs):
     context = multiprocessing.get_context('fork')
     pool = context.Pool(processes=min(args.nproc, len(cpu_data.values())))
     userprint(" \nStarting\n")
-    if args.nproc>1:
+    if args.nproc > 1:
         wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
     else:
         wick_data = [calc_wick_terms(arg) for arg in sorted(cpu_data.values())]
@@ -466,78 +468,70 @@ def main(cmdargs):
 
     # save results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [
-        {
-            'name': 'RPMIN',
-            'value': cf.r_par_min,
-            'comment': 'Minimum r-parallel [h^-1 Mpc]'
-        },
-        {
-            'name': 'RPMAX',
-            'value': cf.r_par_max,
-            'comment': 'Maximum r-parallel [h^-1 Mpc]'
-        },
-        {
-            'name': 'RTMAX',
-            'value': cf.r_trans_max,
-            'comment': 'Maximum r-transverse [h^-1 Mpc]'
-        },
-        {
-            'name': 'NP',
-            'value': cf.num_bins_r_par,
-            'comment': 'Number of bins in r-parallel'
-        },
-        {
-            'name': 'NT',
-            'value': cf.num_bins_r_trans,
-            'comment': 'Number of bins in r-transverse'
-        },
-        {
-            'name': 'ZCUTMIN',
-            'value': cf.z_cut_min,
-            'comment': 'Minimum redshift of pairs'
-        },
-        {
-            'name': 'ZCUTMAX',
-            'value': cf.z_cut_max,
-            'comment': 'Maximum redshift of pairs'
-        },
-        {
-            'name': 'REJ',
-            'value': cf.reject,
-            'comment': 'Rejection factor'
-        },
-        {
-            'name': 'NPALL',
-            'value': num_pairs,
-            'comment': 'Number of pairs'
-        },
-        {
-            'name': 'NPUSED',
-            'value': num_pairs_used,
-            'comment': 'Number of used pairs'
-        }, {
-            'name': 'OMEGAM',
-            'value': args.fid_Om,
-            'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAR',
-            'value': args.fid_Or,
-            'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAK',
-            'value': args.fid_Ok,
-            'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'WL',
-            'value': args.fid_wl,
-            'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-        }, {
-            'name': "BLINDING",
-            'value': blinding,
-            'comment': 'String specifying the blinding strategy'
-        }
-        ]
+    header = [{
+        'name': 'RPMIN',
+        'value': cf.r_par_min,
+        'comment': 'Minimum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RPMAX',
+        'value': cf.r_par_max,
+        'comment': 'Maximum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RTMAX',
+        'value': cf.r_trans_max,
+        'comment': 'Maximum r-transverse [h^-1 Mpc]'
+    }, {
+        'name': 'NP',
+        'value': cf.num_bins_r_par,
+        'comment': 'Number of bins in r-parallel'
+    }, {
+        'name': 'NT',
+        'value': cf.num_bins_r_trans,
+        'comment': 'Number of bins in r-transverse'
+    }, {
+        'name': 'ZCUTMIN',
+        'value': cf.z_cut_min,
+        'comment': 'Minimum redshift of pairs'
+    }, {
+        'name': 'ZCUTMAX',
+        'value': cf.z_cut_max,
+        'comment': 'Maximum redshift of pairs'
+    }, {
+        'name': 'REJ',
+        'value': cf.reject,
+        'comment': 'Rejection factor'
+    }, {
+        'name': 'NPALL',
+        'value': num_pairs,
+        'comment': 'Number of pairs'
+    }, {
+        'name': 'NPUSED',
+        'value': num_pairs_used,
+        'comment': 'Number of used pairs'
+    }, {
+        'name': 'OMEGAM',
+        'value': args.fid_Om,
+        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAR',
+        'value': args.fid_Or,
+        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAK',
+        'value': args.fid_Ok,
+        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name':
+            'WL',
+        'value':
+            args.fid_wl,
+        'comment':
+            'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    }, {
+        'name': "BLINDING",
+        'value': blinding,
+        'comment': 'String specifying the blinding strategy'
+    }]
     comment = [
         'Sum of weight', 'Covariance', 'Nomber of pairs', 'T1', 'T2', 'T3',
         'T4', 'T5', 'T6'
@@ -552,5 +546,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)

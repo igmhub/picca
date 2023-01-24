@@ -30,6 +30,7 @@ from picca.tests.delta_extraction.test_utils import desi_mock_data_kwargs
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
 class ExpectedFluxTest(AbstractTest):
     """Test class ExpectedFlux and its childs.
     Methods
@@ -49,17 +50,19 @@ class ExpectedFluxTest(AbstractTest):
     test_dr16_expected_flux_populate_los_ids
     test_dr16_expected_flux_save_iteration_step
     """
+
     def test_dr16_expected_flux(self):
         """Test constructor for class Dr16ExpectedFlux
         Load an Dr16ExpectedFlux instance.
         """
         config = ConfigParser()
-        config.read_dict(
-            {"expected flux": {
+        config.read_dict({
+            "expected flux": {
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
                 "num processors": 1
-            }})
+            }
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -79,7 +82,8 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_fudge, interp1d))
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
-        self.assertTrue(isinstance(expected_flux.log_lambda_var_func_grid, np.ndarray))
+        self.assertTrue(
+            isinstance(expected_flux.log_lambda_var_func_grid, np.ndarray))
 
         # setup Forest variables; case: linear wavelength solution
         reset_forest()
@@ -90,7 +94,8 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_fudge, interp1d))
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
-        self.assertTrue(isinstance(expected_flux.log_lambda_var_func_grid, np.ndarray))
+        self.assertTrue(
+            isinstance(expected_flux.log_lambda_var_func_grid, np.ndarray))
 
     def test_dr16_expected_flux_compute_continuum_lin(self):
         """Test method compute_continuum for class Dr16ExpectedFlux for
@@ -122,13 +127,10 @@ class ExpectedFluxTest(AbstractTest):
         # compute the forest continua
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
-             continuum_fit_parameters) = compute_continuum(forest,
-                                                           expected_flux.get_mean_cont,
-                                                           expected_flux.get_eta,
-                                                           expected_flux.get_var_lss,
-                                                           expected_flux.get_fudge,
-                                                           expected_flux.use_constant_weight,
-                                                           expected_flux.order)
+             continuum_fit_parameters) = compute_continuum(
+                 forest, expected_flux.get_mean_cont, expected_flux.get_eta,
+                 expected_flux.get_var_lss, expected_flux.get_fudge,
+                 expected_flux.use_constant_weight, expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
 
@@ -163,19 +165,22 @@ class ExpectedFluxTest(AbstractTest):
         for forest in data.forests:
             if forest.continuum is None:
                 if continua.get(forest.los_id) is not None:
-                    print(f"For forest with los_id {forest.los_id}, new continuum "
-                          "is None. Expected continua:")
+                    print(
+                        f"For forest with los_id {forest.los_id}, new continuum "
+                        "is None. Expected continua:")
                     print(continua.get(forest.los_id))
                 self.assertTrue(continua.get(forest.los_id) is None)
             elif continua.get(forest.los_id) is None:
                 self.assertTrue(forest.continuum is None)
             else:
-                if not np.allclose(forest.continuum, continua.get(forest.los_id)):
+                if not np.allclose(forest.continuum, continua.get(
+                        forest.los_id)):
                     print("Difference found in forest.continuum")
                     print(f"forest.los_id: {forest.los_id}")
                     print(f"result test are_close result-test")
-                    for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
-                        print(i1, i2, np.isclose(i1, i2), i1-i2)
+                    for i1, i2 in zip(forest.continuum,
+                                      continua.get(forest.los_id)):
+                        print(i1, i2, np.isclose(i1, i2), i1 - i2)
                 self.assertTrue(
                     np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
@@ -213,13 +218,10 @@ class ExpectedFluxTest(AbstractTest):
         # compute the forest continua
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
-             continuum_fit_parameters) = compute_continuum(forest,
-                                                           expected_flux.get_mean_cont,
-                                                           expected_flux.get_eta,
-                                                           expected_flux.get_var_lss,
-                                                           expected_flux.get_fudge,
-                                                           expected_flux.use_constant_weight,
-                                                           expected_flux.order)
+             continuum_fit_parameters) = compute_continuum(
+                 forest, expected_flux.get_mean_cont, expected_flux.get_eta,
+                 expected_flux.get_var_lss, expected_flux.get_fudge,
+                 expected_flux.use_constant_weight, expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
 
@@ -252,8 +254,9 @@ class ExpectedFluxTest(AbstractTest):
                 print("Difference found in forest.continuum")
                 print(f"forest.los_id: {forest.los_id}")
                 print(f"result test are_close result-test")
-                for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
-                    print(i1, i2, np.isclose(i1, i2), i1-i2)
+                for i1, i2 in zip(forest.continuum,
+                                  continua.get(forest.los_id)):
+                    print(i1, i2, np.isclose(i1, i2), i1 - i2)
             self.assertTrue(
                 np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
@@ -291,13 +294,10 @@ class ExpectedFluxTest(AbstractTest):
         # compute the forest continua
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
-             continuum_fit_parameters) = compute_continuum(forest,
-                                                           expected_flux.get_mean_cont,
-                                                           expected_flux.get_eta,
-                                                           expected_flux.get_var_lss,
-                                                           expected_flux.get_fudge,
-                                                           expected_flux.use_constant_weight,
-                                                           expected_flux.order)
+             continuum_fit_parameters) = compute_continuum(
+                 forest, expected_flux.get_mean_cont, expected_flux.get_eta,
+                 expected_flux.get_var_lss, expected_flux.get_fudge,
+                 expected_flux.use_constant_weight, expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
 
@@ -308,7 +308,8 @@ class ExpectedFluxTest(AbstractTest):
         f = open(out_file, "w")
         f.write("# log_lambda delta\n")
         for log_lambda in np.arange(3.5563025, 3.7123025 + 3e-4, 3e-4):
-            f.write(f"{log_lambda} {expected_flux.get_stack_delta(log_lambda)}\n")
+            f.write(
+                f"{log_lambda} {expected_flux.get_stack_delta(log_lambda)}\n")
         f.close()
 
         # load expected delta stack
@@ -322,7 +323,7 @@ class ExpectedFluxTest(AbstractTest):
             print("Difference found in delta stack")
             print(f"result test are_close result-test")
             for i1, i2 in zip(stack_delta, expectations["delta"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
         self.assertTrue(np.allclose(stack_delta, expectations["delta"]))
 
     def test_dr16_expected_flux_compute_delta_stack_log(self):
@@ -355,13 +356,10 @@ class ExpectedFluxTest(AbstractTest):
         # compute the forest continua
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
-             continuum_fit_parameters) = compute_continuum(forest,
-                                                           expected_flux.get_mean_cont,
-                                                           expected_flux.get_eta,
-                                                           expected_flux.get_var_lss,
-                                                           expected_flux.get_fudge,
-                                                           expected_flux.use_constant_weight,
-                                                           expected_flux.order)
+             continuum_fit_parameters) = compute_continuum(
+                 forest, expected_flux.get_mean_cont, expected_flux.get_eta,
+                 expected_flux.get_var_lss, expected_flux.get_fudge,
+                 expected_flux.use_constant_weight, expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
 
@@ -372,7 +370,8 @@ class ExpectedFluxTest(AbstractTest):
         f = open(out_file, "w")
         f.write("# log_lambda delta\n")
         for log_lambda in np.arange(3.5563025, 3.7123025 + 3e-4, 3e-4):
-            f.write(f"{log_lambda} {expected_flux.get_stack_delta(log_lambda)}\n")
+            f.write(
+                f"{log_lambda} {expected_flux.get_stack_delta(log_lambda)}\n")
         f.close()
 
         # load expected delta stack
@@ -386,7 +385,7 @@ class ExpectedFluxTest(AbstractTest):
             print("Difference found in delta stack")
             print(f"result test are_close result-test")
             for i1, i2 in zip(stack_delta, expectations["delta"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
         self.assertTrue(np.allclose(stack_delta, expectations["delta"]))
 
     def test_dr16_expected_flux_compute_expected_flux_lin(self):
@@ -493,13 +492,10 @@ class ExpectedFluxTest(AbstractTest):
         # compute the forest continua
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
-             continuum_fit_parameters) = compute_continuum(forest,
-                                                           expected_flux.get_mean_cont,
-                                                           expected_flux.get_eta,
-                                                           expected_flux.get_var_lss,
-                                                           expected_flux.get_fudge,
-                                                           expected_flux.use_constant_weight,
-                                                           expected_flux.order)
+             continuum_fit_parameters) = compute_continuum(
+                 forest, expected_flux.get_mean_cont, expected_flux.get_eta,
+                 expected_flux.get_var_lss, expected_flux.get_fudge,
+                 expected_flux.use_constant_weight, expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
 
@@ -524,7 +520,7 @@ class ExpectedFluxTest(AbstractTest):
             print("Difference found in mean_cont")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_cont, expectations["mean_cont"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
         self.assertTrue(np.allclose(mean_cont, expectations["mean_cont"]))
 
     def test_dr16_expected_flux_compute_mean_cont_log(self):
@@ -557,13 +553,10 @@ class ExpectedFluxTest(AbstractTest):
         # compute the forest continua
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
-             continuum_fit_parameters) = compute_continuum(forest,
-                                                           expected_flux.get_mean_cont,
-                                                           expected_flux.get_eta,
-                                                           expected_flux.get_var_lss,
-                                                           expected_flux.get_fudge,
-                                                           expected_flux.use_constant_weight,
-                                                           expected_flux.order)
+             continuum_fit_parameters) = compute_continuum(
+                 forest, expected_flux.get_mean_cont, expected_flux.get_eta,
+                 expected_flux.get_var_lss, expected_flux.get_fudge,
+                 expected_flux.use_constant_weight, expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
 
@@ -588,7 +581,7 @@ class ExpectedFluxTest(AbstractTest):
             print("Difference found in mean_cont")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_cont, expectations["mean_cont"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
         self.assertTrue(np.allclose(mean_cont, expectations["mean_cont"]))
 
     def test_dr16_expected_flux_compute_var_stats_lin(self):
@@ -622,13 +615,10 @@ class ExpectedFluxTest(AbstractTest):
         # compute the forest continua
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
-             continuum_fit_parameters) = compute_continuum(forest,
-                                                           expected_flux.get_mean_cont,
-                                                           expected_flux.get_eta,
-                                                           expected_flux.get_var_lss,
-                                                           expected_flux.get_fudge,
-                                                           expected_flux.use_constant_weight,
-                                                           expected_flux.order)
+             continuum_fit_parameters) = compute_continuum(
+                 forest, expected_flux.get_mean_cont, expected_flux.get_eta,
+                 expected_flux.get_var_lss, expected_flux.get_fudge,
+                 expected_flux.use_constant_weight, expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
 
@@ -694,13 +684,10 @@ class ExpectedFluxTest(AbstractTest):
         # compute the forest continua
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
-             continuum_fit_parameters) = compute_continuum(forest,
-                                                           expected_flux.get_mean_cont,
-                                                           expected_flux.get_eta,
-                                                           expected_flux.get_var_lss,
-                                                           expected_flux.get_fudge,
-                                                           expected_flux.use_constant_weight,
-                                                           expected_flux.order)
+             continuum_fit_parameters) = compute_continuum(
+                 forest, expected_flux.get_mean_cont, expected_flux.get_eta,
+                 expected_flux.get_var_lss, expected_flux.get_fudge,
+                 expected_flux.use_constant_weight, expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
 
@@ -742,23 +729,23 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a Dr16ExpectedFlux with missing ExpectedFlux Options
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-        }})
+        config.read_dict({"expected_flux": {}})
         expected_message = (
-            "Missing argument 'iter out prefix' required by ExpectedFlux"
-        )
+            "Missing argument 'iter out prefix' required by ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Dr16ExpectedFlux with missing 'force stack delta to zero'
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out prefix": f"iter_out_prefix",
-            "out dir": f"{THIS_DIR}/results/",
-            "num bins variance": 20,
-            "num processors": 1
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1
+            }
+        })
         expected_message = (
             "Missing argument 'force stack delta to zero' required by Dr16ExpectedFlux"
         )
@@ -768,108 +755,115 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a Dr16ExpectedFlux with missing 'limit eta'
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out prefix": f"iter_out_prefix",
-            "out dir": f"{THIS_DIR}/results/",
-            "num bins variance": 20,
-            "num processors": 1,
-            "force stack delta to zero": True,
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+            }
+        })
         expected_message = (
-            "Missing argument 'limit eta' required by Dr16ExpectedFlux"
-        )
+            "Missing argument 'limit eta' required by Dr16ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Dr16ExpectedFlux with missing 'limit var lss'
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out prefix": f"iter_out_prefix",
-            "out dir": f"{THIS_DIR}/results/",
-            "num bins variance": 20,
-            "num processors": 1,
-            "force stack delta to zero": True,
-            "limit eta": "0.0, 1.90",
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+            }
+        })
         expected_message = (
-            "Missing argument 'limit var lss' required by Dr16ExpectedFlux"
-        )
+            "Missing argument 'limit var lss' required by Dr16ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Dr16ExpectedFlux with missing num_iterations
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out prefix": f"iter_out_prefix",
-            "out dir": f"{THIS_DIR}/results/",
-            "num bins variance": 20,
-            "num processors": 1,
-            "force stack delta to zero": True,
-            "limit eta": "0.0, 1.90",
-            "limit var lss": "0.0, 1.90",
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.0, 1.90",
+            }
+        })
         expected_message = (
-            "Missing argument 'min qso in fit' required by Dr16ExpectedFlux"
-        )
+            "Missing argument 'min qso in fit' required by Dr16ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Dr16ExpectedFlux with missing num_iterations
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out prefix": f"iter_out_prefix",
-            "out dir": f"{THIS_DIR}/results/",
-            "num bins variance": 20,
-            "num processors": 1,
-            "force stack delta to zero": True,
-            "limit eta": "0.0, 1.90",
-            "limit var lss": "0.0, 1.90",
-            "min num qso in fit": 100,
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.0, 1.90",
+                "min num qso in fit": 100,
+            }
+        })
         expected_message = (
-            "Missing argument 'num iterations' required by Dr16ExpectedFlux"
-        )
+            "Missing argument 'num iterations' required by Dr16ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Dr16ExpectedFlux with missing order
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out prefix": f"iter_out_prefix",
-            "out dir": f"{THIS_DIR}/results/",
-            "num bins variance": 20,
-            "num processors": 1,
-            "force stack delta to zero": True,
-            "limit eta": "0.0, 1.90",
-            "limit var lss": "0.0, 1.90",
-            "min num qso in fit": 100,
-            "num iterations": 5,
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.0, 1.90",
+                "min num qso in fit": 100,
+                "num iterations": 5,
+            }
+        })
         expected_message = (
-            "Missing argument 'order' required by Dr16ExpectedFlux"
-        )
+            "Missing argument 'order' required by Dr16ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Dr16ExpectedFlux with missing use_constant_weight
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out prefix": f"iter_out_prefix",
-            "out dir": f"{THIS_DIR}/results/",
-            "num bins variance": 20,
-            "num processors": 1,
-            "force stack delta to zero": True,
-            "limit eta": "0.0, 1.90",
-            "limit var lss": "0.0, 1.90",
-            "min num qso in fit": 100,
-            "num iterations": 5,
-            "order": 1,
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.0, 1.90",
+                "min num qso in fit": 100,
+                "num iterations": 5,
+                "order": 1,
+            }
+        })
         expected_message = (
             "Missing argument 'use constant weight' required by Dr16ExpectedFlux"
         )
@@ -879,19 +873,21 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a Dr16ExpectedFlux with missing use_ivar_as_weight
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out prefix": f"iter_out_prefix",
-            "out dir": f"{THIS_DIR}/results/",
-            "num bins variance": 20,
-            "num processors": 1,
-            "force stack delta to zero": True,
-            "limit eta": "0.0, 1.90",
-            "limit var lss": "0.0, 1.90",
-            "min num qso in fit": 100,
-            "num iterations": 5,
-            "order": 1,
-            "use constant weight": False,
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.0, 1.90",
+                "min num qso in fit": 100,
+                "num iterations": 5,
+                "order": 1,
+                "use constant weight": False,
+            }
+        })
         expected_message = (
             "Missing argument 'use ivar as weight' required by Dr16ExpectedFlux"
         )
@@ -901,40 +897,44 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a Dr16ExpectedFlux instance; case: limit eta and limit var_lss with ()
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out prefix": f"iter_out_prefix",
-            "out dir": f"{THIS_DIR}/results/",
-            "num bins variance": 20,
-            "num processors": 1,
-            "force stack delta to zero": True,
-            "limit eta": "(0.0, 1.90)",
-            "limit var lss": "(0.5, 1.40)",
-            "min num qso in fit": 100,
-            "num iterations": 5,
-            "order": 1,
-            "use constant weight": False,
-            "use ivar as weight": False,
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "(0.0, 1.90)",
+                "limit var lss": "(0.5, 1.40)",
+                "min num qso in fit": 100,
+                "num iterations": 5,
+                "order": 1,
+                "use constant weight": False,
+                "use ivar as weight": False,
+            }
+        })
         expected_flux = Dr16ExpectedFlux(config["expected_flux"])
         self.assertTrue(np.allclose(expected_flux.limit_eta, (0.0, 1.9)))
         self.assertTrue(np.allclose(expected_flux.limit_var_lss, (0.5, 1.4)))
 
         # create a Dr16ExpectedFlux instance; case: limit eta and limit var_lss with []
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out prefix": f"iter_out_prefix",
-            "out dir": f"{THIS_DIR}/results/",
-            "num bins variance": 20,
-            "num processors": 1,
-            "force stack delta to zero": True,
-            "limit eta": "[0.0, 1.90]",
-            "limit var lss": "[0.5, 1.40]",
-            "min num qso in fit": 100,
-            "num iterations": 5,
-            "order": 1,
-            "use constant weight": False,
-            "use ivar as weight": False,
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "[0.0, 1.90]",
+                "limit var lss": "[0.5, 1.40]",
+                "min num qso in fit": 100,
+                "num iterations": 5,
+                "order": 1,
+                "use constant weight": False,
+                "use ivar as weight": False,
+            }
+        })
         expected_flux = Dr16ExpectedFlux(config["expected_flux"])
         self.assertTrue(np.allclose(expected_flux.limit_eta, (0.0, 1.9)))
         self.assertTrue(np.allclose(expected_flux.limit_var_lss, (0.5, 1.4)))
@@ -942,20 +942,22 @@ class ExpectedFluxTest(AbstractTest):
         # create a Dr16ExpectedFlux instance; case: limit eta and limit var_lss
         # without parenthesis
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out prefix": f"iter_out_prefix",
-            "out dir": f"{THIS_DIR}/results/",
-            "num bins variance": 20,
-            "num processors": 1,
-            "force stack delta to zero": True,
-            "limit eta": "0.0, 1.90",
-            "limit var lss": "0.5, 1.40",
-            "min num qso in fit": 100,
-            "num iterations": 5,
-            "order": 1,
-            "use constant weight": False,
-            "use ivar as weight": False,
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.5, 1.40",
+                "min num qso in fit": 100,
+                "num iterations": 5,
+                "order": 1,
+                "use constant weight": False,
+                "use ivar as weight": False,
+            }
+        })
         expected_flux = Dr16ExpectedFlux(config["expected_flux"])
         self.assertTrue(np.allclose(expected_flux.limit_eta, (0.0, 1.9)))
         self.assertTrue(np.allclose(expected_flux.limit_var_lss, (0.5, 1.4)))
@@ -987,13 +989,10 @@ class ExpectedFluxTest(AbstractTest):
         # compute the forest continua
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
-             continuum_fit_parameters) = compute_continuum(forest,
-                                                           expected_flux.get_mean_cont,
-                                                           expected_flux.get_eta,
-                                                           expected_flux.get_var_lss,
-                                                           expected_flux.get_fudge,
-                                                           expected_flux.use_constant_weight,
-                                                           expected_flux.order)
+             continuum_fit_parameters) = compute_continuum(
+                 forest, expected_flux.get_mean_cont, expected_flux.get_eta,
+                 expected_flux.get_var_lss, expected_flux.get_fudge,
+                 expected_flux.use_constant_weight, expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
 
@@ -1036,16 +1035,14 @@ class ExpectedFluxTest(AbstractTest):
         continuum_fit_parameters_dict = {}
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
-             continuum_fit_parameters) = compute_continuum(forest,
-                                                           expected_flux.get_mean_cont,
-                                                           expected_flux.get_eta,
-                                                           expected_flux.get_var_lss,
-                                                           expected_flux.get_fudge,
-                                                           expected_flux.use_constant_weight,
-                                                           expected_flux.order)
+             continuum_fit_parameters) = compute_continuum(
+                 forest, expected_flux.get_mean_cont, expected_flux.get_eta,
+                 expected_flux.get_var_lss, expected_flux.get_fudge,
+                 expected_flux.use_constant_weight, expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
-            continuum_fit_parameters_dict[forest.los_id] = continuum_fit_parameters
+            continuum_fit_parameters_dict[
+                forest.los_id] = continuum_fit_parameters
         expected_flux.continuum_fit_parameters = continuum_fit_parameters_dict
 
         # compute variance functions and statistics
@@ -1054,7 +1051,6 @@ class ExpectedFluxTest(AbstractTest):
         # save iter_out_prefix for iteration 0
         expected_flux.save_iteration_step(0)
         self.compare_fits(test_file, out_file)
-
 
         # save iter_out_prefix for final iteration
         expected_flux.save_iteration_step(-1)
@@ -1092,13 +1088,10 @@ class ExpectedFluxTest(AbstractTest):
         # compute the forest continua
         for forest in data.forests:
             (cont_model, bad_continuum_reason,
-             continuum_fit_parameters) = compute_continuum(forest,
-                                                           expected_flux.get_mean_cont,
-                                                           expected_flux.get_eta,
-                                                           expected_flux.get_var_lss,
-                                                           expected_flux.get_fudge,
-                                                           expected_flux.use_constant_weight,
-                                                           expected_flux.order)
+             continuum_fit_parameters) = compute_continuum(
+                 forest, expected_flux.get_mean_cont, expected_flux.get_eta,
+                 expected_flux.get_var_lss, expected_flux.get_fudge,
+                 expected_flux.use_constant_weight, expected_flux.order)
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
 
@@ -1167,20 +1160,20 @@ class ExpectedFluxTest(AbstractTest):
         """Test method __parse_config for class Dr16ExpectedFlux"""
         # create a ExpectedFlux with missing iter_out_prefix
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-        }})
+        config.read_dict({"expected_flux": {}})
         expected_message = (
-            "Missing argument 'iter out prefix' required by ExpectedFlux"
-        )
+            "Missing argument 'iter out prefix' required by ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a ExpectedFlux with invalid iter_out_prefix
         config = ConfigParser()
-        config.read_dict({"expected flux": {
-            "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
-        }})
+        config.read_dict({
+            "expected flux": {
+                "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
+            }
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -1193,39 +1186,41 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a ExpectedFlux with missing num_bins_variance
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out Prefix": f"delta_attributes",
-        }})
+        config.read_dict(
+            {"expected_flux": {
+                "iter out Prefix": f"delta_attributes",
+            }})
         expected_message = (
-            "Missing argument 'num bins variance' required by ExpectedFlux"
-        )
+            "Missing argument 'num bins variance' required by ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a ExpectedFlux with missing num_processors
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out Prefix": f"delta_attributes",
-            "num bins variance": 20,
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out Prefix": f"delta_attributes",
+                "num bins variance": 20,
+            }
+        })
         expected_message = (
-            "Missing argument 'num processors' required by ExpectedFlux"
-        )
+            "Missing argument 'num processors' required by ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a ExpectedFlux with missing out_dir
         config = ConfigParser()
-        config.read_dict({"expected_flux": {
-            "iter out Prefix": f"delta_attributes",
-            "num bins variance": 20,
-            "num processors": 1,
-        }})
+        config.read_dict({
+            "expected_flux": {
+                "iter out Prefix": f"delta_attributes",
+                "num bins variance": 20,
+                "num processors": 1,
+            }
+        })
         expected_message = (
-            "Missing argument 'out dir' required by ExpectedFlux"
-        )
+            "Missing argument 'out dir' required by ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
@@ -1235,13 +1230,14 @@ class ExpectedFluxTest(AbstractTest):
         Load a TrueContinuum instance.
         """
         config = ConfigParser()
-        config.read_dict(
-            {"expected flux": {
+        config.read_dict({
+            "expected flux": {
                 "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
                 "num processors": 1,
-            }})
+            }
+        })
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -1273,8 +1269,7 @@ class ExpectedFluxTest(AbstractTest):
             expected_flux = TrueContinuum(config["expected flux"])
         expected_message = (
             "Couldn't find compatible raw satistics file. Provide a custom one using"
-            " 'raw statistics file' field."
-            )
+            " 'raw statistics file' field.")
         self.compare_error_message(context_manager, expected_message)
 
     def test_true_continuum_compute_mean_cont_lin(self):
@@ -1328,19 +1323,22 @@ class ExpectedFluxTest(AbstractTest):
             print("Difference found in mean_cont")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_cont, expectations["mean_cont"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
         self.assertTrue(np.allclose(mean_cont, expectations["mean_cont"]))
 
         # compare mean_flux data with obtained results
-        mean_cont_weight = expected_flux.get_mean_cont_weight(expectations["log_lambda"])
+        mean_cont_weight = expected_flux.get_mean_cont_weight(
+            expectations["log_lambda"])
         if not np.allclose(mean_cont_weight, expectations["mean_cont_weight"]):
             print(f"\nOriginal file: {test_file}")
             print(f"New file: {out_file}")
             print("Difference found in mean_cont_weight")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont_weight, expectations["mean_cont_weight"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
-        self.assertTrue(np.allclose(mean_cont_weight, expectations["mean_cont_weight"]))
+            for i1, i2 in zip(mean_cont_weight,
+                              expectations["mean_cont_weight"]):
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
+        self.assertTrue(
+            np.allclose(mean_cont_weight, expectations["mean_cont_weight"]))
 
     def test_true_continuum_compute_mean_cont_log(self):
         """Test method compute_mean_cont for class TrueContinuum using
@@ -1396,19 +1394,22 @@ class ExpectedFluxTest(AbstractTest):
             print("Difference found in mean_cont")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_cont, expectations["mean_cont"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
         self.assertTrue(np.allclose(mean_cont, expectations["mean_cont"]))
 
         # compare mean_flux data with obtained results
-        mean_cont_weight = expected_flux.get_mean_cont_weight(expectations["log_lambda"])
+        mean_cont_weight = expected_flux.get_mean_cont_weight(
+            expectations["log_lambda"])
         if not np.allclose(mean_cont_weight, expectations["mean_cont_weight"]):
             print(f"\nOriginal file: {test_file}")
             print(f"New file: {out_file}")
             print("Difference found in mean_cont_weight")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont_weight, expectations["mean_cont_weight"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
-        self.assertTrue(np.allclose(mean_cont_weight, expectations["mean_cont_weight"]))
+            for i1, i2 in zip(mean_cont_weight,
+                              expectations["mean_cont_weight"]):
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
+        self.assertTrue(
+            np.allclose(mean_cont_weight, expectations["mean_cont_weight"]))
 
     def test_true_continuum_expected_flux_lin(self):
         """Test method compute expected flux for class TrueContinuum for
@@ -1423,11 +1424,16 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({
             "data": desi_mock_data_kwargs,
             "expected flux": {
-                "type": "TrueContinuum",
-                "input directory": f"{THIS_DIR}/data",
-                "iter out prefix": "true_iter_out_prefix_compute_expected_flux_lin",
-                "num processors": 1,
-                "out dir": f"{THIS_DIR}/results/",
+                "type":
+                    "TrueContinuum",
+                "input directory":
+                    f"{THIS_DIR}/data",
+                "iter out prefix":
+                    "true_iter_out_prefix_compute_expected_flux_lin",
+                "num processors":
+                    1,
+                "out dir":
+                    f"{THIS_DIR}/results/",
             },
         })
 
@@ -1460,11 +1466,16 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({
             "data": kwargs,
             "expected flux": {
-                "type": "TrueContinuum",
-                "input directory": f"{THIS_DIR}/data",
-                "iter out prefix": "true_iter_out_prefix_compute_expected_flux_log",
-                "out dir": f"{THIS_DIR}/results/",
-                "num processors": 1,
+                "type":
+                    "TrueContinuum",
+                "input directory":
+                    f"{THIS_DIR}/data",
+                "iter out prefix":
+                    "true_iter_out_prefix_compute_expected_flux_log",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
             },
         })
 
@@ -1530,7 +1541,7 @@ class ExpectedFluxTest(AbstractTest):
             print("Difference found in var_lss")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_cont, expectations["var_lss"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
         self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
 
         # compare mean_flux data with obtained results
@@ -1541,7 +1552,7 @@ class ExpectedFluxTest(AbstractTest):
             print("Difference found in mean_flux")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_cont, expectations["mean_flux"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
         self.assertTrue(np.allclose(mean_flux, expectations["mean_flux"]))
 
     def test_true_continuum_read_raw_statistics_log(self):
@@ -1593,7 +1604,7 @@ class ExpectedFluxTest(AbstractTest):
             print("Difference found in var_lss")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_cont, expectations["var_lss"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
         self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
 
         # compare mean_flux data with obtained results
@@ -1604,7 +1615,7 @@ class ExpectedFluxTest(AbstractTest):
             print("Difference found in mean_flux")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_cont, expectations["mean_flux"]):
-                print(i1, i2, np.isclose(i1, i2), i1-i2)
+                print(i1, i2, np.isclose(i1, i2), i1 - i2)
         self.assertTrue(np.allclose(mean_flux, expectations["mean_flux"]))
 
     def test_true_continuum_read_true_continuum_lin(self):
@@ -1668,19 +1679,22 @@ class ExpectedFluxTest(AbstractTest):
         for forest in data.forests:
             if forest.continuum is None:
                 if continua.get(forest.los_id) is not None:
-                    print(f"For forest with los_id {forest.los_id}, new continuum "
-                          "is None. Expected continua:")
+                    print(
+                        f"For forest with los_id {forest.los_id}, new continuum "
+                        "is None. Expected continua:")
                     print(continua.get(forest.los_id))
                 self.assertTrue(continua.get(forest.los_id) is None)
             elif continua.get(forest.los_id) is None:
                 self.assertTrue(forest.continuum is None)
             else:
-                if not np.allclose(forest.continuum, continua.get(forest.los_id)):
+                if not np.allclose(forest.continuum, continua.get(
+                        forest.los_id)):
                     print("Difference found in forest.continuum")
                     print(f"forest.los_id: {forest.los_id}")
                     print(f"result test are_close result-test")
-                    for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
-                        print(i1, i2, np.isclose(i1, i2), i1-i2)
+                    for i1, i2 in zip(forest.continuum,
+                                      continua.get(forest.los_id)):
+                        print(i1, i2, np.isclose(i1, i2), i1 - i2)
                 self.assertTrue(
                     np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
@@ -1751,19 +1765,22 @@ class ExpectedFluxTest(AbstractTest):
         for forest in data.forests:
             if forest.continuum is None:
                 if continua.get(forest.los_id) is not None:
-                    print(f"For forest with los_id {forest.los_id}, new continuum "
-                          "is None. Expected continua:")
+                    print(
+                        f"For forest with los_id {forest.los_id}, new continuum "
+                        "is None. Expected continua:")
                     print(continua.get(forest.los_id))
                 self.assertTrue(continua.get(forest.los_id) is None)
             elif continua.get(forest.los_id) is None:
                 self.assertTrue(forest.continuum is None)
             else:
-                if not np.allclose(forest.continuum, continua.get(forest.los_id)):
+                if not np.allclose(forest.continuum, continua.get(
+                        forest.los_id)):
                     print("Difference found in forest.continuum")
                     print(f"forest.los_id: {forest.los_id}")
                     print(f"result test are_close result-test")
-                    for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
-                        print(i1, i2, np.isclose(i1, i2), i1-i2)
+                    for i1, i2 in zip(forest.continuum,
+                                      continua.get(forest.los_id)):
+                        print(i1, i2, np.isclose(i1, i2), i1 - i2)
                 self.assertTrue(
                     np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
@@ -1809,10 +1826,10 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.populate_los_ids(data.forests)
 
         for i, key in enumerate(("mean expected flux", "weights", "continuum")):
-            self.assertTrue(np.allclose(
-                expected_flux.los_ids[59152][key],
-                np.loadtxt(f"{test_folder}/los_ids_{i}.txt")
-            ))
+            self.assertTrue(
+                np.allclose(expected_flux.los_ids[59152][key],
+                            np.loadtxt(f"{test_folder}/los_ids_{i}.txt")))
+
 
 if __name__ == '__main__':
     unittest.main()

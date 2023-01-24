@@ -16,7 +16,9 @@ defaults = {
     "los_id name": "THING_ID",
 }
 
-accepted_options = ["dla mask limit", "los_id name", "mask file", "filename", "keep pixels"]
+accepted_options = [
+    "dla mask limit", "los_id name", "mask file", "filename", "keep pixels"
+]
 
 np.random.seed(0)
 NUM_POINTS = 10000
@@ -45,6 +47,7 @@ class DlaMask(Mask):
     mask: astropy.Table
     Table containing specific intervals of wavelength to be masked for DLAs
     """
+
     def __init__(self, config):
         """Initializes class instance.
 
@@ -84,21 +87,20 @@ class DlaMask(Mask):
                 hdul_colnames = set(hdul["DLACAT"].get_colnames())
                 z_colname = hdul_colnames.intersection(accepted_zcolnames)
                 if not z_colname:
-                    raise ValueError(f"Z colname has to be one of {', '.join(accepted_zcolnames)}")
+                    raise ValueError(
+                        f"Z colname has to be one of {', '.join(accepted_zcolnames)}"
+                    )
                 z_colname = z_colname.pop()
                 columns_list = [los_id_name, z_colname, "NHI"]
                 cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
         except OSError as error:
-            raise MaskError(
-                f"Error loading DlaMask. File {filename} does "
-                "not have extension 'DLACAT'"
-            ) from error
+            raise MaskError(f"Error loading DlaMask. File {filename} does "
+                            "not have extension 'DLACAT'") from error
         except ValueError as error:
             aux = "', '".join(columns_list)
             raise MaskError(
                 f"Error loading DlaMask. File {filename} does "
-                f"not have fields '{aux}' in HDU 'DLACAT'"
-            ) from error
+                f"not have fields '{aux}' in HDU 'DLACAT'") from error
 
         # group DLAs on the same line of sight together
         self.los_ids = {}
@@ -108,7 +110,8 @@ class DlaMask(Mask):
         num_dlas = np.sum([len(los_id) for los_id in self.los_ids.values()])
 
         self.logger.progress(f'In catalog: {num_dlas} DLAs')
-        self.logger.progress(f'In catalog: {len(self.los_ids)} forests have a DLA\n')
+        self.logger.progress(
+            f'In catalog: {len(self.los_ids)} forests have a DLA\n')
 
         # setup transmission limit
         # transmissions below this number are masked
@@ -152,22 +155,22 @@ class DlaMask(Mask):
         if self.los_ids.get(forest.los_id) is not None:
             dla_transmission = np.ones(len(lambda_))
             for (z_abs, nhi) in self.los_ids.get(forest.los_id):
-                dla_transmission *= DlaProfile(lambda_, z_abs,
-                                               nhi).transmission
+                dla_transmission *= DlaProfile(lambda_, z_abs, nhi).transmission
 
             # find out which pixels to mask
             w = dla_transmission > self.dla_mask_limit
             if len(self.mask) > 0:
                 for mask_range in self.mask:
                     for (z_abs, nhi) in self.los_ids.get(forest.los_id):
-                        w &= ((lambda_ / (1. + z_abs) < mask_range['wave_min'])
-                              | (lambda_ /
-                                 (1. + z_abs) > mask_range['wave_max']))
+                        w &= ((lambda_ /
+                               (1. + z_abs) < mask_range['wave_min']) |
+                              (lambda_ / (1. + z_abs) > mask_range['wave_max']))
 
             # do the actual masking
             forest.transmission_correction *= dla_transmission
             for param in Forest.mask_fields:
                 self._masker(forest, param, w)
+
 
 class DlaProfile:
     """Class to represent Damped Lyman-alpha Absorbers.
@@ -195,6 +198,7 @@ class DlaProfile:
     z_abs: float
     Redshift of the absorption
     """
+
     def __init__(self, lambda_, z_abs, nhi):
         """Initialize class instance.
 

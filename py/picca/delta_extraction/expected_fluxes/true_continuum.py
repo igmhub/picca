@@ -20,11 +20,12 @@ accepted_options = update_accepted_options(accepted_options, [
     "num bins variance", "force stack delta to zero"
 ])
 
-defaults = update_default_options(defaults, {
-    "raw statistics file": "",
-    "use constant weight": False,
-    "force stack delta to zero": False
-})
+defaults = update_default_options(
+    defaults, {
+        "raw statistics file": "",
+        "use constant weight": False,
+        "force stack delta to zero": False
+    })
 
 IN_NSIDE = 16
 
@@ -76,7 +77,6 @@ class TrueContinuum(ExpectedFlux):
     a function of wavelength.
     """
 
-
     def __init__(self, config):
         """Initialize class instance.
 
@@ -122,7 +122,8 @@ class TrueContinuum(ExpectedFlux):
         self.use_constant_weight = config.getboolean("use constant weight")
         self.raw_statistics_filename = config.get("raw statistics file")
 
-        self.force_stack_delta_to_zero = config.getboolean("force stack delta to zero")
+        self.force_stack_delta_to_zero = config.getboolean(
+            "force stack delta to zero")
 
     def compute_expected_flux(self, forests):
         """
@@ -186,7 +187,7 @@ class TrueContinuum(ExpectedFlux):
         else:
             var_lss = self.get_var_lss(forest.log_lambda[w])
             ivar_pipe = forest.ivar * forest.continuum**2
-            variance[w] = var_lss + 1/ivar_pipe[w]
+            variance[w] = var_lss + 1 / ivar_pipe[w]
 
         return variance
 
@@ -224,7 +225,7 @@ class TrueContinuum(ExpectedFlux):
 
             # get the variance functions
             if self.use_constant_weight:
-                w = forest.ivar>0
+                w = forest.ivar > 0
                 weights = np.empty_like(forest.log_lambda)
                 weights[w] = 1
                 weights[~w] = 0
@@ -260,11 +261,12 @@ class TrueContinuum(ExpectedFlux):
         -----
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
-        healpixes = np.array([healpy.ang2pix(IN_NSIDE,
-                                 np.pi / 2 - forest.dec,
-                                 forest.ra,
-                                 nest=True)
-                              for forest in forests], dtype=int)
+        healpixes = np.array([
+            healpy.ang2pix(
+                IN_NSIDE, np.pi / 2 - forest.dec, forest.ra, nest=True)
+            for forest in forests
+        ],
+                             dtype=int)
 
         unique_healpixes = np.unique(healpixes)
         # healpix_n_forests is a list of (sublist, healpix),
@@ -280,8 +282,8 @@ class TrueContinuum(ExpectedFlux):
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
             with context.Pool(processes=self.num_processors) as pool:
-                grouped_forests = pool.starmap(self.read_true_continuum_one_healpix,
-                    forests_n_healpix)
+                grouped_forests = pool.starmap(
+                    self.read_true_continuum_one_healpix, forests_n_healpix)
         else:
             grouped_forests = []
             for subforests, healpix in forests_n_healpix:
@@ -403,7 +405,8 @@ class TrueContinuum(ExpectedFlux):
                 err_msg += "File wave solution is linear.\n"
 
         elif Forest.wave_solution == "lin":
-            pixel_step = 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]
+            pixel_step = 10**Forest.log_lambda_grid[
+                1] - 10**Forest.log_lambda_grid[0]
             pixel_step_key = 'DEL_L'
             log_lambda = np.log10(fits_data['LAMBDA'])
 
@@ -411,7 +414,8 @@ class TrueContinuum(ExpectedFlux):
                 is_rawfile_consistent = False
                 err_msg += "File wave solution is not linear.\n"
 
-        def _check_header_consistency(_key, _test_val, atol, _consistent, _err_msg):
+        def _check_header_consistency(_key, _test_val, atol, _consistent,
+                                      _err_msg):
             if not np.isclose(header[_key], _test_val, atol=atol, rtol=1e-3):
                 _consistent = False
                 _err_msg += f"header['{_key}']={header[_key]:.2f} vs input={_test_val:.2f}\n"
@@ -426,21 +430,23 @@ class TrueContinuum(ExpectedFlux):
         is_rawfile_consistent, err_msg = _check_header_consistency(
             pixel_step_key, pixel_step, 1e-6, is_rawfile_consistent, err_msg)
         # Check minimum lambda
-        atol = (10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0])/2
+        atol = (10**Forest.log_lambda_grid[1] -
+                10**Forest.log_lambda_grid[0]) / 2
         is_rawfile_consistent, err_msg = _check_header_consistency(
             'L_MIN', lambda_min, atol, is_rawfile_consistent, err_msg)
         # Check maximum lambda
-        atol = (10**Forest.log_lambda_grid[-1] - 10**Forest.log_lambda_grid[-2])/2
+        atol = (10**Forest.log_lambda_grid[-1] -
+                10**Forest.log_lambda_grid[-2]) / 2
         is_rawfile_consistent, err_msg = _check_header_consistency(
             'L_MAX', lambda_max, atol, is_rawfile_consistent, err_msg)
         # Check minimum rest-frame lambda
-        atol = (10**Forest.log_lambda_rest_frame_grid[1]
-              - 10**Forest.log_lambda_rest_frame_grid[0])/2
+        atol = (10**Forest.log_lambda_rest_frame_grid[1] -
+                10**Forest.log_lambda_rest_frame_grid[0]) / 2
         is_rawfile_consistent, err_msg = _check_header_consistency(
             'LR_MIN', lambda_rest_min, atol, is_rawfile_consistent, err_msg)
         # Check maximum rest-frame lambda
-        atol = (10**Forest.log_lambda_rest_frame_grid[-1]
-              - 10**Forest.log_lambda_rest_frame_grid[-2])/2
+        atol = (10**Forest.log_lambda_rest_frame_grid[-1] -
+                10**Forest.log_lambda_rest_frame_grid[-2]) / 2
         is_rawfile_consistent, err_msg = _check_header_consistency(
             'LR_MAX', lambda_rest_max, atol, is_rawfile_consistent, err_msg)
 

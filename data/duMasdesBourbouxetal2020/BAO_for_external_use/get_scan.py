@@ -35,10 +35,11 @@ def get_scan(path, output, chi2_format="chi2"):
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:
-        print("Usage: " + __file__ + " <input_h5_file>" + " <output_file>"
-              + " chi2/lik")
+        print("Usage: " + __file__ + " <input_h5_file>" + " <output_file>" +
+              " chi2/lik")
         print("The input must be a valid picca fitter2 scan output HDF file.")
-        print("At the end add the word <chi2> if you want the last column to be chi2 \
+        print(
+            "At the end add the word <chi2> if you want the last column to be chi2 \
             or <lik> if you want it to be a likelihood")
     else:
         path = sys.argv[1]

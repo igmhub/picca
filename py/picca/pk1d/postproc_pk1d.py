@@ -238,11 +238,10 @@ def compute_mean_pk1d(p1d_table,
     metadata_table['k_max'] = kbin_edges[-1] * np.ones(nbins_z)
 
     # Number of chunks in each redshift bin
-    n_chunks, _, _ = binned_statistic(
-        z_array,
-        z_array,
-        statistic='count',
-        bins=zbin_edges)
+    n_chunks, _, _ = binned_statistic(z_array,
+                                      z_array,
+                                      statistic='count',
+                                      bins=zbin_edges)
     metadata_table['N_chunks'] = n_chunks
 
     zbin_centers = np.around((zbin_edges[1:] + zbin_edges[:-1]) / 2, 5)
@@ -263,26 +262,26 @@ def compute_mean_pk1d(p1d_table,
         for ikbin, kbin in enumerate(kbin_edges[:-1]):  # Main loop 2) k bins
 
             if apply_z_weights:  # special chunk selection in that case
-                delta_z = zbin_centers[1:]-zbin_centers[:-1]
+                delta_z = zbin_centers[1:] - zbin_centers[:-1]
                 if not np.allclose(delta_z, delta_z[0], atol=1.e-3):
-                    raise ValueError("z bins should have equal widths with apply_z_weights.")
+                    raise ValueError(
+                        "z bins should have equal widths with apply_z_weights.")
                 delta_z = delta_z[0]
 
                 select = (p1d_table['k'] < kbin_edges[ikbin + 1]) & (
-                            p1d_table['k'] > kbin_edges[ikbin]
-                        )
-                if izbin in (0, nbins_z-1):
+                    p1d_table['k'] > kbin_edges[ikbin])
+                if izbin in (0, nbins_z - 1):
                     # First and last bin: in order to avoid edge effects,
                     #    use only chunks within the bin
                     select = select & (
                         p1d_table['forest_z'] > zbin_edges[izbin]) & (
-                        p1d_table['forest_z'] < zbin_edges[izbin+1])
+                            p1d_table['forest_z'] < zbin_edges[izbin + 1])
                 else:
                     select = select & (
-                        p1d_table['forest_z'] < zbin_centers[izbin+1]) & (
-                        p1d_table['forest_z'] > zbin_centers[izbin-1])
+                        p1d_table['forest_z'] < zbin_centers[izbin + 1]) & (
+                            p1d_table['forest_z'] > zbin_centers[izbin - 1])
 
-                redshift_weights = 1.0 - np.abs(p1d_table['forest_z'][select]-
+                redshift_weights = 1.0 - np.abs(p1d_table['forest_z'][select] -
                                                 zbin_centers[izbin]) / delta_z
 
             else:
@@ -331,12 +330,10 @@ def compute_mean_pk1d(p1d_table,
                                                           statistic='std',
                                                           bins=snr_bin_edges)
                     # the *_ is to ignore the rest of the return arguments
-                    coef, *_ = curve_fit(
-                        fitfunc_variance_pk1d,
-                        snr_bins,
-                        standard_dev**2,
-                        bounds=(0, np.inf)
-                    )
+                    coef, *_ = curve_fit(fitfunc_variance_pk1d,
+                                         snr_bins,
+                                         standard_dev**2,
+                                         bounds=(0, np.inf))
 
                     # Model variance from fit function
                     data_snr[data_snr >
@@ -347,8 +344,9 @@ def compute_mean_pk1d(p1d_table,
                     if apply_z_weights:
                         weights *= redshift_weights
                     mean = np.average(data_values, weights=weights)
-                    if apply_z_weights:   # Analytic expression for the re-weighted average:
-                        error = np.sqrt(np.sum(weights*redshift_weights))/np.sum(weights)
+                    if apply_z_weights:  # Analytic expression for the re-weighted average:
+                        error = np.sqrt(np.sum(
+                            weights * redshift_weights)) / np.sum(weights)
                     else:
                         error = np.sqrt(1. / np.sum(weights))
                     if output_snrfit is not None and col == 'Pk':
@@ -375,19 +373,24 @@ def compute_mean_pk1d(p1d_table,
                     mean = np.average(p1d_table[col][select], weights=weights)
                     # Need to rescale the weights to find the error:
                     #   weights_true = weights * (num_chunks - 1) / alpha
-                    alpha = np.sum(weights * ((p1d_table[col][select] - mean)**2))
-                    error = np.sqrt(alpha / (np.sum(weights) * (num_chunks - 1)))
+                    alpha = np.sum(weights *
+                                   ((p1d_table[col][select] - mean)**2))
+                    error = np.sqrt(alpha / (np.sum(weights) *
+                                             (num_chunks - 1)))
 
                 elif weight_method == 'no_weights':
                     if apply_z_weights:
-                        mean = np.average(p1d_table[col][select], weights=redshift_weights)
+                        mean = np.average(p1d_table[col][select],
+                                          weights=redshift_weights)
                         # simple analytic expression:
                         error = np.std(p1d_table[col][select]) * (
-                                np.sqrt(np.sum(redshift_weights**2)) / np.sum(redshift_weights) )
+                            np.sqrt(np.sum(redshift_weights**2)) /
+                            np.sum(redshift_weights))
                     else:
                         mean = np.mean(p1d_table[col][select])
                         # unbiased estimate: num_chunks-1
-                        error = np.std(p1d_table[col][select]) / np.sqrt(num_chunks - 1)
+                        error = np.std(
+                            p1d_table[col][select]) / np.sqrt(num_chunks - 1)
 
                 else:
                     raise ValueError(
@@ -466,10 +469,9 @@ def run_postproc_pk1d(data_dir,
         tuple(output_readpk1d[i][1] for i in range(len(output_readpk1d))))
 
     userprint('Individual P1Ds read, now computing statistics.')
-    mean_p1d_table, metadata_table = compute_mean_pk1d(p1d_table, z_array,
-                                                      zbin_edges, kbin_edges,
-                                                      weight_method, apply_z_weights, nomedians,
-                                                      velunits, output_snrfit)
+    mean_p1d_table, metadata_table = compute_mean_pk1d(
+        p1d_table, z_array, zbin_edges, kbin_edges, weight_method,
+        apply_z_weights, nomedians, velunits, output_snrfit)
     result = fitsio.FITS(output_file, 'rw', clobber=True)
     result.write(mean_p1d_table.as_array(), header={'velunits': velunits})
     result.write(metadata_table.as_array())

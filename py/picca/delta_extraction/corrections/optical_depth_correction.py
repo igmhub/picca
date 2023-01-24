@@ -7,8 +7,10 @@ from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
 from picca.delta_extraction.utils import ABSORBER_IGM
 
-accepted_options = ["optical depth absorber", "optical depth gamma",
-                    "optical depth tau"]
+accepted_options = [
+    "optical depth absorber", "optical depth gamma", "optical depth tau"
+]
+
 
 class OpticalDepthCorrection(Correction):
     """Class to correct for optical depths contribution
@@ -56,17 +58,20 @@ class OpticalDepthCorrection(Correction):
         tau_list = config.get("optical depth tau")
         if tau_list is None:
             raise CorrectionError(
-                "Missing argument 'optical depth tau' required by SdssOpticalDepthCorrection")
+                "Missing argument 'optical depth tau' required by SdssOpticalDepthCorrection"
+            )
         self.tau_list = [float(item) for item in tau_list.split()]
         gamma_list = config.get("optical depth gamma")
         if gamma_list is None:
             raise CorrectionError(
-                "Missing argument 'optical depth gamma' required by SdssOpticalDepthCorrection")
+                "Missing argument 'optical depth gamma' required by SdssOpticalDepthCorrection"
+            )
         self.gamma_list = [float(item) for item in gamma_list.split()]
         absorber_list = config.get("optical depth absorber")
         if absorber_list is None:
             raise CorrectionError(
-                "Missing argument 'optical depth absorber' required by SdssOpticalDepthCorrection")
+                "Missing argument 'optical depth absorber' required by SdssOpticalDepthCorrection"
+            )
         absorber_list = [item.upper() for item in absorber_list.split()]
         self.lambda_rest_frame_list = [
             ABSORBER_IGM[absorber] for absorber in absorber_list

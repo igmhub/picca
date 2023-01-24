@@ -206,8 +206,7 @@ def _save_deltas_one_healpix(out_dir, healpix, forests, save_format):
     if save_format == "ImageHDU":
         return _save_deltas_one_healpix_image(out_dir, healpix, forests)
     raise DataError("Invalid format. Expected one of " +
-                    " ".join(accepted_save_format) +
-                    f" Found: {save_format}")
+                    " ".join(accepted_save_format) + f" Found: {save_format}")
 
 
 class Data:
