@@ -10,11 +10,16 @@ jobs:
       - uses: actions/checkout@master
         with:
           ref: ${{ github.head_ref }}
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y install libbz2-dev
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install yapf toml
       - name: autoyapf
         id: autoyapf
-        uses: mritunjaysharma394/autoyapf@v2
-        with:
-          args: --style google --recursive --in-place .
+        run: |
+          yapf --style google --recursive --in-place .
       - name: Check for modified files
         id: git-check
         run: echo "modified=$(if git diff-index --quiet HEAD --; then echo "false"; else echo "true"; fi)" >> $GITHUB_ENV
