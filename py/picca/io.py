@@ -68,7 +68,8 @@ def read_dlas(filename,obj_id_name='THING_ID'):
     # group DLAs on the same line of sight together
     dlas = {}
     for thingid in np.unique(cat[obj_id_name]):
-        w = (thingid == cat[obj_id_name]); dlas[thingid] = list(zip(cat['Z'][w], cat['NHI'][w]))
+        w = (thingid == cat[obj_id_name])
+        dlas[thingid] = list(zip(cat['Z'][w], cat['NHI'][w]))
     num_dlas = np.sum([len(dla) for dla in dlas.values()])
 
     userprint(' In catalog: {} DLAs'.format(num_dlas))
