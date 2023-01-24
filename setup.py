@@ -16,7 +16,8 @@ long_description = (this_directory / "README.md").read_text()
 exec(open('py/picca/_version.py').read())
 version = __version__
 
-setup(name="picca",
+setup(
+    name="picca",
     version=version,
     description=description,
     long_description=long_description,
