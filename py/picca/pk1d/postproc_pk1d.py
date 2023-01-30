@@ -249,6 +249,7 @@ def compute_mean_pk1d(p1d_table,
              13))  # 13 entries: z k a b + 9 SNR bins used for the fit
 
     for izbin, _ in enumerate(zbin_edges[:-1]):  # Main loop 1) z bins
+        # CR - need to be multiprocessed for all redshifts
 
         if n_chunks[izbin] == 0:  # Fill rows with NaNs
             i_min = izbin * nbins_k
@@ -392,23 +393,26 @@ def compute_mean_pk1d(p1d_table,
                     
                               
     if (compute_covariance) | (compute_bootstrap):
-
-        # Initialize cov_table of len = (nzbins * nkbins * nkbins) corresponding to hdu[3] in final ouput
-        cov_table = Table()
-        cov_table['zbin'] = np.zeros(nbins_z * nbins_k * nbins_k)
-        cov_table['index_zbin'] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
-        cov_table['N'] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
-        cov_table['covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)
-        
-        if compute_bootstrap:
-            cov_table['boot_covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)
-            cov_table['error_boot_covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)        
-        
-        k_index = np.full(len(p1d_table['k']), -1 , dtype=int)
-        for ikbin, kbin in enumerate(kbin_edges[:-1]):  # First loop 1) k bins
-            select = (p1d_table['k'] < kbin_edges[ikbin + 1]) & (
-                      p1d_table['k'] > kbin_edges[ikbin])  # select a specific k bin
-            k_index[select] = ikbin
+        if "chunk_id" not in p1d_table.columns:
+            print("chunk_id not in individual pk files, necessary to compute covariance. Skipping calculation")
+            compute_covariance, compute_bootstrap = False, False
+        else:
+            # Initialize cov_table of len = (nzbins * nkbins * nkbins) corresponding to hdu[3] in final ouput
+            cov_table = Table()
+            cov_table['zbin'] = np.zeros(nbins_z * nbins_k * nbins_k)
+            cov_table['index_zbin'] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
+            cov_table['N'] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
+            cov_table['covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)
+            
+            if compute_bootstrap:
+                cov_table['boot_covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)
+                cov_table['error_boot_covariance'] = np.zeros(nbins_z * nbins_k * nbins_k)        
+            
+            k_index = np.full(len(p1d_table['k']), -1 , dtype=int)
+            for ikbin, kbin in enumerate(kbin_edges[:-1]):  # First loop 1) k bins
+                select = (p1d_table['k'] < kbin_edges[ikbin + 1]) & (
+                        p1d_table['k'] > kbin_edges[ikbin])  # select a specific k bin
+                k_index[select] = ikbin
     else:
         cov_table = None
         
