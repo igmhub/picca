@@ -162,6 +162,25 @@ def main(cmdargs):
                         required=False,
                         help='Number of CPUs used to read input P1D files')
 
+    parser.add_argument('--covariance',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Compute covariance matrix, cpu-intensive calculation')
+
+    parser.add_argument('--bootstrap',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Compute covariance matrix with bootstrap method, very cpu-intensive calculation')
+
+    parser.add_argument('--nbootstrap',
+                        type=int,
+                        default=20,
+                        required=False,
+                        help='Number of bootstrap iteration used')
+
+
     args = parser.parse_args(sys.argv[1:])
 
     if (args.weight_method != 'no_weights') and (args.snr_cut_scheme is not None):
@@ -212,7 +231,10 @@ def main(cmdargs):
                                     nomedians=args.no_median,
                                     velunits=args.velunits,
                                     overwrite=args.overwrite,
-                                    ncpu = args.ncpu)
+                                    ncpu = args.ncpu,
+                                    compute_covariance=args.covariance,
+                                    compute_bootstrap=args.bootstrap,
+                                    number_bootstrap=args.nbootstrap)
 
 
 if __name__ == '__main__':
