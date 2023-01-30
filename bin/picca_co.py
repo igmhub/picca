@@ -169,6 +169,12 @@ def main(cmdargs):
         required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--fid-H0',
+                        type=float,
+                        default=67.31,
+                        required=False,
+                        help=('Hubble constant of fiducial LambdaCDM cosmology'))
+
     parser.add_argument(
         '--type-corr',
         type=str,
@@ -218,7 +224,8 @@ def main(cmdargs):
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl)
+                            wl=args.fid_wl,
+                            H0=args.fid_H0)
 
     ### Read objects 1
     objs, z_min = io.read_objects(args.drq, args.nside, args.z_min_obj,

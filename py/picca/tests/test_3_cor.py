@@ -145,6 +145,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_cf.main(cmd.split()[1:])
 
@@ -173,6 +174,7 @@ class TestCor(AbstractTest):
         cmd += " --np 15"
         cmd += " --nt 15"
         cmd += " --nproc 1"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_cf.main(cmd.split()[1:])
 
@@ -203,6 +205,7 @@ class TestCor(AbstractTest):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
 
@@ -234,6 +237,7 @@ class TestCor(AbstractTest):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_metal_dmat.main(cmd.split()[1:])
 
@@ -264,6 +268,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_wick.main(cmd.split()[1:])
 
@@ -310,6 +315,7 @@ class TestCor(AbstractTest):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_cf.main(cmd.split()[1:])
 
@@ -343,6 +349,7 @@ class TestCor(AbstractTest):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
 
@@ -378,6 +385,7 @@ class TestCor(AbstractTest):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_metal_dmat.main(cmd.split()[1:])
 
@@ -418,6 +426,7 @@ class TestCor(AbstractTest):
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
         cmd += " --nproc 1"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_xcf_angl.main(cmd.split()[1:])
 
@@ -446,6 +455,7 @@ class TestCor(AbstractTest):
         cmd += " --np 30"
         cmd += " --nt 15"
         cmd += " --nproc 1"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_xcf.main(cmd.split()[1:])
 
@@ -477,6 +487,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_xdmat.main(cmd.split()[1:])
 
@@ -506,6 +517,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_metal_xdmat.main(cmd.split()[1:])
 
@@ -536,6 +548,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_xwick.main(cmd.split()[1:])
 
@@ -600,6 +613,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr DD"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_co.main(cmd.split()[1:])
         ### Send
@@ -614,6 +628,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr RR"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_co.main(cmd.split()[1:])
         ### Send
@@ -629,6 +644,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr DR"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_co.main(cmd.split()[1:])
         ### Send
@@ -644,6 +660,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr RD"
+        cmd += " --fid-H0 100"
         print(repr(cmd))
         picca.bin.picca_co.main(cmd.split()[1:])
 

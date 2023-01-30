@@ -184,6 +184,12 @@ def main(cmdargs):
         required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--fid-H0',
+                        type=float,
+                        default=67.31,
+                        required=False,
+                        help=('Hubble constant of fiducial LambdaCDM cosmology'))
+
     parser.add_argument('--max-diagram',
                         type=int,
                         default=4,
@@ -236,7 +242,7 @@ def main(cmdargs):
                         default=None,
                         required=False,
                         help='Rebin factor for deltas. If not None, deltas will '
-                             'be rebinned by that factor')    
+                             'be rebinned by that factor')
 
     args = parser.parse_args(cmdargs)
     if args.nproc is None:
@@ -270,6 +276,7 @@ def main(cmdargs):
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
                             wl=args.fid_wl,
+                            H0=args.fid_H0,
                             blinding=blinding)
 
     ### Read deltas
