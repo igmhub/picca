@@ -211,7 +211,7 @@ def main(cmdargs):
                         default=0.,
                         required=False,
                         help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
-    
+
     parser.add_argument('--fid-H0',
                         type=float,
                         default=67.31,
@@ -292,7 +292,7 @@ def main(cmdargs):
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
                             wl=args.fid_wl,
-                            H0=arg.fid_H0,
+                            H0=args.fid_H0,
                             blinding=blinding)
     xcf.cosmo = cosmo
 

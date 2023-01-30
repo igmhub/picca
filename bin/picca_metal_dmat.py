@@ -216,7 +216,7 @@ def main(cmdargs):
         default=-1.,
         required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
-    
+
     parser.add_argument('--fid-H0',
                         type=float,
                         default=67.31,
@@ -306,7 +306,7 @@ def main(cmdargs):
                                Or=args.fid_Or,
                                Ok=args.fid_Ok,
                                wl=args.fid_wl,
-                               H0=arg.fid_H0,
+                               H0=args.fid_H0,
                                blinding=blinding)
 
     t0 = time.time()
