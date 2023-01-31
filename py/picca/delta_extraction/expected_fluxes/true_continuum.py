@@ -16,15 +16,17 @@ from picca.delta_extraction.utils import (find_bins, update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, [
-    "input directory", "raw statistics file", "use splines", "use constant weight",
-    "num bins variance", "force stack delta to zero"
+    "input directory", "raw statistics file", "recompute var lss",
+    "use splines", "use constant weight","num bins variance", 
+    "force stack delta to zero"
 ])
 
 defaults = update_default_options(defaults, {
     "raw statistics file": "",
     "use constant weight": False,
     "force stack delta to zero": False,
-    "use splines": False
+    "use splines": False,
+    "recompute var lss": True
 })
 
 IN_NSIDE = 16
@@ -125,6 +127,7 @@ class TrueContinuum(ExpectedFlux):
 
         self.force_stack_delta_to_zero = config.getboolean("force stack delta to zero")
         self.use_splines=config.getboolean("use splines")
+        self.recompute_varlss= config.getboolean("recompute var lss")
     def compute_expected_flux(self, forests):
         """
 
@@ -142,10 +145,11 @@ class TrueContinuum(ExpectedFlux):
         # the might be some small changes in the var_lss compared to the read
         # values due to some smoothing of the forests
         # thus, we recompute it from the actual deltas
-        self.compute_var_lss(forests)
-        # note that this does not change the output deltas but might slightly
-        # affect the mean continuum so we have to compute it after updating
-        # var_lss
+        if self.recompute_varlss :
+            self.compute_var_lss(forests)
+            # note that this does not change the output deltas but might slightly
+            # affect the mean continuum so we have to compute it after updating
+            # var_lss
         self.compute_mean_cont(forests)
 
         self.compute_delta_stack(forests)
