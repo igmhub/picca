@@ -79,6 +79,18 @@ class AstronomicalObject:
 
         self.healpix = healpy.ang2pix(16, np.pi / 2 - self.dec, self.ra)
 
+        self.plate    = kwargs.get("plate")
+        if self.plate is None:
+            raise AstronomicalObjectError(
+                "Error constructing AstronomicalObject. "
+                "Missing variable 'plate'")
+
+        self.fiberid  =  kwargs.get("fiberid")
+        if self.fiberid is None :
+            raise AstronomicalObjectError(
+                "Error constructing AstronomicalObject. "
+                "Missing variable 'fiberid'")
+
     def __gt__(self, other):
         """Comparare two astronomical_objects
 
@@ -149,6 +161,16 @@ class AstronomicalObject:
                 'value': self.z,
                 'comment': 'Redshift'
             },
+            {
+                'name': 'PLATE',
+                'value': self.plate,
+                'comment': 'Plate or Tile ID'
+            },
+            {
+                'name': 'FIBERID',
+                'value': self.fiberid,
+                'comment': 'Fiber ID'
+            },
         ]
 
         return header
@@ -163,7 +185,7 @@ class AstronomicalObject:
         metadata: list
         A list containing the line-of-sight data
         """
-        return [self.los_id, self.ra, self.dec, self.z]
+        return [self.los_id, self.ra, self.dec, self.z, self.plate, self.fiberid]
 
     @classmethod
     def get_metadata_dtype(cls):
@@ -176,7 +198,7 @@ class AstronomicalObject:
         A list with tuples containing the name and data type of the line-of-sight
         data
         """
-        return [('LOS_ID', int), ('RA', float), ('DEC', float), ('Z', float)]
+        return [('LOS_ID', int), ('RA', float), ('DEC', float), ('Z', float), ('PLATE', int), ('FIBERID', int)]
 
     @classmethod
     def get_metadata_units(cls):
@@ -188,4 +210,4 @@ class AstronomicalObject:
         metadata_units: list
         A list with the units of the line-of-sight data
         """
-        return ["", "DEGREES", "DEGREES", ""]
+        return ["", "DEGREES", "DEGREES", "", "", ""]

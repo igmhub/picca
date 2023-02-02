@@ -1241,18 +1241,30 @@ class Delta(QSO):
         w = weights > 0
         cont = hdul["CONT"].read().astype(float)
 
-        if "THING_ID" in hdul["METADATA"].get_colnames():
+        colnames=hdul["METADATA"].get_colnames()
+
+        if "THING_ID" in colnames :
             los_id = hdul["METADATA"]["THING_ID"][:]
-            plate = hdul["METADATA"]["PLATE"][:]
-            mjd = hdul["METADATA"]["MJD"][:]
-            fiberid=hdul["METADATA"]["FIBERID"][:]
-        elif "LOS_ID" in hdul["METADATA"].get_colnames():
+        elif "LOS_ID" in colnames :
             los_id = hdul["METADATA"]["LOS_ID"][:]
-            plate=los_id
+        else :
+            raise KeyError("no THING_ID nor LOS_ID")
+
+        if "PLATE" in colnames :
+            plate = hdul["METADATA"]["PLATE"][:]
+        else :
+            plate = los_id
+
+        if "MJD" in colnames :
+            mjd = hdul["METADATA"]["MJD"][:]
+        else :
             mjd=los_id
+
+        if "FIBERID" in colnames :
+            fiberid=hdul["METADATA"]["FIBERID"][:]
+        else :
             fiberid=los_id
-        else:
-            raise Exception("Could not find THING_ID or LOS_ID")
+
 
         ra = hdul["METADATA"]["RA"][:]
         dec = hdul["METADATA"]["DEC"][:]
@@ -1273,12 +1285,12 @@ class Delta(QSO):
                    mean_resolution_matrix, mean_reso_pix, w):
             deltas.append(cls(
                 los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i, log_lambda[w_i],
-                weights_i[w_i] if weights_i is not None else None, 
-                cont_i[w_i], 
+                weights_i[w_i] if weights_i is not None else None,
+                cont_i[w_i],
                 delta_i[w_i],
-                order_i, 
+                order_i,
                 ivar_i[w_i] if ivar_i is not None else None,
-                exposures_diff_i[w_i] if exposures_diff_i is not None else None, 
+                exposures_diff_i[w_i] if exposures_diff_i is not None else None,
                 mean_snr_i, mean_reso_i, mean_z_i,
                 resolution_matrix_i if resolution_matrix_i is not None else None,
                 mean_resolution_matrix_i if mean_resolution_matrix_i is not None else None,

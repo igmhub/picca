@@ -342,6 +342,19 @@ class DesiDataFileHandler():
                     flux = spec['FLUX'][w_t].copy()
                     ivar = spec['IVAR'][w_t].copy()
 
+                if 'TILEID' in row.keys() :
+                    plate = row['TILEID']
+                else :
+                    plate = -1
+                if 'FIBER' in row.keys() :
+                    fiberid = row['FIBER']
+                else :
+                    fiberid = -1
+                if 'PETAL_LOC' in row.keys() :
+                    petal = row['PETAL_LOC']
+                    if fiberid == -1 :
+                        fiberid = 500*petal+1
+
                 args = {
                     "flux": flux,
                     "ivar": ivar,
@@ -349,6 +362,8 @@ class DesiDataFileHandler():
                     "ra": row['RA'],
                     "dec": row['DEC'],
                     "z": row['Z'],
+                    "plate": plate,
+                    "fiberid": fiberid
                 }
                 args["log_lambda"] = np.log10(spec['WAVELENGTH'])
 
