@@ -103,7 +103,7 @@ class DlaMask(Mask):
         # group DLAs on the same line of sight together
         self.los_ids = {}
         for los_id in np.unique(cat[los_id_name]):
-            w = (los_id == cat[los_id_name])
+            w = los_id == cat[los_id_name]
             self.los_ids[los_id] = list(zip(cat[z_colname][w], cat['NHI'][w]))
         num_dlas = np.sum([len(los_id) for los_id in self.los_ids.values()])
 

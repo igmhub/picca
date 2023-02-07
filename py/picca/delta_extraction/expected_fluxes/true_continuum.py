@@ -422,6 +422,9 @@ class TrueContinuum(ExpectedFlux):
         err_msg = ("raw statistics file pixelization scheme does not match "
                    "input pixelization scheme.\n")
 
+        pixel_step = None
+        pixel_step_key = None
+        log_lambda = None
         if Forest.wave_solution == "log":
             pixel_step = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
             pixel_step_key = 'DEL_LL'
