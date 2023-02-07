@@ -123,11 +123,35 @@ class TrueContinuum(ExpectedFlux):
                 "by TrueContinuum")
 
         self.use_constant_weight = config.getboolean("use constant weight")
+        if self.use_constant_weight is None:
+            raise ExpectedFluxError(
+                "Missing argument 'use constant weight' required "
+                "by TrueContinuum")
+
         self.raw_statistics_filename = config.get("raw statistics file")
+        if self.raw_statistics_filename is None:
+            raise ExpectedFluxError(
+                "Missing argument 'raw statistics filename' required "
+                "by TrueContinuum")
 
         self.force_stack_delta_to_zero = config.getboolean("force stack delta to zero")
-        self.use_splines=config.getboolean("use splines")
-        self.recompute_varlss= config.getboolean("recompute var lss")
+        if self.force_stack_delta_to_zero is None:
+            raise ExpectedFluxError(
+                "Missing argument 'force stack delta to zero' required "
+                "by TrueContinuum")
+
+        self.use_splines = config.getboolean("use splines")
+        if self.use_splines is None:
+            raise ExpectedFluxError(
+                "Missing argument 'use splines' required "
+                "by TrueContinuum")
+
+        self.recompute_varlss = config.getboolean("recompute var lss")
+        if self.recompute_varlss is None:
+            raise ExpectedFluxError(
+                "Missing argument 'recompute var lss' required "
+                "by TrueContinuum")
+
     def compute_expected_flux(self, forests):
         """
 
@@ -145,7 +169,7 @@ class TrueContinuum(ExpectedFlux):
         # the might be some small changes in the var_lss compared to the read
         # values due to some smoothing of the forests
         # thus, we recompute it from the actual deltas
-        if self.recompute_varlss :
+        if self.recompute_varlss:
             self.compute_var_lss(forests)
             # note that this does not change the output deltas but might slightly
             # affect the mean continuum so we have to compute it after updating
