@@ -420,9 +420,9 @@ def compute_mean_pk1d(p1d_table,
         print("Computing covariance matrix")
         
         for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
-            chunkids = np.unique(p1d_table["chunk_id"][select_z])
             select_z = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
                         p1d_table['forest_z'] > zbin_edges[izbin])
+            chunkids = np.unique(p1d_table["chunk_id"][select_z])
             zbin_array, index_zbin_array, N_array, covariance_array = compute_cov(izbin,select_z,chunkids,p1d_table,
                                                                                   mean_p1d_table,zbin_centers,n_chunks,
                                                                                   k_index,nbins_k)
