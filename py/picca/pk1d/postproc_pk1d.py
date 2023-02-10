@@ -22,6 +22,7 @@ from scipy.optimize import curve_fit
 import fitsio
 from astropy.table import Table, vstack
 from astropy.stats import bootstrap
+from functools import partial
 
 from picca.constants import SPEED_LIGHT
 from picca.constants import ABSORBER_IGM
@@ -140,7 +141,8 @@ def compute_mean_pk1d(p1d_table,
                       output_snrfit=None,
                       compute_covariance=False,
                       compute_bootstrap=False,
-                      number_bootstrap=50):
+                      number_bootstrap=50,
+                      number_worker=8):
     """Compute mean P1D in a set of given (z,k) bins, from individual chunks P1Ds
 
     Arguments
@@ -418,14 +420,19 @@ def compute_mean_pk1d(p1d_table,
         
     if compute_covariance:
         print("Computing covariance matrix")
-        
-        for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
+        params_pool = []
+        for izbin in range(nbins_z):  # Main loop 1) z bins
             select_z = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
-                        p1d_table['forest_z'] > zbin_edges[izbin])
+                        p1d_table['forest_z'] > zbin_edges[izbin])        
             chunkids = np.unique(p1d_table["chunk_id"][select_z])
-            zbin_array, index_zbin_array, N_array, covariance_array = compute_cov(izbin,select_z,chunkids,p1d_table,
-                                                                                  mean_p1d_table,zbin_centers,n_chunks,
-                                                                                  k_index,nbins_k)
+            params_pool.append([izbin,select_z,chunkids])
+                
+        func = partial(compute_cov, p1d_table, mean_p1d_table, zbin_centers, n_chunks, k_index, nbins_k)
+        with Pool(number_worker) as pool:
+            output_cov = pool.starmap(func, params_pool)
+
+        for izbin in range(nbins_z):  # Main loop 1) z bins
+            zbin_array, index_zbin_array, N_array, covariance_array = (*output_cov[izbin],)
             i_min = izbin * nbins_k * nbins_k
             i_max = (izbin + 1) * nbins_k * nbins_k
             cov_table['zbin'][i_min:i_max] = zbin_array
@@ -433,32 +440,35 @@ def compute_mean_pk1d(p1d_table,
             cov_table['N'][i_min:i_max] = N_array
             cov_table['covariance'][i_min:i_max] = covariance_array
 
-            
+
     if compute_bootstrap:
         print("Computing covariance matrix with bootstrap method")
         
+        params_pool = []
         for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
             select_z = (p1d_table['forest_z'] < zbin_edges[izbin + 1]) & (
                         p1d_table['forest_z'] > zbin_edges[izbin])
             
             chunkids = np.unique(p1d_table["chunk_id"][select_z])
-            bootid = bootstrap(np.arange(chunkids.size), number_bootstrap)
-            boot_cov = []
+            bootid = np.array(bootstrap(np.arange(chunkids.size), number_bootstrap)).astype(int)
             for iboot in range(number_bootstrap): # Main loop 2) number of bootstrap samples - can be paralelized
-                zbin_array, index_zbin_array, N_array, covariance_array = compute_cov(izbin,select_z,
-                                                                                      chunkids[bootid[iboot].astype(int)],
-                                                                                      p1d_table,mean_p1d_table,
-                                                                                      zbin_centers,n_chunks,
-                                                                                      k_index,nbins_k)                
+                params_pool.append([izbin,select_z,chunkids[bootid[iboot]]])
+
+
+        func = partial(compute_cov, p1d_table, mean_p1d_table, zbin_centers, n_chunks, k_index, nbins_k)
+        with Pool(number_worker) as pool:
+            output_cov = pool.starmap(func, params_pool)
+
+        for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
+            boot_cov = []
+            for iboot in range(number_bootstrap): # Main loop 2) number of bootstrap samples - can be paralelized               
+                zbin_array, index_zbin_array, N_array, covariance_array = (*output_cov[izbin * number_bootstrap + iboot],)
                 boot_cov.append(covariance_array)
-                
+
             i_min = izbin * nbins_k * nbins_k
             i_max = (izbin + 1) * nbins_k * nbins_k
             cov_table['boot_covariance'][i_min:i_max] = np.mean(boot_cov,axis=0)
             cov_table['error_boot_covariance'][i_min:i_max] = np.std(boot_cov,axis=0)
-
-
-
 
     if output_snrfit is not None:
         np.savetxt(output_snrfit,
@@ -472,15 +482,15 @@ def compute_mean_pk1d(p1d_table,
 
 
 
-def compute_cov(izbin,
-                select_z,
-                chunkids,
-                p1d_table,
+def compute_cov(p1d_table,
                 mean_p1d_table,
                 zbin_centers,
                 n_chunks,
                 k_index,
-                nbins_k):
+                nbins_k,
+                izbin,
+                select_z,
+                chunkids):
     
         zbin_array = np.zeros(nbins_k * nbins_k)
         index_zbin_array = np.zeros(nbins_k * nbins_k, dtype=int)
