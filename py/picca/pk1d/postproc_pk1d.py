@@ -590,7 +590,7 @@ def compute_cov(
         selected_pk = p1d_table["Pk"][select_id]
         selected_ikbin = k_index[select_id]
 
-        for ipk in range(len(selected_pk)):  # First loop 2) selected pk
+        for ipk, _ in enumerate(selected_pk):  # First loop 2) selected pk
             ikbin = selected_ikbin[ipk]
             if ikbin != -1:
                 for ipk2 in range(ipk, len(selected_pk)):  # First loop 3) selected pk
