@@ -27,7 +27,7 @@ from functools import partial
 from picca.constants import SPEED_LIGHT
 from picca.constants import ABSORBER_IGM
 from picca.utils import userprint
-from picca.pk1d.utils import MEANPK_FITRANGE_SNR
+from picca.pk1d.utils import MEANPK_FITRANGE_SNR, variance_function_snr_weighting
 
 
 def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
@@ -294,26 +294,6 @@ def compute_mean_pk1d(p1d_table,
                                               MEANPK_FITRANGE_SNR[1] + 1, 1)
                     snr_bins = (snr_bin_edges[:-1] + snr_bin_edges[1:]) / 2
 
-                    def variance_function(snr, amp, zero_point):
-                        # TODO: fix docstrings
-                        """Compute variance
-
-                        Arguments
-                        ---------
-                        snr: float
-                        signal-to-noise ratio
-
-                        amp: float
-                        ?
-
-                        zero_point: float
-                        ?
-
-                        Return
-                        ------
-                        The variance
-                        """
-                        return (amp / (snr - 1)**2) + zero_point
 
                     data_values = p1d_table[col][select]
                     data_snr = p1d_table['forest_snr'][select]
@@ -331,7 +311,7 @@ def compute_mean_pk1d(p1d_table,
                                                           bins=snr_bin_edges)
                     # the *_ is to ignore the rest of the return arguments
                     coef, *_ = curve_fit(
-                        variance_function,
+                        variance_function_snr_weighting,
                         snr_bins,
                         standard_dev**2,
                         bounds=(0, np.inf)
@@ -341,7 +321,7 @@ def compute_mean_pk1d(p1d_table,
                     data_snr[data_snr >
                              MEANPK_FITRANGE_SNR[1]] = MEANPK_FITRANGE_SNR[1]
                     data_snr[data_snr < 1.01] = 1.01
-                    variance_estimated = variance_function(data_snr, *coef)
+                variance_estimated = variance_function_snr_weighting(data_snr, *coef)
                     weights = 1. / variance_estimated
                     mean = np.average(data_values, weights=weights)
                     error = np.sqrt(1. / np.sum(weights))

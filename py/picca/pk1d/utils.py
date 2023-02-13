@@ -15,3 +15,25 @@ DEFAULT_K_BINNING_FACTOR = 4
 # Fit dispersion vs SNR,
 # used in mean Pk computation when weight_method=='fit_snr':
 MEANPK_FITRANGE_SNR = [1, 10]
+
+
+
+def variance_function_snr_weighting(snr, amp, zero_point):
+    """Compute variance
+
+    Arguments
+    ---------
+    snr (float): 
+    The signal-to-noise ratio of the signal. Must be greater than 1.
+
+    amp (float): 
+    The amplitude of the signal.
+
+    zero_point (float): 
+    The zero point offset of the signal.
+
+    Return
+    ------
+    float: The variance of the signal.
+    """
+    return (amp / (snr - 1)**2) + zero_point
