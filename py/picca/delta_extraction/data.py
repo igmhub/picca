@@ -380,7 +380,7 @@ class Data:
             raise DataError(
                 "Missing argument 'num processors' required by Data")
         if self.num_processors == 0:
-            self.num_processors = (multiprocessing.cpu_count() // 2)
+            self.num_processors = multiprocessing.cpu_count() // 2
 
         self.out_dir = config.get("out dir")
         if self.out_dir is None:

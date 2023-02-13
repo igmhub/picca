@@ -338,7 +338,7 @@ class DesiDataFileHandler():
                     ivar_coadded_flux = np.atleast_2d(
                         ivar * spec['FLUX'][w_t]).sum(axis=0)
                     ivar = ivar.sum(axis=0)
-                    flux = (ivar_coadded_flux / ivar)
+                    flux = ivar_coadded_flux / ivar
                 else:
                     flux = spec['FLUX'][w_t].copy()
                     ivar = spec['IVAR'][w_t].copy()
