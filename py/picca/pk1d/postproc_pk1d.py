@@ -236,7 +236,8 @@ def compute_mean_pk1d(
     metadata_table["k_min"] = kbin_edges[0] * np.ones(nbins_z)
     metadata_table["k_max"] = kbin_edges[-1] * np.ones(nbins_z)
 
-    # Initialize cov_table of len = (nzbins * nkbins * nkbins) corresponding to hdu[3] in final ouput
+    # Initialize cov_table of len = (nzbins * nkbins * nkbins)
+    # corresponding to hdu[3] in final ouput
     if compute_covariance:
         cov_table = Table()
         cov_table["zbin"] = np.zeros(nbins_z * nbins_k * nbins_k)
@@ -444,11 +445,13 @@ def compute_mean_pk1d(
     if (compute_covariance) | (compute_bootstrap):
         if "chunk_id" not in p1d_table.columns:
             print(
-                "chunk_id not in individual pk files, necessary to compute covariance. Skipping calculation"
+                """chunk_id not in individual pk files,
+                necessary to compute covariance. Skipping calculation"""
             )
             compute_covariance, compute_bootstrap = False, False
         else:
-            # Initialize cov_table of len = (nzbins * nkbins * nkbins) corresponding to hdu[3] in final ouput
+            # Initialize cov_table of len = (nzbins * nkbins * nkbins)
+            # corresponding to hdu[3] in final ouput
             cov_table = Table()
             cov_table["zbin"] = np.zeros(nbins_z * nbins_k * nbins_k)
             cov_table["index_zbin"] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
@@ -493,14 +496,14 @@ def compute_mean_pk1d(
             output_cov = pool.starmap(func, params_pool)
 
         for izbin in range(nbins_z):  # Main loop 1) z bins
-            zbin_array, index_zbin_array, N_array, covariance_array = (
+            zbin_array, index_zbin_array, n_array, covariance_array = (
                 *output_cov[izbin],
             )
             i_min = izbin * nbins_k * nbins_k
             i_max = (izbin + 1) * nbins_k * nbins_k
             cov_table["zbin"][i_min:i_max] = zbin_array
             cov_table["index_zbin"][i_min:i_max] = index_zbin_array
-            cov_table["N"][i_min:i_max] = N_array
+            cov_table["N"][i_min:i_max] = n_array
             cov_table["covariance"][i_min:i_max] = covariance_array
 
     if compute_bootstrap:
@@ -538,7 +541,7 @@ def compute_mean_pk1d(
             for iboot in range(
                 number_bootstrap
             ):  # Main loop 2) number of bootstrap samples - can be paralelized
-                zbin_array, index_zbin_array, N_array, covariance_array = (
+                zbin_array, index_zbin_array, n_array, covariance_array = (
                     *output_cov[izbin * number_bootstrap + iboot],
                 )
                 boot_cov.append(covariance_array)
@@ -572,18 +575,64 @@ def compute_cov(
     select_z,
     chunkids,
 ):
+    """Computes the covariance of a set of 1D power spectra.
+
+
+    Arguments
+    ---------
+    p1d_table (array-like):
+    Table of 1D power spectra, with columns 'Pk' and 'chunk_id'.
+
+    mean_p1d_table (array-like):
+    Table of mean 1D power spectra, with column 'meanPk'.
+
+    zbin_centers (array-like):
+    Array of bin centers for redshift.
+
+    n_chunks (array-like):
+    Array of the number of chunks in each redshift bin.
+
+    k_index (array-like):
+    Array of indices for k-values, with -1 indicating values outside of the k bins.
+
+    nbins_k (int):
+    Number of k bins.
+
+    izbin (int):
+    Current redshift bin being considered.
+
+    select_z (array-like):
+    Boolean array for selecting data points based on redshift.
+
+    chunkids (array-like):
+    Array of chunk ids.
+
+    Return
+    ------
+    zbin_array (array-like):
+    Array of redshift bin centers for each covariance coefficient.
+
+    index_zbin_array (array-like):
+    Array of redshift bin indices for each covariance coefficient.
+
+    n_array (array-like):
+    Array of the number of power spectra used to compute each covariance coefficient.
+
+    covariance_array (array-like):
+    Array of covariance coefficients.
+    """
 
     zbin_array = np.zeros(nbins_k * nbins_k)
     index_zbin_array = np.zeros(nbins_k * nbins_k, dtype=int)
-    N_array = np.zeros(nbins_k * nbins_k, dtype=int)
+    n_array = np.zeros(nbins_k * nbins_k, dtype=int)
     covariance_array = np.zeros(nbins_k * nbins_k)
 
     if n_chunks[izbin] == 0:  # Fill rows with NaNs
         zbin_array[:] = zbin_centers[izbin]
         index_zbin_array[:] = izbin
-        N_array[:] = 0
+        n_array[:] = 0
         covariance_array[:] = np.nan
-        return zbin_array, index_zbin_array, N_array, covariance_array
+        return zbin_array, index_zbin_array, n_array, covariance_array
 
     for chunkid in chunkids:  # First loop 1) id forest bins
         select_id = select_z & (p1d_table["chunk_id"] == chunkid)
@@ -603,7 +652,7 @@ def compute_cov(
                             covariance_array[index]
                             + selected_pk[ipk] * selected_pk[ipk2]
                         )
-                        N_array[index] = N_array[index] + 1
+                        n_array[index] = n_array[index] + 1
 
     for ikbin in range(nbins_k):  # Second loop 1) k bins
         mean_ikbin = mean_p1d_table["meanPk"][(nbins_k * izbin) + ikbin]
@@ -614,8 +663,8 @@ def compute_cov(
             # index of the (ikbin,ikbin2) coefficient on the top of the matrix
             index = (nbins_k * ikbin) + ikbin2
             covariance_array[index] = (
-                (covariance_array[index] / N_array[index]) - mean_ikbin * mean_ikbin2
-            ) / N_array[index]
+                (covariance_array[index] / n_array[index]) - mean_ikbin * mean_ikbin2
+            ) / n_array[index]
 
             zbin_array[index] = zbin_centers[izbin]
             index_zbin_array[index] = izbin
@@ -624,12 +673,12 @@ def compute_cov(
                 # index of the (ikbin,ikbin2) coefficient on the bottom of the matrix
                 index_2 = (nbins_k * ikbin2) + ikbin
                 covariance_array[index_2] = covariance_array[index]
-                N_array[index_2] = N_array[index]
+                n_array[index_2] = n_array[index]
 
                 zbin_array[index_2] = zbin_centers[izbin]
                 index_zbin_array[index_2] = izbin
 
-    return zbin_array, index_zbin_array, N_array, covariance_array
+    return zbin_array, index_zbin_array, n_array, covariance_array
 
 
 def run_postproc_pk1d(
