@@ -17,7 +17,7 @@ from picca.delta_extraction.utils import (find_bins, update_accepted_options,
 
 accepted_options = update_accepted_options(accepted_options, [
     "input directory", "raw statistics file", "recompute var lss",
-    "use splines", "use constant weight","num bins variance",
+    "use splines", "use constant weight", "num bins variance",
     "force stack delta to zero"
 ])
 
@@ -143,9 +143,8 @@ class TrueContinuum(ExpectedFlux):
 
         self.use_splines = config.getboolean("use splines")
         if self.use_splines is None:
-            raise ExpectedFluxError(
-                "Missing argument 'use splines' required "
-                "by TrueContinuum")
+            raise ExpectedFluxError("Missing argument 'use splines' required "
+                                    "by TrueContinuum")
 
         self.recompute_varlss = config.getboolean("recompute var lss")
         if self.recompute_varlss is None:
