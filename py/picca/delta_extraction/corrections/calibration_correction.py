@@ -72,7 +72,7 @@ class CalibrationCorrection(Correction):
                 f"File {filename} does not have fields "
                 "'loglam' and/or 'stack' in HDU 'STACK_DELTAS'"
             ) from error
-        w = (stack_delta != 0.)
+        w = stack_delta != 0.
         if self.wave_solution == "log":
             self.correct_flux = interp1d(stack_log_lambda[w],
                                          stack_delta[w],

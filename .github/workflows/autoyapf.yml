@@ -1,0 +1,8 @@
+name: Autoyapf
+
+on: [push, pull_request]
+jobs:
+  autoyapf:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "In the future this will run the automatic formatting"

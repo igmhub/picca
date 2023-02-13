@@ -6,10 +6,6 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.mask import Mask
 
-defaults = {
-    "absorber mask width": 2.5,
-}
-
 accepted_options = ["filename", "keep pixels"]
 
 
