@@ -16,13 +16,13 @@ import os
 import glob
 from multiprocessing import Pool
 
+from functools import partial
 import numpy as np
 from scipy.stats import binned_statistic
 from scipy.optimize import curve_fit
 import fitsio
 from astropy.table import Table, vstack
 from astropy.stats import bootstrap
-from functools import partial
 
 from picca.constants import SPEED_LIGHT
 from picca.constants import ABSORBER_IGM
