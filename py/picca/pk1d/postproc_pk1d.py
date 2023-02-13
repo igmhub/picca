@@ -428,6 +428,67 @@ def fill_average_table(
     izbin,
 ):
 
+    """Fill the average P1D table for the given redshift and k bins.
+
+    The function fills the mean P1D table for each redshift and k bin.
+    If there are no chunks in a given bin, the rows in the
+    table for that bin will be filled with NaNs.
+    The mean value for each bin is calculated using a weighting method,
+    either a fit to the SNR or using weights based on the redshift.
+
+
+    Arguments
+    ---------
+    p1d_table: numpy ndarray,
+    Table containing the data to be averaged.
+
+    p1d_table_cols: List of str,
+    Column names in the input table to be averaged.
+
+    mean_p1d_table: astropy Table,
+    Output table to be filled with the mean values.
+
+    weight_method: str,
+    Method to weight the data.
+
+    apply_z_weights: bool,
+    If True, apply redshift weights.
+
+    snrfit_table: numpy ndarray,
+    Table containing the fit to the SNR.
+
+    output_snrfit: bool,
+    If not None, write the fit to the SNR to a file.
+
+    nomedians: bool,
+    If True, do not use median values in the fit to the SNR.
+
+    nbins_z: int,
+    Number of redshift bins.
+
+    zbin_centers: numpy ndarray,
+    Centers of the redshift bins.
+
+    zbin_edges: numpy ndarray,
+    Edges of the redshift bins.
+
+    n_chunks: numpy ndarray,
+    Number of chunks in each redshift bin.
+
+    nbins_k: int,
+    Number of k bins.
+
+    kbin_edges: numpy ndarray,
+    Edges of the k bins.
+
+    izbin: int,
+    Index of the current redshift bin.
+
+    Return
+    ------
+    None
+    """
+
     if n_chunks[izbin] == 0:  # Fill rows with NaNs
         i_min = izbin * nbins_k
         i_max = (izbin + 1) * nbins_k
