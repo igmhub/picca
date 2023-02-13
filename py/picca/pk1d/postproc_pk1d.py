@@ -27,29 +27,7 @@ from functools import partial
 from picca.constants import SPEED_LIGHT
 from picca.constants import ABSORBER_IGM
 from picca.utils import userprint
-from picca.pk1d.utils import MEANPK_FITRANGE_SNR, variance_function_snr_weighting
-
-
-def fitfunc_variance_pk1d(snr, amp, zero_point):
-    """Model function for the variance of Pk1D as a function of SNR
-
-    Arguments
-    ---------
-    snr: float
-    signal-to-noise ratio
-
-    amp: float
-    first parameter
-
-    zero_point: float
-    second parameter
-
-    Return
-    ------
-    The variance model
-    """
-    return (amp / (snr - 1)**2) + zero_point
-
+from picca.pk1d.utils import MEANPK_FITRANGE_SNR, fitfunc_variance_pk1d
 
 def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     """Read Pk1D data from a single file

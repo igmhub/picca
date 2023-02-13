@@ -18,7 +18,7 @@ MEANPK_FITRANGE_SNR = [1, 10]
 
 
 
-def variance_function_snr_weighting(snr, amp, zero_point):
+def fitfunc_variance_pk1d(snr, amp, zero_point):
     """Compute variance
 
     Arguments
