@@ -321,7 +321,7 @@ def compute_mean_pk1d(p1d_table,
                     data_snr[data_snr >
                              MEANPK_FITRANGE_SNR[1]] = MEANPK_FITRANGE_SNR[1]
                     data_snr[data_snr < 1.01] = 1.01
-                variance_estimated = variance_function_snr_weighting(data_snr, *coef)
+                    variance_estimated = variance_function_snr_weighting(data_snr, *coef)
                     weights = 1. / variance_estimated
                     mean = np.average(data_values, weights=weights)
                     error = np.sqrt(1. / np.sum(weights))
