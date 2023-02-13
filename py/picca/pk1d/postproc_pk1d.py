@@ -311,7 +311,7 @@ def compute_mean_pk1d(
                 )
 
             k_index = np.full(len(p1d_table["k"]), -1, dtype=int)
-            for ikbin, kbin in enumerate(kbin_edges[:-1]):  # First loop 1) k bins
+            for ikbin, _ in enumerate(kbin_edges[:-1]):  # First loop 1) k bins
                 select = (p1d_table["k"] < kbin_edges[ikbin + 1]) & (
                     p1d_table["k"] > kbin_edges[ikbin]
                 )  # select a specific k bin
