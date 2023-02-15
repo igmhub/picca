@@ -223,6 +223,7 @@ def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out
         header['MJD'] = delta.mjd
         header['FIBERID'] = delta.fiberid
         header['ORDER'] = delta.order
+        header['WAVE_SOLUTION'] = 'lin' if lin_spaced else 'log'
 
         cols = [
             delta.log_lambda, delta.delta, delta.weights,
