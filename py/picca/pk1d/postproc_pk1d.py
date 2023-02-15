@@ -225,7 +225,7 @@ def compute_mean_pk1d(
     nbins_z, nbins_k = len(zbin_edges) - 1, len(kbin_edges) - 1
     mean_p1d_table["zbin"] = np.zeros(nbins_z * nbins_k)
     mean_p1d_table["index_zbin"] = np.zeros(nbins_z * nbins_k, dtype=int)
-    mean_p1d_table["N"] = np.zeros(nbins_z * nbins_k, dtype="int64")
+    mean_p1d_table["N"] = np.zeros(nbins_z * nbins_k, dtype=int)
     for col in p1d_table_cols:
         for stats in stats_array:
             mean_p1d_table[stats + col] = np.ones(nbins_z * nbins_k) * np.nan
