@@ -22,9 +22,9 @@ from .utils import userprint
 
 
 def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lambda_min=3600.,
-                           lambda_max=5500., lambda_min_rest_frame=1040., 
+                           lambda_max=5500., lambda_min_rest_frame=1040.,
                            lambda_max_rest_frame=1200., delta_log_lambda=None,
-                           delta_lambda=None, lin_spaced=False):
+                           delta_lambda=None, lin_spaced=False, mean_flux_max_wave=None):
 
     """Make delta objects from all skewers in a transmission file.
     Args:
@@ -138,11 +138,18 @@ def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lam
         rebin_flux = np.bincount(bins, weights=aux_trans, minlength=num_bins)
         rebin_ivar = np.bincount(bins, minlength=num_bins).astype(float)
 
+        mean_flux_cut = np.full_like(rebin_log_lambda, True)
+        if mean_flux_max_wave is not None:
+            assert mean_flux_max_wave > lambda_min_rest_frame
+            assert mean_flux_max_wave < lambda_max_rest_frame
+            lambda_rest_frame = 10**rebin_log_lambda / (1 + z[index2])
+            mean_flux_cut = lambda_rest_frame < mean_flux_max_wave
+
         w = rebin_ivar > 0.
         if w.sum() < 50:
             continue
-        stack_flux += rebin_flux
-        stack_weight += rebin_ivar
+        stack_flux[mean_flux_cut] += rebin_flux[mean_flux_cut]
+        stack_weight[mean_flux_cut] += rebin_ivar[mean_flux_cut]
         rebin_log_lambda = rebin_log_lambda[w]
         rebin_flux = rebin_flux[w] / rebin_ivar[w]
         rebin_ivar = rebin_ivar[w]
@@ -234,7 +241,7 @@ def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out
 def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=None,
                                    tracer='F_LYA', lambda_min=3600., lambda_max=5500.,
                                    lambda_min_rest_frame=1040.,
-                                   lambda_max_rest_frame=1200.,
+                                   lambda_max_rest_frame=1200., mean_flux_max_wave=None,
                                    delta_log_lambda=None, delta_lambda=None, lin_spaced=False,
                                    max_num_spec=None, nproc=None, use_old_weights=False,
                                    use_splines=False, out_healpix_order='RING'):
@@ -363,7 +370,7 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     # Read the transmission files in parallel
     arguments = [(f, num_bins, objs_thingid, tracer, lambda_min, lambda_max,
                   lambda_min_rest_frame, lambda_max_rest_frame,
-                  delta_log_lambda, delta_lambda, lin_spaced) for f in files]
+                  delta_log_lambda, delta_lambda, lin_spaced, mean_flux_max_wave) for f in files]
 
     userprint("Reading transmission files...")
     with Pool(processes=nproc) as pool:
