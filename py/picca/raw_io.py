@@ -138,7 +138,7 @@ def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lam
         rebin_flux = np.bincount(bins, weights=aux_trans, minlength=num_bins)
         rebin_ivar = np.bincount(bins, minlength=num_bins).astype(float)
 
-        mean_flux_cut = np.full_like(rebin_log_lambda, True)
+        mean_flux_cut = np.full_like(rebin_log_lambda, True, dtype=bool)
         if mean_flux_max_wave is not None:
             assert mean_flux_max_wave > lambda_min_rest_frame
             assert mean_flux_max_wave < lambda_max_rest_frame
