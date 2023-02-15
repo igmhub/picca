@@ -266,7 +266,7 @@ def compute_mean_pk1d(
         snrfit_table = None
 
     # Main loop 1) z bins
-    params_pool = [[izbin] for izbin, _ in enumerate(zbin_edges[:-1])]
+    params_pool = [izbin for izbin, _ in enumerate(zbin_edges[:-1])]
 
     func = partial(
         fill_average_table,
@@ -286,7 +286,7 @@ def compute_mean_pk1d(
         kbin_edges,
     )
     with ThreadPool(number_worker) as pool:
-        pool.starmap(func, params_pool)
+        pool.map(func, params_pool)
 
     if (compute_covariance) | (compute_bootstrap):
         if "chunk_id" not in p1d_table.columns:
