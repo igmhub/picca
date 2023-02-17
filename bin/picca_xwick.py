@@ -153,7 +153,7 @@ def main(cmdargs):
     parser.add_argument(
         '--z-evol-obj',
         type=float,
-        default=1.,
+        default=1.44,
         required=False,
         help='Exponent of the redshift evolution of the object field')
 

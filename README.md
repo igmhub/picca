@@ -154,10 +154,12 @@ Before submitting a PR please make sure to:
 2. Update the data model
 3. For every file you have modified run
    ```
-   yapf --style google file.py -i 
+   yapf --style google file.py -i
    ```
    to ensure the coding styles are maintained.
 4. Consider using pylint to help in the debug process. From the repo folder run
    ```
-   pylint py/picca/delta_extraction/**/*py
+   pylint py/picca/delta_extraction/
+   pylint py/picca/pk1d/
    ```
+   depending on the module you are working on.
