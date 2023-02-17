@@ -289,7 +289,7 @@ class DrqCatalogue(QuasarCatalogue):
             9: 'NODATA'
         }
         for z_warn_bit, z_warn_bit_name in bad_z_warn_bit.items():
-            wbit = (catalogue["ZWARNING"] & 2**z_warn_bit == 0)
+            wbit = catalogue["ZWARNING"] & 2**z_warn_bit == 0
             w &= wbit
             self.logger.progress(f"Found {np.sum(w)} spectra without {z_warn_bit} "
                                  f"bit set: {z_warn_bit_name}")
