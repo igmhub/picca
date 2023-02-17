@@ -16,14 +16,17 @@ from picca.delta_extraction.utils import (find_bins, update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, [
-    "input directory", "raw statistics file", "use constant weight",
-    "num bins variance", "force stack delta to zero"
+    "input directory", "raw statistics file", "recompute var lss",
+    "use splines", "use constant weight","num bins variance",
+    "force stack delta to zero"
 ])
 
 defaults = update_default_options(defaults, {
     "raw statistics file": "",
     "use constant weight": False,
-    "force stack delta to zero": False
+    "force stack delta to zero": False,
+    "use splines": False,
+    "recompute var lss": True
 })
 
 IN_NSIDE = 16
@@ -120,9 +123,34 @@ class TrueContinuum(ExpectedFlux):
                 "by TrueContinuum")
 
         self.use_constant_weight = config.getboolean("use constant weight")
+        if self.use_constant_weight is None:
+            raise ExpectedFluxError(
+                "Missing argument 'use constant weight' required "
+                "by TrueContinuum")
+
         self.raw_statistics_filename = config.get("raw statistics file")
+        if self.raw_statistics_filename is None:
+            raise ExpectedFluxError(
+                "Missing argument 'raw statistics filename' required "
+                "by TrueContinuum")
 
         self.force_stack_delta_to_zero = config.getboolean("force stack delta to zero")
+        if self.force_stack_delta_to_zero is None:
+            raise ExpectedFluxError(
+                "Missing argument 'force stack delta to zero' required "
+                "by TrueContinuum")
+
+        self.use_splines = config.getboolean("use splines")
+        if self.use_splines is None:
+            raise ExpectedFluxError(
+                "Missing argument 'use splines' required "
+                "by TrueContinuum")
+
+        self.recompute_varlss = config.getboolean("recompute var lss")
+        if self.recompute_varlss is None:
+            raise ExpectedFluxError(
+                "Missing argument 'recompute var lss' required "
+                "by TrueContinuum")
 
     def compute_expected_flux(self, forests):
         """
@@ -141,10 +169,11 @@ class TrueContinuum(ExpectedFlux):
         # the might be some small changes in the var_lss compared to the read
         # values due to some smoothing of the forests
         # thus, we recompute it from the actual deltas
-        self.compute_var_lss(forests)
-        # note that this does not change the output deltas but might slightly
-        # affect the mean continuum so we have to compute it after updating
-        # var_lss
+        if self.recompute_varlss:
+            self.compute_var_lss(forests)
+            # note that this does not change the output deltas but might slightly
+            # affect the mean continuum so we have to compute it after updating
+            # var_lss
         self.compute_mean_cont(forests)
 
         self.compute_delta_stack(forests)
@@ -393,6 +422,9 @@ class TrueContinuum(ExpectedFlux):
         err_msg = ("raw statistics file pixelization scheme does not match "
                    "input pixelization scheme.\n")
 
+        pixel_step = None
+        pixel_step_key = None
+        log_lambda = None
         if Forest.wave_solution == "log":
             pixel_step = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
             pixel_step_key = 'DEL_LL'
@@ -447,8 +479,12 @@ class TrueContinuum(ExpectedFlux):
         if not is_rawfile_consistent:
             raise ExpectedFluxError(err_msg)
 
-        flux_variance = fits_data['VAR']
-        mean_flux = fits_data['MEANFLUX']
+        if self.use_splines:
+            flux_variance = fits_data['VAR_SPLINE']
+            mean_flux = fits_data['MEANFLUX_SPLINE']
+        else:
+            flux_variance = fits_data['VAR']
+            mean_flux = fits_data['MEANFLUX']
 
         var_lss = flux_variance / mean_flux**2
 

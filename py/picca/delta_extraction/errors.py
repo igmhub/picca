@@ -64,4 +64,4 @@ class RejectionLogError(Exception):
 
 
 if __name__ == '__main__':
-    raise Exception()
+    pass

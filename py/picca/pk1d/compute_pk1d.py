@@ -179,7 +179,7 @@ def rebin_diff_noise(pixel_step, lambda_or_log_lambda, exposures_diff):
 
     rebin_exposure_diff = np.bincount(bins.astype(int), weights=exposures_diff)
     rebin_counts = np.bincount(bins.astype(int))
-    w = (rebin_counts > 0)
+    w = rebin_counts > 0
     if len(rebin_counts) == 0:
         userprint("Error: exposures_diff size = 0 ", exposures_diff)
     rebin_exposure_diff = rebin_exposure_diff[w] / np.sqrt(rebin_counts[w])
@@ -303,7 +303,7 @@ def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False):
     The Power Spectrum
     """
     if linear_binning:  # spectral length in AA
-        length_lambda = (delta_lambda_or_log_lambda * len(delta))
+        length_lambda = delta_lambda_or_log_lambda * len(delta)
     else:  # spectral length in km/s
         length_lambda = (delta_lambda_or_log_lambda * constants.SPEED_LIGHT *
                          np.log(10.) * len(delta))
@@ -448,7 +448,7 @@ def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel):
         try:
             assert np.all(k_resmat == k)
         except AssertionError as error:
-            raise Exception(
+            raise AssertionError(
                 "for some reason the resolution matrix correction has "
                 "different k scaling than the pk") from error
         w2 /= w2[0]
