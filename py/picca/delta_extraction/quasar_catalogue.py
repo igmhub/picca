@@ -7,8 +7,13 @@ import numpy as np
 from picca.delta_extraction.errors import QuasarCatalogueError
 
 accepted_options = [
-    "lambda max", "lambda max rest frame", "lambda min",
-    "lambda min rest frame", "max num spec", "z max", "z min"
+    "lambda max",
+    "lambda max rest frame",
+    "lambda min",
+    "lambda min rest frame",
+    "max num spec",
+    "z max",
+    "z min",
 ]
 
 
@@ -50,23 +55,39 @@ class QuasarCatalogue:
 
         self.z_min = config.getfloat("z min")
         if self.z_min is None:
-            if (config.getfloat("lambda min") is None or
-                    config.getfloat("lambda max rest frame") is None):
-                raise QuasarCatalogueError("Missing argument 'z min' "
-                                           "required by QuasarCatalogue")
-            self.z_min = max(0.,
-                             (config.getfloat("lambda min") /
-                              config.getfloat("lambda max rest frame") - 1.))
+            if (
+                config.getfloat("lambda min") is None
+                or config.getfloat("lambda max rest frame") is None
+            ):
+                raise QuasarCatalogueError(
+                    "Missing argument 'z min' " "required by QuasarCatalogue"
+                )
+            self.z_min = max(
+                0.0,
+                (
+                    config.getfloat("lambda min")
+                    / config.getfloat("lambda max rest frame")
+                    - 1.0
+                ),
+            )
 
         self.z_max = config.getfloat("z max")
         if self.z_max is None:
-            if (config.getfloat("lambda max") is None or
-                    config.getfloat("lambda min rest frame") is None):
-                raise QuasarCatalogueError("Missing argument 'z max' "
-                                           "required by QuasarCatalogue")
-            self.z_max = max(0.,
-                             (config.getfloat("lambda max") /
-                              config.getfloat("lambda min rest frame") - 1.))
+            if (
+                config.getfloat("lambda max") is None
+                or config.getfloat("lambda min rest frame") is None
+            ):
+                raise QuasarCatalogueError(
+                    "Missing argument 'z max' " "required by QuasarCatalogue"
+                )
+            self.z_max = max(
+                0.0,
+                (
+                    config.getfloat("lambda max")
+                    / config.getfloat("lambda min rest frame")
+                    - 1.0
+                ),
+            )
         self.catalogue = None
 
     def trim_catalogue(self):
@@ -85,4 +106,4 @@ class QuasarCatalogue:
             ]
             self.catalogue["healpix"] = healpix
             self.catalogue.sort("healpix")
-            self.catalogue = self.catalogue[:self.max_num_spec]
+            self.catalogue = self.catalogue[: self.max_num_spec]

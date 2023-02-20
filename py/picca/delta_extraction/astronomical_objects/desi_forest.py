@@ -65,8 +65,9 @@ class DesiForest(Forest):
 
         self.targetid = kwargs.get("targetid")
         if self.targetid is None:
-            raise AstronomicalObjectError("Error constructing DesiForest. "
-                                          "Missing variable 'targetid'")
+            raise AstronomicalObjectError(
+                "Error constructing DesiForest. " "Missing variable 'targetid'"
+            )
         del kwargs["targetid"]
 
         self.tile = []
@@ -97,7 +98,8 @@ class DesiForest(Forest):
             raise AstronomicalObjectError(
                 "Error coadding DesiForest. Expected "
                 "DesiForest instance in other. Found: "
-                f"{type(other).__name__}")
+                f"{type(other).__name__}"
+            )
         self.night += other.night
         self.petal += other.petal
         self.tile += other.tile
@@ -116,24 +118,24 @@ class DesiForest(Forest):
         header = super().get_header()
         header += [
             {
-                'name': 'TARGETID',
-                'value': self.targetid,
-                'comment': 'Object identification'
+                "name": "TARGETID",
+                "value": self.targetid,
+                "comment": "Object identification",
             },
             {
-                'name': 'NIGHT',
-                'value': "-".join(str(night) for night in self.night),
-                'comment': "Observation night(s)"
+                "name": "NIGHT",
+                "value": "-".join(str(night) for night in self.night),
+                "comment": "Observation night(s)",
             },
             {
-                'name': 'PETAL',
-                'value': "-".join(str(petal) for petal in self.petal),
-                'comment': 'Observation petal(s)'
+                "name": "PETAL",
+                "value": "-".join(str(petal) for petal in self.petal),
+                "comment": "Observation petal(s)",
             },
             {
-                'name': 'TILE',
-                'value': "-".join(str(tile) for tile in self.tile),
-                'comment': 'Observation tile(s)'
+                "name": "TILE",
+                "value": "-".join(str(tile) for tile in self.tile),
+                "comment": "Observation tile(s)",
             },
         ]
 
@@ -170,8 +172,12 @@ class DesiForest(Forest):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('TARGETID', int), ('NIGHT', 'S12'), ('PETAL', 'S12'),
-                  ('TILE', 'S12')]
+        dtype += [
+            ("TARGETID", int),
+            ("NIGHT", "S12"),
+            ("PETAL", "S12"),
+            ("TILE", "S12"),
+        ]
         return dtype
 
     @classmethod

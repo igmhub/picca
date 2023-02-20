@@ -3,11 +3,14 @@ import iminuit
 import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.least_squares.least_squares_cont_model import LeastsSquaresContModel
+from picca.delta_extraction.least_squares.least_squares_cont_model import (
+    LeastsSquaresContModel,
+)
 
 
-def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
-                      use_constant_weight, order):
+def compute_continuum(
+    forest, get_mean_cont, get_eta, get_var_lss, get_fudge, use_constant_weight, order
+):
     """Compute the forest continuum.
 
     Fits a model based on the mean quasar continuum and linear function
@@ -63,10 +66,12 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     mean_cont_kwargs = {"mean_cont": mean_cont}
     # TODO: This can probably be replaced by forest.log_lambda[-1] and
     # forest.log_lambda[0]
-    mean_cont_kwargs["log_lambda_max"] = (
-        Forest.log_lambda_rest_frame_grid[-1] + np.log10(1 + forest.z))
-    mean_cont_kwargs["log_lambda_min"] = (Forest.log_lambda_rest_frame_grid[0] +
-                                          np.log10(1 + forest.z))
+    mean_cont_kwargs["log_lambda_max"] = Forest.log_lambda_rest_frame_grid[
+        -1
+    ] + np.log10(1 + forest.z)
+    mean_cont_kwargs["log_lambda_min"] = Forest.log_lambda_rest_frame_grid[
+        0
+    ] + np.log10(1 + forest.z)
 
     #
     weights_kwargs = {
@@ -76,41 +81,44 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
         "fudge": get_fudge(forest.log_lambda),
     }
 
-    leasts_squares = LeastsSquaresContModel(forest=forest,
-                                            mean_cont_kwargs=mean_cont_kwargs,
-                                            weights_kwargs=weights_kwargs)
+    leasts_squares = LeastsSquaresContModel(
+        forest=forest, mean_cont_kwargs=mean_cont_kwargs, weights_kwargs=weights_kwargs
+    )
 
     zero_point = (forest.flux * forest.ivar).sum() / forest.ivar.sum()
     slope = 0.0
 
-    minimizer = iminuit.Minuit(leasts_squares,
-                               zero_point=zero_point,
-                               slope=slope)
-    minimizer.errors["zero_point"] = zero_point / 2.
-    minimizer.errors["slope"] = zero_point / 2.
-    minimizer.errordef = 1.
+    minimizer = iminuit.Minuit(leasts_squares, zero_point=zero_point, slope=slope)
+    minimizer.errors["zero_point"] = zero_point / 2.0
+    minimizer.errors["slope"] = zero_point / 2.0
+    minimizer.errordef = 1.0
     minimizer.print_level = 0
     minimizer.fixed["slope"] = order == 0
     minimizer.migrad()
 
     bad_continuum_reason = None
     cont_model = leasts_squares.get_continuum_model(
-        forest, minimizer.values["zero_point"], minimizer.values["slope"],
-        **mean_cont_kwargs)
+        forest,
+        minimizer.values["zero_point"],
+        minimizer.values["slope"],
+        **mean_cont_kwargs
+    )
     if not minimizer.valid:
         bad_continuum_reason = "minuit didn't converge"
     if np.any(cont_model < 0):
         bad_continuum_reason = "negative continuum"
 
     if bad_continuum_reason is None:
-        continuum_fit_parameters = (minimizer.values["zero_point"],
-                                    minimizer.values["slope"], minimizer.fval,
-                                    leasts_squares.get_ndata())
+        continuum_fit_parameters = (
+            minimizer.values["zero_point"],
+            minimizer.values["slope"],
+            minimizer.fval,
+            leasts_squares.get_ndata(),
+        )
     ## if the continuum is negative or minuit didn't converge, then
     ## set continuum fit parameters to None
     else:
         cont_model = None
-        continuum_fit_parameters = (np.nan, np.nan, np.nan,
-                                    leasts_squares.get_ndata())
+        continuum_fit_parameters = (np.nan, np.nan, np.nan, leasts_squares.get_ndata())
 
     return cont_model, bad_continuum_reason, continuum_fit_parameters

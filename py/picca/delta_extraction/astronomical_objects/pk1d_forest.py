@@ -70,20 +70,23 @@ class Pk1dForest(Forest):
 
         self.exposures_diff = kwargs.get("exposures_diff")
         if self.exposures_diff is None:
-            raise AstronomicalObjectError("Error constructing Pk1dForest. "
-                                          "Missing variable 'exposures_diff'")
+            raise AstronomicalObjectError(
+                "Error constructing Pk1dForest. " "Missing variable 'exposures_diff'"
+            )
         del kwargs["exposures_diff"]
 
         self.reso = kwargs.get("reso")
         if self.reso is None:
-            raise AstronomicalObjectError("Error constructing Pk1dForest. "
-                                          "Missing variable 'reso'")
+            raise AstronomicalObjectError(
+                "Error constructing Pk1dForest. " "Missing variable 'reso'"
+            )
         del kwargs["reso"]
 
         self.reso_pix = kwargs.get("reso_pix")
         if self.reso_pix is None:
-            raise AstronomicalObjectError("Error constructing Pk1dForest. "
-                                          "Missing variable 'reso_pix'")
+            raise AstronomicalObjectError(
+                "Error constructing Pk1dForest. " "Missing variable 'reso_pix'"
+            )
         del kwargs["reso_pix"]
 
         # call parent constructor
@@ -92,9 +95,9 @@ class Pk1dForest(Forest):
         # compute mean quality variables
         self.mean_reso = self.reso.mean()
         self.mean_z = (
-            (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-             np.power(10., self.log_lambda[0])) / 2. / Pk1dForest.lambda_abs_igm
-            - 1.0)
+            np.power(10.0, self.log_lambda[len(self.log_lambda) - 1])
+            + np.power(10.0, self.log_lambda[0])
+        ) / 2.0 / Pk1dForest.lambda_abs_igm - 1.0
         self.mean_reso_pix = self.reso_pix.mean()
 
         self.consistency_check()
@@ -105,7 +108,8 @@ class Pk1dForest(Forest):
         if cls.lambda_abs_igm is None:
             raise AstronomicalObjectError(
                 "Error constructing Pk1dForest. Class variable 'lambda_abs_igm' "
-                "must be set prior to initialize instances of this type")
+                "must be set prior to initialize instances of this type"
+            )
 
     def consistency_check(self):
         """Consistency checks after __init__"""
@@ -114,7 +118,8 @@ class Pk1dForest(Forest):
             raise AstronomicalObjectError(
                 "Error constructing Pk1dForest. 'flux' "
                 "and 'exposures_diff' don't have the "
-                "same size")
+                "same size"
+            )
         if "exposures_diff" not in Forest.mask_fields:
             Forest.mask_fields += ["exposures_diff"]
         if "reso" not in Forest.mask_fields:
@@ -141,9 +146,9 @@ class Pk1dForest(Forest):
             raise AstronomicalObjectError(
                 "Error coadding Pk1dForest. Expected "
                 "Pk1dForest instance in other. Found: "
-                f"{type(other).__name__}")
-        self.exposures_diff = np.append(self.exposures_diff,
-                                        other.exposures_diff)
+                f"{type(other).__name__}"
+            )
+        self.exposures_diff = np.append(self.exposures_diff, other.exposures_diff)
         self.reso = np.append(self.reso, other.reso)
         self.reso_pix = np.append(self.reso_pix, other.reso_pix)
         # coadd the deltas by rebinning
@@ -177,7 +182,7 @@ class Pk1dForest(Forest):
             "Inverse variance. Check input spectra for units",
             "Difference. Check input spectra for units",
             "Resolution estimate (FWHM) for each pixel in units of km/s"
-            "Resolution estimate (sigma) for each pixel in units of pixel size"
+            "Resolution estimate (sigma) for each pixel in units of pixel size",
         ]
         units += ["Flux units", "Flux units", "", ""]
 
@@ -196,20 +201,16 @@ class Pk1dForest(Forest):
         """
         header = super().get_header()
         header += [
+            {"name": "MEANZ", "value": self.mean_z, "comment": "Mean redshift"},
             {
-                'name': 'MEANZ',
-                'value': self.mean_z,
-                'comment': 'Mean redshift'
+                "name": "MEANRESO",
+                "value": self.mean_reso,
+                "comment": "Mean resolution (km/s)",
             },
             {
-                'name': 'MEANRESO',
-                'value': self.mean_reso,
-                'comment': 'Mean resolution (km/s)'
-            },
-            {
-                'name': 'MEANRESO_PIX',
-                'value': self.mean_reso_pix,
-                'comment': 'Mean resolution (pixels)'
+                "name": "MEANRESO_PIX",
+                "value": self.mean_reso_pix,
+                "comment": "Mean resolution (pixels)",
             },
         ]
 
@@ -241,8 +242,7 @@ class Pk1dForest(Forest):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('MEANZ', float), ('MEANRESO', float),
-                  ('MEANRESO_PIX', float)]
+        dtype += [("MEANZ", float), ("MEANRESO", float), ("MEANRESO_PIX", float)]
         return dtype
 
     @classmethod
@@ -307,19 +307,18 @@ class Pk1dForest(Forest):
         final_arr_size = np.sum(wslice_inner)
 
         # rebin exposures_diff and reso
-        rebin_exposures_diff = np.bincount(bins,
-                                           weights=orig_ivar[w1] *
-                                           self.exposures_diff,
-                                           minlength=binned_arr_size)
-        rebin_reso = np.bincount(bins,
-                                 weights=orig_ivar[w1] * self.reso,
-                                 minlength=binned_arr_size)
-        rebin_reso_pix = np.bincount(bins,
-                                     weights=orig_ivar[w1] * self.reso_pix,
-                                     minlength=binned_arr_size)
+        rebin_exposures_diff = np.bincount(
+            bins, weights=orig_ivar[w1] * self.exposures_diff, minlength=binned_arr_size
+        )
+        rebin_reso = np.bincount(
+            bins, weights=orig_ivar[w1] * self.reso, minlength=binned_arr_size
+        )
+        rebin_reso_pix = np.bincount(
+            bins, weights=orig_ivar[w1] * self.reso_pix, minlength=binned_arr_size
+        )
 
         # Remove empty bins but not ivar
-        w2_ = (rebin_ivar > 0.) & wslice_inner
+        w2_ = (rebin_ivar > 0.0) & wslice_inner
         self.exposures_diff = np.zeros(final_arr_size)
         self.reso = np.zeros(final_arr_size)
         self.reso_pix = np.zeros(final_arr_size)
@@ -332,9 +331,9 @@ class Pk1dForest(Forest):
         # finally update control variables
         self.mean_reso = self.reso[w2].mean()
         self.mean_z = (
-            (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-             np.power(10., self.log_lambda[0])) / 2. / Pk1dForest.lambda_abs_igm
-            - 1.0)
+            np.power(10.0, self.log_lambda[len(self.log_lambda) - 1])
+            + np.power(10.0, self.log_lambda[0])
+        ) / 2.0 / Pk1dForest.lambda_abs_igm - 1.0
         self.mean_reso_pix = self.reso_pix[w2].mean()
 
         # maybe replace empty resolution values with the mean?

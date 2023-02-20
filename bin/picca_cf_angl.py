@@ -38,139 +38,159 @@ def main(cmdargs):
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Compute the auto and cross-correlation of delta fields '
-                     'as a function of angle and wavelength ratio'))
-
-    parser.add_argument('--out',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Output file name')
-
-    parser.add_argument('--in-dir',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Directory to delta files')
-
-    parser.add_argument('--in-dir2',
-                        type=str,
-                        default=None,
-                        required=False,
-                        help='Directory to 2nd delta files')
-
-    parser.add_argument('--wr-min',
-                        type=float,
-                        default=1.,
-                        required=False,
-                        help='Min of wavelength ratio')
-
-    parser.add_argument('--wr-max',
-                        type=float,
-                        default=1.1,
-                        required=False,
-                        help='Max of wavelength ratio')
-
-    parser.add_argument('--ang-max',
-                        type=float,
-                        default=0.02,
-                        required=False,
-                        help='Max angle (rad)')
-
-    parser.add_argument('--np',
-                        type=int,
-                        default=50,
-                        required=False,
-                        help='Number of wavelength ratio bins')
-
-    parser.add_argument('--nt',
-                        type=int,
-                        default=50,
-                        required=False,
-                        help='Number of angular bins')
+        description=(
+            "Compute the auto and cross-correlation of delta fields "
+            "as a function of angle and wavelength ratio"
+        ),
+    )
 
     parser.add_argument(
-        '--z-cut-min',
-        type=float,
-        default=0.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift larger than '
-              'z-cut-min'))
+        "--out", type=str, default=None, required=True, help="Output file name"
+    )
 
     parser.add_argument(
-        '--z-cut-max',
-        type=float,
-        default=10.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift smaller than '
-              'z-cut-max'))
-
-    parser.add_argument(
-        '--lambda-abs',
+        "--in-dir",
         type=str,
-        default='LYA',
-        required=False,
-        help=('Name of the absorption in picca.constants defining the redshift '
-              'of the delta'))
+        default=None,
+        required=True,
+        help="Directory to delta files",
+    )
 
     parser.add_argument(
-        '--lambda-abs2',
+        "--in-dir2",
         type=str,
         default=None,
         required=False,
-        help=('Name of the absorption in picca.constants defining the redshift '
-              'of the 2nd delta'))
-
-    parser.add_argument('--z-ref',
-                        type=float,
-                        default=2.25,
-                        required=False,
-                        help='Reference redshift')
+        help="Directory to 2nd delta files",
+    )
 
     parser.add_argument(
-        '--z-evol',
+        "--wr-min",
+        type=float,
+        default=1.0,
+        required=False,
+        help="Min of wavelength ratio",
+    )
+
+    parser.add_argument(
+        "--wr-max",
+        type=float,
+        default=1.1,
+        required=False,
+        help="Max of wavelength ratio",
+    )
+
+    parser.add_argument(
+        "--ang-max", type=float, default=0.02, required=False, help="Max angle (rad)"
+    )
+
+    parser.add_argument(
+        "--np",
+        type=int,
+        default=50,
+        required=False,
+        help="Number of wavelength ratio bins",
+    )
+
+    parser.add_argument(
+        "--nt", type=int, default=50, required=False, help="Number of angular bins"
+    )
+
+    parser.add_argument(
+        "--z-cut-min",
+        type=float,
+        default=0.0,
+        required=False,
+        help=(
+            "Use only pairs of forest x object with the mean of the last "
+            "absorber redshift and the object redshift larger than "
+            "z-cut-min"
+        ),
+    )
+
+    parser.add_argument(
+        "--z-cut-max",
+        type=float,
+        default=10.0,
+        required=False,
+        help=(
+            "Use only pairs of forest x object with the mean of the last "
+            "absorber redshift and the object redshift smaller than "
+            "z-cut-max"
+        ),
+    )
+
+    parser.add_argument(
+        "--lambda-abs",
+        type=str,
+        default="LYA",
+        required=False,
+        help=(
+            "Name of the absorption in picca.constants defining the redshift "
+            "of the delta"
+        ),
+    )
+
+    parser.add_argument(
+        "--lambda-abs2",
+        type=str,
+        default=None,
+        required=False,
+        help=(
+            "Name of the absorption in picca.constants defining the redshift "
+            "of the 2nd delta"
+        ),
+    )
+
+    parser.add_argument(
+        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
+    )
+
+    parser.add_argument(
+        "--z-evol",
         type=float,
         default=2.9,
         required=False,
-        help='Exponent of the redshift evolution of the delta field')
+        help="Exponent of the redshift evolution of the delta field",
+    )
 
     parser.add_argument(
-        '--z-evol2',
+        "--z-evol2",
         type=float,
         default=2.9,
         required=False,
-        help='Exponent of the redshift evolution of the 2nd delta field')
-
-    parser.add_argument('--no-project',
-                        action='store_true',
-                        required=False,
-                        help='Do not project out continuum fitting modes')
+        help="Exponent of the redshift evolution of the 2nd delta field",
+    )
 
     parser.add_argument(
-        '--remove-same-half-plate-close-pairs',
-        action='store_true',
+        "--no-project",
+        action="store_true",
         required=False,
-        help='Reject pairs in the first bin in r-parallel from same half plate')
+        help="Do not project out continuum fitting modes",
+    )
 
-    parser.add_argument('--nside',
-                        type=int,
-                        default=16,
-                        required=False,
-                        help='Healpix nside')
+    parser.add_argument(
+        "--remove-same-half-plate-close-pairs",
+        action="store_true",
+        required=False,
+        help="Reject pairs in the first bin in r-parallel from same half plate",
+    )
 
-    parser.add_argument('--nproc',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Number of processors')
+    parser.add_argument(
+        "--nside", type=int, default=16, required=False, help="Healpix nside"
+    )
 
-    parser.add_argument('--nspec',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Maximum number of spectra to read')
+    parser.add_argument(
+        "--nproc", type=int, default=None, required=False, help="Number of processors"
+    )
+
+    parser.add_argument(
+        "--nspec",
+        type=int,
+        default=None,
+        required=False,
+        help="Maximum number of spectra to read",
+    )
 
     args = parser.parse_args(cmdargs)
 
@@ -195,14 +215,16 @@ def main(cmdargs):
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
     ### Read data 1
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  cf.nside,
-                                                  cf.lambda_abs,
-                                                  cf.alpha,
-                                                  cf.z_ref,
-                                                  cosmo=None,
-                                                  max_num_spec=args.nspec,
-                                                  no_project=args.no_project)
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir,
+        cf.nside,
+        cf.lambda_abs,
+        cf.alpha,
+        cf.z_ref,
+        cosmo=None,
+        max_num_spec=args.nspec,
+        no_project=args.no_project,
+    )
     cf.data = data
     cf.num_data = num_data
     del z_min, z_max
@@ -228,7 +250,8 @@ def main(cmdargs):
             cf.z_ref,
             cosmo=None,
             max_num_spec=args.nspec,
-            no_project=args.no_project)
+            no_project=args.no_project,
+        )
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2
@@ -236,10 +259,10 @@ def main(cmdargs):
         userprint("done, npix = {}".format(len(data2)))
 
     # compute correlation function, use pool to parallelize
-    cf.counter = Value('i', 0)
+    cf.counter = Value("i", 0)
     cf.lock = Lock()
     cpu_data = {healpix: [healpix] for healpix in data}
-    context = multiprocessing.get_context('fork')
+    context = multiprocessing.get_context("fork")
     pool = context.Pool(processes=args.nproc)
     correlation_function_data = pool.map(corr_func, sorted(cpu_data.values()))
     pool.close()
@@ -255,7 +278,7 @@ def main(cmdargs):
     healpix_list = np.array(sorted(list(cpu_data.keys())))
 
     # normalize values
-    w = (weights_list.sum(axis=0) > 0.)
+    w = weights_list.sum(axis=0) > 0.0
     r_par = (r_par_list * weights_list).sum(axis=0)
     r_par[w] /= weights_list.sum(axis=0)[w]
     r_trans = (r_trans_list * weights_list).sum(axis=0)
@@ -264,62 +287,54 @@ def main(cmdargs):
     z[w] /= weights_list.sum(axis=0)[w]
     num_pairs = num_pairs_list.sum(axis=0)
 
-    results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [{
-        'name': 'RPMIN',
-        'value': cf.r_par_min,
-        'comment': 'Minimum wavelength ratio'
-    }, {
-        'name': 'RPMAX',
-        'value': cf.r_par_max,
-        'comment': 'Maximum wavelength ratio'
-    }, {
-        'name': 'RTMAX',
-        'value': cf.r_trans_max,
-        'comment': 'Maximum angle [rad]'
-    }, {
-        'name': 'NP',
-        'value': cf.num_bins_r_par,
-        'comment': 'Number of bins in wavelength ratio'
-    }, {
-        'name': 'NT',
-        'value': cf.num_bins_r_trans,
-        'comment': 'Number of bins in angle'
-    }, {
-        'name': 'ZCUTMIN',
-        'value': cf.z_cut_min,
-        'comment': 'Minimum redshift of pairs'
-    }, {
-        'name': 'ZCUTMAX',
-        'value': cf.z_cut_max,
-        'comment': 'Maximum redshift of pairs'
-    }, {
-        'name': 'NSIDE',
-        'value': cf.nside,
-        'comment': 'Healpix nside'
-    }]
+    results = fitsio.FITS(args.out, "rw", clobber=True)
+    header = [
+        {"name": "RPMIN", "value": cf.r_par_min, "comment": "Minimum wavelength ratio"},
+        {"name": "RPMAX", "value": cf.r_par_max, "comment": "Maximum wavelength ratio"},
+        {"name": "RTMAX", "value": cf.r_trans_max, "comment": "Maximum angle [rad]"},
+        {
+            "name": "NP",
+            "value": cf.num_bins_r_par,
+            "comment": "Number of bins in wavelength ratio",
+        },
+        {
+            "name": "NT",
+            "value": cf.num_bins_r_trans,
+            "comment": "Number of bins in angle",
+        },
+        {
+            "name": "ZCUTMIN",
+            "value": cf.z_cut_min,
+            "comment": "Minimum redshift of pairs",
+        },
+        {
+            "name": "ZCUTMAX",
+            "value": cf.z_cut_max,
+            "comment": "Maximum redshift of pairs",
+        },
+        {"name": "NSIDE", "value": cf.nside, "comment": "Healpix nside"},
+    ]
     results.write(
         [r_par, r_trans, z, num_pairs],
-        names=['RP', 'RT', 'Z', 'NB'],
-        units=['', 'rad', '', ''],
-        comment=['Wavelength ratio', 'Angle', 'Redshift', 'Number of pairs'],
+        names=["RP", "RT", "Z", "NB"],
+        units=["", "rad", "", ""],
+        comment=["Wavelength ratio", "Angle", "Redshift", "Number of pairs"],
         header=header,
-        extname='ATTRI')
+        extname="ATTRI",
+    )
 
-    header2 = [{
-        'name': 'HLPXSCHM',
-        'value': 'RING',
-        'comment': 'Healpix scheme'
-    }]
-    results.write([healpix_list, weights_list, xi_list],
-                  names=['HEALPID', 'WE', 'DA'],
-                  comment=['Healpix index', 'Sum of weight', 'Correlation'],
-                  header=header2,
-                  extname='COR')
+    header2 = [{"name": "HLPXSCHM", "value": "RING", "comment": "Healpix scheme"}]
+    results.write(
+        [healpix_list, weights_list, xi_list],
+        names=["HEALPID", "WE", "DA"],
+        comment=["Healpix index", "Sum of weight", "Correlation"],
+        header=header2,
+        extname="COR",
+    )
 
     results.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cmdargs = sys.argv[1:]
     main(cmdargs)

@@ -100,11 +100,13 @@ class RejectionLogFromTable(RejectionLog):
         In the log forest headers will be saved along with the forest size and
         the rejection status.
         """
-        rejection_log = fitsio.FITS(self.file, 'rw', clobber=True)
+        rejection_log = fitsio.FITS(self.file, "rw", clobber=True)
 
-        rejection_log.write([np.array(item) for item in self.cols],
-                            names=self.names,
-                            comment=self.comments,
-                            extname="rejection_log")
+        rejection_log.write(
+            [np.array(item) for item in self.cols],
+            names=self.names,
+            comment=self.comments,
+            extname="rejection_log",
+        )
 
         rejection_log.close()

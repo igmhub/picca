@@ -18,23 +18,25 @@ defaults = {
 accepted_options = ["bal index type", "filename", "los_id name", "keep pixels"]
 
 # Wavelengths in Angstroms
-lines = np.array([
-    ("lCIV", 1549),
-    ("lSiIV1", 1394),
-    ("lSiIV2", 1403),
-    ("lNV", 1240.81),
-    ("lLya", 1216.1),
-    ("lCIII", 1175),
-    ("lPV1", 1117),
-    ("lPV2", 1128),
-    ("lSIV1", 1062),
-    ("lSIV2", 1074),
-    ("lLyb", 1020),
-    ("lOIV", 1031),
-    ("lOVI", 1037),
-    ("lOI", 1039),
-],
-                 dtype=[("name", "U10"), ("value", float)])
+lines = np.array(
+    [
+        ("lCIV", 1549),
+        ("lSiIV1", 1394),
+        ("lSiIV2", 1403),
+        ("lNV", 1240.81),
+        ("lLya", 1216.1),
+        ("lCIII", 1175),
+        ("lPV1", 1117),
+        ("lPV2", 1128),
+        ("lSIV1", 1062),
+        ("lSIV2", 1074),
+        ("lLyb", 1020),
+        ("lOIV", 1031),
+        ("lOVI", 1037),
+        ("lOI", 1039),
+    ],
+    dtype=[("name", "U10"), ("value", float)],
+)
 
 
 class BalMask(Mask):
@@ -89,10 +91,9 @@ class BalMask(Mask):
 
         los_id_name = config.get("los_id name")
         if los_id_name is None:
-            raise MaskError(
-                "Missing argument 'los_id name' required by BalMask")
+            raise MaskError("Missing argument 'los_id name' required by BalMask")
         if los_id_name == "THING_ID":
-            ext_name = 'BALCAT'
+            ext_name = "BALCAT"
         elif los_id_name == "TARGETID":
             extnames = [ext.get_extname() for ext in fitsio.FITS(filename)]
             if "QSO_CAT" in extnames:
@@ -102,27 +103,31 @@ class BalMask(Mask):
             else:
                 raise MaskError(
                     "Could not find valid quasar catalog extension in fits "
-                    f"file: {filename}")
+                    f"file: {filename}"
+                )
         else:
             raise MaskError(
                 "Unrecognized los_id name. Expected one of 'THING_ID' "
-                f" or 'TARGETID'. Found {los_id_name}")
+                f" or 'TARGETID'. Found {los_id_name}"
+            )
 
         # setup bal index limit
         self.bal_index_type = config.get("bal index type")
         if self.bal_index_type is None:
-            self.bal_index_type = MaskError("Missing argument 'bal index type' "
-                                            "required by BalMask")
+            self.bal_index_type = MaskError(
+                "Missing argument 'bal index type' " "required by BalMask"
+            )
         if self.bal_index_type == "ai":
-            columns_list = [los_id_name, 'VMIN_CIV_450', 'VMAX_CIV_450']
+            columns_list = [los_id_name, "VMIN_CIV_450", "VMAX_CIV_450"]
         elif self.bal_index_type == "bi":
-            columns_list = [los_id_name, 'VMIN_CIV_2000', 'VMAX_CIV_2000']
+            columns_list = [los_id_name, "VMIN_CIV_2000", "VMAX_CIV_2000"]
         else:
             self.bal_index_type = MaskError(
                 "In BalMask, unrecognized value "
                 "for 'bal_index_type'. Expected one "
                 "of 'ai' or 'bi'. Found "
-                f"{self.bal_index_type}")
+                f"{self.bal_index_type}"
+            )
 
         self.velocity_list = columns_list[1:]
 
@@ -132,13 +137,16 @@ class BalMask(Mask):
             hdul = fitsio.FITS(filename)
             self.cat = {col: hdul[ext_name][col][:] for col in columns_list}
         except OSError as error:
-            raise MaskError(f"Error loading BalMask. File {filename} does "
-                            f"not have extension '{ext_name}'") from error
+            raise MaskError(
+                f"Error loading BalMask. File {filename} does "
+                f"not have extension '{ext_name}'"
+            ) from error
         except ValueError as error:
             aux = "', '".join(columns_list)
             raise MaskError(
                 f"Error loading BalMask. File {filename} does "
-                f"not have fields '{aux}' in HDU '{ext_name}'") from error
+                f"not have fields '{aux}' in HDU '{ext_name}'"
+            ) from error
         finally:
             hdul.close()
 
@@ -147,12 +155,10 @@ class BalMask(Mask):
         for los_id in np.unique(self.cat[los_id_name]):
             self.los_ids[los_id] = self.add_bal_rest_frame(los_id, los_id_name)
 
-        num_bals = np.sum([
-            len(los_id)
-            for los_id in self.los_ids.values()
-            if los_id is not None
-        ])
-        self.logger.progress(f'In catalog: {num_bals} BAL quasars')
+        num_bals = np.sum(
+            [len(los_id) for los_id in self.los_ids.values() if los_id is not None]
+        )
+        self.logger.progress(f"In catalog: {num_bals} BAL quasars")
 
     def add_bal_rest_frame(self, los_id, los_id_name):
         """Creates a list of wavelengths to be masked out by forest.mask
@@ -186,11 +192,15 @@ class BalMask(Mask):
             return None
 
         num_lines = lines.size
-        mask_rest_frame_bal = np.empty(num_velocities * num_lines,
-                                       dtype=[('log_lambda_min', 'f8'),
-                                              ('log_lambda_max', 'f8'),
-                                              ('lambda_min', 'f8'),
-                                              ('lambda_max', 'f8')])
+        mask_rest_frame_bal = np.empty(
+            num_velocities * num_lines,
+            dtype=[
+                ("log_lambda_min", "f8"),
+                ("log_lambda_max", "f8"),
+                ("lambda_min", "f8"),
+                ("lambda_max", "f8"),
+            ],
+        )
 
         # Calculate mask width for each velocity pair, for each emission line
         # This might be  bit confusing, since BAL absorption is
@@ -198,14 +208,12 @@ class BalMask(Mask):
         # corresponds to the red side of the BAL absorption (the larger
         # wavelength value), and the “maximum velocity” corresponds to
         # the blue side (the smaller wavelength value).
-        lambda_max = np.outer(lines['value'],
-                              1 - min_velocities / SPEED_LIGHT).ravel()
-        lambda_min = np.outer(lines['value'],
-                              1 - max_velocities / SPEED_LIGHT).ravel()
-        mask_rest_frame_bal['lambda_min'] = lambda_min
-        mask_rest_frame_bal['lambda_max'] = lambda_max
-        mask_rest_frame_bal['log_lambda_min'] = np.log10(lambda_min)
-        mask_rest_frame_bal['log_lambda_max'] = np.log10(lambda_max)
+        lambda_max = np.outer(lines["value"], 1 - min_velocities / SPEED_LIGHT).ravel()
+        lambda_min = np.outer(lines["value"], 1 - max_velocities / SPEED_LIGHT).ravel()
+        mask_rest_frame_bal["lambda_min"] = lambda_min
+        mask_rest_frame_bal["lambda_max"] = lambda_max
+        mask_rest_frame_bal["log_lambda_min"] = np.log10(lambda_min)
+        mask_rest_frame_bal["log_lambda_max"] = np.log10(lambda_max)
 
         return mask_rest_frame_bal
 
@@ -229,10 +237,11 @@ class BalMask(Mask):
 
         # find out which pixels to mask
         w = np.ones(forest.log_lambda.size, dtype=bool)
-        rest_frame_log_lambda = forest.log_lambda - np.log10(1. + forest.z)
+        rest_frame_log_lambda = forest.log_lambda - np.log10(1.0 + forest.z)
         mask_idx_ranges = np.searchsorted(
             rest_frame_log_lambda,
-            [mask_table['log_lambda_min'], mask_table['log_lambda_max']]).T
+            [mask_table["log_lambda_min"], mask_table["log_lambda_max"]],
+        ).T
         # Make sure first index comes before the second
         mask_idx_ranges.sort(axis=1)
 

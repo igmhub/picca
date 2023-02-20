@@ -11,24 +11,32 @@ from picca.delta_extraction.astronomical_objects.sdss_pk1d_forest import SdssPk1
 from picca.delta_extraction.data import Data, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
-from picca.delta_extraction.quasar_catalogues.drq_catalogue import defaults as defaults_drq
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import (
-    accepted_options as accepted_options_quasar_catalogue)
+    defaults as defaults_drq,
+)
+from picca.delta_extraction.quasar_catalogues.drq_catalogue import (
+    accepted_options as accepted_options_quasar_catalogue,
+)
 from picca.delta_extraction.utils_pk1d import exp_diff, spectral_resolution
 from picca.delta_extraction.utils import update_accepted_options, update_default_options
 
-accepted_options = update_accepted_options(accepted_options,
-                                           accepted_options_quasar_catalogue)
+accepted_options = update_accepted_options(
+    accepted_options, accepted_options_quasar_catalogue
+)
 accepted_options = update_accepted_options(accepted_options, ["rebin", "mode"])
 accepted_options = update_accepted_options(
     accepted_options,
     ["delta lambda", "delta log lambda", "delta lambda rest frame"],
-    remove=True)
+    remove=True,
+)
 
-defaults = update_default_options(defaults, {
-    "mode": "spplate",
-    "rebin": 3,
-})
+defaults = update_default_options(
+    defaults,
+    {
+        "mode": "spplate",
+        "rebin": 3,
+    },
+)
 defaults = update_default_options(defaults, defaults_drq)
 
 
@@ -84,8 +92,9 @@ class SdssData(Data):
         elif self.mode == "spec":
             self.read_from_spec(catalogue)
         else:
-            raise DataError(f"Error reading data in SdssData. Mode {self.mode} "
-                            "is not supported.")
+            raise DataError(
+                f"Error reading data in SdssData. Mode {self.mode} " "is not supported."
+            )
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -123,15 +132,17 @@ class SdssData(Data):
         self.logger.progress(f"Reading {len(catalogue)} objects")
 
         forests_by_thingid = {}
-        #-- Loop over unique objects
+        # -- Loop over unique objects
         for row in catalogue:
-            thingid = row['THING_ID']
+            thingid = row["THING_ID"]
             plate = row["PLATE"]
             mjd = row["MJD"]
             fiberid = row["FIBERID"]
 
-            filename = (f"{self.input_directory}/{plate}/spec-{plate}-{mjd}-"
-                        f"{fiberid:04d}.fits")
+            filename = (
+                f"{self.input_directory}/{plate}/spec-{plate}-{mjd}-"
+                f"{fiberid:04d}.fits"
+            )
             try:
                 hdul = fitsio.FITS(filename)
             except IOError:
@@ -141,8 +152,10 @@ class SdssData(Data):
 
             log_lambda = np.array(hdul[1]["loglam"][:], dtype=np.float64)
             flux = np.array(hdul[1]["flux"][:], dtype=np.float64)
-            ivar = (np.array(hdul[1]["ivar"][:], dtype=np.float64) *
-                    hdul[1]["and_mask"][:] == 0)
+            ivar = (
+                np.array(hdul[1]["ivar"][:], dtype=np.float64) * hdul[1]["and_mask"][:]
+                == 0
+            )
 
             if self.analysis_type == "BAO 3D":
                 forest = SdssForest(
@@ -156,8 +169,9 @@ class SdssData(Data):
                         "z": row["Z"],
                         "plate": plate,
                         "mjd": mjd,
-                        "fiberid": fiberid
-                    })
+                        "fiberid": fiberid,
+                    }
+                )
             elif self.analysis_type == "PK 1D":
                 # compute difference between exposure
                 exposures_diff = exp_diff(hdul, log_lambda)
@@ -179,8 +193,9 @@ class SdssData(Data):
                         "fiberid": fiberid,
                         "exposures_diff": exposures_diff,
                         "reso": reso,
-                        "reso_pix": wdisp
-                    })
+                        "reso_pix": wdisp,
+                    }
+                )
             else:
                 raise DataError(f"analysis_type = {self.analysis_type}")
 
@@ -206,8 +221,9 @@ class SdssData(Data):
 
         forests_by_thingid = {}
         num_read_total = 0
-        for (plate, mjd), group in zip(grouped_catalogue.groups.keys,
-                                       grouped_catalogue.groups):
+        for (plate, mjd), group in zip(
+            grouped_catalogue.groups.keys, grouped_catalogue.groups
+        ):
             spplate = f"{self.input_directory}/{plate}/spPlate-{plate:04d}-{mjd}.fits"
             try:
                 hdul = fitsio.FITS(spplate)
@@ -243,8 +259,9 @@ class SdssData(Data):
                             "z": row["Z"],
                             "plate": plate,
                             "mjd": mjd,
-                            "fiberid": fiberid
-                        })
+                            "fiberid": fiberid,
+                        }
+                    )
                 elif self.analysis_type == "PK 1D":
                     # compute difference between exposure
                     exposures_diff = exp_diff(hdul, log_lambda)
@@ -265,8 +282,9 @@ class SdssData(Data):
                             "mjd": mjd,
                             "fiberid": fiberid,
                             "exposures_diff": exposures_diff,
-                            "reso": reso
-                        })
+                            "reso": reso,
+                        }
+                    )
 
                 # rebin arrays
                 # this needs to happen after all arrays are initialized by
@@ -281,7 +299,8 @@ class SdssData(Data):
                 else:
                     forests_by_thingid[thingid] = forest
                 self.logger.debug(
-                    f"{thingid} read from file {spplate} and fiberid {fiberid}")
+                    f"{thingid} read from file {spplate} and fiberid {fiberid}"
+                )
 
             num_read = len(group)
             num_read_total += num_read
@@ -292,7 +311,8 @@ class SdssData(Data):
             self.logger.progress(
                 f"read {num_read} from {os.path.basename(spplate)}"
                 f" in {time_read:.3f} per spec. Progress: "
-                f"{num_read_total} of {num_objects}")
+                f"{num_read_total} of {num_objects}"
+            )
             hdul.close()
 
         self.forests = list(forests_by_thingid.values())

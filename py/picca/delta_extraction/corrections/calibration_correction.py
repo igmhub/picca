@@ -49,41 +49,51 @@ class CalibrationCorrection(Correction):
         try:
             hdu = fitsio.read(filename, ext="STACK_DELTAS")
             if "loglam" in hdu.dtype.names:
-                stack_log_lambda = hdu['loglam']
+                stack_log_lambda = hdu["loglam"]
                 self.wave_solution = "log"
             elif "lambda" in hdu.dtype.names:
-                stack_lambda = hdu['lambda']
+                stack_lambda = hdu["lambda"]
                 self.wave_solution = "lin"
             else:
-                raise CorrectionError("Error loading CalibrationCorrection. In "
-                                      "extension 'STACK_DELTAS' in file "
-                                      f"{filename} one of the fields 'loglam' "
-                                      "or 'lambda' should be present. I did not"
-                                      "find them.")
-            stack_delta = hdu['stack']
+                raise CorrectionError(
+                    "Error loading CalibrationCorrection. In "
+                    "extension 'STACK_DELTAS' in file "
+                    f"{filename} one of the fields 'loglam' "
+                    "or 'lambda' should be present. I did not"
+                    "find them."
+                )
+            stack_delta = hdu["stack"]
         except OSError as error:
             raise CorrectionError(
                 "Error loading CalibrationCorrection. "
-                f"Failed to find or open file {filename}") from error
+                f"Failed to find or open file {filename}"
+            ) from error
         except ValueError as error:
             raise CorrectionError(
                 "Error loading CalibrationCorrection. "
                 f"File {filename} does not have fields "
-                "'loglam' and/or 'stack' in HDU 'STACK_DELTAS'") from error
-        w = stack_delta != 0.
+                "'loglam' and/or 'stack' in HDU 'STACK_DELTAS'"
+            ) from error
+        w = stack_delta != 0.0
         if self.wave_solution == "log":
-            self.correct_flux = interp1d(stack_log_lambda[w],
-                                         stack_delta[w],
-                                         fill_value="extrapolate",
-                                         kind="nearest")
+            self.correct_flux = interp1d(
+                stack_log_lambda[w],
+                stack_delta[w],
+                fill_value="extrapolate",
+                kind="nearest",
+            )
         elif self.wave_solution == "lin":
-            self.correct_flux = interp1d(stack_lambda[w],
-                                         stack_delta[w],
-                                         fill_value="extrapolate",
-                                         kind="nearest")
+            self.correct_flux = interp1d(
+                stack_lambda[w],
+                stack_delta[w],
+                fill_value="extrapolate",
+                kind="nearest",
+            )
         else:
-            raise CorrectionError("In CalibrationCorrection wave_solution must "
-                                  "be either 'log' or 'lin'")
+            raise CorrectionError(
+                "In CalibrationCorrection wave_solution must "
+                "be either 'log' or 'lin'"
+            )
 
     def apply_correction(self, forest):
         """Apply the correction. Correction is applied by dividing the

@@ -83,16 +83,18 @@ def get_header(time, name, email=None, queue="regular", account="desi"):
     return header
 
 
-def picca_deltas_script(batch,
-                        time,
-                        in_dir,
-                        out_dir,
-                        drq_filename,
-                        email=None,
-                        debug=False,
-                        mode="desi",
-                        lambda_rest_frame_min=None,
-                        lambda_rest_frame_max=None):
+def picca_deltas_script(
+    batch,
+    time,
+    in_dir,
+    out_dir,
+    drq_filename,
+    email=None,
+    debug=False,
+    mode="desi",
+    lambda_rest_frame_min=None,
+    lambda_rest_frame_max=None,
+):
     """Writes a .batch file to submit the picca_deltas.py script
 
     Args:
@@ -122,11 +124,13 @@ def picca_deltas_script(batch,
     if mode == "eboss":
         mode = "spplate"
     header = get_header(time, name="picca_deltas", email=email)
-    header += ("srun -n 1 -c 64 picca_deltas.py " +
-               "--in-dir {} --drq {} ".format(in_dir, drq_filename) +
-               "--out-dir {}/deltas/ --mode {} ".format(out_dir, mode) +
-               "--iter-out-prefix {}/iter ".format(out_dir) +
-               "--log {}/input.log".format(out_dir))
+    header += (
+        "srun -n 1 -c 64 picca_deltas.py "
+        + "--in-dir {} --drq {} ".format(in_dir, drq_filename)
+        + "--out-dir {}/deltas/ --mode {} ".format(out_dir, mode)
+        + "--iter-out-prefix {}/iter ".format(out_dir)
+        + "--log {}/input.log".format(out_dir)
+    )
     if lambda_rest_frame_min is not None:
         header += " --lambda-rest-min {}".format(lambda_rest_frame_min)
     if lambda_rest_frame_max is not None:
@@ -141,14 +145,9 @@ def picca_deltas_script(batch,
     file.close()
 
 
-def cf_script(batch,
-              time,
-              z_intervals,
-              out_dir,
-              email=None,
-              fid_om=None,
-              fid_pk=None,
-              fid_or=None):
+def cf_script(
+    batch, time, z_intervals, out_dir, email=None, fid_om=None, fid_pk=None, fid_or=None
+):
     """
     Writes the .batch files to submit the picca_cf.py and the picca_export.py
     scripts and adds them to the batch.cf and batch.export lists
@@ -180,13 +179,18 @@ def cf_script(batch,
             out_dir + "/cf_z_{}_{}.fits".format(z_min, z_max),
             out_dir + "/dmat_z_{}_{}.fits".format(z_min, z_max),
             out_dir + "/cf_z_{}_{}-exp.fits".format(z_min, z_max),
-            fid_pk=fid_pk)
+            fid_pk=fid_pk,
+        )
         header = get_header(time, name=out, email=email)
-        srun = (header + "srun -n 1 -c 64 "
-                "picca_cf.py --in-dir {}/deltas/ ".format(out_dir) +
-                "--z-cut-min {} --z-cut-max {} ".format(z_min, z_max) +
-                "--out {}/{} --nproc 32 ".format(out_dir, out) +
-                "--fid-Om {} --fid-Or {} \n".format(fid_om, fid_or))
+        srun = header + "srun -n 1 -c 64 " "picca_cf.py --in-dir {}/deltas/ ".format(
+            out_dir
+        ) + "--z-cut-min {} --z-cut-max {} ".format(
+            z_min, z_max
+        ) + "--out {}/{} --nproc 32 ".format(
+            out_dir, out
+        ) + "--fid-Om {} --fid-Or {} \n".format(
+            fid_om, fid_or
+        )
 
         batch_filename = out_dir + "/" + out.replace(".fits", ".batch")
         batch.cf_script_list.append(basename(batch_filename))
@@ -197,14 +201,9 @@ def cf_script(batch,
         file.close()
 
 
-def dmat_script(batch,
-                time,
-                z_intervals,
-                out_dir,
-                email=None,
-                reject=0.99,
-                fid_om=None,
-                fid_or=None):
+def dmat_script(
+    batch, time, z_intervals, out_dir, email=None, reject=0.99, fid_om=None, fid_or=None
+):
     """
     Writes the .batch files to submit the picca_dmat.py script
     and adds them to the batch.dmat script
@@ -231,11 +230,14 @@ def dmat_script(batch,
         z_min, z_max = z_interval.split(":")
         out = "dmat_z_{}_{}.fits".format(z_min, z_max)
         header = get_header(time, name=out, email=email)
-        srun = (header + "srun -n 1 -c 64 " +
-                "picca_dmat.py --in-dir {}/deltas/ ".format(out_dir) +
-                "--z-cut-min {} --z-cut-max {} ".format(z_min, z_max) +
-                "--out {}/{} --rej {} ".format(out_dir, out, reject) +
-                "--nproc 32  --fid-Om {} --fid-Or {}\n".format(fid_om, fid_or))
+        srun = (
+            header
+            + "srun -n 1 -c 64 "
+            + "picca_dmat.py --in-dir {}/deltas/ ".format(out_dir)
+            + "--z-cut-min {} --z-cut-max {} ".format(z_min, z_max)
+            + "--out {}/{} --rej {} ".format(out_dir, out, reject)
+            + "--nproc 32  --fid-Om {} --fid-Or {}\n".format(fid_om, fid_or)
+        )
         batch_filename = out_dir + "/" + out.replace(".fits", ".batch")
         batch.dmat_script_list.append(basename(batch_filename))
 
@@ -244,15 +246,17 @@ def dmat_script(batch,
         file.close()
 
 
-def xcf_script(batch,
-               time,
-               drq_filename,
-               z_intervals,
-               out_dir,
-               email=None,
-               fid_om=None,
-               fid_pk=None,
-               fid_or=None):
+def xcf_script(
+    batch,
+    time,
+    drq_filename,
+    z_intervals,
+    out_dir,
+    email=None,
+    fid_om=None,
+    fid_pk=None,
+    fid_or=None,
+):
     """
     Writes the .batch files to submit the picca_xcf.py script
     and the picca_export.py scripts
@@ -288,13 +292,17 @@ def xcf_script(batch,
             out_dir + "/xcf_z_{}_{}.fits".format(z_min, z_max),
             out_dir + "/xdmat_z_{}_{}.fits".format(z_min, z_max),
             out_dir + "/xcf_z_{}_{}-exp.fits".format(z_min, z_max),
-            fid_pk=fid_pk)
-        srun = (header + "srun -n 1 -c 64 picca_xcf.py " +
-                "--drq {} --in-dir {}/deltas/ ".format(drq_filename, out_dir) +
-                "--z-evol-obj 1.44 " +
-                "--z-cut-min {} --z-cut-max {} ".format(z_min, z_max) +
-                "--out {}/{} --nproc 32 ".format(out_dir, out) +
-                "--fid-Om {} --fid-Or {}\n".format(fid_om, fid_or))
+            fid_pk=fid_pk,
+        )
+        srun = (
+            header
+            + "srun -n 1 -c 64 picca_xcf.py "
+            + "--drq {} --in-dir {}/deltas/ ".format(drq_filename, out_dir)
+            + "--z-evol-obj 1.44 "
+            + "--z-cut-min {} --z-cut-max {} ".format(z_min, z_max)
+            + "--out {}/{} --nproc 32 ".format(out_dir, out)
+            + "--fid-Om {} --fid-Or {}\n".format(fid_om, fid_or)
+        )
         batch_filename = out_dir + "/" + out.replace(".fits", ".batch")
         batch.xcf_script_list.append(basename(batch_filename))
         batch.xexport_script_list.append(basename(exp_batch))
@@ -304,15 +312,17 @@ def xcf_script(batch,
         file.close()
 
 
-def xdmat_script(batch,
-                 time,
-                 drq_filename,
-                 z_intervals,
-                 out_dir,
-                 email=None,
-                 reject=0.95,
-                 fid_om=None,
-                 fid_or=None):
+def xdmat_script(
+    batch,
+    time,
+    drq_filename,
+    z_intervals,
+    out_dir,
+    email=None,
+    reject=0.95,
+    fid_om=None,
+    fid_or=None,
+):
     """
     Writes the .batch files to submit the picca_xdmat.py script
     and adds if to the b.xdmat list
@@ -342,13 +352,16 @@ def xdmat_script(batch,
         z_min, z_max = z_interval.split(":")
         out = "xdmat_z_{}_{}.fits".format(z_min, z_max)
         header = get_header(time, name=out, email=email)
-        srun = (header + "srun -n 1 -c 64 picca_xdmat.py " +
-                "--drq {} --in-dir {}/deltas/ ".format(drq_filename, out_dir) +
-                "--z-evol-obj 1.44 " +
-                "--z-cut-min {} --z-cut-max {} ".format(z_min, z_max) +
-                "--out {}/{} ".format(out_dir, out) +
-                "--rej {} --nproc 32 ".format(reject) +
-                "--fid-Om {} --fid-Or {}\n".format(fid_om, fid_or))
+        srun = (
+            header
+            + "srun -n 1 -c 64 picca_xdmat.py "
+            + "--drq {} --in-dir {}/deltas/ ".format(drq_filename, out_dir)
+            + "--z-evol-obj 1.44 "
+            + "--z-cut-min {} --z-cut-max {} ".format(z_min, z_max)
+            + "--out {}/{} ".format(out_dir, out)
+            + "--rej {} --nproc 32 ".format(reject)
+            + "--fid-Om {} --fid-Or {}\n".format(fid_om, fid_or)
+        )
         batch_filename = out_dir + "/" + out.replace(".fits", ".batch")
         batch.xdmat_script_list.append(basename(batch_filename))
 
@@ -379,9 +392,12 @@ def export_script(time, cf_file, dmat_file, out, fid_pk):
         picca_fitter2.py
     """
     header = get_header(time, name=basename(out), queue="regular")
-    srun = (header + "srun -n 1 -c 64 picca_export.py " +
-            "--data {} --dmat {} ".format(cf_file, dmat_file) +
-            "--out {}\n".format(out))
+    srun = (
+        header
+        + "srun -n 1 -c 64 picca_export.py "
+        + "--data {} --dmat {} ".format(cf_file, dmat_file)
+        + "--out {}\n".format(out)
+    )
     chi2_ini = do_ini(dirname(out), basename(out), fid_pk)
     srun += "srun -n 1 -c 64 picca_fitter2.py {}\n".format(chi2_ini)
     batch_filename = out.replace(".fits", ".batch")
@@ -417,7 +433,7 @@ def do_ini(out_dir, cf_file, fid_pk):
     else:
         file.write("tracer2 = LYA\n")
         file.write("tracer2-type = continuous\n")
-    file.write("filename = {}\n".format(out_dir + '/' + cf_file))
+    file.write("filename = {}\n".format(out_dir + "/" + cf_file))
     file.write("ell-max = 6\n")
 
     file.write("[cuts]\n")
@@ -461,10 +477,16 @@ def do_ini(out_dir, cf_file, fid_pk):
     file.write("sigmaNL_par = 6.36984 0.1 None None fixed\n")
     file.write("sigmaNL_per = 3.24 0.1 None None fixed\n")
 
-    file.write(("par binsize {} = 4. 0.4 None None "
-                "free\n").format(cf_file.replace(".fits", "")))
-    file.write(("per binsize {} = 4. 0.4 None None "
-                "free\n").format(cf_file.replace(".fits", "")))
+    file.write(
+        ("par binsize {} = 4. 0.4 None None " "free\n").format(
+            cf_file.replace(".fits", "")
+        )
+    )
+    file.write(
+        ("per binsize {} = 4. 0.4 None None " "free\n").format(
+            cf_file.replace(".fits", "")
+        )
+    )
 
     file.write("bao_amp = 1. 0.1 None None fixed\n")
     if "xcf" in cf_file:
@@ -476,8 +498,9 @@ def do_ini(out_dir, cf_file, fid_pk):
     file = open(chi2_ini, "w")
     file.write("[data sets]\n")
     file.write("zeff = 2.310\n")
-    file.write("ini files = {}\n".format(out_dir + "/" +
-                                         cf_file.replace(".fits", ".ini")))
+    file.write(
+        "ini files = {}\n".format(out_dir + "/" + cf_file.replace(".fits", ".ini"))
+    )
 
     file.write("[fiducial]\n")
     file.write("filename = {}\n".format(fid_pk))
@@ -486,8 +509,9 @@ def do_ini(out_dir, cf_file, fid_pk):
     file.write("level = 0\n")
 
     file.write("[output]\n")
-    file.write("filename = {}\n".format(out_dir + "/" +
-                                        cf_file.replace(".fits", ".h5")))
+    file.write(
+        "filename = {}\n".format(out_dir + "/" + cf_file.replace(".fits", ".h5"))
+    )
 
     file.write("[cosmo-fit type]\n")
     file.write("cosmo fit func = ap_at\n")
@@ -507,62 +531,84 @@ def submit(batch):
     file = open(out_name, "w")
     file.write("#!/bin/bash\n")
     if batch.picca_deltas_script_filename is not None:
-        file.write(("picca_deltas=$(sbatch --parsable "
-                    "{})\n").format(batch.picca_deltas_script_filename))
+        file.write(
+            ("picca_deltas=$(sbatch --parsable " "{})\n").format(
+                batch.picca_deltas_script_filename
+            )
+        )
         file.write('echo "picca_deltas: "$picca_deltas\n')
-    for cf_batch, dmat_batch, exp_batch in zip(batch.cf_script_list,
-                                               batch.dmat_script_list,
-                                               batch.export_script_list):
+    for cf_batch, dmat_batch, exp_batch in zip(
+        batch.cf_script_list, batch.dmat_script_list, batch.export_script_list
+    ):
         var_cf = cf_batch.replace(".batch", "").replace(".", "_")
         var_dmat = dmat_batch.replace(".batch", "").replace(".", "_")
         if batch.picca_deltas_script_filename is not None:
-            file.write(("{}=$(sbatch --parsable "
-                        "--dependency=afterok:$picca_deltas "
-                        "{})\n").format(var_cf, cf_batch))
+            file.write(
+                (
+                    "{}=$(sbatch --parsable "
+                    "--dependency=afterok:$picca_deltas "
+                    "{})\n"
+                ).format(var_cf, cf_batch)
+            )
             file.write('echo "{0}: "${0} \n'.format(var_cf))
-            file.write(("{}=$(sbatch --parsable "
-                        "--dependency=afterok:$picca_deltas "
-                        "{})\n").format(var_dmat, dmat_batch))
+            file.write(
+                (
+                    "{}=$(sbatch --parsable "
+                    "--dependency=afterok:$picca_deltas "
+                    "{})\n"
+                ).format(var_dmat, dmat_batch)
+            )
             file.write('echo "{0}: "${0} \n'.format(var_dmat))
         else:
             file.write("{}=$(sbatch --parsable {})\n".format(var_cf, cf_batch))
             file.write('echo "{0}: "${0} \n'.format(var_cf))
-            file.write("{}=$(sbatch --parsable {})\n".format(
-                var_dmat, dmat_batch))
+            file.write("{}=$(sbatch --parsable {})\n".format(var_dmat, dmat_batch))
             file.write('echo "{0}: "${0} \n'.format(var_dmat))
-        var_exp = exp_batch.replace(".batch",
-                                    "").replace(".", "_").replace("-", "_")
-        file.write(("{}=$(sbatch --parsable "
-                    "--dependency=afterok:${},afterok:${} "
-                    "{})\n").format(var_exp, var_cf, var_dmat, exp_batch))
+        var_exp = exp_batch.replace(".batch", "").replace(".", "_").replace("-", "_")
+        file.write(
+            (
+                "{}=$(sbatch --parsable "
+                "--dependency=afterok:${},afterok:${} "
+                "{})\n"
+            ).format(var_exp, var_cf, var_dmat, exp_batch)
+        )
         file.write('echo "{0}: "${0} \n'.format(var_exp))
 
-    for xcf_batch, xdmat_batch, xexp_batch in zip(batch.xcf_script_list,
-                                                  batch.xdmat_script_list,
-                                                  batch.xexport_script_list):
+    for xcf_batch, xdmat_batch, xexp_batch in zip(
+        batch.xcf_script_list, batch.xdmat_script_list, batch.xexport_script_list
+    ):
         var_xcf = xcf_batch.replace(".batch", "").replace(".", "_")
         var_xdmat = xdmat_batch.replace(".batch", "").replace(".", "_")
         if batch.picca_deltas_script_filename is not None:
-            file.write(("{}=$(sbatch --parsable "
-                        "--dependency=afterok:$picca_deltas "
-                        "{})\n").format(var_xcf, xcf_batch))
-            file.write('echo "{0}: "${0} \n'.format(var_xcf))
-            file.write(("{}=$(sbatch --parsable "
-                        "--dependency=afterok:$picca_deltas "
-                        "{})\n").format(var_xdmat, xdmat_batch))
-            file.write('echo "{0}: "${0} \n'.format(var_xdmat))
-        else:
-            file.write(("{}=$(sbatch --parsable "
-                        "{})\n").format(var_xcf, xcf_batch))
+            file.write(
+                (
+                    "{}=$(sbatch --parsable "
+                    "--dependency=afterok:$picca_deltas "
+                    "{})\n"
+                ).format(var_xcf, xcf_batch)
+            )
             file.write('echo "{0}: "${0} \n'.format(var_xcf))
             file.write(
-                ("{}=$(sbatch --parsable {})\n").format(var_xdmat, xdmat_batch))
+                (
+                    "{}=$(sbatch --parsable "
+                    "--dependency=afterok:$picca_deltas "
+                    "{})\n"
+                ).format(var_xdmat, xdmat_batch)
+            )
             file.write('echo "{0}: "${0} \n'.format(var_xdmat))
-        var_xexp = xexp_batch.replace(".batch",
-                                      "").replace(".", "_").replace("-", "_")
-        file.write(("{}=$(sbatch --parsable "
-                    "--dependency=afterok:${},afterok:${} "
-                    "{})\n").format(var_xexp, var_xcf, var_xdmat, xexp_batch))
+        else:
+            file.write(("{}=$(sbatch --parsable " "{})\n").format(var_xcf, xcf_batch))
+            file.write('echo "{0}: "${0} \n'.format(var_xcf))
+            file.write(("{}=$(sbatch --parsable {})\n").format(var_xdmat, xdmat_batch))
+            file.write('echo "{0}: "${0} \n'.format(var_xdmat))
+        var_xexp = xexp_batch.replace(".batch", "").replace(".", "_").replace("-", "_")
+        file.write(
+            (
+                "{}=$(sbatch --parsable "
+                "--dependency=afterok:${},afterok:${} "
+                "{})\n"
+            ).format(var_xexp, var_xcf, var_xdmat, xexp_batch)
+        )
         file.write('echo "{0}: "${0} \n'.format(var_xexp))
 
     file.close()
@@ -577,73 +623,78 @@ def main(cmdargs):
     """
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Writes scripts to send the picca BAO analysis. Once ran, '
-                     'run `./submit.sh` in your terminal. This script works on '
-                     'nersc::cori not on nersc::edison.'))
+        description=(
+            "Writes scripts to send the picca BAO analysis. Once ran, "
+            "run `./submit.sh` in your terminal. This script works on "
+            "nersc::cori not on nersc::edison."
+        ),
+    )
 
-    parser.add_argument("--out-dir",
-                        type=str,
-                        default=None,
-                        required=True,
-                        help="Output directory")
+    parser.add_argument(
+        "--out-dir", type=str, default=None, required=True, help="Output directory"
+    )
 
-    parser.add_argument("--drq",
-                        type=str,
-                        default=None,
-                        required=True,
-                        help="Absolute path to drq file")
+    parser.add_argument(
+        "--drq", type=str, default=None, required=True, help="Absolute path to drq file"
+    )
 
     parser.add_argument(
         "--in-dir",
         type=str,
         default=None,
         required=True,
-        help=("Absolute path to spectra-NSIDE directory (including "
-              "spectra-NSIDE)"))
+        help=("Absolute path to spectra-NSIDE directory (including " "spectra-NSIDE)"),
+    )
 
-    parser.add_argument("--email",
-                        type=str,
-                        default=None,
-                        required=False,
-                        help="Your email address (optional)")
+    parser.add_argument(
+        "--email",
+        type=str,
+        default=None,
+        required=False,
+        help="Your email address (optional)",
+    )
 
-    parser.add_argument("--to-do",
-                        type=str,
-                        nargs="*",
-                        default=["cf", "xcf"],
-                        required=False,
-                        help="What to do")
+    parser.add_argument(
+        "--to-do",
+        type=str,
+        nargs="*",
+        default=["cf", "xcf"],
+        required=False,
+        help="What to do",
+    )
 
-    parser.add_argument("--fid-Om",
-                        type=float,
-                        default=0.3147,
-                        required=False,
-                        help="Fiducial Om")
+    parser.add_argument(
+        "--fid-Om", type=float, default=0.3147, required=False, help="Fiducial Om"
+    )
 
-    parser.add_argument("--fid-Or",
-                        type=float,
-                        default=0.,
-                        required=False,
-                        help="Fiducial Or")
+    parser.add_argument(
+        "--fid-Or", type=float, default=0.0, required=False, help="Fiducial Or"
+    )
 
-    parser.add_argument("--fid-Pk",
-                        type=str,
-                        default="PlanckDR12/PlanckDR12.fits",
-                        required=False,
-                        help="Fiducial Pk")
+    parser.add_argument(
+        "--fid-Pk",
+        type=str,
+        default="PlanckDR12/PlanckDR12.fits",
+        required=False,
+        help="Fiducial Pk",
+    )
 
-    parser.add_argument("--zint",
-                        type=str,
-                        nargs="*",
-                        default=['0:2.35', '2.35:2.65', '2.65:3.05', '3.05:10'],
-                        required=False,
-                        help="Redshifts intervals")
+    parser.add_argument(
+        "--zint",
+        type=str,
+        nargs="*",
+        default=["0:2.35", "2.35:2.65", "2.65:3.05", "3.05:10"],
+        required=False,
+        help="Redshifts intervals",
+    )
 
-    parser.add_argument("--mode",
-                        type=str,
-                        default="desi",
-                        required=False,
-                        help="Use eboss or desi data")
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default="desi",
+        required=False,
+        help="Use eboss or desi data",
+    )
 
     parser.add_argument("--debug", action="store_true", default=False)
 
@@ -651,19 +702,24 @@ def main(cmdargs):
         "--no-deltas",
         action="store_true",
         default=False,
-        help="Do not run picca_deltas (e.g. because they were already run)")
+        help="Do not run picca_deltas (e.g. because they were already run)",
+    )
 
-    parser.add_argument('--lambda-rest-min',
-                        type=float,
-                        default=None,
-                        required=False,
-                        help='Lower limit on rest frame wavelength [Angstrom]')
+    parser.add_argument(
+        "--lambda-rest-min",
+        type=float,
+        default=None,
+        required=False,
+        help="Lower limit on rest frame wavelength [Angstrom]",
+    )
 
-    parser.add_argument('--lambda-rest-max',
-                        type=float,
-                        default=None,
-                        required=False,
-                        help='Upper limit on rest frame wavelength [Angstrom]')
+    parser.add_argument(
+        "--lambda-rest-max",
+        type=float,
+        default=None,
+        required=False,
+        help="Upper limit on rest frame wavelength [Angstrom]",
+    )
 
     args = parser.parse_args(cmdargs)
 
@@ -680,66 +736,76 @@ def main(cmdargs):
         time = "03:30:00"
         if args.debug:
             time = time_debug
-        cf_script(batch,
-                  time,
-                  args.zint,
-                  args.out_dir,
-                  email=args.email,
-                  fid_om=args.fid_om,
-                  fid_pk=args.fid_Pk,
-                  fid_or=args.fid_Or)
+        cf_script(
+            batch,
+            time,
+            args.zint,
+            args.out_dir,
+            email=args.email,
+            fid_om=args.fid_om,
+            fid_pk=args.fid_Pk,
+            fid_or=args.fid_Or,
+        )
 
         time = "02:00:00"
         if args.debug:
             time = time_debug
-        dmat_script(batch,
-                    time,
-                    args.zint,
-                    args.out_dir,
-                    email=args.email,
-                    fid_om=args.fid_om,
-                    fid_or=args.fid_Or)
+        dmat_script(
+            batch,
+            time,
+            args.zint,
+            args.out_dir,
+            email=args.email,
+            fid_om=args.fid_om,
+            fid_or=args.fid_Or,
+        )
 
     if "xcf" in args.to_do:
         time = "01:30:00"
         if args.debug:
             time = time_debug
-        xcf_script(batch,
-                   time,
-                   args.drq,
-                   args.zint,
-                   args.out_dir,
-                   email=args.email,
-                   fid_om=args.fid_om,
-                   fid_pk=args.fid_Pk,
-                   fid_or=args.fid_Or)
+        xcf_script(
+            batch,
+            time,
+            args.drq,
+            args.zint,
+            args.out_dir,
+            email=args.email,
+            fid_om=args.fid_om,
+            fid_pk=args.fid_Pk,
+            fid_or=args.fid_Or,
+        )
 
         time = "03:00:00"
         if args.debug:
             time = time_debug
-        xdmat_script(batch,
-                     time,
-                     args.drq,
-                     args.zint,
-                     args.out_dir,
-                     email=args.email,
-                     fid_om=args.fid_om,
-                     fid_or=args.fid_Or)
+        xdmat_script(
+            batch,
+            time,
+            args.drq,
+            args.zint,
+            args.out_dir,
+            email=args.email,
+            fid_om=args.fid_om,
+            fid_or=args.fid_Or,
+        )
 
     time = "02:00:00"
     if args.debug:
         time = time_debug
     if not args.no_deltas:
-        picca_deltas_script(batch,
-                            time,
-                            args.in_dir,
-                            args.out_dir,
-                            args.drq,
-                            email=args.email,
-                            debug=args.debug,
-                            mode=args.mode,
-                            lambda_rest_frame_min=args.lambda_rest_min,
-                            lambda_rest_frame_max=args.lambda_rest_max)
+        picca_deltas_script(
+            batch,
+            time,
+            args.in_dir,
+            args.out_dir,
+            args.drq,
+            email=args.email,
+            debug=args.debug,
+            mode=args.mode,
+            lambda_rest_frame_min=args.lambda_rest_min,
+            lambda_rest_frame_max=args.lambda_rest_max,
+        )
 
     submit(batch)
 

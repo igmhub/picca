@@ -12,12 +12,12 @@ from picca.tests.test_helpers import AbstractTest
 
 class TestPk1d(AbstractTest):
     """
-        Test the Pk1d routines
+    Test the Pk1d routines
     """
 
     def produce_folder(self):
         """
-            Create the necessary folders
+        Create the necessary folders
         """
 
         userprint("\n")
@@ -31,7 +31,7 @@ class TestPk1d(AbstractTest):
 
     def test_Pk1D(self):
         """
-            Runs a simple test of Pk1d routines
+        Runs a simple test of Pk1d routines
         """
         import picca.bin.picca_Pk1D as picca_Pk1D
 
@@ -53,7 +53,7 @@ class TestPk1d(AbstractTest):
 
     def test_Pk1D_raw(self):
         """
-            Runs a simple test of Pk1d routines
+        Runs a simple test of Pk1d routines
         """
         import picca.bin.picca_Pk1D as picca_Pk1D
 
@@ -74,5 +74,5 @@ class TestPk1d(AbstractTest):
         return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

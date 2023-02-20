@@ -57,7 +57,8 @@ class RejectionLog:
         Rejection status
         """
         raise RejectionLogError(
-            "Function 'add_to_rejection_log' was not overloaded by child class")
+            "Function 'add_to_rejection_log' was not overloaded by child class"
+        )
 
     def save_rejection_log(self):
         """Saves the rejection log arrays.
@@ -65,4 +66,5 @@ class RejectionLog:
         rejection status.
         """
         raise RejectionLogError(
-            "Function 'save_rejection_log' was not overloaded by child class")
+            "Function 'save_rejection_log' was not overloaded by child class"
+        )

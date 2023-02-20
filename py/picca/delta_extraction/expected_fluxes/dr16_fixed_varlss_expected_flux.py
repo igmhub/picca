@@ -8,18 +8,24 @@ from scipy.interpolate import interp1d
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
-    defaults, accepted_options)
+    defaults,
+    accepted_options,
+)
 from picca.delta_extraction.utils import update_accepted_options, update_default_options
 
 accepted_options = update_accepted_options(accepted_options, ["var lss value"])
 accepted_options = update_accepted_options(
     accepted_options,
     ["limit var lss", "use constant weight", "use ivar as weight"],
-    remove=True)
+    remove=True,
+)
 
-defaults = update_default_options(defaults, {
-    "var lss value": 0.15,
-})
+defaults = update_default_options(
+    defaults,
+    {
+        "var lss value": 0.15,
+    },
+)
 
 
 class Dr16FixedVarlssExpectedFlux(Dr16ExpectedFlux):
@@ -61,19 +67,20 @@ class Dr16FixedVarlssExpectedFlux(Dr16ExpectedFlux):
         """Initialiaze function get_var_lss"""
         # initialize fudge factor
         if self.var_lss_value.endswith(".fits") or self.var_lss_value.endswith(
-                ".fits.gz"):
+            ".fits.gz"
+        ):
             hdu = fitsio.read(self.var_lss_value, ext="VAR_FUNC")
-            self.get_var_lss = interp1d(hdu["loglam"],
-                                        hdu["var_lss"],
-                                        fill_value='extrapolate',
-                                        kind='nearest')
+            self.get_var_lss = interp1d(
+                hdu["loglam"], hdu["var_lss"], fill_value="extrapolate", kind="nearest"
+            )
         else:
-            var_lss = np.ones(self.num_bins_variance) * float(
-                self.var_lss_value)
-            self.get_var_lss = interp1d(self.log_lambda_var_func_grid,
-                                        var_lss,
-                                        fill_value='extrapolate',
-                                        kind='nearest')
+            var_lss = np.ones(self.num_bins_variance) * float(self.var_lss_value)
+            self.get_var_lss = interp1d(
+                self.log_lambda_var_func_grid,
+                var_lss,
+                fill_value="extrapolate",
+                kind="nearest",
+            )
         # note that for var_lss to be fitted, we need to include it to
         # self.fit_variance_functions:
         # self.fit_variance_functions.append("var_lss")
@@ -93,14 +100,19 @@ class Dr16FixedVarlssExpectedFlux(Dr16ExpectedFlux):
         """
         self.var_lss_value = config.get("var lss value")
         if self.var_lss_value is None:
-            raise ExpectedFluxError("Missing argument 'var lss value' required "
-                                    "by Dr16FixedVarlssExpectedFlux")
-        if not (self.var_lss_value.endswith(".fits") or
-                self.var_lss_value.endswith(".fits.gz")):
+            raise ExpectedFluxError(
+                "Missing argument 'var lss value' required "
+                "by Dr16FixedVarlssExpectedFlux"
+            )
+        if not (
+            self.var_lss_value.endswith(".fits")
+            or self.var_lss_value.endswith(".fits.gz")
+        ):
             try:
                 _ = float(self.var_lss_value)
             except ValueError as error:
                 raise ExpectedFluxError(
                     "Wrong argument 'var_lss value' passed to "
                     "Dr16FixedVarlssExpectedFlux. Expected a fits file or "
-                    f"a float. Found {self.var_lss_value}") from error
+                    f"a float. Found {self.var_lss_value}"
+                ) from error

@@ -56,26 +56,26 @@ class AstronomicalObject:
         self.dec = kwargs.get("dec")
         if self.dec is None:
             raise AstronomicalObjectError(
-                "Error constructing AstronomicalObject. "
-                "Missing variable 'dec'")
+                "Error constructing AstronomicalObject. " "Missing variable 'dec'"
+            )
 
         self.los_id = kwargs.get("los_id")
         if self.los_id is None:
             raise AstronomicalObjectError(
-                "Error constructing AstronomicalObject. "
-                "Missing variable 'los_id'")
+                "Error constructing AstronomicalObject. " "Missing variable 'los_id'"
+            )
 
         self.ra = kwargs.get("ra")
         if self.ra is None:
             raise AstronomicalObjectError(
-                "Error constructing AstronomicalObject. "
-                "Missing variable 'ra'")
+                "Error constructing AstronomicalObject. " "Missing variable 'ra'"
+            )
 
         self.z = kwargs.get("z")
         if self.z is None:
             raise AstronomicalObjectError(
-                "Error constructing AstronomicalObject. "
-                "Missing variable 'z'")
+                "Error constructing AstronomicalObject. " "Missing variable 'z'"
+            )
 
         self.healpix = healpy.ang2pix(16, np.pi / 2 - self.dec, self.ra)
 
@@ -117,8 +117,12 @@ class AstronomicalObject:
         -------
         True if the objects are equal
         """
-        return (self.healpix == other.healpix and self.ra == other.ra and
-                self.dec == other.dec and self.z == other.z)
+        return (
+            self.healpix == other.healpix
+            and self.ra == other.ra
+            and self.dec == other.dec
+            and self.z == other.z
+        )
 
     def get_header(self):
         """Return line-of-sight data to be saved as a fits file header
@@ -130,25 +134,13 @@ class AstronomicalObject:
         """
         header = [
             {
-                'name': 'LOS_ID',
-                'value': self.los_id,
-                'comment': 'Picca line-of-sight id'
+                "name": "LOS_ID",
+                "value": self.los_id,
+                "comment": "Picca line-of-sight id",
             },
-            {
-                'name': 'RA',
-                'value': self.ra,
-                'comment': 'Right Ascension [rad]'
-            },
-            {
-                'name': 'DEC',
-                'value': self.dec,
-                'comment': 'Declination [rad]'
-            },
-            {
-                'name': 'Z',
-                'value': self.z,
-                'comment': 'Redshift'
-            },
+            {"name": "RA", "value": self.ra, "comment": "Right Ascension [rad]"},
+            {"name": "DEC", "value": self.dec, "comment": "Declination [rad]"},
+            {"name": "Z", "value": self.z, "comment": "Redshift"},
         ]
 
         return header
@@ -176,7 +168,7 @@ class AstronomicalObject:
         A list with tuples containing the name and data type of the line-of-sight
         data
         """
-        return [('LOS_ID', int), ('RA', float), ('DEC', float), ('Z', float)]
+        return [("LOS_ID", int), ("RA", float), ("DEC", float), ("Z", float)]
 
     @classmethod
     def get_metadata_units(cls):

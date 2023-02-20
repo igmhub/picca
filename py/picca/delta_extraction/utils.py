@@ -13,7 +13,7 @@ from picca.delta_extraction.errors import DeltaExtractionError
 
 module_logger = logging.getLogger(__name__)
 
-SPEED_LIGHT = speed_light / 1000.  # [km/s]
+SPEED_LIGHT = speed_light / 1000.0  # [km/s]
 
 ABSORBER_IGM = {
     "Halpha": 6562.8,
@@ -50,7 +50,7 @@ ABSORBER_IGM = {
     "NV(1239)": 1238.821,
     "LYA": 1215.67,
     "SiIII(1207)": 1206.500,
-    "NI(1200)": 1200.,
+    "NI(1200)": 1200.0,
     "SiII(1193)": 1193.2897,
     "SiII(1190)": 1190.4158,
     "PII(1153)": 1152.818,
@@ -165,7 +165,8 @@ def find_bins(original_array, grid_array, wave_solution):
     else:  # pragma: no cover
         raise DeltaExtractionError(
             "Error in function find_bins from py/picca/delta_extraction/utils.py"
-            "expected wavelength solution to be either 'log' or 'lin'. ")
+            "expected wavelength solution to be either 'log' or 'lin'. "
+        )
     original_array_size = original_array.size
     grid_array_size = grid_array.size
     found_bin = np.zeros(original_array_size, dtype=np.int64)
@@ -210,9 +211,9 @@ def ok_warning(self, message, *args, **kws):
 logging.Logger.ok_warning = ok_warning
 
 
-def setup_logger(logging_level_console=logging.DEBUG,
-                 log_file=None,
-                 logging_level_file=logging.DEBUG):
+def setup_logger(
+    logging_level_console=logging.DEBUG, log_file=None, logging_level_file=logging.DEBUG
+):
     """This function set up the logger for the package
     picca.delta_extraction
 
@@ -236,8 +237,7 @@ def setup_logger(logging_level_console=logging.DEBUG,
         if logging_level_console.upper() == "PROGRESS":
             logging_level_console = PROGRESS_LEVEL_NUM
         else:
-            logging_level_console = getattr(logging,
-                                            logging_level_console.upper())
+            logging_level_console = getattr(logging, logging_level_console.upper())
 
     if isinstance(logging_level_file, str):
         if logging_level_file.upper() == "PROGRESS":
@@ -249,7 +249,7 @@ def setup_logger(logging_level_console=logging.DEBUG,
     logger.setLevel(logging.DEBUG)
 
     # logging formatter
-    formatter = logging.Formatter('[%(levelname)s]: %(message)s')
+    formatter = logging.Formatter("[%(levelname)s]: %(message)s")
 
     # create console handler to logs messages
     console_handler = logging.StreamHandler(sys.stdout)
@@ -260,7 +260,7 @@ def setup_logger(logging_level_console=logging.DEBUG,
     # create file handler which logs messages to file
     if log_file is not None:
         if os.path.exists(log_file):
-            newfilename = f'{log_file}.{os.path.getmtime(log_file)}'
+            newfilename = f"{log_file}.{os.path.getmtime(log_file)}"
             os.rename(log_file, newfilename)
         file_handler = logging.FileHandler(log_file, mode="w")
         file_handler.setLevel(logging_level_file)
@@ -268,7 +268,7 @@ def setup_logger(logging_level_console=logging.DEBUG,
         logger.addHandler(file_handler)
 
     # sets up numba logger
-    #logging.getLogger('numba').setLevel(logging.WARNING)
+    # logging.getLogger('numba').setLevel(logging.WARNING)
 
 
 def update_accepted_options(accepted_options, new_options, remove=False):
@@ -327,12 +327,14 @@ def update_default_options(default_options, new_options):
                     f"Incompatible defaults are being added. Key {key} "
                     "found to have values with different type: "
                     f"{type(default_value)} and {type(value)}. "
-                    "Revise your recent changes or contact picca developpers.")
+                    "Revise your recent changes or contact picca developpers."
+                )
             if default_value != value:
                 raise DeltaExtractionError(
                     f"Incompatible defaults are being added. Key {key} "
                     f"found to have two default values: '{value}' and '{default_value}' "
-                    "Revise your recent changes or contact picca developpers.")
+                    "Revise your recent changes or contact picca developpers."
+                )
         else:
             default_options[key] = value
 

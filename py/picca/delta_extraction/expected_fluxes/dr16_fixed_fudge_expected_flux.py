@@ -8,17 +8,22 @@ from scipy.interpolate import interp1d
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
-    defaults, accepted_options)
+    defaults,
+    accepted_options,
+)
 from picca.delta_extraction.utils import update_accepted_options, update_default_options
 
 accepted_options = update_accepted_options(accepted_options, ["fudge value"])
 accepted_options = update_accepted_options(
-    accepted_options, ["use constant weight", "use ivar as weight"],
-    remove=True)
+    accepted_options, ["use constant weight", "use ivar as weight"], remove=True
+)
 
-defaults = update_default_options(defaults, {
-    "fudge value": 0.0,
-})
+defaults = update_default_options(
+    defaults,
+    {
+        "fudge value": 0.0,
+    },
+)
 
 
 class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
@@ -60,19 +65,19 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
     def _initialize_get_fudge(self):
         """Initialiaze function get_fudge"""
         # initialize fudge factor
-        if self.fudge_value.endswith(".fits") or self.fudge_value.endswith(
-                ".fits.gz"):
+        if self.fudge_value.endswith(".fits") or self.fudge_value.endswith(".fits.gz"):
             hdu = fitsio.read(self.fudge_value, ext="VAR_FUNC")
-            self.get_fudge = interp1d(hdu["loglam"],
-                                      hdu["fudge"],
-                                      fill_value='extrapolate',
-                                      kind='nearest')
+            self.get_fudge = interp1d(
+                hdu["loglam"], hdu["fudge"], fill_value="extrapolate", kind="nearest"
+            )
         else:
             fudge = np.ones(self.num_bins_variance) * float(self.fudge_value)
-            self.get_fudge = interp1d(self.log_lambda_var_func_grid,
-                                      fudge,
-                                      fill_value='extrapolate',
-                                      kind='nearest')
+            self.get_fudge = interp1d(
+                self.log_lambda_var_func_grid,
+                fudge,
+                fill_value="extrapolate",
+                kind="nearest",
+            )
         # note that for fudge to be fitted, we need to include it to
         # self.fit_variance_functions:
         # self.fit_variance_functions.append("fudge")
@@ -92,14 +97,17 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
         """
         self.fudge_value = config.get("fudge value")
         if self.fudge_value is None:
-            raise ExpectedFluxError("Missing argument 'fudge value' required "
-                                    "by Dr16FixFudgeExpectedFlux")
-        if not (self.fudge_value.endswith(".fits") or
-                self.fudge_value.endswith(".fits.gz")):
+            raise ExpectedFluxError(
+                "Missing argument 'fudge value' required " "by Dr16FixFudgeExpectedFlux"
+            )
+        if not (
+            self.fudge_value.endswith(".fits") or self.fudge_value.endswith(".fits.gz")
+        ):
             try:
                 _ = float(self.fudge_value)
             except ValueError as error:
                 raise ExpectedFluxError(
                     "Wrong argument 'fudge value' passed to "
                     "Dr16FixFudgeExpectedFlux. Expected a fits file or "
-                    f"a float. Found {self.fudge_value}") from error
+                    f"a float. Found {self.fudge_value}"
+                ) from error

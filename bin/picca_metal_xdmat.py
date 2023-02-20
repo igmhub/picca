@@ -43,214 +43,249 @@ def calc_metal_dmat(abs_igm, healpixs):
 
 def main(cmdargs):
     """Compute the distortion matrix of the cross-correlation delta x object for
-     a list of IGM absorption."""
+    a list of IGM absorption."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Compute the distortion matrix of the cross-correlation '
-                     'delta x object for a list of IGM absorption.'))
-
-    parser.add_argument('--out',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Output file name')
-
-    parser.add_argument('--in-dir',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Directory to delta files')
-
-    parser.add_argument('--drq',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Catalog of objects in DRQ format')
-
-    parser.add_argument('--mode',
-                        type=str,
-                        default='sdss',
-                        choices=['sdss', 'desi', 'desi_mocks', 'desi_healpix'],
-                        required=False,
-                        help='type of catalog supplied, default sdss')
-
-    parser.add_argument('--rp-min',
-                        type=float,
-                        default=-200.,
-                        required=False,
-                        help='Min r-parallel [h^-1 Mpc]')
-
-    parser.add_argument('--rp-max',
-                        type=float,
-                        default=200.,
-                        required=False,
-                        help='Max r-parallel [h^-1 Mpc]')
-
-    parser.add_argument('--rt-max',
-                        type=float,
-                        default=200.,
-                        required=False,
-                        help='Max r-transverse [h^-1 Mpc]')
-
-    parser.add_argument('--np',
-                        type=int,
-                        default=100,
-                        required=False,
-                        help='Number of r-parallel bins')
-
-    parser.add_argument('--nt',
-                        type=int,
-                        default=50,
-                        required=False,
-                        help='Number of r-transverse bins')
+        description=(
+            "Compute the distortion matrix of the cross-correlation "
+            "delta x object for a list of IGM absorption."
+        ),
+    )
 
     parser.add_argument(
-        '--coef-binning-model',
+        "--out", type=str, default=None, required=True, help="Output file name"
+    )
+
+    parser.add_argument(
+        "--in-dir",
+        type=str,
+        default=None,
+        required=True,
+        help="Directory to delta files",
+    )
+
+    parser.add_argument(
+        "--drq",
+        type=str,
+        default=None,
+        required=True,
+        help="Catalog of objects in DRQ format",
+    )
+
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default="sdss",
+        choices=["sdss", "desi", "desi_mocks", "desi_healpix"],
+        required=False,
+        help="type of catalog supplied, default sdss",
+    )
+
+    parser.add_argument(
+        "--rp-min",
+        type=float,
+        default=-200.0,
+        required=False,
+        help="Min r-parallel [h^-1 Mpc]",
+    )
+
+    parser.add_argument(
+        "--rp-max",
+        type=float,
+        default=200.0,
+        required=False,
+        help="Max r-parallel [h^-1 Mpc]",
+    )
+
+    parser.add_argument(
+        "--rt-max",
+        type=float,
+        default=200.0,
+        required=False,
+        help="Max r-transverse [h^-1 Mpc]",
+    )
+
+    parser.add_argument(
+        "--np", type=int, default=100, required=False, help="Number of r-parallel bins"
+    )
+
+    parser.add_argument(
+        "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
+    )
+
+    parser.add_argument(
+        "--coef-binning-model",
         type=int,
         default=1,
         required=False,
-        help=('Coefficient multiplying np and nt to get finner binning for the '
-              'model'))
-
-    parser.add_argument('--z-min-obj',
-                        type=float,
-                        default=0,
-                        required=False,
-                        help='Min redshift for object field')
-
-    parser.add_argument('--z-max-obj',
-                        type=float,
-                        default=10,
-                        required=False,
-                        help='Max redshift for object field')
+        help=(
+            "Coefficient multiplying np and nt to get finner binning for the " "model"
+        ),
+    )
 
     parser.add_argument(
-        '--z-cut-min',
+        "--z-min-obj",
         type=float,
-        default=0.,
+        default=0,
         required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift larger than '
-              'z-cut-min'))
+        help="Min redshift for object field",
+    )
 
     parser.add_argument(
-        '--z-cut-max',
+        "--z-max-obj",
         type=float,
-        default=10.,
+        default=10,
         required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift smaller than '
-              'z-cut-max'))
+        help="Max redshift for object field",
+    )
 
     parser.add_argument(
-        '--lambda-abs',
+        "--z-cut-min",
+        type=float,
+        default=0.0,
+        required=False,
+        help=(
+            "Use only pairs of forest x object with the mean of the last "
+            "absorber redshift and the object redshift larger than "
+            "z-cut-min"
+        ),
+    )
+
+    parser.add_argument(
+        "--z-cut-max",
+        type=float,
+        default=10.0,
+        required=False,
+        help=(
+            "Use only pairs of forest x object with the mean of the last "
+            "absorber redshift and the object redshift smaller than "
+            "z-cut-max"
+        ),
+    )
+
+    parser.add_argument(
+        "--lambda-abs",
         type=str,
-        default='LYA',
+        default="LYA",
         required=False,
-        help=('Name of the absorption in picca.constants defining the redshift '
-              'of the delta'))
-
-    parser.add_argument('--obj-name',
-                        type=str,
-                        default='QSO',
-                        required=False,
-                        help='Name of the object tracer')
+        help=(
+            "Name of the absorption in picca.constants defining the redshift "
+            "of the delta"
+        ),
+    )
 
     parser.add_argument(
-        '--abs-igm',
+        "--obj-name",
+        type=str,
+        default="QSO",
+        required=False,
+        help="Name of the object tracer",
+    )
+
+    parser.add_argument(
+        "--abs-igm",
         type=str,
         default=None,
         required=False,
-        nargs='*',
-        help='List of names of metal absorption in picca.constants')
-
-    parser.add_argument('--z-ref',
-                        type=float,
-                        default=2.25,
-                        required=False,
-                        help='Reference redshift')
+        nargs="*",
+        help="List of names of metal absorption in picca.constants",
+    )
 
     parser.add_argument(
-        '--z-evol-del',
+        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
+    )
+
+    parser.add_argument(
+        "--z-evol-del",
         type=float,
         default=2.9,
         required=False,
-        help='Exponent of the redshift evolution of the delta field')
+        help="Exponent of the redshift evolution of the delta field",
+    )
 
     parser.add_argument(
-        '--z-evol-obj',
+        "--z-evol-obj",
         type=float,
-        default=1.,
+        default=1.0,
         required=False,
-        help='Exponent of the redshift evolution of the object field')
+        help="Exponent of the redshift evolution of the object field",
+    )
 
     parser.add_argument(
-        '--metal-alpha',
+        "--metal-alpha",
         type=float,
-        default=1.,
+        default=1.0,
         required=False,
-        help='Exponent of the redshift evolution of the metal delta field')
+        help="Exponent of the redshift evolution of the metal delta field",
+    )
 
     parser.add_argument(
-        '--fid-Om',
+        "--fid-Om",
         type=float,
         default=0.315,
         required=False,
-        help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
+        help="Omega_matter(z=0) of fiducial LambdaCDM cosmology",
+    )
 
     parser.add_argument(
-        '--fid-Or',
+        "--fid-Or",
         type=float,
-        default=0.,
+        default=0.0,
         required=False,
-        help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
-
-    parser.add_argument('--fid-Ok',
-                        type=float,
-                        default=0.,
-                        required=False,
-                        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+        help="Omega_radiation(z=0) of fiducial LambdaCDM cosmology",
+    )
 
     parser.add_argument(
-        '--fid-wl',
+        "--fid-Ok",
         type=float,
-        default=-1.,
+        default=0.0,
         required=False,
-        help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
+        help="Omega_k(z=0) of fiducial LambdaCDM cosmology",
+    )
 
     parser.add_argument(
-        '--rej',
+        "--fid-wl",
         type=float,
-        default=1.,
+        default=-1.0,
         required=False,
-        help=('Fraction of rejected object-forests pairs: -1=no rejection, '
-              '1=all rejection'))
-
-    parser.add_argument('--nside',
-                        type=int,
-                        default=16,
-                        required=False,
-                        help='Healpix nside')
-
-    parser.add_argument('--nproc',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Number of processors')
-
-    parser.add_argument('--nspec',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Maximum number of spectra to read')
+        help="Equation of state of dark energy of fiducial LambdaCDM cosmology",
+    )
 
     parser.add_argument(
-        '--rebin-factor',
+        "--rej",
+        type=float,
+        default=1.0,
+        required=False,
+        help=(
+            "Fraction of rejected object-forests pairs: -1=no rejection, "
+            "1=all rejection"
+        ),
+    )
+
+    parser.add_argument(
+        "--nside", type=int, default=16, required=False, help="Healpix nside"
+    )
+
+    parser.add_argument(
+        "--nproc", type=int, default=None, required=False, help="Number of processors"
+    )
+
+    parser.add_argument(
+        "--nspec",
         type=int,
         default=None,
         required=False,
-        help='Rebin factor for deltas. If not None, deltas will '
-        'be rebinned by that factor')
+        help="Maximum number of spectra to read",
+    )
+
+    parser.add_argument(
+        "--rebin-factor",
+        type=int,
+        default=None,
+        required=False,
+        help="Rebin factor for deltas. If not None, deltas will "
+        "be rebinned by that factor",
+    )
 
     args = parser.parse_args(cmdargs)
 
@@ -281,11 +316,13 @@ def main(cmdargs):
     blinding = io.read_blinding(args.in_dir)
 
     # load fiducial cosmology
-    cosmo = constants.Cosmo(Om=args.fid_Om,
-                            Or=args.fid_Or,
-                            Ok=args.fid_Ok,
-                            wl=args.fid_wl,
-                            blinding=blinding)
+    cosmo = constants.Cosmo(
+        Om=args.fid_Om,
+        Or=args.fid_Or,
+        Ok=args.fid_Ok,
+        wl=args.fid_wl,
+        blinding=blinding,
+    )
     xcf.cosmo = cosmo
 
     t0 = time.time()
@@ -300,7 +337,8 @@ def main(cmdargs):
         cosmo,
         max_num_spec=args.nspec,
         nproc=args.nproc,
-        rebin_factor=args.rebin_factor)
+        rebin_factor=args.rebin_factor,
+    )
 
     xcf.data = data
     xcf.num_data = num_data
@@ -308,34 +346,35 @@ def main(cmdargs):
     ### Find the redshift range
     if args.z_min_obj is None:
         r_comov_min = cosmo.get_r_comov(z_min)
-        r_comov_min = max(0., r_comov_min + xcf.r_par_min)
+        r_comov_min = max(0.0, r_comov_min + xcf.r_par_min)
         args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
         userprint("z_min_obj = {}".format(args.z_min_obj), end="")
     if args.z_max_obj is None:
         r_comov_max = cosmo.get_r_comov(z_max)
-        r_comov_max = max(0., r_comov_max + xcf.r_par_max)
+        r_comov_max = max(0.0, r_comov_max + xcf.r_par_max)
         args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
         userprint("z_max_obj = {}".format(args.z_max_obj), end="")
 
     # read objets
-    objs, z_min2 = io.read_objects(args.drq,
-                                   args.nside,
-                                   args.z_min_obj,
-                                   args.z_max_obj,
-                                   args.z_evol_obj,
-                                   args.z_ref,
-                                   cosmo,
-                                   mode=args.mode)
+    objs, z_min2 = io.read_objects(
+        args.drq,
+        args.nside,
+        args.z_min_obj,
+        args.z_max_obj,
+        args.z_evol_obj,
+        args.z_ref,
+        cosmo,
+        mode=args.mode,
+    )
     xcf.objs = objs
 
     # compute maximum angular separation
     xcf.ang_max = utils.compute_ang_max(cosmo, xcf.r_trans_max, z_min, z_min2)
 
     t1 = time.time()
-    userprint(
-        f'picca_metal_xdmat.py - Time reading data: {(t1-t0)/60:.3f} minutes')
+    userprint(f"picca_metal_xdmat.py - Time reading data: {(t1-t0)/60:.3f} minutes")
 
-    xcf.counter = Value('i', 0)
+    xcf.counter = Value("i", 0)
     xcf.lock = Lock()
     cpu_data = {}
     for index, healpix in enumerate(sorted(list(data.keys()))):
@@ -361,10 +400,9 @@ def main(cmdargs):
         userprint("")
 
         if args.nproc > 1:
-            context = multiprocessing.get_context('fork')
+            context = multiprocessing.get_context("fork")
             pool = context.Pool(processes=args.nproc)
-            dmat_data = pool.map(calc_metal_dmat_wrapper,
-                                 sorted(cpu_data.values()))
+            dmat_data = pool.map(calc_metal_dmat_wrapper, sorted(cpu_data.values()))
             pool.close()
         elif args.nproc == 1:
             dmat_data = map(calc_metal_dmat_wrapper, sorted(cpu_data.values()))
@@ -401,83 +439,88 @@ def main(cmdargs):
 
     t2 = time.time()
     userprint(
-        f'picca_metal_xdmat.py - Time computing all metal matrix: {(t2-t1)/60:.3f} minutes'
+        f"picca_metal_xdmat.py - Time computing all metal matrix: {(t2-t1)/60:.3f} minutes"
     )
 
     # save the results
-    results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [{
-        'name': 'RPMIN',
-        'value': xcf.r_par_min,
-        'comment': 'Minimum r-parallel [h^-1 Mpc]'
-    }, {
-        'name': 'RPMAX',
-        'value': xcf.r_par_max,
-        'comment': 'Maximum r-parallel [h^-1 Mpc]'
-    }, {
-        'name': 'RTMAX',
-        'value': xcf.r_trans_max,
-        'comment': 'Maximum r-transverse [h^-1 Mpc]'
-    }, {
-        'name': 'NP',
-        'value': xcf.num_bins_r_par,
-        'comment': 'Number of bins in r-parallel'
-    }, {
-        'name': 'NT',
-        'value': xcf.num_bins_r_trans,
-        'comment': 'Number of bins in r-transverse'
-    }, {
-        'name': 'COEFMOD',
-        'value': args.coef_binning_model,
-        'comment': 'Coefficient for model binning'
-    }, {
-        'name': 'ZCUTMIN',
-        'value': xcf.z_cut_min,
-        'comment': 'Minimum redshift of pairs'
-    }, {
-        'name': 'ZCUTMAX',
-        'value': xcf.z_cut_max,
-        'comment': 'Maximum redshift of pairs'
-    }, {
-        'name': 'REJ',
-        'value': xcf.reject,
-        'comment': 'Rejection factor'
-    }, {
-        'name': 'OMEGAM',
-        'value': args.fid_Om,
-        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'OMEGAR',
-        'value': args.fid_Or,
-        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'OMEGAK',
-        'value': args.fid_Ok,
-        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name':
-            'WL',
-        'value':
-            args.fid_wl,
-        'comment':
-            'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    }, {
-        'name': "BLINDING",
-        'value': blinding,
-        'comment': 'String specifying the blinding strategy'
-    }]
+    results = fitsio.FITS(args.out, "rw", clobber=True)
+    header = [
+        {
+            "name": "RPMIN",
+            "value": xcf.r_par_min,
+            "comment": "Minimum r-parallel [h^-1 Mpc]",
+        },
+        {
+            "name": "RPMAX",
+            "value": xcf.r_par_max,
+            "comment": "Maximum r-parallel [h^-1 Mpc]",
+        },
+        {
+            "name": "RTMAX",
+            "value": xcf.r_trans_max,
+            "comment": "Maximum r-transverse [h^-1 Mpc]",
+        },
+        {
+            "name": "NP",
+            "value": xcf.num_bins_r_par,
+            "comment": "Number of bins in r-parallel",
+        },
+        {
+            "name": "NT",
+            "value": xcf.num_bins_r_trans,
+            "comment": "Number of bins in r-transverse",
+        },
+        {
+            "name": "COEFMOD",
+            "value": args.coef_binning_model,
+            "comment": "Coefficient for model binning",
+        },
+        {
+            "name": "ZCUTMIN",
+            "value": xcf.z_cut_min,
+            "comment": "Minimum redshift of pairs",
+        },
+        {
+            "name": "ZCUTMAX",
+            "value": xcf.z_cut_max,
+            "comment": "Maximum redshift of pairs",
+        },
+        {"name": "REJ", "value": xcf.reject, "comment": "Rejection factor"},
+        {
+            "name": "OMEGAM",
+            "value": args.fid_Om,
+            "comment": "Omega_matter(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "OMEGAR",
+            "value": args.fid_Or,
+            "comment": "Omega_radiation(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "OMEGAK",
+            "value": args.fid_Ok,
+            "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "WL",
+            "value": args.fid_wl,
+            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "BLINDING",
+            "value": blinding,
+            "comment": "String specifying the blinding strategy",
+        },
+    ]
     len_names = np.array([len(name) for name in names]).max()
-    names = np.array(names, dtype='S' + str(len_names))
+    names = np.array(names, dtype="S" + str(len_names))
     results.write(
-        [
-            np.array(num_pairs_all),
-            np.array(num_pairs_used_all),
-            np.array(names)
-        ],
-        names=['NPALL', 'NPUSED', 'ABS_IGM'],
+        [np.array(num_pairs_all), np.array(num_pairs_used_all), np.array(names)],
+        names=["NPALL", "NPUSED", "ABS_IGM"],
         header=header,
-        comment=['Number of pairs', 'Number of used pairs', 'Absorption name'],
-        extname='ATTRI')
+        comment=["Number of pairs", "Number of used pairs", "Absorption name"],
+        extname="ATTRI",
+    )
 
     dmat_name = "DM_"
     if blinding != "none":
@@ -488,42 +531,40 @@ def main(cmdargs):
     out_comment = []
     out_units = []
     for index, name in enumerate(names):
-        out_names += ['RP_' + args.obj_name + '_' + name]
+        out_names += ["RP_" + args.obj_name + "_" + name]
         out_list += [r_par_all[index]]
-        out_comment += ['R-parallel']
-        out_units += ['h^-1 Mpc']
+        out_comment += ["R-parallel"]
+        out_units += ["h^-1 Mpc"]
 
-        out_names += ['RT_' + args.obj_name + '_' + name]
+        out_names += ["RT_" + args.obj_name + "_" + name]
         out_list += [r_trans_all[index]]
-        out_comment += ['R-transverse']
-        out_units += ['h^-1 Mpc']
+        out_comment += ["R-transverse"]
+        out_units += ["h^-1 Mpc"]
 
-        out_names += ['Z_' + args.obj_name + '_' + name]
+        out_names += ["Z_" + args.obj_name + "_" + name]
         out_list += [z_all[index]]
-        out_comment += ['Redshift']
-        out_units += ['']
+        out_comment += ["Redshift"]
+        out_units += [""]
 
-        out_names += [dmat_name + args.obj_name + '_' + name]
+        out_names += [dmat_name + args.obj_name + "_" + name]
         out_list += [dmat_all[index]]
-        out_comment += ['Distortion matrix']
-        out_units += ['']
+        out_comment += ["Distortion matrix"]
+        out_units += [""]
 
-        out_names += ['WDM_' + args.obj_name + '_' + name]
+        out_names += ["WDM_" + args.obj_name + "_" + name]
         out_list += [weights_dmat_all[index]]
-        out_comment += ['Sum of weight']
-        out_units += ['']
+        out_comment += ["Sum of weight"]
+        out_units += [""]
 
-    results.write(out_list,
-                  names=out_names,
-                  comment=out_comment,
-                  units=out_units,
-                  extname='MDMAT')
+    results.write(
+        out_list, names=out_names, comment=out_comment, units=out_units, extname="MDMAT"
+    )
     results.close()
 
     t3 = time.time()
-    userprint(f'picca_metal_xdmat.py - Time total: {(t3-t0)/60:.3f} minutes')
+    userprint(f"picca_metal_xdmat.py - Time total: {(t3-t0)/60:.3f} minutes")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cmdargs = sys.argv[1:]
     main(cmdargs)

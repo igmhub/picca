@@ -43,7 +43,7 @@ def compute_cov(xi, weights):
 
     mean_xi = (xi * weights).sum(axis=0)
     sum_weights = weights.sum(axis=0)
-    w = sum_weights > 0.
+    w = sum_weights > 0.0
     mean_xi[w] /= sum_weights[w]
 
     meanless_xi_times_weight = weights * (xi - mean_xi)
@@ -52,19 +52,15 @@ def compute_cov(xi, weights):
 
     covariance = meanless_xi_times_weight.T.dot(meanless_xi_times_weight)
     sum_weights_squared = sum_weights * sum_weights[:, None]
-    w = sum_weights_squared > 0.
+    w = sum_weights_squared > 0.0
     covariance[w] /= sum_weights_squared[w]
 
     return covariance
 
 
-def smooth_cov(xi,
-               weights,
-               r_par,
-               r_trans,
-               delta_r_trans=4.0,
-               delta_r_par=4.0,
-               covariance=None):
+def smooth_cov(
+    xi, weights, r_par, r_trans, delta_r_trans=4.0, delta_r_par=4.0, covariance=None
+):
     """Smoothes the covariance matrix
 
     Args:
@@ -93,9 +89,9 @@ def smooth_cov(xi,
 
     num_bins = covariance.shape[1]
     var = np.diagonal(covariance)
-    if np.any(var == 0.):
-        userprint('WARNING: data has some empty bins, impossible to smooth')
-        userprint('WARNING: returning the unsmoothed covariance')
+    if np.any(var == 0.0):
+        userprint("WARNING: data has some empty bins, impossible to smooth")
+        userprint("WARNING: returning the unsmoothed covariance")
         return covariance
 
     correlation = covariance / np.sqrt(var * var[:, None])
@@ -109,30 +105,31 @@ def smooth_cov(xi,
     for index in range(num_bins):
         userprint("\rsmoothing {}".format(index), end="")
         for index2 in range(index + 1, num_bins):
-            index_delta_r_par = round(
-                abs(r_par[index2] - r_par[index]) / delta_r_par)
+            index_delta_r_par = round(abs(r_par[index2] - r_par[index]) / delta_r_par)
             index_delta_r_trans = round(
-                abs(r_trans[index] - r_trans[index2]) / delta_r_trans)
+                abs(r_trans[index] - r_trans[index2]) / delta_r_trans
+            )
             if (index_delta_r_par, index_delta_r_trans) not in sum_correlation:
-                sum_correlation[(index_delta_r_par, index_delta_r_trans)] = 0.
+                sum_correlation[(index_delta_r_par, index_delta_r_trans)] = 0.0
                 counts_correlation[(index_delta_r_par, index_delta_r_trans)] = 0
 
-            sum_correlation[(index_delta_r_par,
-                             index_delta_r_trans)] += correlation[index, index2]
+            sum_correlation[(index_delta_r_par, index_delta_r_trans)] += correlation[
+                index, index2
+            ]
             counts_correlation[(index_delta_r_par, index_delta_r_trans)] += 1
 
     for index in range(num_bins):
-        correlation_smooth[index, index] = 1.
+        correlation_smooth[index, index] = 1.0
         for index2 in range(index + 1, num_bins):
-            index_delta_r_par = round(
-                abs(r_par[index2] - r_par[index]) / delta_r_par)
+            index_delta_r_par = round(abs(r_par[index2] - r_par[index]) / delta_r_par)
             index_delta_r_trans = round(
-                abs(r_trans[index] - r_trans[index2]) / delta_r_trans)
+                abs(r_trans[index] - r_trans[index2]) / delta_r_trans
+            )
             correlation_smooth[index, index2] = (
-                sum_correlation[(index_delta_r_par, index_delta_r_trans)] /
-                counts_correlation[(index_delta_r_par, index_delta_r_trans)])
-            correlation_smooth[index2, index] = correlation_smooth[index,
-                                                                   index2]
+                sum_correlation[(index_delta_r_par, index_delta_r_trans)]
+                / counts_correlation[(index_delta_r_par, index_delta_r_trans)]
+            )
+            correlation_smooth[index2, index] = correlation_smooth[index, index2]
 
     userprint("\n")
     covariance_smooth = correlation_smooth * np.sqrt(var * var[:, None])
@@ -155,20 +152,20 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
     """
     # load subsampling covariance
     hdul = fitsio.FITS(filename)
-    xi = np.array(hdul[2]['DA'][:])
-    weights = np.array(hdul[2]['WE'][:])
+    xi = np.array(hdul[2]["DA"][:])
+    weights = np.array(hdul[2]["WE"][:])
     header = hdul[1].read_header()
-    num_bins_r_par = header['NP']
-    num_bins_r_trans = header['NT']
+    num_bins_r_par = header["NP"]
+    num_bins_r_trans = header["NT"]
     hdul.close()
 
     covariance = compute_cov(xi, weights)
 
     num_bins = xi.shape[1]
     var = np.diagonal(covariance)
-    if np.any(var == 0.):
-        userprint('WARNING: data has some empty bins, impossible to smooth')
-        userprint('WARNING: returning')
+    if np.any(var == 0.0):
+        userprint("WARNING: data has some empty bins, impossible to smooth")
+        userprint("WARNING: returning")
         return
 
     correlation = covariance / np.sqrt(var * var[:, None])
@@ -176,13 +173,13 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
 
     # load Wick covariance
     hdul = fitsio.FITS(wick_filename)
-    covariance_wick = np.array(hdul[1]['CO'][:])
+    covariance_wick = np.array(hdul[1]["CO"][:])
     hdul.close()
 
     var_wick = np.diagonal(covariance_wick)
-    if np.any(var_wick == 0.):
-        userprint('WARNING: Wick covariance has bins with var = 0')
-        userprint('WARNING: returning')
+    if np.any(var_wick == 0.0):
+        userprint("WARNING: Wick covariance has bins with var = 0")
+        userprint("WARNING: returning")
         return
 
     correlation_wick = covariance_wick / np.sqrt(var_wick * var_wick[:, None])
@@ -204,11 +201,15 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
     reduced_delta_correlation1d = np.zeros(num_bins)
     for index in range(0, num_bins):
         userprint("\rsmoothing {}".format(index), end="")
-        reduced_delta_correlation1d[index] = np.mean(delta_correlation1d[
-            (index_delta_r_par1d == index_r_par[index]) &
-            (index_delta_r_trans1d == index_r_trans[index])])
+        reduced_delta_correlation1d[index] = np.mean(
+            delta_correlation1d[
+                (index_delta_r_par1d == index_r_par[index])
+                & (index_delta_r_trans1d == index_r_trans[index])
+            ]
+        )
     reduced_delta_correlation = reduced_delta_correlation1d.reshape(
-        num_bins_r_par, num_bins_r_trans)
+        num_bins_r_par, num_bins_r_trans
+    )
     userprint("")
 
     #### fit for length and amp at each delta_r_par
@@ -230,8 +231,8 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
             The model with the issed correlation
         """
         r = np.sqrt(
-            float(index_delta_r_trans)**2 +
-            float(index_delta_r_par)**2) - float(index_delta_r_par)
+            float(index_delta_r_trans) ** 2 + float(index_delta_r_par) ** 2
+        ) - float(index_delta_r_par)
         return amp * np.exp(-r / length)
 
     def chi2(length, amp, index_delta_r_par):
@@ -248,12 +249,12 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
         Returns:
             The chi2 value
         """
-        chi2 = 0.
+        chi2 = 0.0
         index_delta_r_par = int(index_delta_r_par)
         for index_delta_r_trans in range(1, num_bins_r_trans):
-            chi = (reduced_delta_correlation[index_delta_r_par,
-                                             index_delta_r_trans] -
-                   corrfun(index_delta_r_par, index_delta_r_trans, length, amp))
+            chi = reduced_delta_correlation[
+                index_delta_r_par, index_delta_r_trans
+            ] - corrfun(index_delta_r_par, index_delta_r_trans, length, amp)
             chi2 += chi**2
         chi2 = chi2 * num_bins_r_par * num_bins
         return chi2
@@ -261,19 +262,18 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
     length_fit = np.zeros(num_bins_r_par)
     amp_fit = np.zeros(num_bins_r_par)
     for index_delta_r_par in range(num_bins_r_par):
-        minimizer = iminuit.Minuit(chi2,
-                                   length=5.,
-                                   amp=1.,
-                                   index_delta_r_par=index_delta_r_par)
-        minimizer.fixed['index_delta_r_par'] = True
-        minimizer.errors['length'] = 0.2
-        minimizer.errors['amp'] = 0.2
-        minimizer.errordef = 1.
+        minimizer = iminuit.Minuit(
+            chi2, length=5.0, amp=1.0, index_delta_r_par=index_delta_r_par
+        )
+        minimizer.fixed["index_delta_r_par"] = True
+        minimizer.errors["length"] = 0.2
+        minimizer.errors["amp"] = 0.2
+        minimizer.errordef = 1.0
         minimizer.print_level = 1
-        minimizer.limits['length'] = (1., 400.)
+        minimizer.limits["length"] = (1.0, 400.0)
         minimizer.migrad()
-        length_fit[index_delta_r_par] = minimizer.values['length']
-        amp_fit[index_delta_r_par] = minimizer.values['amp']
+        length_fit[index_delta_r_par] = minimizer.values["length"]
+        amp_fit[index_delta_r_par] = minimizer.values["amp"]
 
     #### hybrid covariance from wick + fit
     covariance_smooth = np.sqrt(var * var[:, None])
@@ -288,18 +288,21 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
             if index_delta_r_trans == 0:
                 newcov += cor0[index_delta_r_par]
             else:
-                newcov += corrfun(index_delta_r_par, index_delta_r_trans,
-                                  length_fit[index_delta_r_par],
-                                  amp_fit[index_delta_r_par])
+                newcov += corrfun(
+                    index_delta_r_par,
+                    index_delta_r_trans,
+                    length_fit[index_delta_r_par],
+                    amp_fit[index_delta_r_par],
+                )
             covariance_smooth[index, index2] *= newcov
             covariance_smooth[index2, index] *= newcov
 
     userprint("\n")
 
-    results = fitsio.FITS(results_filename, 'rw', clobber=True)
-    results.write([covariance_smooth], names=['CO'], extname='COR')
+    results = fitsio.FITS(results_filename, "rw", clobber=True)
+    results.write([covariance_smooth], names=["CO"], extname="COR")
     results.close()
-    userprint(results_filename, ' written')
+    userprint(results_filename, " written")
 
 
 def compute_ang_max(cosmo, r_trans_max, z_min, z_min2=None):
@@ -331,7 +334,7 @@ def compute_ang_max(cosmo, r_trans_max, z_min, z_min2=None):
     if r_min + r_min2 < r_trans_max:
         ang_max = np.pi
     else:
-        ang_max = 2. * np.arcsin(r_trans_max / (r_min + r_min2))
+        ang_max = 2.0 * np.arcsin(r_trans_max / (r_min + r_min2))
 
     return ang_max
 
@@ -351,25 +354,24 @@ def shuffle_distrib_forests(data, seed):
         The shuffled catalogue
     """
 
-    userprint(("INFO: Shuffling the forests angular position with seed "
-               "{}").format(seed))
+    userprint(
+        ("INFO: Shuffling the forests angular position with seed " "{}").format(seed)
+    )
 
     data_info = {}
-    param_list = [
-        'ra', 'dec', 'x_cart', 'y_cart', 'z_cart', 'cos_dec', 'thingid'
-    ]
-    data_info['healpix'] = []
+    param_list = ["ra", "dec", "x_cart", "y_cart", "z_cart", "cos_dec", "thingid"]
+    data_info["healpix"] = []
     for param in param_list:
         data_info[param] = []
 
     for healpix, deltas in data.items():
         for delta in deltas:
-            data_info['healpix'].append(healpix)
+            data_info["healpix"].append(healpix)
             for param in param_list:
                 data_info[param].append(getattr(delta, param))
 
     np.random.seed(seed)
-    new_index = np.arange(len(data_info['ra']))
+    new_index = np.arange(len(data_info["ra"]))
     np.random.shuffle(new_index)
 
     index = 0
@@ -378,9 +380,9 @@ def shuffle_distrib_forests(data, seed):
         for delta in deltas:
             for param in param_list:
                 setattr(delta, param, data_info[param][new_index[index]])
-            if not data_info['healpix'][new_index[index]] in data_shuffled:
-                data_shuffled[data_info['healpix'][new_index[index]]] = []
-            data_shuffled[data_info['healpix'][new_index[index]]].append(delta)
+            if not data_info["healpix"][new_index[index]] in data_shuffled:
+                data_shuffled[data_info["healpix"][new_index[index]]] = []
+            data_shuffled[data_info["healpix"][new_index[index]]].append(delta)
             index += 1
 
     return data_shuffled
@@ -395,8 +397,8 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     """
 
     # Convert to inverse microns
-    x = 10000. / wave
-    curve = x * 0.
+    x = 10000.0 / wave
+    curve = x * 0.0
 
     # Set some standard values:
     x0 = 4.596
@@ -436,9 +438,11 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
         xuv = xspluv
 
     yuv = c1 + c2 * xuv
-    yuv = yuv + c3 * xuv**2 / ((xuv**2 - x0**2)**2 + (xuv * gamma)**2)
-    yuv = yuv + c4 * (0.5392 * (np.maximum(xuv, 5.9) - 5.9)**2 + 0.05644 *
-                      (np.maximum(xuv, 5.9) - 5.9)**3)
+    yuv = yuv + c3 * xuv**2 / ((xuv**2 - x0**2) ** 2 + (xuv * gamma) ** 2)
+    yuv = yuv + c4 * (
+        0.5392 * (np.maximum(xuv, 5.9) - 5.9) ** 2
+        + 0.05644 * (np.maximum(xuv, 5.9) - 5.9) ** 3
+    )
     yuv = yuv + R_V
     yspluv = yuv[0:2]  # save spline points
 
@@ -448,25 +452,29 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     # Compute optical portion of A(lambda)/E(B-V) curve
     # using cubic spline anchored in UV, optical, and IR
     xsplopir = np.concatenate(
-        ([0], 10000.0 /
-         np.array([26500.0, 12200.0, 6000.0, 5470.0, 4670.0, 4110.0])))
+        ([0], 10000.0 / np.array([26500.0, 12200.0, 6000.0, 5470.0, 4670.0, 4110.0]))
+    )
     ysplir = np.array([0.0, 0.26469, 0.82925]) * R_V / 3.1
     ysplop = np.array(
-        (np.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1], R_V),
-         np.polyval([-5.13540e-02, 1.00216, -7.35778e-05][::-1], R_V),
-         np.polyval([7.00127e-01, 1.00184, -3.32598e-05][::-1], R_V),
-         np.polyval([1.19456, 1.01707, -5.46959e-03, 7.97809e-04,
-                     -4.45636e-05][::-1], R_V)))
+        (
+            np.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1], R_V),
+            np.polyval([-5.13540e-02, 1.00216, -7.35778e-05][::-1], R_V),
+            np.polyval([7.00127e-01, 1.00184, -3.32598e-05][::-1], R_V),
+            np.polyval(
+                [1.19456, 1.01707, -5.46959e-03, 7.97809e-04, -4.45636e-05][::-1], R_V
+            ),
+        )
+    )
     ysplopir = np.concatenate((ysplir, ysplop))
 
     if Nopir > 0:
-        tck = interpolate.splrep(np.concatenate((xsplopir, xspluv)),
-                                 np.concatenate((ysplopir, yspluv)),
-                                 s=0)
+        tck = interpolate.splrep(
+            np.concatenate((xsplopir, xspluv)), np.concatenate((ysplopir, yspluv)), s=0
+        )
         curve[iopir] = interpolate.splev(x[iopir], tck)
 
-    #Now apply extinction correction to input flux vector
+    # Now apply extinction correction to input flux vector
     curve *= ebv
-    corr = 1. / (10.**(0.4 * curve))
+    corr = 1.0 / (10.0 ** (0.4 * curve))
 
     return corr

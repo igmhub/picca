@@ -54,27 +54,31 @@ class SdssForest(Forest):
         AstronomicalObjectError if there are missing variables
         """
         if kwargs.get("fiberid") is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Missing variable 'fiberid'")
+            raise AstronomicalObjectError(
+                "Error constructing SdssForest. " "Missing variable 'fiberid'"
+            )
         self.fiberid = [kwargs.get("fiberid")]
         del kwargs["fiberid"]
 
         if kwargs.get("mjd") is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Missing variable 'mjd'")
+            raise AstronomicalObjectError(
+                "Error constructing SdssForest. " "Missing variable 'mjd'"
+            )
         self.mjd = [kwargs.get("mjd")]
         del kwargs["mjd"]
 
         if kwargs.get("plate") is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Missing variable 'plate'")
+            raise AstronomicalObjectError(
+                "Error constructing SdssForest. " "Missing variable 'plate'"
+            )
         self.plate = [kwargs.get("plate")]
         del kwargs["plate"]
 
         self.thingid = kwargs.get("thingid")
         if self.thingid is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Missing variable 'thingid'")
+            raise AstronomicalObjectError(
+                "Error constructing SdssForest. " "Missing variable 'thingid'"
+            )
         del kwargs["thingid"]
 
         # call parent constructor
@@ -100,7 +104,8 @@ class SdssForest(Forest):
             raise AstronomicalObjectError(
                 "Error coadding SdssForest. Expected "
                 "SdssForest instance in other. Found: "
-                f"{type(other).__name__}")
+                f"{type(other).__name__}"
+            )
 
         self.fiberid += other.fiberid
         self.mjd += other.mjd
@@ -120,24 +125,24 @@ class SdssForest(Forest):
         header = super().get_header()
         header += [
             {
-                'name': 'THING_ID',
-                'value': self.thingid,
-                'comment': 'Object identification'
+                "name": "THING_ID",
+                "value": self.thingid,
+                "comment": "Object identification",
             },
             {
-                'name': 'PLATE',
-                'value': "-".join(f"{plate:04d}" for plate in self.plate),
-                'comment': 'SDSS plate(s)',
+                "name": "PLATE",
+                "value": "-".join(f"{plate:04d}" for plate in self.plate),
+                "comment": "SDSS plate(s)",
             },
             {
-                'name': 'MJD',
-                'value': "-".join(f"{mjd:05d}" for mjd in self.mjd),
-                'comment': 'Modified Julian date'
+                "name": "MJD",
+                "value": "-".join(f"{mjd:05d}" for mjd in self.mjd),
+                "comment": "Modified Julian date",
             },
             {
-                'name': 'FIBERID',
-                'value': "-".join(f"{fiberid:04d}" for fiberid in self.fiberid),
-                'comment': 'SDSS fiber id(s)',
+                "name": "FIBERID",
+                "value": "-".join(f"{fiberid:04d}" for fiberid in self.fiberid),
+                "comment": "SDSS fiber id(s)",
             },
         ]
 
@@ -174,8 +179,12 @@ class SdssForest(Forest):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('THING_ID', int), ('PLATE', 'S12'), ('MJD', 'S12'),
-                  ('FIBERID', 'S12')]
+        dtype += [
+            ("THING_ID", int),
+            ("PLATE", "S12"),
+            ("MJD", "S12"),
+            ("FIBERID", "S12"),
+        ]
         return dtype
 
     @classmethod

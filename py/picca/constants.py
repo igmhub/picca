@@ -11,16 +11,21 @@ from pkg_resources import resource_filename
 from picca.utils import userprint
 
 # TODO: this constant is unused. They should be removed at some point
-BOSS_LAMBDA_MIN = 3600.  # [Angstrom]
+BOSS_LAMBDA_MIN = 3600.0  # [Angstrom]
 
-SMALL_ANGLE_CUT_OFF = 2. / 3600. * np.pi / 180.  # 2 arcsec
+SMALL_ANGLE_CUT_OFF = 2.0 / 3600.0 * np.pi / 180.0  # 2 arcsec
 
-SPEED_LIGHT = speed_light / 1000.  # [km/s]
+SPEED_LIGHT = speed_light / 1000.0  # [km/s]
 
 # different strategies are explained in
 # https://desi.lbl.gov/trac/wiki/keyprojects/y1kp6/Blinding
 ACCEPTED_BLINDING_STRATEGIES = [
-    "none", "minimal", "strategyB", "strategyC", "strategyBC", "corr_yshift"
+    "none",
+    "minimal",
+    "strategyB",
+    "strategyC",
+    "strategyBC",
+    "corr_yshift",
 ]
 
 
@@ -163,7 +168,7 @@ class Cosmo(object):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    def __init__(self, Om, Ok=0., Or=0., wl=-1., H0=100., blinding=False):
+    def __init__(self, Om, Ok=0.0, Or=0.0, wl=-1.0, H0=100.0, blinding=False):
         """Initializes the methods for this instance
 
         Args:
@@ -183,56 +188,67 @@ class Cosmo(object):
         if blinding == "none":
             userprint("ATTENTION: Analysis is not blinded!")
         else:
-            userprint(
-                f"ATTENTION: Analysis is blinded with strategy {blinding}")
+            userprint(f"ATTENTION: Analysis is blinded with strategy {blinding}")
 
         if blinding not in ["strategyB", "strategyBC"]:
             userprint(f"Om={Om}, Or={Or}, wl={wl}, H0={H0}")
         else:
-            userprint("The specified cosmology is "
-                      f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
+            userprint(
+                "The specified cosmology is "
+                f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}"
+            )
             # blind test small
             filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
             # blind test large
-            #filename = "DR16_blind_test_small/DR16_blind_test_large.fits"
+            # filename = "DR16_blind_test_small/DR16_blind_test_large.fits"
             # load Om
-            filename = resource_filename(
-                'picca', 'fitter2') + '/models/{}'.format(filename)
+            filename = resource_filename("picca", "fitter2") + "/models/{}".format(
+                filename
+            )
             hdu = fitsio.FITS(filename)
-            Om = hdu[1].read_header()['OM']
-            Or = hdu[1].read_header()['OR']
-            wl = hdu[1].read_header()['W']
-            H0 = hdu[1].read_header()['H0']
+            Om = hdu[1].read_header()["OM"]
+            Or = hdu[1].read_header()["OR"]
+            wl = hdu[1].read_header()["W"]
+            H0 = hdu[1].read_header()["H0"]
             hdu.close()
 
         # Ignore evolution of neutrinos from matter to radiation
-        Ol = 1. - Ok - Om - Or
+        Ol = 1.0 - Ok - Om - Or
 
         num_bins = 10000
-        z_max = 10.
+        z_max = 10.0
         delta_z = z_max / num_bins
         z = np.arange(num_bins, dtype=float) * delta_z
-        hubble = H0 * np.sqrt(Ol * (1. + z)**(3. * (1. + wl)) + Ok *
-                              (1. + z)**2 + Om * (1. + z)**3 + Or * (1. + z)**4)
+        hubble = H0 * np.sqrt(
+            Ol * (1.0 + z) ** (3.0 * (1.0 + wl))
+            + Ok * (1.0 + z) ** 2
+            + Om * (1.0 + z) ** 3
+            + Or * (1.0 + z) ** 4
+        )
 
         r_comov = np.zeros(num_bins)
         for index in range(1, num_bins):
             r_comov[index] = (
-                SPEED_LIGHT *
-                (1. / hubble[index - 1] + 1. / hubble[index]) / 2. * delta_z +
-                r_comov[index - 1])
+                SPEED_LIGHT
+                * (1.0 / hubble[index - 1] + 1.0 / hubble[index])
+                / 2.0
+                * delta_z
+                + r_comov[index - 1]
+            )
 
         self.get_r_comov = interpolate.interp1d(z, r_comov)
 
         ### dist_m here is the comoving angular diameter distance
-        if Ok == 0.:
+        if Ok == 0.0:
             dist_m = r_comov
-        elif Ok < 0.:
-            dist_m = (np.sin(H0 * np.sqrt(-Ok) / SPEED_LIGHT * r_comov) /
-                      (H0 * np.sqrt(-Ok) / SPEED_LIGHT))
-        elif Ok > 0.:
-            dist_m = (np.sinh(H0 * np.sqrt(Ok) / SPEED_LIGHT * r_comov) /
-                      (H0 * np.sqrt(Ok) / SPEED_LIGHT))
+        elif Ok < 0.0:
+            dist_m = np.sin(H0 * np.sqrt(-Ok) / SPEED_LIGHT * r_comov) / (
+                H0 * np.sqrt(-Ok) / SPEED_LIGHT
+            )
+        elif Ok > 0.0:
+            dist_m = np.sinh(H0 * np.sqrt(Ok) / SPEED_LIGHT * r_comov) / (
+                H0 * np.sqrt(Ok) / SPEED_LIGHT
+            )
 
         self.get_hubble = interpolate.interp1d(z, hubble)
         self.distance_to_redshift = interpolate.interp1d(r_comov, z)
@@ -242,8 +258,9 @@ class Cosmo(object):
         # D_M
         self.get_dist_m = interpolate.interp1d(z, dist_m)
         # D_V
-        dist_v = np.power(z * self.get_dist_m(z)**2 * self.get_dist_hubble(z),
-                          1. / 3.)
+        dist_v = np.power(
+            z * self.get_dist_m(z) ** 2 * self.get_dist_hubble(z), 1.0 / 3.0
+        )
         self.get_dist_v = interpolate.interp1d(z, dist_v)
 
 
@@ -283,7 +300,7 @@ ABSORBER_IGM = {
     "NV(1239)": 1238.821,
     "LYA": 1215.67,
     "SiIII(1207)": 1206.500,
-    "NI(1200)": 1200.,
+    "NI(1200)": 1200.0,
     "SiII(1193)": 1193.2897,
     "SiII(1190)": 1190.4158,
     "PII(1153)": 1152.818,

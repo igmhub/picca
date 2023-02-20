@@ -2,8 +2,22 @@ import numpy as np
 
 
 class wedge:
-    def __init__(self,rpmin=0.,rpmax=200.,nrp=50,rtmin=0.,rtmax=200.,nrt=50,\
-            rmin=0.,rmax=200.,nr=50,mumin=0.8,mumax=0.95,ss=10,absoluteMu=False):
+    def __init__(
+        self,
+        rpmin=0.0,
+        rpmax=200.0,
+        nrp=50,
+        rtmin=0.0,
+        rtmax=200.0,
+        nrt=50,
+        rmin=0.0,
+        rmax=200.0,
+        nr=50,
+        mumin=0.8,
+        mumax=0.95,
+        ss=10,
+        absoluteMu=False,
+    ):
         nrtmc = ss * nrt
         nrpmc = ss * nrp
         nss = nrtmc * nrpmc
@@ -32,13 +46,12 @@ class wedge:
 
         bins = bt + nrt * bp + nrp * nrt * br
 
-        w = (mumc >= mumin) & (mumc <= mumax) & (r < rmax) & (r > rmin) & (br <
-                                                                           nr)
+        w = (mumc >= mumin) & (mumc <= mumax) & (r < rmax) & (r > rmin) & (br < nr)
         bins = bins[w]
 
         W = np.zeros(nrp * nrt * nr)
         c = np.bincount(bins.flatten())
-        W[:len(c)] += c
+        W[: len(c)] += c
 
         self.W = W.reshape(nr, nrt * nrp)
         self.r = rmin + (np.arange(nr) + 0.5) * (rmax - rmin) / nr

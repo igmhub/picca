@@ -6,7 +6,7 @@ objects.
 import time
 import logging
 import multiprocessing
-from numba import prange  #, jit
+from numba import prange  # , jit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.config import Config
@@ -16,8 +16,8 @@ from picca.delta_extraction.errors import DeltaExtractionError
 module_logger = logging.getLogger(__name__)
 
 
-class MaskHandler():
-    """ Simple class to parallelize masking in Survey.apply_masks()
+class MaskHandler:
+    """Simple class to parallelize masking in Survey.apply_masks()
 
     Methods
     -------
@@ -107,7 +107,7 @@ class Survey:
 
     def __init__(self):
         """Initialize class instance"""
-        self.logger = logging.getLogger('picca.delta_extraction.survey.Survey')
+        self.logger = logging.getLogger("picca.delta_extraction.survey.Survey")
         self.config = None
         self.corrections = None
         self.masks = None
@@ -123,7 +123,8 @@ class Survey:
         for forest_index, _ in enumerate(self.data.forests):
             for correction_index, _ in enumerate(self.corrections):
                 self.corrections[correction_index].apply_correction(
-                    self.data.forests[forest_index])
+                    self.data.forests[forest_index]
+                )
 
         t1 = time.time()
         self.logger.info(f"Time spent applying corrections: {t1-t0}")
@@ -134,20 +135,21 @@ class Survey:
         self.logger.info("Applying masks")
 
         if self.num_processors > 1:
-            context = multiprocessing.get_context('fork')
+            context = multiprocessing.get_context("fork")
             # Pick a large chunk size such that masks are
             # copied as few times as possible
             chunksize = int(len(self.data.forests) / self.num_processors / 3)
             chunksize = max(1, chunksize)
             with context.Pool(processes=self.num_processors) as pool:
-                self.data.forests = pool.map(MaskHandler(self.masks),
-                                             self.data.forests,
-                                             chunksize=chunksize)
+                self.data.forests = pool.map(
+                    MaskHandler(self.masks), self.data.forests, chunksize=chunksize
+                )
         else:
             mask_handler = MaskHandler(self.masks)
             for forest_index, _ in enumerate(self.data.forests):
                 self.data.forests[forest_index] = mask_handler(
-                    self.data.forests[forest_index])
+                    self.data.forests[forest_index]
+                )
 
         t1 = time.time()
         self.logger.info(f"Time spent applying masks: {t1-t0}")
@@ -164,10 +166,9 @@ class Survey:
         self.expected_flux = ExpectedFluxType(expected_flux_arguments)
         self.expected_flux.compute_expected_flux(self.data.forests)
         t1 = time.time()
-        self.logger.info(
-            f"Time spent computing the mean expected flux: {t1-t0}")
+        self.logger.info(f"Time spent computing the mean expected flux: {t1-t0}")
 
-    #@jit(nopython=True, parallel=True)
+    # @jit(nopython=True, parallel=True)
     def extract_deltas(self):
         """Compute the delta fields"""
         t0 = time.time()
@@ -209,7 +210,8 @@ class Survey:
         t0 = time.time()
         num_corrections = self.config.num_corrections
         self.logger.info(
-            f"Reading corrections. There are {num_corrections} corrections")
+            f"Reading corrections. There are {num_corrections} corrections"
+        )
 
         for CorrectionType, correction_arguments in self.config.corrections:
             correction = CorrectionType(correction_arguments)
@@ -232,8 +234,9 @@ class Survey:
         self.data = DataType(data_arguments)
         # we should never enter this block unless DataType is not correctly
         # writen
-        if not all((isinstance(forest, Forest)
-                    for forest in self.data.forests)):  # pragma: no cover
+        if not all(
+            (isinstance(forest, Forest) for forest in self.data.forests)
+        ):  # pragma: no cover
             raise DeltaExtractionError(
                 "Error reading data.\n At least one of "
                 "the elements in variable 'forest' is "
@@ -241,7 +244,8 @@ class Survey:
                 "the Data object responsible for reading "
                 "the data did not define the correct data "
                 "type. Please check for correct "
-                "inheritance pattern.")
+                "inheritance pattern."
+            )
         self.data.find_nside()
 
         t1 = time.time()

@@ -25,7 +25,7 @@ class ScriptsTest(AbstractTest):
     """
 
     def run_delta_extraction(self, config_file, out_dir, test_dir):
-        """ Run delta_extraction.py with the specified configuration
+        """Run delta_extraction.py with the specified configuration
         and test its results
 
         Parameters
@@ -41,19 +41,19 @@ class ScriptsTest(AbstractTest):
         print("Running command: ", " ".join(command))
 
         try:
-            subprocess.run(command,
-                           check=True,
-                           capture_output=True,
-                           env=dict(os.environ, THIS_DIR=THIS_DIR))
+            subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                env=dict(os.environ, THIS_DIR=THIS_DIR),
+            )
         except CalledProcessError as e:
             print(e.stderr)
             raise e
 
         # compare attributes
-        test_files = sorted(
-            glob.glob(f"{test_dir}/Log/delta_attributes*.fits.gz"))
-        out_files = sorted(
-            glob.glob(f"{out_dir}/Log/delta_attributes*.fits.gz"))
+        test_files = sorted(glob.glob(f"{test_dir}/Log/delta_attributes*.fits.gz"))
+        out_files = sorted(glob.glob(f"{out_dir}/Log/delta_attributes*.fits.gz"))
         for test_file, out_file in zip(test_files, out_files):
             self.assertTrue(test_file.split("/")[-1] == out_file.split("/")[-1])
             self.compare_fits(test_file, out_file)
@@ -115,8 +115,7 @@ class ScriptsTest(AbstractTest):
         self.run_delta_extraction(config_file, out_dir, test_dir)
 
     def test_delta_lin_pk1d(self):
-        """End-to-end test using 'LYA' setup with a linear wavelenth solution and Pk1D Forests.
-        """
+        """End-to-end test using 'LYA' setup with a linear wavelenth solution and Pk1D Forests."""
         config_file = "{}/data/delta_lin_pk1d.ini".format(THIS_DIR)
         out_dir = "{}/results/delta_extraction_lin_pk1d".format(THIS_DIR)
         test_dir = "{}/data/delta_extraction_lin_pk1d".format(THIS_DIR)
@@ -134,8 +133,7 @@ class ScriptsTest(AbstractTest):
     def test_delta_lya_nomask_nodla(self):
         """End-to-end test using 'LYA' setup wihtout masking sky lines nor DLAs"""
         config_file = "{}/data/delta_lya_nomask_nodla.ini".format(THIS_DIR)
-        out_dir = "{}/results/delta_extraction_lya_nomask_nodla".format(
-            THIS_DIR)
+        out_dir = "{}/results/delta_extraction_lya_nomask_nodla".format(THIS_DIR)
         test_dir = "{}/data/delta_extraction_lya_nomask_nodla".format(THIS_DIR)
 
         self.run_delta_extraction(config_file, out_dir, test_dir)
@@ -150,5 +148,5 @@ class ScriptsTest(AbstractTest):
         self.run_delta_extraction(config_file, out_dir, test_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

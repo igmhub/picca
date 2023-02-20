@@ -28,5 +28,6 @@ class Correction:
         -----
         CorrectionError if function was not overloaded by child class
         """
-        raise CorrectionError("Function 'apply_correction' was not overloaded "
-                              "by child class")
+        raise CorrectionError(
+            "Function 'apply_correction' was not overloaded " "by child class"
+        )

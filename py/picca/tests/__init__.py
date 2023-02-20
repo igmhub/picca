@@ -4,7 +4,7 @@ import os
 
 def test_suite():
     """
-        Returns unittest.TestSuite of picca tests for use by setup.py
+    Returns unittest.TestSuite of picca tests for use by setup.py
     """
 
     thisdir = os.path.dirname(__file__)

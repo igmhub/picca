@@ -10,8 +10,9 @@ from picca.delta_extraction.masks.lines_mask import LinesMask
 from picca.delta_extraction.masks.dla_mask import DlaMask
 from picca.delta_extraction.masks.dla_mask import defaults as defaults_dla_mask
 from picca.delta_extraction.masks.absorber_mask import AbsorberMask
-from picca.delta_extraction.masks.absorber_mask import (defaults as
-                                                        defaults_absorber_mask)
+from picca.delta_extraction.masks.absorber_mask import (
+    defaults as defaults_absorber_mask,
+)
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.utils import setup_logger
 from picca.tests.delta_extraction.abstract_test import AbstractTest
@@ -38,7 +39,7 @@ class MaskTest(AbstractTest):
     """
 
     def setUp(self):
-        """ Actions done at test startup
+        """Actions done at test startup
         Initialize Forest class variables
         """
         super().setUp()
@@ -60,11 +61,7 @@ class MaskTest(AbstractTest):
 
         # initialize mask
         config = ConfigParser()
-        config.read_dict(
-            {"mask": {
-                "filename": in_file,
-                "los_id name": "THING_ID"
-            }})
+        config.read_dict({"mask": {"filename": in_file, "los_id name": "THING_ID"}})
         for key, value in defaults_absorber_mask.items():
             if key not in config["mask"]:
                 config["mask"][key] = str(value)
@@ -76,54 +73,57 @@ class MaskTest(AbstractTest):
         mask.apply_mask(forest1)
 
         w = np.ones(forest1_log_lambda.size, dtype=bool)
-        w &= np.fabs(1.e4 * (forest1_log_lambda - np.log10(5600))) > 2.5
-        self.assertTrue(
-            np.allclose(forest1.flux, np.ones_like(forest1_log_lambda[w])))
+        w &= np.fabs(1.0e4 * (forest1_log_lambda - np.log10(5600))) > 2.5
+        self.assertTrue(np.allclose(forest1.flux, np.ones_like(forest1_log_lambda[w])))
         self.assertTrue(np.allclose(forest1.log_lambda, forest1_log_lambda[w]))
         self.assertTrue(
-            np.allclose(forest1.ivar,
-                        np.ones_like(forest1_log_lambda[w]) * 4))
+            np.allclose(forest1.ivar, np.ones_like(forest1_log_lambda[w]) * 4)
+        )
         self.assertTrue(
-            np.allclose(forest1.transmission_correction,
-                        np.ones_like(forest1_log_lambda[w])))
+            np.allclose(
+                forest1.transmission_correction, np.ones_like(forest1_log_lambda[w])
+            )
+        )
 
         # apply mask to forest with 2 absorbers
         mask.apply_mask(forest2)
 
         w = np.ones(forest2_log_lambda.size, dtype=bool)
-        w &= np.fabs(1.e4 * (forest2_log_lambda - np.log10(5600))) > 2.5
-        w &= np.fabs(1.e4 * (forest2_log_lambda - np.log10(5650))) > 2.5
-        self.assertTrue(
-            np.allclose(forest2.flux, np.ones_like(forest2_log_lambda[w])))
+        w &= np.fabs(1.0e4 * (forest2_log_lambda - np.log10(5600))) > 2.5
+        w &= np.fabs(1.0e4 * (forest2_log_lambda - np.log10(5650))) > 2.5
+        self.assertTrue(np.allclose(forest2.flux, np.ones_like(forest2_log_lambda[w])))
         self.assertTrue(np.allclose(forest2.log_lambda, forest2_log_lambda[w]))
         self.assertTrue(
-            np.allclose(forest2.ivar,
-                        np.ones_like(forest2_log_lambda[w]) * 4))
+            np.allclose(forest2.ivar, np.ones_like(forest2_log_lambda[w]) * 4)
+        )
         self.assertTrue(
-            np.allclose(forest2.transmission_correction,
-                        np.ones_like(forest2_log_lambda[w])))
+            np.allclose(
+                forest2.transmission_correction, np.ones_like(forest2_log_lambda[w])
+            )
+        )
 
         # apply mask to forest without absorbers
         mask.apply_mask(forest3)
-        self.assertTrue(
-            np.allclose(forest2.flux, np.ones_like(forest3_log_lambda)))
+        self.assertTrue(np.allclose(forest2.flux, np.ones_like(forest3_log_lambda)))
         self.assertTrue(np.allclose(forest2.log_lambda, forest3_log_lambda))
+        self.assertTrue(np.allclose(forest2.ivar, np.ones_like(forest3_log_lambda) * 4))
         self.assertTrue(
-            np.allclose(forest2.ivar,
-                        np.ones_like(forest3_log_lambda) * 4))
-        self.assertTrue(
-            np.allclose(forest2.transmission_correction,
-                        np.ones_like(forest3_log_lambda)))
+            np.allclose(
+                forest2.transmission_correction, np.ones_like(forest3_log_lambda)
+            )
+        )
 
         # initialize mask specifying variables
         config = ConfigParser()
-        config.read_dict({
-            "mask": {
-                "filename": in_file,
-                "absorber mask width": 1.5,
-                "los_id name": "THING_ID"
+        config.read_dict(
+            {
+                "mask": {
+                    "filename": in_file,
+                    "absorber mask width": 1.5,
+                    "los_id name": "THING_ID",
+                }
             }
-        })
+        )
         for key, value in defaults_absorber_mask.items():
             if key not in config["mask"]:
                 config["mask"][key] = str(value)
@@ -149,11 +149,7 @@ class MaskTest(AbstractTest):
 
         # initialize mask
         config = ConfigParser()
-        config.read_dict(
-            {"mask": {
-                "filename": in_file,
-                "los_id name": "THING_ID"
-            }})
+        config.read_dict({"mask": {"filename": in_file, "los_id name": "THING_ID"}})
         for key, value in defaults_dla_mask.items():
             if key not in config["mask"]:
                 config["mask"][key] = str(value)
@@ -170,15 +166,14 @@ class MaskTest(AbstractTest):
 
         # apply mask to forest without DLAs
         mask.apply_mask(forest3)
-        self.assertTrue(
-            np.allclose(forest3.flux, np.ones_like(forest3_log_lambda)))
+        self.assertTrue(np.allclose(forest3.flux, np.ones_like(forest3_log_lambda)))
         self.assertTrue(np.allclose(forest3.log_lambda, forest3_log_lambda))
+        self.assertTrue(np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda) * 4))
         self.assertTrue(
-            np.allclose(forest3.ivar,
-                        np.ones_like(forest3_log_lambda) * 4))
-        self.assertTrue(
-            np.allclose(forest3.transmission_correction,
-                        np.ones_like(forest3_log_lambda)))
+            np.allclose(
+                forest3.transmission_correction, np.ones_like(forest3_log_lambda)
+            )
+        )
 
         reset_logger()
         self.compare_ascii(test_file, out_file)
@@ -189,12 +184,12 @@ class MaskTest(AbstractTest):
 
     def test_lines_mask_missing_options(self):
         """Test correct error reporting when initializing with missing options
-            for class LinesMask
-            """
+        for class LinesMask
+        """
         # create LinesMask instance with missing options
         config = ConfigParser()
         config.read_dict({"masks": {}})
-        expected_message = ("Missing argument 'filename' required by LinesMask")
+        expected_message = "Missing argument 'filename' required by LinesMask"
         with self.assertRaises(MaskError) as context_manager:
             correction = LinesMask(config["masks"])
         self.compare_error_message(context_manager, expected_message)
@@ -206,13 +201,12 @@ class MaskTest(AbstractTest):
         """
         config = ConfigParser()
         config.read_dict({"masks": {}})
-        mask = Mask(config['masks'])
-        expected_message = (
-            "Function 'apply_mask' was not overloaded by child class")
+        mask = Mask(config["masks"])
+        expected_message = "Function 'apply_mask' was not overloaded by child class"
         with self.assertRaises(MaskError) as context_manager:
             mask.apply_mask(forest1)
         self.compare_error_message(context_manager, expected_message)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

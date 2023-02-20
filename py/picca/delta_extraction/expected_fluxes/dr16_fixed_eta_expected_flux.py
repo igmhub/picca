@@ -8,18 +8,24 @@ from scipy.interpolate import interp1d
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
-    defaults, accepted_options)
+    defaults,
+    accepted_options,
+)
 from picca.delta_extraction.utils import update_accepted_options, update_default_options
 
 accepted_options = update_accepted_options(accepted_options, ["eta value"])
 accepted_options = update_accepted_options(
     accepted_options,
     ["limit eta", "use constant weight", "use ivar as weight"],
-    remove=True)
+    remove=True,
+)
 
-defaults = update_default_options(defaults, {
-    "eta value": 1.0,
-})
+defaults = update_default_options(
+    defaults,
+    {
+        "eta value": 1.0,
+    },
+)
 
 
 class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
@@ -60,19 +66,19 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
     def _initialize_get_eta(self):
         """Initialiaze function get_eta"""
         # initialize eta factor
-        if self.eta_value.endswith(".fits") or self.eta_value.endswith(
-                ".fits.gz"):
+        if self.eta_value.endswith(".fits") or self.eta_value.endswith(".fits.gz"):
             hdu = fitsio.read(self.eta_value, ext="VAR_FUNC")
-            self.get_eta = interp1d(hdu["loglam"],
-                                    hdu["eta"],
-                                    fill_value='extrapolate',
-                                    kind='nearest')
+            self.get_eta = interp1d(
+                hdu["loglam"], hdu["eta"], fill_value="extrapolate", kind="nearest"
+            )
         else:
             eta = np.ones(self.num_bins_variance) * float(self.eta_value)
-            self.get_eta = interp1d(self.log_lambda_var_func_grid,
-                                    eta,
-                                    fill_value='extrapolate',
-                                    kind='nearest')
+            self.get_eta = interp1d(
+                self.log_lambda_var_func_grid,
+                eta,
+                fill_value="extrapolate",
+                kind="nearest",
+            )
         # note that for eta to be fitted, we need to include it to
         # self.fit_variance_functions:
         # self.fit_variance_functions.append("eta")
@@ -92,14 +98,17 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
         """
         self.eta_value = config.get("eta value")
         if self.eta_value is None:
-            raise ExpectedFluxError("Missing argument 'eta value' required "
-                                    "by Dr16FixEtaExpectedFlux")
-        if not (self.eta_value.endswith(".fits") or
-                self.eta_value.endswith(".fits.gz")):
+            raise ExpectedFluxError(
+                "Missing argument 'eta value' required " "by Dr16FixEtaExpectedFlux"
+            )
+        if not (
+            self.eta_value.endswith(".fits") or self.eta_value.endswith(".fits.gz")
+        ):
             try:
                 _ = float(self.eta_value)
             except ValueError as error:
                 raise ExpectedFluxError(
                     "Wrong argument 'eta value' passed to "
                     "Dr16FixEtaExpectedFlux. Expected a fits file or "
-                    f"a float. Found {self.eta_value}") from error
+                    f"a float. Found {self.eta_value}"
+                ) from error

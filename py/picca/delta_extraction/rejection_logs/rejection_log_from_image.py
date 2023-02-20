@@ -50,9 +50,10 @@ class RejectionLogFromImage(RejectionLog):
         forest: Forest
         Forest to obtain metadata dtypes
         """
-        self.dtypes = forest.get_metadata_dtype() + [('FOREST_SIZE', int),
-                                                     ('REJECTION_STATUS', 'S12')
-                                                    ]
+        self.dtypes = forest.get_metadata_dtype() + [
+            ("FOREST_SIZE", int),
+            ("REJECTION_STATUS", "S12"),
+        ]
         self.initialized = True
 
     def add_to_rejection_log(self, forest, rejection_status):
@@ -73,15 +74,14 @@ class RejectionLogFromImage(RejectionLog):
 
         size = forest.flux.size
 
-        self.data.append(tuple(forest.get_metadata() +
-                               [size, rejection_status]))
+        self.data.append(tuple(forest.get_metadata() + [size, rejection_status]))
 
     def save_rejection_log(self):
         """Saves the rejection log arrays.
         In the log forest metadata will be saved along with the forest size and
         rejection status.
         """
-        rejection_log = fitsio.FITS(self.file, 'rw', clobber=True)
+        rejection_log = fitsio.FITS(self.file, "rw", clobber=True)
 
         rejection_log.write(
             np.array(

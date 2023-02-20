@@ -54,21 +54,22 @@ def main(args):
     module_logger.info("Done")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Compute the delta field '
-                     'from a list of spectra'))
+        description=("Compute the delta field " "from a list of spectra"),
+    )
 
     parser.add_argument(
-        'config_file',
+        "config_file",
         type=str,
         default=None,
-        help=
-        ('Configuration file. To learn about all the available options '
-         'check the configuration tutorial in '
-         '$PICCA/tutorials/delta_extraction/picca_delta_extraction_tutorial.ipynb'
-        ))
+        help=(
+            "Configuration file. To learn about all the available options "
+            "check the configuration tutorial in "
+            "$PICCA/tutorials/delta_extraction/picca_delta_extraction_tutorial.ipynb"
+        ),
+    )
 
     args = parser.parse_args()
     main(args)
