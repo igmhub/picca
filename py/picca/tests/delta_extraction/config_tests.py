@@ -9,8 +9,7 @@ from picca.delta_extraction.config import Config
 from picca.delta_extraction.config import accepted_corrections_options
 from picca.delta_extraction.config import accepted_masks_options
 from picca.delta_extraction.corrections.dust_correction import (
-    defaults as defaults_dust_correction,
-)
+    defaults as defaults_dust_correction,)
 from picca.delta_extraction.errors import ConfigError
 from picca.delta_extraction.masks.dla_mask import defaults as defaults_dla_mask
 from picca.tests.delta_extraction.abstract_test import AbstractTest
@@ -50,9 +49,9 @@ class ConfigTest(AbstractTest):
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
 
-        self.compare_error_message(
-            context_manager, expected_message, startswith=startswith
-        )
+        self.compare_error_message(context_manager,
+                                   expected_message,
+                                   startswith=startswith)
 
     def compare_config(self, orig_file, new_file):
         """Compares two configuration files to check that they are equal
@@ -84,8 +83,7 @@ class ConfigTest(AbstractTest):
                     if key not in new_section.keys():
                         print(
                             f"key '{key}' in section [{new_section}] missing in "
-                            "new file"
-                        )
+                            "new file")
                     self.assertTrue(key in new_section.keys())
                     new_value = new_section.get(key)
                     # this is necessary to remove the system dependent bits of
@@ -96,18 +94,15 @@ class ConfigTest(AbstractTest):
                         orig_value = orig_value.split(base_path)[-1]
 
                     if not orig_value == new_value:
-                        print(
-                            f"In section [{section}], for key '{key}'' found "
-                            f"orig value = {orig_value} but new value = "
-                            f"{new_value}"
-                        )
+                        print(f"In section [{section}], for key '{key}'' found "
+                              f"orig value = {orig_value} but new value = "
+                              f"{new_value}")
                     self.assertTrue(orig_value == new_value)
             for key in new_section.keys():
                 if key not in orig_section.keys():
                     print(
                         f"key '{key}' in section [{section}] missing in original "
-                        "file"
-                    )
+                        "file")
                     for key2, value in new_section.items():
                         print(key2, value)
                 self.assertTrue(key in orig_section.keys())
@@ -142,8 +137,7 @@ class ConfigTest(AbstractTest):
             "Specified folder contains a previous run. Pass overwrite "
             "option in configuration file in order to ignore the "
             "previous run or change the output path variable to point "
-            f"elsewhere. Folder: {THIS_DIR}/results/config_tests/"
-        )
+            f"elsewhere. Folder: {THIS_DIR}/results/config_tests/")
         self.check_error(in_file, expected_message)
 
         # this should not raise an error as folder exists and overwrite is True
@@ -161,8 +155,8 @@ class ConfigTest(AbstractTest):
         # check the corrections section
         correction_args = config.corrections[2][1]
         self.assertTrue(
-            np.isclose(correction_args.getfloat("extinction_conversion_r"), 2.0)
-        )
+            np.isclose(correction_args.getfloat("extinction_conversion_r"),
+                       2.0))
 
         # check the mask section
         mask_args = config.masks[0][1]
@@ -189,8 +183,7 @@ class ConfigTest(AbstractTest):
             np.isclose(
                 correction_args1.getfloat("extinction_conversion_r"),
                 defaults_dust_correction.get("extinction_conversion_r"),
-            )
-        )
+            ))
 
         # check masks dictionary
         mask_args0 = config.masks[0][1]
@@ -199,8 +192,7 @@ class ConfigTest(AbstractTest):
             np.isclose(
                 mask_args0.getfloat("dla mask limit"),
                 defaults_dla_mask.get("dla mask limit"),
-            )
-        )
+            ))
 
     def test_config_invalid_correction_options(self):
         """Test that passing invalid options to the correction classes
@@ -209,36 +201,30 @@ class ConfigTest(AbstractTest):
 
         # check corrections section
         in_file = f"{prefix}_corrections.ini"
-        expected_message = (
-            "Unrecognised option in section [corrections]. "
-            f"Found: 'name 0'. Accepted options are "
-            f"{accepted_corrections_options}"
-        )
+        expected_message = ("Unrecognised option in section [corrections]. "
+                            f"Found: 'name 0'. Accepted options are "
+                            f"{accepted_corrections_options}")
         self.check_error(in_file, expected_message)
 
         # check bad correction
         in_file = f"{prefix}_corrections_bad_inheritance.ini"
-        expected_message = (
-            "Error loading class Mask. "
-            "This class should inherit from Correction but "
-            "it does not. Please check for correct inheritance "
-            "pattern."
-        )
+        expected_message = ("Error loading class Mask. "
+                            "This class should inherit from Correction but "
+                            "it does not. Please check for correct inheritance "
+                            "pattern.")
         self.check_error(in_file, expected_message)
 
         # check case num_corrections is missing
         in_file = f"{prefix}_corrections_no_num_corrections.ini"
         expected_message = (
-            "In section [corrections], variable 'num corrections' is required"
-        )
+            "In section [corrections], variable 'num corrections' is required")
         self.check_error(in_file, expected_message)
 
         # check case num_corrections is not positive
         in_file = f"{prefix}_corrections_num_corrections.ini"
         expected_message = (
             "In section [corrections], variable 'num corrections' "
-            "must be a non-negative integer"
-        )
+            "must be a non-negative integer")
         self.check_error(in_file, expected_message)
 
         # check case missing type
@@ -248,36 +234,30 @@ class ConfigTest(AbstractTest):
 
         # check case type is not correct
         in_file = f"{prefix}_corrections_bad_type.ini"
-        expected_message = (
-            "Unrecognised option in section [corrections]. "
-            f"Found: 'type a'. Accepted options are "
-            f"{accepted_corrections_options}"
-        )
+        expected_message = ("Unrecognised option in section [corrections]. "
+                            f"Found: 'type a'. Accepted options are "
+                            f"{accepted_corrections_options}")
         self.check_error(in_file, expected_message)
 
         # check case number in type is too large
         in_file = f"{prefix}_corrections_bad_type2.ini"
         expected_message = (
             "In section [corrections] found option 'type 3', but "
-            "'num corrections' is '1' (keep in mind python zero indexing)"
-        )
+            "'num corrections' is '1' (keep in mind python zero indexing)")
         self.check_error(in_file, expected_message)
 
         # check case module name is not correct
         in_file = f"{prefix}_corrections_bad_module_name.ini"
-        expected_message = (
-            "Unrecognised option in section [corrections]. "
-            f"Found: 'module name a'. Accepted options are "
-            f"{accepted_corrections_options}"
-        )
+        expected_message = ("Unrecognised option in section [corrections]. "
+                            f"Found: 'module name a'. Accepted options are "
+                            f"{accepted_corrections_options}")
         self.check_error(in_file, expected_message)
 
         # check case number in module name is too large
         in_file = f"{prefix}_corrections_bad_module_name2.ini"
         expected_message = (
             "In section [corrections] found option 'module name 3', but "
-            "'num corrections' is '1' (keep in mind python zero indexing)"
-        )
+            "'num corrections' is '1' (keep in mind python zero indexing)")
         self.check_error(in_file, expected_message)
 
         # check case module does not exist
@@ -293,8 +273,7 @@ class ConfigTest(AbstractTest):
         expected_message = (
             "Error loading class DustCorrection, "
             "module picca.delta_extraction.corrections.calibration_correction "
-            "did not contain requested class"
-        )
+            "did not contain requested class")
         self.check_error(in_file, expected_message)
 
         # now check arguments of the different Correction child classes
@@ -327,12 +306,10 @@ class ConfigTest(AbstractTest):
 
         # check bad data
         in_file = f"{prefix}_data_bad_inheritance.ini"
-        expected_message = (
-            "Error loading class Mask. "
-            "This class should inherit from Data but "
-            "it does not. Please check for correct inheritance "
-            "pattern."
-        )
+        expected_message = ("Error loading class Mask. "
+                            "This class should inherit from Data but "
+                            "it does not. Please check for correct inheritance "
+                            "pattern.")
         self.check_error(in_file, expected_message)
 
         # missing type
@@ -342,9 +319,8 @@ class ConfigTest(AbstractTest):
 
         # check case module does not exist
         in_file = f"{prefix}_data_no_module.ini"
-        expected_message = (
-            f"Error loading class Data, " f"module picca.fake_data could not be loaded"
-        )
+        expected_message = (f"Error loading class Data, "
+                            f"module picca.fake_data could not be loaded")
         self.check_error(in_file, expected_message)
 
         # check case module does not contain the class
@@ -352,8 +328,7 @@ class ConfigTest(AbstractTest):
         expected_message = (
             "Error loading class SdssData, "
             "module picca.delta_extraction.data_catalogues.desi_data "
-            "did not contain requested class"
-        )
+            "did not contain requested class")
         self.check_error(in_file, expected_message)
 
         # now check arguments of the different Data child classes
@@ -387,12 +362,10 @@ class ConfigTest(AbstractTest):
 
         # check bad expected_flux
         in_file = f"{prefix}_expected_flux_bad_inheritance.ini"
-        expected_message = (
-            "Error loading class Mask. "
-            "This class should inherit from ExpectedFlux but "
-            "it does not. Please check for correct inheritance "
-            "pattern."
-        )
+        expected_message = ("Error loading class Mask. "
+                            "This class should inherit from ExpectedFlux but "
+                            "it does not. Please check for correct inheritance "
+                            "pattern.")
         self.check_error(in_file, expected_message)
 
         # missing type
@@ -404,8 +377,7 @@ class ConfigTest(AbstractTest):
         in_file = f"{prefix}_expected_flux_no_module.ini"
         expected_message = (
             f"Error loading class Dr16ExpectedFlux, "
-            f"module picca.fake_expected_flux could not be loaded"
-        )
+            f"module picca.fake_expected_flux could not be loaded")
         self.check_error(in_file, expected_message)
 
         # check case module does not contain the class
@@ -413,8 +385,7 @@ class ConfigTest(AbstractTest):
         expected_message = (
             "Error loading class Dr16ExpectedFlux, "
             "module picca.delta_extraction.expected_fluxes.true_continuum "
-            "did not contain requested class"
-        )
+            "did not contain requested class")
         self.check_error(in_file, expected_message)
 
         # now check arguments of the different Data child classes
@@ -441,8 +412,7 @@ class ConfigTest(AbstractTest):
         in_file = f"{prefix}_general_invalid_log.ini"
         expected_message = (
             "Variable 'log' in section [general] should not incude folders. "
-            "Found: log/my_log.log"
-        )
+            "Found: log/my_log.log")
         self.check_error(in_file, expected_message)
 
         # now check arguments of the general section
@@ -460,18 +430,15 @@ class ConfigTest(AbstractTest):
         expected_message = (
             "Unrecognised option in section [masks]. Found: 'name 0'. "
             "Accepted options are "
-            f"{accepted_masks_options}"
-        )
+            f"{accepted_masks_options}")
         self.check_error(in_file, expected_message)
 
         # check bad mask
         in_file = f"{prefix}_mask_bad_inheritance.ini"
-        expected_message = (
-            "Error loading class Correction. "
-            "This class should inherit from Mask but "
-            "it does not. Please check for correct inheritance "
-            "pattern."
-        )
+        expected_message = ("Error loading class Correction. "
+                            "This class should inherit from Mask but "
+                            "it does not. Please check for correct inheritance "
+                            "pattern.")
         self.check_error(in_file, expected_message)
 
         # check case num_masks is missing
@@ -481,9 +448,8 @@ class ConfigTest(AbstractTest):
 
         # check case num_masks is not positive
         in_file = f"{prefix}_masks_num_masks.ini"
-        expected_message = (
-            "In section [masks], variable 'num masks' " "must be a non-negative integer"
-        )
+        expected_message = ("In section [masks], variable 'num masks' "
+                            "must be a non-negative integer")
         self.check_error(in_file, expected_message)
 
         # check case missing type
@@ -493,53 +459,44 @@ class ConfigTest(AbstractTest):
 
         # check case type is not correct
         in_file = f"{prefix}_masks_bad_type.ini"
-        expected_message = (
-            "Unrecognised option in section [masks]. "
-            f"Found: 'type a'. Accepted options are "
-            f"{accepted_masks_options}"
-        )
+        expected_message = ("Unrecognised option in section [masks]. "
+                            f"Found: 'type a'. Accepted options are "
+                            f"{accepted_masks_options}")
         self.check_error(in_file, expected_message)
 
         # check case number in type is too large
         in_file = f"{prefix}_masks_bad_type2.ini"
         expected_message = (
             "In section [masks] found option 'type 3', but "
-            "'num masks' is '1' (keep in mind python zero indexing)"
-        )
+            "'num masks' is '1' (keep in mind python zero indexing)")
         self.check_error(in_file, expected_message)
 
         # check case module name is not correct
         in_file = f"{prefix}_masks_bad_module_name.ini"
-        expected_message = (
-            "Unrecognised option in section [masks]. "
-            f"Found: 'module name a'. Accepted options are "
-            f"{accepted_masks_options}"
-        )
+        expected_message = ("Unrecognised option in section [masks]. "
+                            f"Found: 'module name a'. Accepted options are "
+                            f"{accepted_masks_options}")
         self.check_error(in_file, expected_message)
 
         # check case number in module name is too large
         in_file = f"{prefix}_masks_bad_module_name2.ini"
         expected_message = (
             "In section [masks] found option 'module name 3', but "
-            "'num masks' is '1' (keep in mind python zero indexing)"
-        )
+            "'num masks' is '1' (keep in mind python zero indexing)")
         self.check_error(in_file, expected_message)
 
         # check case module does not exist
         in_file = f"{prefix}_masks_inexistent_module_name.ini"
         expected_message = (
             f"Error loading class Mask, "
-            f"module picca.delta_extraction.fake_mask could not be loaded"
-        )
+            f"module picca.delta_extraction.fake_mask could not be loaded")
         self.check_error(in_file, expected_message)
 
         # check case module does not contain the class
         in_file = f"{prefix}_masks_module_no_class.ini"
-        expected_message = (
-            "Error loading class BalMask, "
-            "module picca.delta_extraction.masks.dla_mask "
-            "did not contain requested class"
-        )
+        expected_message = ("Error loading class BalMask, "
+                            "module picca.delta_extraction.masks.dla_mask "
+                            "did not contain requested class")
         self.check_error(in_file, expected_message)
 
         # now check arguments of the different Correction child classes
@@ -573,8 +530,7 @@ class ConfigTest(AbstractTest):
         in_file = f"{prefix}_undefined_environment.ini"
         expected_message = (
             "In section [general], undefined environment variable UNDEFINED "
-            "was found"
-        )
+            "was found")
         self.check_error(in_file, expected_message)
 
 

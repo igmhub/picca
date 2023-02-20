@@ -54,31 +54,27 @@ class SdssForest(Forest):
         AstronomicalObjectError if there are missing variables
         """
         if kwargs.get("fiberid") is None:
-            raise AstronomicalObjectError(
-                "Error constructing SdssForest. " "Missing variable 'fiberid'"
-            )
+            raise AstronomicalObjectError("Error constructing SdssForest. "
+                                          "Missing variable 'fiberid'")
         self.fiberid = [kwargs.get("fiberid")]
         del kwargs["fiberid"]
 
         if kwargs.get("mjd") is None:
-            raise AstronomicalObjectError(
-                "Error constructing SdssForest. " "Missing variable 'mjd'"
-            )
+            raise AstronomicalObjectError("Error constructing SdssForest. "
+                                          "Missing variable 'mjd'")
         self.mjd = [kwargs.get("mjd")]
         del kwargs["mjd"]
 
         if kwargs.get("plate") is None:
-            raise AstronomicalObjectError(
-                "Error constructing SdssForest. " "Missing variable 'plate'"
-            )
+            raise AstronomicalObjectError("Error constructing SdssForest. "
+                                          "Missing variable 'plate'")
         self.plate = [kwargs.get("plate")]
         del kwargs["plate"]
 
         self.thingid = kwargs.get("thingid")
         if self.thingid is None:
-            raise AstronomicalObjectError(
-                "Error constructing SdssForest. " "Missing variable 'thingid'"
-            )
+            raise AstronomicalObjectError("Error constructing SdssForest. "
+                                          "Missing variable 'thingid'")
         del kwargs["thingid"]
 
         # call parent constructor
@@ -104,8 +100,7 @@ class SdssForest(Forest):
             raise AstronomicalObjectError(
                 "Error coadding SdssForest. Expected "
                 "SdssForest instance in other. Found: "
-                f"{type(other).__name__}"
-            )
+                f"{type(other).__name__}")
 
         self.fiberid += other.fiberid
         self.mjd += other.mjd

@@ -66,11 +66,13 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
     def _initialize_get_eta(self):
         """Initialiaze function get_eta"""
         # initialize eta factor
-        if self.eta_value.endswith(".fits") or self.eta_value.endswith(".fits.gz"):
+        if self.eta_value.endswith(".fits") or self.eta_value.endswith(
+                ".fits.gz"):
             hdu = fitsio.read(self.eta_value, ext="VAR_FUNC")
-            self.get_eta = interp1d(
-                hdu["loglam"], hdu["eta"], fill_value="extrapolate", kind="nearest"
-            )
+            self.get_eta = interp1d(hdu["loglam"],
+                                    hdu["eta"],
+                                    fill_value="extrapolate",
+                                    kind="nearest")
         else:
             eta = np.ones(self.num_bins_variance) * float(self.eta_value)
             self.get_eta = interp1d(
@@ -98,17 +100,14 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
         """
         self.eta_value = config.get("eta value")
         if self.eta_value is None:
-            raise ExpectedFluxError(
-                "Missing argument 'eta value' required " "by Dr16FixEtaExpectedFlux"
-            )
-        if not (
-            self.eta_value.endswith(".fits") or self.eta_value.endswith(".fits.gz")
-        ):
+            raise ExpectedFluxError("Missing argument 'eta value' required "
+                                    "by Dr16FixEtaExpectedFlux")
+        if not (self.eta_value.endswith(".fits") or
+                self.eta_value.endswith(".fits.gz")):
             try:
                 _ = float(self.eta_value)
             except ValueError as error:
                 raise ExpectedFluxError(
                     "Wrong argument 'eta value' passed to "
                     "Dr16FixEtaExpectedFlux. Expected a fits file or "
-                    f"a float. Found {self.eta_value}"
-                ) from error
+                    f"a float. Found {self.eta_value}") from error

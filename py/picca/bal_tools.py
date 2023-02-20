@@ -82,9 +82,8 @@ def add_bal_mask(bal_catalog, objectid, mode):
 
     light_speed = constants.SPEED_LIGHT
 
-    bal_mask = Table(
-        names=["log_wave_min", "log_wave_max", "frame"], dtype=["f4", "f4", "S2"]
-    )
+    bal_mask = Table(names=["log_wave_min", "log_wave_max", "frame"],
+                     dtype=["f4", "f4", "S2"])
     min_velocities = []  ##list of minimum velocities
     max_velocities = []  ##list of maximum velocities
 
@@ -107,8 +106,10 @@ def add_bal_mask(bal_catalog, objectid, mode):
     ##Calculate mask width for each velocity pair, for each emission line
     for vel in range(len(min_velocities)):
         for line in lines.values():
-            min_wavelength = np.log10(line * (1 - min_velocities[vel] / light_speed))
-            max_wavelength = np.log10(line * (1 - max_velocities[vel] / light_speed))
+            min_wavelength = np.log10(line *
+                                      (1 - min_velocities[vel] / light_speed))
+            max_wavelength = np.log10(line *
+                                      (1 - max_velocities[vel] / light_speed))
             # VMIN and VMAX were switched between the eBOSS and DESI BAL catalogs.
             if "desi" in mode:
                 bal_mask.add_row([max_wavelength, min_wavelength, "RF"])

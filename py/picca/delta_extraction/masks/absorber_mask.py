@@ -14,7 +14,9 @@ defaults = {
     "los_id name": "THING_ID",
 }
 
-accepted_options = ["absorber mask width", "filename", "keep pixels", "los_id name"]
+accepted_options = [
+    "absorber mask width", "filename", "keep pixels", "los_id name"
+]
 
 
 class AbsorberMask(Mask):
@@ -52,13 +54,15 @@ class AbsorberMask(Mask):
         # first load the absorbers catalogue
         filename = config.get("filename")
         if filename is None:
-            raise MaskError("Missing argument 'filename' required by " "AbsorbersMask")
+            raise MaskError("Missing argument 'filename' required by "
+                            "AbsorbersMask")
 
         self.logger.progress(f"Reading absorbers from: {filename}")
 
         los_id_name = config.get("los_id name")
         if los_id_name is None:
-            raise MaskError("Missing argument 'los_id name' required by AbsorberMask")
+            raise MaskError(
+                "Missing argument 'los_id name' required by AbsorberMask")
 
         columns_list = [los_id_name, "LAMBDA_ABS"]
         try:
@@ -67,34 +71,32 @@ class AbsorberMask(Mask):
         except OSError as error:
             raise MaskError(
                 "Error loading AbsorberMask. File "
-                f"{filename} does not have extension 'ABSORBERCAT'"
-            ) from error
+                f"{filename} does not have extension 'ABSORBERCAT'") from error
         except ValueError as error:
             aux = "', '".join(columns_list)
             raise MaskError(
                 f"Error loading AbsorberMask. File {filename} does not have "
-                f"fields '{aux}' in HDU 'ABSORBERCAT'"
-            ) from error
+                f"fields '{aux}' in HDU 'ABSORBERCAT'") from error
 
         # group absorbers on the same line of sight together
         self.los_ids = {}
         for los_id in np.unique(cat[los_id_name]):
             w = los_id == cat[los_id_name]
             self.los_ids[los_id] = list(cat[los_id_name][w])
-        num_absorbers = np.sum([len(los_id) for los_id in self.los_ids.values()])
+        num_absorbers = np.sum(
+            [len(los_id) for los_id in self.los_ids.values()])
 
         self.logger.progress(f" In catalog: {num_absorbers} absorbers")
-        self.logger.progress(
-            f" In catalog: {len(self.los_ids)} forests have " "absorbers\n"
-        )
+        self.logger.progress(f" In catalog: {len(self.los_ids)} forests have "
+                             "absorbers\n")
 
         # setup transmission limit
         # transmissions below this number are masked
         self.absorber_mask_width = config.getfloat("absorber mask width")
         if self.absorber_mask_width is None:
             raise MaskError(
-                "Missing argument 'absorber mask width' required by " "AbsorbersMask"
-            )
+                "Missing argument 'absorber mask width' required by "
+                "AbsorbersMask")
 
     def apply_mask(self, forest):
         """Applies the mask. The mask is done by removing the affected
@@ -114,10 +116,9 @@ class AbsorberMask(Mask):
             # find out which pixels to mask
             w = np.ones(forest.log_lambda.size, dtype=bool)
             for lambda_absorber in self.los_ids.get(forest.los_id):
-                w &= (
-                    np.fabs(1.0e4 * (forest.log_lambda - np.log10(lambda_absorber)))
-                    > self.absorber_mask_width
-                )
+                w &= (np.fabs(1.0e4 *
+                              (forest.log_lambda - np.log10(lambda_absorber))) >
+                      self.absorber_mask_width)
 
             # do the actual masking
             for param in Forest.mask_fields:

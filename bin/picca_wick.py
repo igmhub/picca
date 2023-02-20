@@ -40,14 +40,15 @@ def main(cmdargs):
     """Computes the wick covariance for the auto-correlation of forests"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=(
-            "Compute the wick covariance for the auto-correlation of " "forests"
-        ),
+        description=("Compute the wick covariance for the auto-correlation of "
+                     "forests"),
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     parser.add_argument(
         "--in-dir",
@@ -89,24 +90,26 @@ def main(cmdargs):
         help="Max r-transverse [h^-1 Mpc]",
     )
 
-    parser.add_argument(
-        "--np", type=int, default=50, required=False, help="Number of r-parallel bins"
-    )
+    parser.add_argument("--np",
+                        type=int,
+                        default=50,
+                        required=False,
+                        help="Number of r-parallel bins")
 
-    parser.add_argument(
-        "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
-    )
+    parser.add_argument("--nt",
+                        type=int,
+                        default=50,
+                        required=False,
+                        help="Number of r-transverse bins")
 
     parser.add_argument(
         "--z-cut-min",
         type=float,
         default=0.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift larger than "
-            "z-cut-min"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift larger than "
+              "z-cut-min"),
     )
 
     parser.add_argument(
@@ -114,11 +117,9 @@ def main(cmdargs):
         type=float,
         default=10.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift smaller than "
-            "z-cut-max"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift smaller than "
+              "z-cut-max"),
     )
 
     parser.add_argument(
@@ -126,10 +127,8 @@ def main(cmdargs):
         type=str,
         default="LYA",
         required=False,
-        help=(
-            "Name of the absorption in picca.constants defining the redshift "
-            "of the delta"
-        ),
+        help=("Name of the absorption in picca.constants defining the redshift "
+              "of the delta"),
     )
 
     parser.add_argument(
@@ -137,15 +136,15 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "Name of the absorption in picca.constants defining the redshift "
-            "of the 2nd delta"
-        ),
+        help=("Name of the absorption in picca.constants defining the redshift "
+              "of the 2nd delta"),
     )
 
-    parser.add_argument(
-        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
-    )
+    parser.add_argument("--z-ref",
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help="Reference redshift")
 
     parser.add_argument(
         "--z-evol",
@@ -214,9 +213,8 @@ def main(cmdargs):
         "--cf1d",
         type=str,
         required=True,
-        help=(
-            "1D auto-correlation of pixels from the same forest file: " "picca_cf1d.py"
-        ),
+        help=("1D auto-correlation of pixels from the same forest file: "
+              "picca_cf1d.py"),
     )
 
     parser.add_argument(
@@ -224,10 +222,8 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "1D auto-correlation of pixels from the same forest file of the "
-            "2nd delta field: picca_cf1d.py"
-        ),
+        help=("1D auto-correlation of pixels from the same forest file of the "
+              "2nd delta field: picca_cf1d.py"),
     )
 
     parser.add_argument(
@@ -235,7 +231,8 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=("3D auto-correlation of pixels from different forests: " "picca_cf.py"),
+        help=("3D auto-correlation of pixels from different forests: "
+              "picca_cf.py"),
     )
 
     parser.add_argument(
@@ -243,10 +240,8 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "3D auto-correlation of pixels from different forests for 2nd "
-            "catalog: picca_cf.py"
-        ),
+        help=("3D auto-correlation of pixels from different forests for 2nd "
+              "catalog: picca_cf.py"),
     )
 
     parser.add_argument(
@@ -254,20 +249,16 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "3D auto-correlation of pixels from different forests for cross "
-            "1st and 2nd catalog: picca_cf.py"
-        ),
+        help=("3D auto-correlation of pixels from different forests for cross "
+              "1st and 2nd catalog: picca_cf.py"),
     )
 
     parser.add_argument(
         "--unfold-cf",
         action="store_true",
         required=False,
-        help=(
-            "rp can be positive or negative depending on the relative "
-            "position between absorber1 and absorber2"
-        ),
+        help=("rp can be positive or negative depending on the relative "
+              "position between absorber1 and absorber2"),
     )
 
     parser.add_argument(
@@ -278,13 +269,17 @@ def main(cmdargs):
         help="Fraction of rejected pairs: -1=no rejection, 1=all rejection",
     )
 
-    parser.add_argument(
-        "--nside", type=int, default=16, required=False, help="Healpix nside"
-    )
+    parser.add_argument("--nside",
+                        type=int,
+                        default=16,
+                        required=False,
+                        help="Healpix nside")
 
-    parser.add_argument(
-        "--nproc", type=int, default=None, required=False, help="Number of processors"
-    )
+    parser.add_argument("--nproc",
+                        type=int,
+                        default=None,
+                        required=False,
+                        help="Number of processors")
 
     parser.add_argument(
         "--nspec",
@@ -331,9 +326,8 @@ def main(cmdargs):
 
     # load cosmology
     if (args.fid_Or != 0.0) or (args.fid_Ok != 0.0) or (args.fid_wl != -1.0):
-        userprint(
-            ("ERROR: Cosmology with other than Omega_m set are not yet " "implemented")
-        )
+        userprint(("ERROR: Cosmology with other than Omega_m set are not yet "
+                   "implemented"))
         sys.exit()
     cosmo = constants.Cosmo(
         Om=args.fid_Om,
@@ -359,15 +353,15 @@ def main(cmdargs):
         for delta in deltas:
             delta.fname = "D1"
             for item in [
-                "cont",
-                "delta",
-                "order",
-                "ivar",
-                "exposures_diff",
-                "mean_snr",
-                "mean_reso",
-                "mean_z",
-                "delta_log_lambda",
+                    "cont",
+                    "delta",
+                    "order",
+                    "ivar",
+                    "exposures_diff",
+                    "mean_snr",
+                    "mean_reso",
+                    "mean_z",
+                    "delta_log_lambda",
             ]:
                 setattr(delta, item, None)
     del z_max
@@ -388,7 +382,8 @@ def main(cmdargs):
         delta_log_lambda = header["DLL"]
         num_pairs_variance_1d = hdul[1]["nv1d"][:]
         variance_1d = hdul[1]["v1d"][:]
-        log_lambda = log_lambda_min + delta_log_lambda * np.arange(len(variance_1d))
+        log_lambda = log_lambda_min + delta_log_lambda * np.arange(
+            len(variance_1d))
         cf.get_variance_1d[fname] = interp1d(
             log_lambda[num_pairs_variance_1d > 0],
             variance_1d[num_pairs_variance_1d > 0],
@@ -459,15 +454,15 @@ def main(cmdargs):
             for delta in deltas:
                 delta.fname = "D2"
                 for item in [
-                    "cont",
-                    "delta",
-                    "order",
-                    "ivar",
-                    "exposures_diff",
-                    "mean_snr",
-                    "mean_reso",
-                    "mean_z",
-                    "delta_log_lambda",
+                        "cont",
+                        "delta",
+                        "order",
+                        "ivar",
+                        "exposures_diff",
+                        "mean_snr",
+                        "mean_reso",
+                        "mean_z",
+                        "delta_log_lambda",
                 ]:
                     setattr(delta, item, None)
         del z_max2
@@ -564,9 +559,21 @@ def main(cmdargs):
             "value": cf.z_cut_max,
             "comment": "Maximum redshift of pairs",
         },
-        {"name": "REJ", "value": cf.reject, "comment": "Rejection factor"},
-        {"name": "NPALL", "value": num_pairs, "comment": "Number of pairs"},
-        {"name": "NPUSED", "value": num_pairs_used, "comment": "Number of used pairs"},
+        {
+            "name": "REJ",
+            "value": cf.reject,
+            "comment": "Rejection factor"
+        },
+        {
+            "name": "NPALL",
+            "value": num_pairs,
+            "comment": "Number of pairs"
+        },
+        {
+            "name": "NPUSED",
+            "value": num_pairs_used,
+            "comment": "Number of used pairs"
+        },
         {
             "name": "OMEGAM",
             "value": args.fid_Om,
@@ -583,9 +590,12 @@ def main(cmdargs):
             "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            "name": "WL",
-            "value": args.fid_wl,
-            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+            "name":
+                "WL",
+            "value":
+                args.fid_wl,
+            "comment":
+                "Equation of state of dark energy of fiducial LambdaCDM cosmology",
         },
         {
             "name": "BLINDING",

@@ -60,9 +60,9 @@ class TestDelta(AbstractTest):
         z_qso = (3.6 - 2.0) * np.random.random_sample(nObj) + 2.0
 
         ### Save
-        out = fitsio.FITS(
-            self._branchFiles + "/Products/" + name + ".fits", "rw", clobber=True
-        )
+        out = fitsio.FITS(self._branchFiles + "/Products/" + name + ".fits",
+                          "rw",
+                          clobber=True)
         cols = [ra, dec, thid, plate, mjd, fiberid, z_qso]
         names = ["RA", "DEC", "THING_ID", "PLATE", "MJD", "FIBERID", "Z"]
         out.write(cols, names=names, extname="CAT")
@@ -115,20 +115,20 @@ class TestDelta(AbstractTest):
         for p in np.unique(pixs):
             ### Retrieve objects from catalog and produce fake spectra
             p_thid = thid[(pixs == p)]
-            p_fl = np.random.normal(
-                loc=1.0, scale=1.0, size=(log_lambda.size, p_thid.size)
-            )
-            p_iv = np.random.lognormal(
-                mean=0.1, sigma=0.1, size=(log_lambda.size, p_thid.size)
-            )
+            p_fl = np.random.normal(loc=1.0,
+                                    scale=1.0,
+                                    size=(log_lambda.size, p_thid.size))
+            p_iv = np.random.lognormal(mean=0.1,
+                                       sigma=0.1,
+                                       size=(log_lambda.size, p_thid.size))
             p_am = np.zeros((log_lambda.size, p_thid.size)).astype(int)
-            p_am[
-                np.random.random_sample(size=(log_lambda.size, p_thid.size)) > 0.90
-            ] = 1
+            p_am[np.random.random_sample(size=(log_lambda.size,
+                                               p_thid.size)) > 0.90] = 1
             p_om = np.zeros((log_lambda.size, p_thid.size)).astype(int)
 
             ### Save to file
-            p_path = self._branchFiles + "/Products/Spectra/pix_" + str(p) + ".fits"
+            p_path = self._branchFiles + "/Products/Spectra/pix_" + str(
+                p) + ".fits"
             out = fitsio.FITS(p_path, "rw", clobber=True)
             out.write(p_thid, header={}, extname="THING_ID_MAP")
             out.write(log_lambda, header={}, extname="LOGLAM_MAP")
@@ -151,27 +151,24 @@ class TestDelta(AbstractTest):
         ra = 10.0 * np.random.random_sample(nObj)
         dec = 10.0 * np.random.random_sample(nObj)
         tile = np.random.randint(
-            100, high=110, size=nObj, dtype=np.int32
-        )  # restricted to not get too many files
+            100, high=110, size=nObj,
+            dtype=np.int32)  # restricted to not get too many files
         petal_loc = np.random.randint(0, high=10, size=nObj, dtype=np.int16)
-        night = np.array(
-            [
-                np.int32(f"{yyyy:04d}{mm:02d}{dd:02d}")
-                for dd, mm, yyyy in zip(
-                    np.random.randint(1, high=3, size=nObj),
-                    np.random.randint(1, high=2, size=nObj),
-                    np.random.randint(2019, high=2020, size=nObj),
-                )
-            ]
-        )  # restricted to not get too many files
+        night = np.array([
+            np.int32(f"{yyyy:04d}{mm:02d}{dd:02d}") for dd, mm, yyyy in zip(
+                np.random.randint(1, high=3, size=nObj),
+                np.random.randint(1, high=2, size=nObj),
+                np.random.randint(2019, high=2020, size=nObj),
+            )
+        ])  # restricted to not get too many files
         fiberid = np.random.randint(1, high=5001, size=nObj, dtype=np.int32)
         thid = np.arange(2**60, 2**60 + nObj)
         z_qso = (3.6 - 2.0) * np.random.random_sample(nObj) + 2.0
 
         ### Save
-        out = fitsio.FITS(
-            self._branchFiles + "/Products/" + name + ".fits", "rw", clobber=True
-        )
+        out = fitsio.FITS(self._branchFiles + "/Products/" + name + ".fits",
+                          "rw",
+                          clobber=True)
         cols = [ra, dec, thid, tile, petal_loc, night, fiberid, z_qso]
         names = [
             "TARGET_RA",
@@ -209,7 +206,8 @@ class TestDelta(AbstractTest):
         night = vac[1]["NIGHT"][:]
         fiberid = vac[1]["FIBER"][:]
 
-        tile_night_petal_combined = np.unique([*zip(tile, night, petal_loc)], axis=0)
+        tile_night_petal_combined = np.unique([*zip(tile, night, petal_loc)],
+                                              axis=0)
         vac.close()
 
         cols = [thid, ra, dec, night, fiberid, tile, petal_loc]
@@ -269,20 +267,22 @@ class TestDelta(AbstractTest):
             p_m = {}
             p_res = {}
             for key, lam_key in lam.items():
-                p_fl[key] = np.random.normal(
-                    loc=1.0, scale=1.0, size=(p_thid.size, lam_key.size)
-                )
-                p_iv[key] = np.random.lognormal(
-                    mean=0.1, sigma=0.1, size=(p_thid.size, lam_key.size)
-                )
+                p_fl[key] = np.random.normal(loc=1.0,
+                                             scale=1.0,
+                                             size=(p_thid.size, lam_key.size))
+                p_iv[key] = np.random.lognormal(mean=0.1,
+                                                sigma=0.1,
+                                                size=(p_thid.size,
+                                                      lam_key.size))
                 p_m[key] = np.zeros((p_thid.size, lam_key.size)).astype(int)
-                p_m[key][
-                    np.random.random_sample(size=(p_thid.size, lam_key.size)) > 0.90
-                ] = 1
+                p_m[key][np.random.random_sample(
+                    size=(p_thid.size, lam_key.size)) > 0.90] = 1
                 tmp = np.exp(
-                    -(((np.arange(11) - 5) / 0.6382) ** 2)
+                    -(((np.arange(11) - 5) / 0.6382)**2)
                 )  # to fake resolution from a gaussian, this assumes R=3000 at minimum wavelength
-                tmp = np.repeat(tmp[np.newaxis, :, np.newaxis], p_thid.size, axis=0)
+                tmp = np.repeat(tmp[np.newaxis, :, np.newaxis],
+                                p_thid.size,
+                                axis=0)
                 p_res[key] = np.repeat(tmp, lam_key.size, axis=2)
 
             p_path = self._branchFiles + f"/Products/Spectra_MiniSV/{t}/{n}/"
@@ -314,14 +314,10 @@ class TestDelta(AbstractTest):
         cmd += " --in-dir " + self._branchFiles + "/Products/Spectra/"
         cmd += " --drq " + self._branchFiles + "/Products/cat.fits"
         cmd += " --out-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
-        cmd += (
-            " --iter-out-prefix "
-            + self._branchFiles
-            + "/Products/Delta_LYA/Log/delta_attributes"
-        )
-        cmd += (
-            " --metadata " + self._branchFiles + "/Products/Delta_LYA/Log/metadata.fits"
-        )
+        cmd += (" --iter-out-prefix " + self._branchFiles +
+                "/Products/Delta_LYA/Log/delta_attributes")
+        cmd += (" --metadata " + self._branchFiles +
+                "/Products/Delta_LYA/Log/metadata.fits")
         cmd += " --log " + self._branchFiles + "/Products/Delta_LYA/Log/input.log"
         cmd += " --nproc 1"
         picca_deltas.main(cmd.split()[1:])
@@ -329,9 +325,8 @@ class TestDelta(AbstractTest):
         ### Test
         if self._test:
             path1 = self._masterFiles + "/test_delta/delta_attributes.fits.gz"
-            path2 = (
-                self._branchFiles + "/Products/Delta_LYA/Log/delta_attributes.fits.gz"
-            )
+            path2 = (self._branchFiles +
+                     "/Products/Delta_LYA/Log/delta_attributes.fits.gz")
             self.compare_fits(path1, path2, "picca_deltas.py")
 
             path1 = self._masterFiles + "/test_delta/metadata.fits"
@@ -339,7 +334,10 @@ class TestDelta(AbstractTest):
             # TODO: note that for the moment we are more tolerant towards absolute changes in the metadata
             #      else p1 values would cause tests to break all the time, might be worth looking into the
             #      underlying issue at some later time
-            self.compare_fits(path1, path2, "picca_deltas.py", rel_tolerance=5e-4)
+            self.compare_fits(path1,
+                              path2,
+                              "picca_deltas.py",
+                              rel_tolerance=5e-4)
         return
 
     def send_delta_Pk1D_minisv(self):
@@ -358,19 +356,12 @@ class TestDelta(AbstractTest):
         cmd += " --in-dir " + self._branchFiles + "/Products/Spectra_MiniSV/"
         cmd += " --drq " + self._branchFiles + "/Products/cat_minisv.fits"
         cmd += " --out-dir " + self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Delta/"
-        cmd += (
-            " --iter-out-prefix "
-            + self._branchFiles
-            + "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes"
-        )
-        cmd += (
-            " --log " + self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Log/input.log"
-        )
-        cmd += (
-            " --metadata "
-            + self._branchFiles
-            + "/Products/Delta_Pk1D_MiniSV/Log/metadata.fits"
-        )
+        cmd += (" --iter-out-prefix " + self._branchFiles +
+                "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes")
+        cmd += (" --log " + self._branchFiles +
+                "/Products/Delta_Pk1D_MiniSV/Log/input.log")
+        cmd += (" --metadata " + self._branchFiles +
+                "/Products/Delta_Pk1D_MiniSV/Log/metadata.fits")
         cmd += " --delta-format Pk1D --mode desiminisv --order 0 --use-constant-weight"
         cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
         cmd += " --nproc 1"
@@ -382,13 +373,10 @@ class TestDelta(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = (
-                self._masterFiles + "/test_delta/delta_attributes_Pk1D_MiniSV.fits.gz"
-            )
-            path2 = (
-                self._branchFiles
-                + "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes.fits.gz"
-            )
+            path1 = (self._masterFiles +
+                     "/test_delta/delta_attributes_Pk1D_MiniSV.fits.gz")
+            path2 = (self._branchFiles +
+                     "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes.fits.gz")
             self.compare_fits(path1, path2, "picca_deltas.py")
 
             path1 = self._masterFiles + "/test_delta/metadata_Pk1D_MiniSV.fits"
@@ -397,7 +385,7 @@ class TestDelta(AbstractTest):
 
             # this checks if any of the output delta files changed
             for fname in glob.glob(
-                f"{self._branchFiles}/Products/Delta_Pk1D_MiniSV/Delta/delta-*.fits.gz"
+                    f"{self._branchFiles}/Products/Delta_Pk1D_MiniSV/Delta/delta-*.fits.gz"
             ):
                 path2 = fname
                 path1 = f"{self._masterFiles}/test_delta/Delta_Pk1D_MiniSV/{os.path.basename(fname)}"
@@ -440,17 +428,11 @@ class TestDelta(AbstractTest):
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Spectra_Pk1D/"
         cmd += " --drq " + self._masterFiles + "/test_delta/DRQ_Pk1D.fits"
         cmd += " --out-dir " + self._branchFiles + "/Products/Delta_Pk1D/Delta/"
-        cmd += (
-            " --iter-out-prefix "
-            + self._branchFiles
-            + "/Products/Delta_Pk1D/Log/delta_attributes"
-        )
+        cmd += (" --iter-out-prefix " + self._branchFiles +
+                "/Products/Delta_Pk1D/Log/delta_attributes")
         cmd += " --log " + self._branchFiles + "/Products/Delta_Pk1D/Log/input.log"
-        cmd += (
-            " --metadata "
-            + self._branchFiles
-            + "/Products/Delta_Pk1D/Log/metadata.fits"
-        )
+        cmd += (" --metadata " + self._branchFiles +
+                "/Products/Delta_Pk1D/Log/metadata.fits")
         cmd += " --delta-format Pk1D --mode spec --order 0 --use-constant-weight"
         cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
         cmd += " --nproc 1"
@@ -462,9 +444,8 @@ class TestDelta(AbstractTest):
         ### Test
         if self._test:
             path1 = self._masterFiles + "/test_delta/delta_attributes_Pk1D.fits.gz"
-            path2 = (
-                self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
-            )
+            path2 = (self._branchFiles +
+                     "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz")
             self.compare_fits(path1, path2, "picca_deltas.py")
 
             path1 = self._masterFiles + "/test_delta/metadata_Pk1D.fits"

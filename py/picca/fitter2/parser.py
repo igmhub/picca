@@ -40,7 +40,8 @@ def parse_chi2(filename):
     dic_init["fiducial"]["pksb"] = h[1]["PKSB"][:]
     h.close()
     try:  ## For Python2.7 compatibility
-        dic_init["fiducial"]["full-shape"] = int(cp["fiducial"]["full-shape"]) == 1
+        dic_init["fiducial"]["full-shape"] = int(
+            cp["fiducial"]["full-shape"]) == 1
     except (KeyError, AttributeError):
         dic_init["fiducial"]["full-shape"] = False
     if dic_init["fiducial"]["full-shape"]:
@@ -56,7 +57,8 @@ def parse_chi2(filename):
         for d in cp.get("data sets", "ini files").split()
     ]
 
-    utils.cosmo_fit_func = getattr(utils, cp.get("cosmo-fit type", "cosmo fit func"))
+    utils.cosmo_fit_func = getattr(utils,
+                                   cp.get("cosmo-fit type", "cosmo fit func"))
 
     dic_init["outfile"] = cp.get("output", "filename")
 
@@ -80,17 +82,16 @@ def parse_chi2(filename):
                 value = value.split()
                 dic_init["fast mc"][item] = np.array(value).astype(float)
                 if not len(dic_init["fast mc"][item]) == len(
-                    dic_init["data sets"]["data"]
-                ):
+                        dic_init["data sets"]["data"]):
                     raise AssertionError()
             else:
                 value = value.split()
-                dic_init["fast mc"]["fiducial"]["values"][item] = float(value[0])
+                dic_init["fast mc"]["fiducial"]["values"][item] = float(
+                    value[0])
                 if not value[1] in ["fixed", "free"]:
                     raise AssertionError()
                 dic_init["fast mc"]["fiducial"]["fix"]["fix_" + item] = (
-                    value[1] == "fixed"
-                )
+                    value[1] == "fixed")
 
     if cp.has_section("minos"):
         dic_init["minos"] = {}
@@ -174,9 +175,11 @@ def parse_data(filename, zeff, fiducial):
         for item, value in cp.items("metals"):
             dic_init["metals"][item] = value
         if "in tracer1" in dic_init["metals"]:
-            dic_init["metals"]["in tracer1"] = dic_init["metals"]["in tracer1"].split()
+            dic_init["metals"]["in tracer1"] = dic_init["metals"][
+                "in tracer1"].split()
         if "in tracer2" in dic_init["metals"]:
-            dic_init["metals"]["in tracer2"] = dic_init["metals"]["in tracer2"].split()
+            dic_init["metals"]["in tracer2"] = dic_init["metals"][
+                "in tracer2"].split()
 
     if "broadband" in cp.sections():
         dic_init["broadband"] = []
@@ -211,7 +214,8 @@ def parse_data(filename, zeff, fiducial):
     if "priors" in cp.sections():
         for item, value in cp.items("priors"):
             if item in priors.prior_dic.keys():
-                userprint("WARNING: prior on {} will be overwritten".format(item))
+                userprint(
+                    "WARNING: prior on {} will be overwritten".format(item))
             value = value.split()
             priors.prior_dic[item] = partial(
                 getattr(priors, value[0]),
@@ -232,9 +236,10 @@ def parse_chi2scan(items):
         dic["min"] = float(value[0])
         dic["max"] = float(value[1])
         dic["nb_bin"] = int(value[2])
-        dic["grid"] = np.linspace(
-            dic["min"], dic["max"], num=dic["nb_bin"], endpoint=True
-        )
+        dic["grid"] = np.linspace(dic["min"],
+                                  dic["max"],
+                                  num=dic["nb_bin"],
+                                  endpoint=True)
         dic_init[item] = dic
 
     return dic_init

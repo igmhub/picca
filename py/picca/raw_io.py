@@ -98,8 +98,7 @@ def read_transmission_file(
         trans = hdul[tracer].read()
     else:
         raise ValueError(
-            f"Tracer {tracer} could not be found in the transmission files."
-        )
+            f"Tracer {tracer} could not be found in the transmission files.")
 
     num_obj = z.size
     healpix = filename.split("-")[-1].split(".")[0]
@@ -114,12 +113,10 @@ def read_transmission_file(
     lambda_obs_frame = aux_lambda * np.ones(num_obj)[:, None]
     lambda_rest_frame = aux_lambda / (1.0 + z[:, None])
     valid_pixels = np.zeros_like(trans).astype(int)
-    valid_pixels[
-        (lambda_obs_frame >= lambda_min)
-        & (lambda_obs_frame < lambda_max)
-        & (lambda_rest_frame > lambda_min_rest_frame)
-        & (lambda_rest_frame < lambda_max_rest_frame)
-    ] = 1
+    valid_pixels[(lambda_obs_frame >= lambda_min) &
+                 (lambda_obs_frame < lambda_max) &
+                 (lambda_rest_frame > lambda_min_rest_frame) &
+                 (lambda_rest_frame < lambda_max_rest_frame)] = 1
     num_pixels = np.sum(valid_pixels, axis=1)
     w = num_pixels >= 50
     w &= np.in1d(thingid, objs_thingid)
@@ -178,8 +175,7 @@ def read_transmission_file(
                 None,
                 None,
                 None,
-            )
-        )
+            ))
 
     return deltas, stack_flux, stack_weight
 
@@ -229,7 +225,7 @@ def write_delta_from_transmission(
     for delta in deltas:
         lambda_array = delta.log_lambda
         if lin_spaced:
-            lambda_array = 10 ** (lambda_array)
+            lambda_array = 10**(lambda_array)
 
         norm_lambda = (lambda_array - x_min) / delta_x + 0.5
         bins = np.floor(np.around(norm_lambda, decimals=3)).astype(int)
@@ -238,7 +234,7 @@ def write_delta_from_transmission(
         delta.delta = delta.delta / mean_flux[bins] - 1.0
 
         if use_old_weights:
-            delta.weights *= mean_flux[bins] ** 2
+            delta.weights *= mean_flux[bins]**2
         else:
             assert sigma_lss_sq is not None
             delta.weights = 1 / sigma_lss_sq[bins]
@@ -261,7 +257,10 @@ def write_delta_from_transmission(
             np.ones(delta.log_lambda.size),
         ]
         names = ["LOGLAM", "DELTA", "WEIGHT", "CONT"]
-        results.write(cols, names=names, header=header, extname=str(delta.thingid))
+        results.write(cols,
+                      names=names,
+                      header=header,
+                      extname=str(delta.thingid))
     results.close()
 
     return
@@ -367,19 +366,15 @@ def convert_transmission_to_deltas(
     userprint("INFO: Found {} quasars".format(objs_ra.size))
 
     # Load list of transmission files
-    if (in_dir is None and in_filenames is None) or (
-        in_dir is not None and in_filenames is not None
-    ):
-        userprint(
-            (
-                "ERROR: No transmisson input files or both 'in_dir' and "
-                "'in_filenames' given"
-            )
-        )
+    if (in_dir is None and in_filenames is None) or (in_dir is not None and
+                                                     in_filenames is not None):
+        userprint(("ERROR: No transmisson input files or both 'in_dir' and "
+                   "'in_filenames' given"))
         sys.exit()
     elif in_dir is not None:
         # ohio-p1d transmissions are named lya-transmissions*
-        files = np.array(sorted(glob.glob(in_dir + "/*/*/*transmission*.fits*")))
+        files = np.array(sorted(glob.glob(in_dir +
+                                          "/*/*/*transmission*.fits*")))
 
         if in_nside is None:
             hdul = fitsio.FITS(files[0])
@@ -387,9 +382,10 @@ def convert_transmission_to_deltas(
             is_nested = hdul["METADATA"].read_header()["HPXNEST"]
             hdul.close()
 
-        in_healpixs = healpy.ang2pix(
-            in_nside, np.pi / 2.0 - objs_dec, objs_ra, nest=is_nested
-        )
+        in_healpixs = healpy.ang2pix(in_nside,
+                                     np.pi / 2.0 - objs_dec,
+                                     objs_ra,
+                                     nest=is_nested)
         if files[0].endswith(".gz"):
             end_of_file = ".gz"
         else:
@@ -413,22 +409,19 @@ def convert_transmission_to_deltas(
     num_bins = int((x_max - x_min) / delta_x) + 1
 
     # Read the transmission files in parallel
-    arguments = [
-        (
-            f,
-            num_bins,
-            objs_thingid,
-            tracer,
-            lambda_min,
-            lambda_max,
-            lambda_min_rest_frame,
-            lambda_max_rest_frame,
-            delta_log_lambda,
-            delta_lambda,
-            lin_spaced,
-        )
-        for f in files
-    ]
+    arguments = [(
+        f,
+        num_bins,
+        objs_thingid,
+        tracer,
+        lambda_min,
+        lambda_max,
+        lambda_min_rest_frame,
+        lambda_max_rest_frame,
+        delta_log_lambda,
+        delta_lambda,
+        lin_spaced,
+    ) for f in files]
 
     userprint("Reading transmission files...")
     with Pool(processes=nproc) as pool:
@@ -468,8 +461,7 @@ def convert_transmission_to_deltas(
     rebin_lambda = x_min + np.arange(num_bins) * delta_x
     mask = (mean_flux < 1) & (mean_flux > 0)
     mean_flux_spline = scipy.interpolate.UnivariateSpline(
-        rebin_lambda[mask][10:-10], mean_flux[mask][10:-10], k=5
-    )
+        rebin_lambda[mask][10:-10], mean_flux[mask][10:-10], k=5)
     mean_flux_from_spline = mean_flux_spline(rebin_lambda)
 
     # set mapping between input healpix and output healpix
@@ -478,20 +470,17 @@ def convert_transmission_to_deltas(
     # The first case doesn't make sense.
     # Why even convert from nested to ring at all?
     if is_nested is None and out_healpix_order is not None:
-        raise ValueError(
-            "Input HEALPix scheme not known, cannot"
-            "convert to scheme {}".format(out_healpix_order)
-        )
+        raise ValueError("Input HEALPix scheme not known, cannot"
+                         "convert to scheme {}".format(out_healpix_order))
     elif is_nested and out_healpix_order.lower() == "ring":
         out_healpix_method = lambda in_nside, healpix: healpy.nest2ring(
-            int(in_nside), int(healpix)
-        )
+            int(in_nside), int(healpix))
     elif not is_nested and out_healpix_order.lower() == "nest":
         out_healpix_method = lambda in_nside, healpix: healpy.ring2nest(
-            int(in_nside), int(healpix)
-        )
+            int(in_nside), int(healpix))
     else:
-        raise ValueError("HEALPix scheme {} not recognised".format(out_healpix_order))
+        raise ValueError(
+            "HEALPix scheme {} not recognised".format(out_healpix_order))
 
     #  save results
     out_filenames = {}
@@ -501,7 +490,8 @@ def convert_transmission_to_deltas(
         print(
             f"Input nested? {is_nested} // in_healpix={healpix} // out_healpix={out_healpix}"
         )
-        out_filenames[healpix] = out_dir + "/delta-{}".format(out_healpix) + ".fits.gz"
+        out_filenames[healpix] = out_dir + "/delta-{}".format(
+            out_healpix) + ".fits.gz"
 
     # Compute variance
     stack_variance = np.zeros(len(mean_flux))
@@ -510,12 +500,12 @@ def convert_transmission_to_deltas(
         for delta in hpix_deltas:
             lambda_array = delta.log_lambda
             if lin_spaced:
-                lambda_array = 10 ** (lambda_array)
+                lambda_array = 10**(lambda_array)
 
             norm_lambda = (lambda_array - x_min) / delta_x + 0.5
             bins = np.floor(np.around(norm_lambda, decimals=3)).astype(int)
 
-            stack_variance[bins] += (delta.delta - mean_flux[bins]) ** 2
+            stack_variance[bins] += (delta.delta - mean_flux[bins])**2
             var_weights[bins] += np.ones(len(bins))
 
     w = var_weights > 0.0
@@ -524,40 +514,33 @@ def convert_transmission_to_deltas(
 
     mask = flux_variance > 0
     flux_variance_spline = scipy.interpolate.UnivariateSpline(
-        rebin_lambda[mask][10:-10], flux_variance[mask][10:-10], k=5
-    )
+        rebin_lambda[mask][10:-10], flux_variance[mask][10:-10], k=5)
     flux_variance_from_spline = flux_variance_spline(rebin_lambda)
 
     if use_splines:
-        arguments = [
-            (
-                deltas[hpix],
-                mean_flux_from_spline,
-                flux_variance_from_spline,
-                hpix,
-                out_filenames[hpix],
-                x_min,
-                delta_x,
-                use_old_weights,
-                lin_spaced,
-            )
-            for hpix in deltas.keys()
-        ]
+        arguments = [(
+            deltas[hpix],
+            mean_flux_from_spline,
+            flux_variance_from_spline,
+            hpix,
+            out_filenames[hpix],
+            x_min,
+            delta_x,
+            use_old_weights,
+            lin_spaced,
+        ) for hpix in deltas.keys()]
     else:
-        arguments = [
-            (
-                deltas[hpix],
-                mean_flux,
-                flux_variance,
-                hpix,
-                out_filenames[hpix],
-                x_min,
-                delta_x,
-                use_old_weights,
-                lin_spaced,
-            )
-            for hpix in deltas.keys()
-        ]
+        arguments = [(
+            deltas[hpix],
+            mean_flux,
+            flux_variance,
+            hpix,
+            out_filenames[hpix],
+            x_min,
+            delta_x,
+            use_old_weights,
+            lin_spaced,
+        ) for hpix in deltas.keys()]
 
     userprint("Writing deltas...")
     with Pool(processes=nproc) as pool:

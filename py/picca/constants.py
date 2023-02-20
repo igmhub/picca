@@ -188,23 +188,21 @@ class Cosmo(object):
         if blinding == "none":
             userprint("ATTENTION: Analysis is not blinded!")
         else:
-            userprint(f"ATTENTION: Analysis is blinded with strategy {blinding}")
+            userprint(
+                f"ATTENTION: Analysis is blinded with strategy {blinding}")
 
         if blinding not in ["strategyB", "strategyBC"]:
             userprint(f"Om={Om}, Or={Or}, wl={wl}, H0={H0}")
         else:
-            userprint(
-                "The specified cosmology is "
-                f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}"
-            )
+            userprint("The specified cosmology is "
+                      f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
             # blind test small
             filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
             # blind test large
             # filename = "DR16_blind_test_small/DR16_blind_test_large.fits"
             # load Om
-            filename = resource_filename("picca", "fitter2") + "/models/{}".format(
-                filename
-            )
+            filename = resource_filename(
+                "picca", "fitter2") + "/models/{}".format(filename)
             hdu = fitsio.FITS(filename)
             Om = hdu[1].read_header()["OM"]
             Or = hdu[1].read_header()["OR"]
@@ -219,22 +217,15 @@ class Cosmo(object):
         z_max = 10.0
         delta_z = z_max / num_bins
         z = np.arange(num_bins, dtype=float) * delta_z
-        hubble = H0 * np.sqrt(
-            Ol * (1.0 + z) ** (3.0 * (1.0 + wl))
-            + Ok * (1.0 + z) ** 2
-            + Om * (1.0 + z) ** 3
-            + Or * (1.0 + z) ** 4
-        )
+        hubble = H0 * np.sqrt(Ol * (1.0 + z)**(3.0 * (1.0 + wl)) + Ok *
+                              (1.0 + z)**2 + Om * (1.0 + z)**3 + Or *
+                              (1.0 + z)**4)
 
         r_comov = np.zeros(num_bins)
         for index in range(1, num_bins):
-            r_comov[index] = (
-                SPEED_LIGHT
-                * (1.0 / hubble[index - 1] + 1.0 / hubble[index])
-                / 2.0
-                * delta_z
-                + r_comov[index - 1]
-            )
+            r_comov[index] = (SPEED_LIGHT *
+                              (1.0 / hubble[index - 1] + 1.0 / hubble[index]) /
+                              2.0 * delta_z + r_comov[index - 1])
 
         self.get_r_comov = interpolate.interp1d(z, r_comov)
 
@@ -242,13 +233,11 @@ class Cosmo(object):
         if Ok == 0.0:
             dist_m = r_comov
         elif Ok < 0.0:
-            dist_m = np.sin(H0 * np.sqrt(-Ok) / SPEED_LIGHT * r_comov) / (
-                H0 * np.sqrt(-Ok) / SPEED_LIGHT
-            )
+            dist_m = np.sin(H0 * np.sqrt(-Ok) / SPEED_LIGHT *
+                            r_comov) / (H0 * np.sqrt(-Ok) / SPEED_LIGHT)
         elif Ok > 0.0:
-            dist_m = np.sinh(H0 * np.sqrt(Ok) / SPEED_LIGHT * r_comov) / (
-                H0 * np.sqrt(Ok) / SPEED_LIGHT
-            )
+            dist_m = np.sinh(H0 * np.sqrt(Ok) / SPEED_LIGHT *
+                             r_comov) / (H0 * np.sqrt(Ok) / SPEED_LIGHT)
 
         self.get_hubble = interpolate.interp1d(z, hubble)
         self.distance_to_redshift = interpolate.interp1d(r_comov, z)
@@ -258,9 +247,8 @@ class Cosmo(object):
         # D_M
         self.get_dist_m = interpolate.interp1d(z, dist_m)
         # D_V
-        dist_v = np.power(
-            z * self.get_dist_m(z) ** 2 * self.get_dist_hubble(z), 1.0 / 3.0
-        )
+        dist_v = np.power(z * self.get_dist_m(z)**2 * self.get_dist_hubble(z),
+                          1.0 / 3.0)
         self.get_dist_v = interpolate.interp1d(z, dist_v)
 
 

@@ -15,30 +15,24 @@ from picca.delta_extraction.data import defaults as defaults_data
 from picca.delta_extraction.data import accepted_analysis_type, accepted_save_format
 from picca.delta_extraction.data_catalogues.desi_data import DesiData
 from picca.delta_extraction.data_catalogues.desi_data import (
-    defaults as defaults_desi_data,
-)
+    defaults as defaults_desi_data,)
 from picca.delta_extraction.data_catalogues.desi_data import (
-    accepted_options as accepted_options_desi_data,
-)
+    accepted_options as accepted_options_desi_data,)
 from picca.delta_extraction.data_catalogues.desi_healpix import (
     DesiHealpix,
     DesiHealpixFileHandler,
 )
 from picca.delta_extraction.data_catalogues.desi_healpix import (
-    defaults as defaults_desi_healpix,
-)
+    defaults as defaults_desi_healpix,)
 from picca.delta_extraction.data_catalogues.desi_tile import DesiTile
 from picca.delta_extraction.data_catalogues.desi_tile import (
-    defaults as defaults_desi_tile,
-)
+    defaults as defaults_desi_tile,)
 from picca.delta_extraction.data_catalogues.desisim_mocks import DesisimMocks
 from picca.delta_extraction.data_catalogues.desisim_mocks import (
-    defaults as defaults_desisim_mocks,
-)
+    defaults as defaults_desisim_mocks,)
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
 from picca.delta_extraction.data_catalogues.sdss_data import (
-    defaults as defaults_sdss_data,
-)
+    defaults as defaults_sdss_data,)
 from picca.delta_extraction.errors import DataError, QuasarCatalogueError
 from picca.delta_extraction.utils import ABSORBER_IGM
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
@@ -68,9 +62,12 @@ class DataTest(AbstractTest):
     test_sdss_data_spplate
     """
 
-    def check_read_file_error(
-        self, data, catalogue, filename, expected_message, warnings=False
-    ):
+    def check_read_file_error(self,
+                              data,
+                              catalogue,
+                              filename,
+                              expected_message,
+                              warnings=False):
         """Check the warning/error message when running data.read_file()
 
         Arguments
@@ -93,14 +90,16 @@ class DataTest(AbstractTest):
         if warnings:
             setup_test_logger("picca.delta_extraction.data.Data", DataError)
         with self.assertRaises(DataError) as context_manager:
-            reader = DesiHealpixFileHandler(
-                data.analysis_type, data.use_non_coadded_spectra, data.logger
-            )
+            reader = DesiHealpixFileHandler(data.analysis_type,
+                                            data.use_non_coadded_spectra,
+                                            data.logger)
 
             reader((filename, catalogue))
         self.compare_error_message(context_manager, expected_message)
         if warnings:
-            setup_test_logger("picca.delta_extraction.data.Data", DataError, reset=True)
+            setup_test_logger("picca.delta_extraction.data.Data",
+                              DataError,
+                              reset=True)
 
     def test_data(self):
         """Test Abstract class Data
@@ -108,18 +107,16 @@ class DataTest(AbstractTest):
         Load a Data instace.
         """
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "out dir": f"{THIS_DIR}/results/",
-                    "rejection log file": "rejection_log.fits.gz",
-                    "wave solution": "log",
-                    "delta log lambda": 3e-4,
-                    "input directory": f"{THIS_DIR}/data/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "out dir": f"{THIS_DIR}/results/",
+                "rejection log file": "rejection_log.fits.gz",
+                "wave solution": "log",
+                "delta log lambda": 3e-4,
+                "input directory": f"{THIS_DIR}/data/",
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_data.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -130,19 +127,17 @@ class DataTest(AbstractTest):
         self.assertTrue(data.min_num_pix == 50)
 
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "minimum number pixels in forest": 40,
-                    "out dir": f"{THIS_DIR}/results/",
-                    "rejection log file": "rejection_log.fits.gz",
-                    "wave solution": "log",
-                    "delta log lambda": 3e-4,
-                    "input directory": f"{THIS_DIR}/data/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "minimum number pixels in forest": 40,
+                "out dir": f"{THIS_DIR}/results/",
+                "rejection log file": "rejection_log.fits.gz",
+                "wave solution": "log",
+                "delta log lambda": 3e-4,
+                "input directory": f"{THIS_DIR}/data/",
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_data.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -164,51 +159,30 @@ class DataTest(AbstractTest):
 
         # create a Data instance with invalid wave_solution
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "wrong",
-                }
-            }
-        )
+        config.read_dict({"data": {"wave solution": "wrong",}})
         expected_message = (
             "Unrecognised value for 'wave solution'. Expected either 'lin' or "
-            "'log'. Found 'wrong'."
-        )
+            "'log'. Found 'wrong'.")
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Data instance with missing delta_log_lambda
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "log",
-                }
-            }
-        )
+        config.read_dict({"data": {"wave solution": "log",}})
         expected_message = (
             "Missing argument 'delta log lambda' required by Data when "
-            "'wave solution' is set to 'log'"
-        )
+            "'wave solution' is set to 'log'")
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Data instance with missing delta_lambda
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                }
-            }
-        )
+        config.read_dict({"data": {"wave solution": "lin",}})
         expected_message = (
             "Missing argument 'delta lambda' required by Data when "
-            "'wave solution' is set to 'lin'"
-        )
+            "'wave solution' is set to 'lin'")
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
@@ -216,13 +190,10 @@ class DataTest(AbstractTest):
         # create a Data instance with missing lambda_max
         config = ConfigParser()
         config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                }
-            }
-        )
+            {"data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+            }})
         expected_message = "Missing argument 'lambda max' required by Data"
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
@@ -230,15 +201,13 @@ class DataTest(AbstractTest):
 
         # create a Data instance with missing lambda_max_rest_frame
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
             }
-        )
+        })
         expected_message = "Missing argument 'lambda max rest frame' required by Data"
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
@@ -246,16 +215,14 @@ class DataTest(AbstractTest):
 
         # create a Data instance with missing lambda_min
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
             }
-        )
+        })
         expected_message = "Missing argument 'lambda min' required by Data"
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
@@ -263,17 +230,15 @@ class DataTest(AbstractTest):
 
         # create a Data instance with missing lambda_min_rest_frame
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
             }
-        )
+        })
         expected_message = "Missing argument 'lambda min rest frame' required by Data"
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
@@ -281,18 +246,16 @@ class DataTest(AbstractTest):
 
         # create a Data instance with missing analysis_type
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
             }
-        )
+        })
         expected_message = "Missing argument 'analysis type' required by Data"
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
@@ -300,91 +263,80 @@ class DataTest(AbstractTest):
 
         # create a Data instance with wrong analysis_type
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "INVALID",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "INVALID",
             }
-        )
+        })
         expected_message = (
             "Invalid argument 'analysis type' required by Data. "
             "Found: 'INVALID'. Accepted "
-            "values: " + ",".join(accepted_analysis_type)
-        )
+            "values: " + ",".join(accepted_analysis_type))
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Data instance with missing lambda_abs_igm
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "PK 1D",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "PK 1D",
             }
-        )
+        })
         expected_message = (
             "Missing argument 'lambda abs IGM' required by Data when "
-            "'analysys type' is 'PK 1D'"
-        )
+            "'analysys type' is 'PK 1D'")
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Data instance with invallid lambda_abs_igm
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "PK 1D",
-                    "lambda abs IGM": "wrong",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "PK 1D",
+                "lambda abs IGM": "wrong",
             }
-        )
+        })
         keys = [key for key in ABSORBER_IGM.keys()]
         expected_message = (
             "Invalid argument 'lambda abs IGM' required by Data. Found: "
-            "'wrong'. Accepted values: " + ", ".join(keys)
-        )
+            "'wrong'. Accepted values: " + ", ".join(keys))
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Data instance with missing input_directory
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "BAO 3D",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "BAO 3D",
             }
-        )
+        })
         expected_message = "Missing argument 'input directory' required by Data"
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
@@ -392,20 +344,18 @@ class DataTest(AbstractTest):
 
         # create a Data instance with missing min_num_pix
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "BAO 3D",
-                    "input directory": f"{THIS_DIR}/data",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "BAO 3D",
+                "input directory": f"{THIS_DIR}/data",
             }
-        )
+        })
         expected_message = (
             "Missing argument 'minimum number pixels in forest' required by Data"
         )
@@ -415,21 +365,19 @@ class DataTest(AbstractTest):
 
         # create a Data instance with missing num_processors
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "BAO 3D",
-                    "input directory": f"{THIS_DIR}/data",
-                    "minimum number pixels in forest": 50,
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "BAO 3D",
+                "input directory": f"{THIS_DIR}/data",
+                "minimum number pixels in forest": 50,
             }
-        )
+        })
         expected_message = "Missing argument 'num processors' required by Data"
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
@@ -437,22 +385,20 @@ class DataTest(AbstractTest):
 
         # create a Data instance with missing out_dir
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "BAO 3D",
-                    "input directory": f"{THIS_DIR}/data",
-                    "minimum number pixels in forest": 50,
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "BAO 3D",
+                "input directory": f"{THIS_DIR}/data",
+                "minimum number pixels in forest": 50,
+                "num processors": 1,
             }
-        )
+        })
         expected_message = "Missing argument 'out dir' required by Data"
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
@@ -460,23 +406,21 @@ class DataTest(AbstractTest):
 
         # create a Data instance with missing rejection_log_file
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "BAO 3D",
-                    "input directory": f"{THIS_DIR}/data",
-                    "minimum number pixels in forest": 50,
-                    "num processors": 1,
-                    "out dir": f"{THIS_DIR}/results",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "BAO 3D",
+                "input directory": f"{THIS_DIR}/data",
+                "minimum number pixels in forest": 50,
+                "num processors": 1,
+                "out dir": f"{THIS_DIR}/results",
             }
-        )
+        })
         expected_message = "Missing argument 'rejection log file' required by Data"
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
@@ -484,82 +428,73 @@ class DataTest(AbstractTest):
 
         # create a Data instance with invalid rejection_log_file (including folders)
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "BAO 3D",
-                    "input directory": f"{THIS_DIR}/data",
-                    "minimum number pixels in forest": 50,
-                    "num processors": 1,
-                    "out dir": f"{THIS_DIR}/results",
-                    "rejection log file": "results/rejection_log.fits.gz",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "BAO 3D",
+                "input directory": f"{THIS_DIR}/data",
+                "minimum number pixels in forest": 50,
+                "num processors": 1,
+                "out dir": f"{THIS_DIR}/results",
+                "rejection log file": "results/rejection_log.fits.gz",
             }
-        )
+        })
         expected_message = (
             "Error constructing Data. 'rejection log file' should not "
-            f"incude folders. Found: {THIS_DIR}/results/rejection_log.fits.gz"
-        )
+            f"incude folders. Found: {THIS_DIR}/results/rejection_log.fits.gz")
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Data instance with invalid rejection_log_file (wrong extension)
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "BAO 3D",
-                    "input directory": f"{THIS_DIR}/data",
-                    "minimum number pixels in forest": 50,
-                    "num processors": 1,
-                    "out dir": f"{THIS_DIR}/results",
-                    "rejection log file": "rejection_log.txt",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "BAO 3D",
+                "input directory": f"{THIS_DIR}/data",
+                "minimum number pixels in forest": 50,
+                "num processors": 1,
+                "out dir": f"{THIS_DIR}/results",
+                "rejection log file": "rejection_log.txt",
             }
-        )
-        expected_message = (
-            "Error constructing Data. Invalid extension for "
-            "'rejection log file'. Filename "
-            "should en with '.fits' or '.fits.gz'. Found "
-            "'rejection_log.txt'"
-        )
+        })
+        expected_message = ("Error constructing Data. Invalid extension for "
+                            "'rejection log file'. Filename "
+                            "should en with '.fits' or '.fits.gz'. Found "
+                            "'rejection_log.txt'")
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Data instance with missing save format
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "BAO 3D",
-                    "input directory": f"{THIS_DIR}/data",
-                    "minimum number pixels in forest": 50,
-                    "num processors": 1,
-                    "out dir": f"{THIS_DIR}/results",
-                    "rejection log file": "rejection_log.fits.gz",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "BAO 3D",
+                "input directory": f"{THIS_DIR}/data",
+                "minimum number pixels in forest": 50,
+                "num processors": 1,
+                "out dir": f"{THIS_DIR}/results",
+                "rejection log file": "rejection_log.fits.gz",
             }
-        )
+        })
         expected_message = "Missing argument 'save format' required by Data"
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
@@ -567,90 +502,81 @@ class DataTest(AbstractTest):
 
         # create a Data instance with invalid save format
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "BAO 3D",
-                    "input directory": f"{THIS_DIR}/data",
-                    "minimum number pixels in forest": 50,
-                    "num processors": 1,
-                    "out dir": f"{THIS_DIR}/results",
-                    "rejection log file": "rejection_log.fits.gz",
-                    "save format": "InvalidFormat",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "BAO 3D",
+                "input directory": f"{THIS_DIR}/data",
+                "minimum number pixels in forest": 50,
+                "num processors": 1,
+                "out dir": f"{THIS_DIR}/results",
+                "rejection log file": "rejection_log.fits.gz",
+                "save format": "InvalidFormat",
             }
-        )
+        })
         expected_message = (
             "Invalid argument 'save format' required by Data. Found: 'InvalidFormat'. Accepted values: "
-            + ",".join(accepted_save_format)
-        )
+            + ",".join(accepted_save_format))
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Data instance with missing minimal snr bao3d
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "BAO 3D",
-                    "input directory": f"{THIS_DIR}/data",
-                    "minimum number pixels in forest": 50,
-                    "num processors": 1,
-                    "out dir": f"{THIS_DIR}/results",
-                    "rejection log file": "rejection_log.fits.gz",
-                    "save format": "BinTableHDU",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "BAO 3D",
+                "input directory": f"{THIS_DIR}/data",
+                "minimum number pixels in forest": 50,
+                "num processors": 1,
+                "out dir": f"{THIS_DIR}/results",
+                "rejection log file": "rejection_log.fits.gz",
+                "save format": "BinTableHDU",
             }
-        )
+        })
         expected_message = (
             "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
             "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
-            "required by Data"
-        )
+            "required by Data")
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Data instance with missing minimal snr bao3d
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "PK 1D",
-                    "lambda abs IGM": "LYA",
-                    "input directory": f"{THIS_DIR}/data",
-                    "minimum number pixels in forest": 50,
-                    "num processors": 1,
-                    "out dir": f"{THIS_DIR}/results",
-                    "rejection log file": "rejection_log.fits.gz",
-                    "save format": "BinTableHDU",
-                }
+        config.read_dict({
+            "data": {
+                "wave solution": "lin",
+                "delta lambda": 0.8,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "analysis type": "PK 1D",
+                "lambda abs IGM": "LYA",
+                "input directory": f"{THIS_DIR}/data",
+                "minimum number pixels in forest": 50,
+                "num processors": 1,
+                "out dir": f"{THIS_DIR}/results",
+                "rejection log file": "rejection_log.fits.gz",
+                "save format": "BinTableHDU",
             }
-        )
+        })
         expected_message = (
             "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
             "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
-            "required by Data"
-        )
+            "required by Data")
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
@@ -659,20 +585,18 @@ class DataTest(AbstractTest):
         """Test method filter_forests from Abstract Class Data"""
         # create Data instance
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "out dir": f"{THIS_DIR}/results/",
-                    "rejection log file": "rejection_log.fits.gz",
-                    "save format": "BinTableHDU",
-                    "wave solution": "log",
-                    "delta log lambda": 3e-4,
-                    "delta log lambda rest frame": 3e-4,
-                    "input directory": f"{THIS_DIR}/data/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "out dir": f"{THIS_DIR}/results/",
+                "rejection log file": "rejection_log.fits.gz",
+                "save format": "BinTableHDU",
+                "wave solution": "log",
+                "delta log lambda": 3e-4,
+                "delta log lambda rest frame": 3e-4,
+                "input directory": f"{THIS_DIR}/data/",
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_data.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -704,21 +628,19 @@ class DataTest(AbstractTest):
 
         # create Data instance with insane forest length requirements
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "minimum number pixels in forest": 10000,
-                    "out dir": f"{THIS_DIR}/results/",
-                    "rejection log file": "rejection_log.fits.gz",
-                    "save format": "BinTableHDU",
-                    "wave solution": "log",
-                    "delta log lambda": 3e-4,
-                    "delta log lambda rest frame": 3e-4,
-                    "input directory": f"{THIS_DIR}/data/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "minimum number pixels in forest": 10000,
+                "out dir": f"{THIS_DIR}/results/",
+                "rejection log file": "rejection_log.fits.gz",
+                "save format": "BinTableHDU",
+                "wave solution": "log",
+                "delta log lambda": 3e-4,
+                "delta log lambda rest frame": 3e-4,
+                "input directory": f"{THIS_DIR}/data/",
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_data.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -737,21 +659,19 @@ class DataTest(AbstractTest):
 
         # create Data instance with insane forest s/n requirements
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "out dir": f"{THIS_DIR}/results/",
-                    "rejection log file": "rejection_log.fits.gz",
-                    "save format": "BinTableHDU",
-                    "wave solution": "log",
-                    "delta log lambda": 3e-4,
-                    "delta log lambda rest frame": 3e-4,
-                    "input directory": f"{THIS_DIR}/data/",
-                    "minimal snr bao3d": 100000000,
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "out dir": f"{THIS_DIR}/results/",
+                "rejection log file": "rejection_log.fits.gz",
+                "save format": "BinTableHDU",
+                "wave solution": "log",
+                "delta log lambda": 3e-4,
+                "delta log lambda rest frame": 3e-4,
+                "input directory": f"{THIS_DIR}/data/",
+                "minimal snr bao3d": 100000000,
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_data.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -767,8 +687,7 @@ class DataTest(AbstractTest):
         self.assertTrue(len(data.rejection_log.cols[0]) == 1)
         self.assertTrue(len(data.rejection_log.cols[1]) == 1)
         self.assertTrue(
-            data.rejection_log.cols[1][0] == f"low SNR ({forest1.mean_snr})"
-        )
+            data.rejection_log.cols[1][0] == f"low SNR ({forest1.mean_snr})")
 
     def test_desi_data(self):
         """Test DesiData
@@ -777,17 +696,20 @@ class DataTest(AbstractTest):
         since it is an abstract class.
         """
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits",
-                    "keep surveys": "all special",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits",
+                "keep surveys":
+                    "all special",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
             }
-        )
+        })
         for key, value in defaults_desi_data.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -805,17 +727,15 @@ class DataTest(AbstractTest):
         # create a DesiData instance
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits",
-                    "keep surveys": "all special",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits",
+                "keep surveys": "all special",
+                "input directory": f"{THIS_DIR}/data/",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -832,16 +752,9 @@ class DataTest(AbstractTest):
 
         # run __parse_config with missing 'use_non_coadded_spectra'
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "unblind": "True",
-                }
-            }
-        )
+        config.read_dict({"data": {"unblind": "True",}})
         expected_message = (
-            "Missing argument 'use non-coadded spectra' required by DesiData"
-        )
+            "Missing argument 'use non-coadded spectra' required by DesiData")
         with self.assertRaises(DataError) as context_manager:
             data._DesiData__parse_config(config["data"])
         self.compare_error_message(context_manager, expected_message)
@@ -862,18 +775,16 @@ class DataTest(AbstractTest):
         # create a DesiData instance with sv data only and blinding = none
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits",
-                    "keep surveys": "all special",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "blinding": "none",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits",
+                "keep surveys": "all special",
+                "input directory": f"{THIS_DIR}/data/",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+                "blinding": "none",
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -884,18 +795,16 @@ class DataTest(AbstractTest):
         # create a DesiData instance with sv data only and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits",
-                    "keep surveys": "all special",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "blinding": "desi_m2",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits",
+                "keep surveys": "all special",
+                "input directory": f"{THIS_DIR}/data/",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+                "blinding": "desi_m2",
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -906,18 +815,22 @@ class DataTest(AbstractTest):
         # create a DesiData instance with main data and blinding = none
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits",
-                    "keep surveys": "all special",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "blinding": "none",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits",
+                "keep surveys":
+                    "all special",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
+                "blinding":
+                    "none",
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -928,18 +841,22 @@ class DataTest(AbstractTest):
         # create a DesiData instance with main data and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits",
-                    "keep surveys": "all special",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "blinding": "desi_m2",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits",
+                "keep surveys":
+                    "all special",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
+                "blinding":
+                    "desi_m2",
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -950,17 +867,15 @@ class DataTest(AbstractTest):
         # create a DesiData instance with mock data and blinding = desi_m2
         # since DesiData is an abstract class, we create a DesisimMocks instance
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "blinding": "desi_m2",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+                "input directory": f"{THIS_DIR}/data/",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+                "blinding": "desi_m2",
             }
-        )
+        })
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -971,17 +886,15 @@ class DataTest(AbstractTest):
         # create a DesiData instance with main data and blinding = none
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "blinding": "none",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+                "input directory": f"{THIS_DIR}/data/",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+                "blinding": "none",
             }
-        )
+        })
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -993,18 +906,22 @@ class DataTest(AbstractTest):
         """Test DesiHealpix"""
         # case: BAO 3D
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "analysis type": "BAO 3D",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
+                "analysis type":
+                    "BAO 3D",
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1014,22 +931,27 @@ class DataTest(AbstractTest):
         self.assertTrue(len(data.forests) == 63)
         self.assertTrue(data.min_num_pix == 50)
         self.assertTrue(data.analysis_type == "BAO 3D")
-        self.assertTrue(all(isinstance(forest, DesiForest) for forest in data.forests))
+        self.assertTrue(
+            all(isinstance(forest, DesiForest) for forest in data.forests))
 
         # case: Pk 1D
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "analysis type": "PK 1D",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
+                "analysis type":
+                    "PK 1D",
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1040,26 +962,29 @@ class DataTest(AbstractTest):
         self.assertTrue(data.min_num_pix == 50)
         self.assertTrue(data.analysis_type == "PK 1D")
         self.assertTrue(
-            all(isinstance(forest, DesiPk1dForest) for forest in data.forests)
-        )
+            all(isinstance(forest, DesiPk1dForest) for forest in data.forests))
 
     def test_desi_healpix_parse_config(self):
         """Test method __parse_config from DesiHealpix"""
 
         # create a DesiHealpix with missing Data options
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "use non-coadded spectra": False,
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "use non-coadded spectra":
+                    False,
+                "num processors":
+                    1,
             }
-        )
+        })
         expected_message = "Missing argument 'wave solution' required by Data"
         with self.assertRaises(DataError) as context_manager:
             DesiHealpix(config["data"])
@@ -1067,29 +992,44 @@ class DataTest(AbstractTest):
 
         # create a DesiHealpix with missing DesiData options
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "use non-coadded spectra": False,
-                    "num processors": 1,
-                    "wave solution": "lin",
-                    "delta lambda": 0.8,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "analysis type": "BAO 3D",
-                    "minimum number pixels in forest": 50,
-                    "rejection log file": "rejection.fits",
-                    "minimal snr bao3d": 0.0,
-                    "save format": "BinTableHDU",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "use non-coadded spectra":
+                    False,
+                "num processors":
+                    1,
+                "wave solution":
+                    "lin",
+                "delta lambda":
+                    0.8,
+                "lambda max":
+                    5500.0,
+                "lambda max rest frame":
+                    1200.0,
+                "lambda min":
+                    3600.0,
+                "lambda min rest frame":
+                    1040.0,
+                "analysis type":
+                    "BAO 3D",
+                "minimum number pixels in forest":
+                    50,
+                "rejection log file":
+                    "rejection.fits",
+                "minimal snr bao3d":
+                    0.0,
+                "save format":
+                    "BinTableHDU",
             }
-        )
+        })
         expected_message = "Missing argument 'unblind' required by DesiData"
         with self.assertRaises(DataError) as context_manager:
             DesiHealpix(config["data"])
@@ -1099,17 +1039,20 @@ class DataTest(AbstractTest):
         """Test method read_data from DesiHealpix"""
         # run with one processor; case: only sv data
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1120,17 +1063,20 @@ class DataTest(AbstractTest):
 
         # run with 0 processors; case: only sv data
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 0,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    0,
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1141,17 +1087,20 @@ class DataTest(AbstractTest):
 
         # run with 2 processors; case: only sv data
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 2,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    2,
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1162,17 +1111,20 @@ class DataTest(AbstractTest):
 
         # run with one processor; case: only sv data, select sv2 (no quasars)
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-                    "keep surveys": "sv2",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+                "keep surveys":
+                    "sv2",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1184,17 +1136,20 @@ class DataTest(AbstractTest):
 
         # run with one processor; case: only sv data, select sv1
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-                    "keep surveys": "sv1",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+                "keep surveys":
+                    "sv1",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1205,17 +1160,20 @@ class DataTest(AbstractTest):
 
         # run with one processor; case: main data present
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1226,17 +1184,20 @@ class DataTest(AbstractTest):
 
         # run with 0 processors; case: main data present
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 0,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    0,
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1247,17 +1208,20 @@ class DataTest(AbstractTest):
 
         # run with 2 processors; case: main data present
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 2,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    2,
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1268,17 +1232,20 @@ class DataTest(AbstractTest):
 
         # case: data missing
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/fake/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/fake/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1292,18 +1259,22 @@ class DataTest(AbstractTest):
         """Test method read_file from DesiHealpix"""
         # first load create a data instance
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "analysis type": "PK 1D",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
+                "analysis type":
+                    "PK 1D",
             }
-        )
+        })
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1318,38 +1289,42 @@ class DataTest(AbstractTest):
             "Error while reading R band from /Users/iperez/Documents/GitHub/"
             "picca/py/picca/tests/delta_extraction/data/bad_format/spectra-main-"
             "dark-9144.fits. Analysis type is 'PK 1D', but file does not "
-            "contain HDU 'R_RESOLUTION'"
-        )
-        self.check_read_file_error(data, catalogue[pos], filename, expected_message)
+            "contain HDU 'R_RESOLUTION'")
+        self.check_read_file_error(data, catalogue[pos], filename,
+                                   expected_message)
 
         # case: missing Z color
         filename = f"{THIS_DIR}/data/bad_format/missing_z_color.fits"
         expected_message = (
             "Missing Z band from /Users/iperez/Documents/GitHub/"
             "picca/py/picca/tests/delta_extraction/data/bad_format/"
-            "missing_z_color.fits. Ignoring color."
-        )
-        self.check_read_file_error(
-            data, catalogue[pos], filename, expected_message, warnings=True
-        )
+            "missing_z_color.fits. Ignoring color.")
+        self.check_read_file_error(data,
+                                   catalogue[pos],
+                                   filename,
+                                   expected_message,
+                                   warnings=True)
 
         # case: error reading B color
         filename = f"{THIS_DIR}/data/bad_format/missing_b_color.fits"
         expected_message = (
             "Error while reading B band from /Users/iperez/Documents/GitHub/"
             "picca/py/picca/tests/delta_extraction/data/bad_format/"
-            "missing_b_color.fits. Ignoring color."
-        )
-        self.check_read_file_error(
-            data, catalogue[pos], filename, expected_message, warnings=True
-        )
+            "missing_b_color.fits. Ignoring color.")
+        self.check_read_file_error(data,
+                                   catalogue[pos],
+                                   filename,
+                                   expected_message,
+                                   warnings=True)
 
         # case: missing file
         filename = "missing.fits"
         expected_message = "Error reading 'missing.fits'. Ignoring file"
-        self.check_read_file_error(
-            data, catalogue[pos], filename, expected_message, warnings=True
-        )
+        self.check_read_file_error(data,
+                                   catalogue[pos],
+                                   filename,
+                                   expected_message,
+                                   warnings=True)
 
         # TODO: Add tests for use_non_coadded_spectra=True
 
@@ -1357,16 +1332,14 @@ class DataTest(AbstractTest):
         """Test DesiTile"""
         # load DesiTile using coadds
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
-                    "input directory": f"{THIS_DIR}/data/tile/cumulative",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+                "input directory": f"{THIS_DIR}/data/tile/cumulative",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1377,17 +1350,15 @@ class DataTest(AbstractTest):
 
         # load DesiTile using spectra
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
-                    "input directory": f"{THIS_DIR}/data/tile/cumulative",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "use non-coadded spectra": False,
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+                "input directory": f"{THIS_DIR}/data/tile/cumulative",
+                "out dir": f"{THIS_DIR}/results/",
+                "use non-coadded spectra": False,
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1400,18 +1371,22 @@ class DataTest(AbstractTest):
         """Test method __parse_config from DesiTile"""
         # create a DesiTile with missing Data options
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "use non-coadded spectra": False,
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue":
+                    f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+                "keep surveys":
+                    "all",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "use non-coadded spectra":
+                    False,
+                "num processors":
+                    1,
             }
-        )
+        })
         expected_message = "Missing argument 'wave solution' required by Data"
         with self.assertRaises(DataError) as context_manager:
             DesiTile(config["data"])
@@ -1421,16 +1396,14 @@ class DataTest(AbstractTest):
         """Test method read_data from DesiTile"""
         # run with one processor; case: using coadds
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
-                    "input directory": f"{THIS_DIR}/data/tile/cumulative",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+                "input directory": f"{THIS_DIR}/data/tile/cumulative",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1441,16 +1414,14 @@ class DataTest(AbstractTest):
 
         # run with 0 processors; case: using coadds
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
-                    "input directory": f"{THIS_DIR}/data/tile/cumulative",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 0,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+                "input directory": f"{THIS_DIR}/data/tile/cumulative",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 0,
             }
-        )
+        })
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1461,16 +1432,14 @@ class DataTest(AbstractTest):
 
         # run with 2 processors; case: using coadds
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
-                    "input directory": f"{THIS_DIR}/data/tile/cumulative",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 2,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+                "input directory": f"{THIS_DIR}/data/tile/cumulative",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 2,
             }
-        )
+        })
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1481,17 +1450,15 @@ class DataTest(AbstractTest):
 
         # run with one processor; case: using individual spectra
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
-                    "input directory": f"{THIS_DIR}/data/tile/cumulative",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "use non-coadded spectra": False,
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+                "input directory": f"{THIS_DIR}/data/tile/cumulative",
+                "out dir": f"{THIS_DIR}/results/",
+                "use non-coadded spectra": False,
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1502,17 +1469,15 @@ class DataTest(AbstractTest):
 
         # run with 0 processors; case: using individual spectra
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
-                    "input directory": f"{THIS_DIR}/data/tile/cumulative",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "use non-coadded spectra": False,
-                    "num processors": 0,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+                "input directory": f"{THIS_DIR}/data/tile/cumulative",
+                "out dir": f"{THIS_DIR}/results/",
+                "use non-coadded spectra": False,
+                "num processors": 0,
             }
-        )
+        })
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1523,17 +1488,15 @@ class DataTest(AbstractTest):
 
         # run with 2 processors; case: using individual spectra
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
-                    "input directory": f"{THIS_DIR}/data/tile/cumulative",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "use non-coadded spectra": False,
-                    "num processors": 2,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+                "input directory": f"{THIS_DIR}/data/tile/cumulative",
+                "out dir": f"{THIS_DIR}/results/",
+                "use non-coadded spectra": False,
+                "num processors": 2,
             }
-        )
+        })
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1546,18 +1509,16 @@ class DataTest(AbstractTest):
         """Test DesisimMocks"""
         # case: BAO 3D
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "analysis type": "BAO 3D",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+                "keep surveys": "all",
+                "input directory": f"{THIS_DIR}/data/",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+                "analysis type": "BAO 3D",
             }
-        )
+        })
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1567,22 +1528,21 @@ class DataTest(AbstractTest):
         self.assertTrue(len(data.forests) == 194)
         self.assertTrue(data.min_num_pix == 50)
         self.assertTrue(data.analysis_type == "BAO 3D")
-        self.assertTrue(all(isinstance(forest, DesiForest) for forest in data.forests))
+        self.assertTrue(
+            all(isinstance(forest, DesiForest) for forest in data.forests))
 
         # case: Pk 1D
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "analysis type": "PK 1D",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+                "keep surveys": "all",
+                "input directory": f"{THIS_DIR}/data/",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+                "analysis type": "PK 1D",
             }
-        )
+        })
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1593,25 +1553,22 @@ class DataTest(AbstractTest):
         self.assertTrue(data.min_num_pix == 50)
         self.assertTrue(data.analysis_type == "PK 1D")
         self.assertTrue(
-            all(isinstance(forest, DesiPk1dForest) for forest in data.forests)
-        )
+            all(isinstance(forest, DesiPk1dForest) for forest in data.forests))
 
     def test_desisim_mocks_read_data(self):
         """Test method read_data from DesisimMocks"""
         # run with one processor
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                    "analysis type": "BAO 3D",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+                "keep surveys": "all",
+                "input directory": f"{THIS_DIR}/data/",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+                "analysis type": "BAO 3D",
             }
-        )
+        })
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1622,18 +1579,16 @@ class DataTest(AbstractTest):
 
         # run with 0 processors
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 0,
-                    "analysis type": "BAO 3D",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+                "keep surveys": "all",
+                "input directory": f"{THIS_DIR}/data/",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 0,
+                "analysis type": "BAO 3D",
             }
-        )
+        })
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1644,18 +1599,16 @@ class DataTest(AbstractTest):
 
         # run with 2 processors
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 2,
-                    "analysis type": "BAO 3D",
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+                "keep surveys": "all",
+                "input directory": f"{THIS_DIR}/data/",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 2,
+                "analysis type": "BAO 3D",
             }
-        )
+        })
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1666,17 +1619,15 @@ class DataTest(AbstractTest):
 
         # case: data missing
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
-                    "keep surveys": "all",
-                    "input directory": f"{THIS_DIR}/data/fake/",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "data": {
+                "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+                "keep surveys": "all",
+                "input directory": f"{THIS_DIR}/data/fake/",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_desisim_mocks.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -1699,7 +1650,8 @@ class DataTest(AbstractTest):
         self.assertTrue(len(data.forests) == 24)
         self.assertTrue(data.min_num_pix == 50)
         self.assertTrue(data.analysis_type == "BAO 3D")
-        self.assertTrue(all(isinstance(forest, SdssForest) for forest in data.forests))
+        self.assertTrue(
+            all(isinstance(forest, SdssForest) for forest in data.forests))
 
         # filter forests
         data.filter_forests()
@@ -1758,7 +1710,8 @@ class DataTest(AbstractTest):
         self.assertTrue(len(data.forests) == 43)
         self.assertTrue(data.min_num_pix == 50)
         self.assertTrue(data.analysis_type == "BAO 3D")
-        self.assertTrue(all(isinstance(forest, SdssForest) for forest in data.forests))
+        self.assertTrue(
+            all(isinstance(forest, SdssForest) for forest in data.forests))
 
     def test_sdss_data_spplate(self):
         """Tests SdssData when run in spplate mode"""
@@ -1773,7 +1726,8 @@ class DataTest(AbstractTest):
         self.assertTrue(len(data.forests) == 43)
         self.assertTrue(data.min_num_pix == 50)
         self.assertTrue(data.analysis_type == "BAO 3D")
-        self.assertTrue(all(isinstance(forest, SdssForest) for forest in data.forests))
+        self.assertTrue(
+            all(isinstance(forest, SdssForest) for forest in data.forests))
 
         # specifying 'mode'
         config = ConfigParser()
@@ -1787,7 +1741,8 @@ class DataTest(AbstractTest):
 
         self.assertTrue(len(data.forests) == 43)
         self.assertTrue(data.min_num_pix == 50)
-        self.assertTrue(all(isinstance(forest, SdssForest) for forest in data.forests))
+        self.assertTrue(
+            all(isinstance(forest, SdssForest) for forest in data.forests))
 
 
 if __name__ == "__main__":

@@ -61,8 +61,7 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         if self.resolution_matrix is None:
             raise AstronomicalObjectError(
                 "Error constructing DesiPk1dForest. "
-                "Missing variable 'resolution_matrix'"
-            )
+                "Missing variable 'resolution_matrix'")
         del kwargs["resolution_matrix"]
 
         # call parent constructors
@@ -76,8 +75,7 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
             raise AstronomicalObjectError(
                 "Error constructing DesiPk1dForest. 'resolution_matrix' "
                 "and 'flux' don't have the "
-                "same size"
-            )
+                "same size")
         if "resolution_matrix" not in Forest.mask_fields:
             Forest.mask_fields += ["resolution_matrix"]
 
@@ -100,44 +98,50 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
             raise AstronomicalObjectError(
                 "Error coadding DesiPk1dForest. Expected "
                 "DesiPk1dForest instance in other. Found: "
-                f"{type(other).__name__}"
-            )
+                f"{type(other).__name__}")
 
         if other.resolution_matrix.size > 0 and self.resolution_matrix.size > 0:
-            if self.resolution_matrix.shape[0] != other.resolution_matrix.shape[0]:
-                largershape = np.max(
-                    [self.resolution_matrix.shape[0], other.resolution_matrix.shape[0]]
-                )
-                smallershape = np.min(
-                    [self.resolution_matrix.shape[0], other.resolution_matrix.shape[0]]
-                )
+            if self.resolution_matrix.shape[0] != other.resolution_matrix.shape[
+                    0]:
+                largershape = np.max([
+                    self.resolution_matrix.shape[0],
+                    other.resolution_matrix.shape[0]
+                ])
+                smallershape = np.min([
+                    self.resolution_matrix.shape[0],
+                    other.resolution_matrix.shape[0]
+                ])
                 shapediff = largershape - smallershape
                 if self.resolution_matrix.shape[0] == smallershape:
                     self.resolution_matrix = np.append(
-                        np.zeros([shapediff // 2, self.resolution_matrix.shape[1]]),
+                        np.zeros(
+                            [shapediff // 2, self.resolution_matrix.shape[1]]),
                         self.resolution_matrix,
                         axis=0,
                     )
                     self.resolution_matrix = np.append(
                         self.resolution_matrix,
-                        np.zeros([shapediff // 2, self.resolution_matrix.shape[1]]),
+                        np.zeros(
+                            [shapediff // 2, self.resolution_matrix.shape[1]]),
                         axis=0,
                     )
                 if other.resolution_matrix.shape[0] == smallershape:
                     other.resolution_matrix = np.append(
-                        np.zeros([shapediff // 2, other.resolution_matrix.shape[1]]),
+                        np.zeros(
+                            [shapediff // 2, other.resolution_matrix.shape[1]]),
                         other.resolution_matrix,
                         axis=0,
                     )
                     other.resolution_matrix = np.append(
                         other.resolution_matrix,
-                        np.zeros([shapediff // 2, other.resolution_matrix.shape[1]]),
+                        np.zeros(
+                            [shapediff // 2, other.resolution_matrix.shape[1]]),
                         axis=0,
                     )
 
-            self.resolution_matrix = np.append(
-                self.resolution_matrix, other.resolution_matrix, axis=1
-            )
+            self.resolution_matrix = np.append(self.resolution_matrix,
+                                               other.resolution_matrix,
+                                               axis=1)
         elif self.resolution_matrix.size == 0:
             self.resolution_matrix = other.resolution_matrix
 
@@ -219,24 +223,21 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         orig_ivar_2 = orig_ivar[w1]
         w__ = orig_ivar_2 > 0
         orig_ivar_2[~w__] = 1
-        rebin_reso_ivar = np.bincount(
-            bins, weights=orig_ivar_2, minlength=binned_arr_size
-        )
+        rebin_reso_ivar = np.bincount(bins,
+                                      weights=orig_ivar_2,
+                                      minlength=binned_arr_size)
 
         # rebin resolution_matrix
         rebin_reso_matrix_aux = np.zeros(
-            (self.resolution_matrix.shape[0], binned_arr_size)
-        )
+            (self.resolution_matrix.shape[0], binned_arr_size))
         for index, reso_matrix_col in enumerate(self.resolution_matrix):
-            rebin_reso_matrix_aux[index, :] = np.bincount(
-                bins, weights=orig_ivar_2 * reso_matrix_col
-            )
+            rebin_reso_matrix_aux[index, :] = np.bincount(bins,
+                                                          weights=orig_ivar_2 *
+                                                          reso_matrix_col)
 
         # apply mask due to rebinned inverse vairane
-        self.resolution_matrix = (
-            rebin_reso_matrix_aux[:, wslice_inner]
-            / rebin_reso_ivar[np.newaxis, wslice_inner]
-        )
+        self.resolution_matrix = (rebin_reso_matrix_aux[:, wslice_inner] /
+                                  rebin_reso_ivar[np.newaxis, wslice_inner])
 
         # return weights and binning solution to be used by child classes if
         # required
@@ -248,6 +249,8 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         necessary fields for this class to work properly.
         """
         cls.class_variable_check()
-        for field in ["exposures_diff", "reso", "reso_pix", "resolution_matrix"]:
+        for field in [
+                "exposures_diff", "reso", "reso_pix", "resolution_matrix"
+        ]:
             if field not in Forest.mask_fields:
                 cls.mask_fields.append(field)

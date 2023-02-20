@@ -16,9 +16,8 @@ def define_wavenumber_array(k_min, k_max, k_dist, velunits, pixsize, rebinfac):
 
     k_min_lin_default = utils.DEFAULT_K_MIN_LIN * rebinfac
     k_max_lin_default = np.pi / pixsize
-    nb_k_bins = int(
-        k_max_lin_default / k_min_lin_default / utils.DEFAULT_K_BINNING_FACTOR
-    )
+    nb_k_bins = int(k_max_lin_default / k_min_lin_default /
+                    utils.DEFAULT_K_BINNING_FACTOR)
     k_dist_lin_default = (k_max_lin_default - k_min_lin_default) / nb_k_bins
 
     k_dist_vel_default = utils.DEFAULT_K_BIN_VEL * rebinfac
@@ -72,7 +71,8 @@ def main(cmdargs):
         type=float,
         default="2.1",
         required=False,
-        help="Minimal value of the redshift edge array," "Default value: 2.1",
+        help="Minimal value of the redshift edge array,"
+        "Default value: 2.1",
     )
 
     parser.add_argument(
@@ -80,7 +80,8 @@ def main(cmdargs):
         type=float,
         default="6.5",
         required=False,
-        help="Maximal value of the redshift edge array," "Default value: 6.5",
+        help="Maximal value of the redshift edge array,"
+        "Default value: 6.5",
     )
 
     parser.add_argument(
@@ -88,7 +89,8 @@ def main(cmdargs):
         type=float,
         default="0.2",
         required=False,
-        help="Number of bins of the redshift edge array," "Default value: 0.2",
+        help="Number of bins of the redshift edge array,"
+        "Default value: 0.2",
     )
 
     parser.add_argument(
@@ -152,7 +154,8 @@ def main(cmdargs):
         action="store_true",
         default=False,
         required=False,
-        help="If set, apply a z weighting scheme analog to that used for QMLE (eg. 2008.06421). "
+        help=
+        "If set, apply a z weighting scheme analog to that used for QMLE (eg. 2008.06421). "
         "Each chunk with mean redshift z contributes two nearest bins z_i (resp. z_j=z_i+dz), "
         "with weights |z-z_j|/dz (resp. |z-z_i|/dz).",
     )
@@ -215,39 +218,36 @@ def main(cmdargs):
 
     args = parser.parse_args(sys.argv[1:])
 
-    if (args.weight_method != "no_weights") and (args.snr_cut_scheme is not None):
-        raise ValueError(
-            """You are using a weighting method with a
+    if (args.weight_method != "no_weights") and (args.snr_cut_scheme
+                                                 is not None):
+        raise ValueError("""You are using a weighting method with a
                             redshift-dependent SNR quality cut, this is not
-                            tested and should bias the result"""
-        )
+                            tested and should bias the result""")
 
     if args.snr_cut_scheme == "eboss":
-        snrcut = np.array(
-            [
-                4.1,
-                3.9,
-                3.6,
-                3.2,
-                2.9,
-                2.6,
-                2.2,
-                2.0,
-                2.0,
-                2.0,
-                2.0,
-                2.0,
-                2.0,
-                2.0,
-                2.0,
-                2.0,
-                2.0,
-                2.0,
-                2.0,
-                2.0,
-                2.0,
-            ]
-        )
+        snrcut = np.array([
+            4.1,
+            3.9,
+            3.6,
+            3.2,
+            2.9,
+            2.6,
+            2.2,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+        ])
         zbins_snrcut = np.arange(2.2, 6.4, 0.2)
     elif args.snr_cut_scheme == "fixed":
         snrcut = np.array([args.snrcut])
@@ -258,8 +258,7 @@ def main(cmdargs):
     else:
         raise ValueError(
             "Unknown value for option --snr-cut-scheme"
-            "You may add here in the code a specific SNR cutting scheme"
-        )
+            "You may add here in the code a specific SNR cutting scheme")
 
     kedge_min, kedge_max, kedge_bin = define_wavenumber_array(
         args.kedge_min,
@@ -270,7 +269,8 @@ def main(cmdargs):
         args.rebinfac,
     )
     k_edges = np.arange(kedge_min, kedge_max, kedge_bin)
-    z_edges = np.around(np.arange(args.zedge_min, args.zedge_max, args.zedge_bin), 5)
+    z_edges = np.around(
+        np.arange(args.zedge_min, args.zedge_max, args.zedge_bin), 5)
 
     if args.output_file is None:
         med_ext = "" if args.no_median else "_medians"

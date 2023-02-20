@@ -10,14 +10,11 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data import Data, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
-    DesiQuasarCatalogue,
-)
+    DesiQuasarCatalogue,)
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
-    accepted_options as accepted_options_quasar_catalogue,
-)
+    accepted_options as accepted_options_quasar_catalogue,)
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
-    defaults as defaults_quasar_catalogue,
-)
+    defaults as defaults_quasar_catalogue,)
 from picca.delta_extraction.utils import (
     ACCEPTED_BLINDING_STRATEGIES,
     UNBLINDABLE_STRATEGIES,
@@ -29,12 +26,10 @@ from picca.delta_extraction.utils import (
     update_default_options,
 )
 
+accepted_options = update_accepted_options(accepted_options,
+                                           accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(
-    accepted_options, accepted_options_quasar_catalogue
-)
-accepted_options = update_accepted_options(
-    accepted_options, ["unblind", "use non-coadded spectra", "wave solution"]
-)
+    accepted_options, ["unblind", "use non-coadded spectra", "wave solution"])
 
 defaults = update_default_options(
     defaults,
@@ -63,7 +58,8 @@ def merge_new_forest(forests_by_targetid, new_forests_by_targetid):
     forests_by_targetid
     """
     parent_targetids = set(forests_by_targetid.keys())
-    existing_targetids = parent_targetids.intersection(new_forests_by_targetid.keys())
+    existing_targetids = parent_targetids.intersection(
+        new_forests_by_targetid.keys())
     new_targetids = new_forests_by_targetid.keys() - existing_targetids
 
     # Does not fail if existing_targetids is empty
@@ -157,7 +153,8 @@ class DesiData(Data):
         if self.unblind is None:
             raise DataError("Missing argument 'unblind' required by DesiData")
 
-        self.use_non_coadded_spectra = config.getboolean("use non-coadded spectra")
+        self.use_non_coadded_spectra = config.getboolean(
+            "use non-coadded spectra")
         if self.use_non_coadded_spectra is None:
             raise DataError(
                 "Missing argument 'use non-coadded spectra' required by DesiData"
@@ -177,7 +174,8 @@ class DesiData(Data):
         -----
         DataError if no quasars were found
         """
-        raise DataError("Function 'read_data' was not overloaded by child class")
+        raise DataError(
+            "Function 'read_data' was not overloaded by child class")
 
     def set_blinding(self, is_mock):
         """Set the blinding in Forest.
@@ -213,15 +211,13 @@ class DesiData(Data):
                         "In DesiData: Requested unblinding but data requires blinding strategy "
                         f"{self.blinding} and this strategy do not support "
                         "unblinding. If you believe this is an error, contact "
-                        "picca developers"
-                    )
+                        "picca developers")
 
         if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
             raise DataError(
                 "Unrecognized blinding strategy. Accepted strategies "
                 f"are {ACCEPTED_BLINDING_STRATEGIES}. "
-                f"Found '{self.blinding}'"
-            )
+                f"Found '{self.blinding}'")
 
         # set blinding strategy
         Forest.blinding = self.blinding
@@ -291,9 +287,11 @@ class DesiDataFileHandler:
         """
         return self.read_file(*args)
 
-    def format_data(
-        self, catalogue, spectrographs_data, targetid_spec, reso_from_truth=False
-    ):
+    def format_data(self,
+                    catalogue,
+                    spectrographs_data,
+                    targetid_spec,
+                    reso_from_truth=False):
         """After data has been read, format it into DesiForest instances
 
         Instances will be DesiForest or DesiPk1dForest depending on analysis_type
@@ -331,12 +329,13 @@ class DesiDataFileHandler:
             targetid = row["TARGETID"]
             w_t = np.where(targetid_spec == targetid)[0]
             if len(w_t) == 0:
-                self.logger.warning(f"Error reading {targetid}. Ignoring object")
+                self.logger.warning(
+                    f"Error reading {targetid}. Ignoring object")
                 continue
             if len(w_t) > 1:
                 self.logger.warning(
-                    "Warning: more than one spectrum in this file " f"for {targetid}"
-                )
+                    "Warning: more than one spectrum in this file "
+                    f"for {targetid}")
             else:
                 w_t = w_t[0]
             # Construct DesiForest instance
@@ -344,9 +343,8 @@ class DesiDataFileHandler:
             for spec in spectrographs_data.values():
                 if self.use_non_coadded_spectra:
                     ivar = np.atleast_2d(spec["IVAR"][w_t])
-                    ivar_coadded_flux = np.atleast_2d(ivar * spec["FLUX"][w_t]).sum(
-                        axis=0
-                    )
+                    ivar_coadded_flux = np.atleast_2d(
+                        ivar * spec["FLUX"][w_t]).sum(axis=0)
                     ivar = ivar.sum(axis=0)
                     flux = ivar_coadded_flux / ivar
                 else:
@@ -380,8 +378,7 @@ class DesiDataFileHandler:
                         else:
                             reso_sum = spec["RESO"][w_t].sum(axis=0)
                     reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
-                        reso_sum, spec["WAVELENGTH"]
-                    )
+                        reso_sum, spec["WAVELENGTH"])
                     args["exposures_diff"] = exposures_diff
                     args["reso"] = reso_in_km_per_s
                     args["resolution_matrix"] = reso_sum
@@ -391,10 +388,8 @@ class DesiDataFileHandler:
                 # this should never be entered added here in case at some point
                 # we add another analysis type
                 else:  # pragma: no cover
-                    raise DataError(
-                        "Unkown analysis type. Expected 'BAO 3D'"
-                        f"or 'PK 1D'. Found '{self.analysis_type}'"
-                    )
+                    raise DataError("Unkown analysis type. Expected 'BAO 3D'"
+                                    f"or 'PK 1D'. Found '{self.analysis_type}'")
 
                 # rebin arrays
                 # this needs to happen after all arrays are initialized by
@@ -435,4 +430,5 @@ class DesiDataFileHandler:
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         """
-        raise DataError("Function 'read_data' was not overloaded by child class")
+        raise DataError(
+            "Function 'read_data' was not overloaded by child class")

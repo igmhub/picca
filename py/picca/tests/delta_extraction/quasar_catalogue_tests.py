@@ -8,15 +8,12 @@ from astropy.table import Table
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
-    DesiQuasarCatalogue,
-)
+    DesiQuasarCatalogue,)
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
-    defaults as defaults_desi_quasar_cat,
-)
+    defaults as defaults_desi_quasar_cat,)
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import (
-    defaults as defaults_drq,
-)
+    defaults as defaults_drq,)
 from picca.tests.delta_extraction.abstract_test import AbstractTest
 from picca.tests.delta_extraction.test_utils import reset_logger
 from picca.delta_extraction.utils import setup_logger
@@ -48,13 +45,12 @@ class QuasarCatalogueTest(AbstractTest):
 
         # Case 0: missing redshift variables
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "drq catalogue": f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-                }
+        config.read_dict({
+            "data": {
+                "drq catalogue":
+                    f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
             }
-        )
+        })
         for key, value in defaults_drq.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -66,15 +62,16 @@ class QuasarCatalogueTest(AbstractTest):
 
         # Case 1: missing spAll file
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "drq catalogue": f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-                    "z max": 3.5,
-                    "z min": 2.1,
-                }
+        config.read_dict({
+            "data": {
+                "drq catalogue":
+                    f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+                "z max":
+                    3.5,
+                "z min":
+                    2.1,
             }
-        )
+        })
         for key, value in defaults_drq.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -85,16 +82,18 @@ class QuasarCatalogueTest(AbstractTest):
 
         # case 2: finding spAll file
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "drq catalogue": f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-                    "input directory": f"{THIS_DIR}/data/",
-                    "z max": 3.5,
-                    "z min": 2.1,
-                }
+        config.read_dict({
+            "data": {
+                "drq catalogue":
+                    f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+                "input directory":
+                    f"{THIS_DIR}/data/",
+                "z max":
+                    3.5,
+                "z min":
+                    2.1,
             }
-        )
+        })
         for key, value in defaults_drq.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -102,16 +101,18 @@ class QuasarCatalogueTest(AbstractTest):
 
         # case 3: with spAll file
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "drq catalogue": f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-                    "spAll": f"{THIS_DIR}/data/spAll-plate3655.fits",
-                    "z max": 3.5,
-                    "z min": 2.1,
-                }
+        config.read_dict({
+            "data": {
+                "drq catalogue":
+                    f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+                "spAll":
+                    f"{THIS_DIR}/data/spAll-plate3655.fits",
+                "z max":
+                    3.5,
+                "z min":
+                    2.1,
             }
-        )
+        })
         for key, value in defaults_drq.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -139,7 +140,12 @@ class QuasarCatalogueTest(AbstractTest):
         self.compare_error_message(context_manager, expected_message)
 
         config = ConfigParser()
-        config.read_dict({"data": {"z min": 2.15, "z max": 3.2, "max num spec": 2}})
+        config.read_dict(
+            {"data": {
+                "z min": 2.15,
+                "z max": 3.2,
+                "max num spec": 2
+            }})
         quasar_catalogue = QuasarCatalogue(config["data"])
 
         self.assertTrue(quasar_catalogue.catalogue is None)
@@ -154,18 +160,16 @@ class QuasarCatalogueTest(AbstractTest):
         """
         # case: no zmin, but we can compute it
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "z max": 3.2,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "max num spec": 2,
-                }
+        config.read_dict({
+            "data": {
+                "z max": 3.2,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "max num spec": 2,
             }
-        )
+        })
         quasar_catalogue = QuasarCatalogue(config["data"])
 
         self.assertTrue(quasar_catalogue.catalogue is None)
@@ -183,18 +187,16 @@ class QuasarCatalogueTest(AbstractTest):
 
         # case: no zmax, but we can compute it
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "z min": 2.0,
-                    "lambda min": 3600.0,
-                    "lambda min rest frame": 1040.0,
-                    "lambda max": 5500.0,
-                    "lambda max rest frame": 1200.0,
-                    "max num spec": 2,
-                }
+        config.read_dict({
+            "data": {
+                "z min": 2.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "max num spec": 2,
             }
-        )
+        })
         quasar_catalogue = QuasarCatalogue(config["data"])
 
         self.assertTrue(quasar_catalogue.catalogue is None)
@@ -204,13 +206,7 @@ class QuasarCatalogueTest(AbstractTest):
 
         # case: no zmin, cannot compute it
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "z min": 2.0,
-                }
-            }
-        )
+        config.read_dict({"data": {"z min": 2.0,}})
         expected_message = "Missing argument 'z max' required by QuasarCatalogue"
         with self.assertRaises(QuasarCatalogueError) as context_manager:
             quasar_catalogue = QuasarCatalogue(config["data"])
@@ -224,14 +220,10 @@ class QuasarCatalogueTest(AbstractTest):
 
         # load instance without maximum number of objects
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "z min": 2.15,
-                    "z max": 3.2,
-                }
-            }
-        )
+        config.read_dict({"data": {
+            "z min": 2.15,
+            "z max": 3.2,
+        }})
         quasar_catalogue = QuasarCatalogue(config["data"])
         quasar_catalogue.catalogue = catalogue.copy()
         # trimming function does nothing
@@ -241,7 +233,12 @@ class QuasarCatalogueTest(AbstractTest):
 
         # load instance with a large maximum number of objects
         config = ConfigParser()
-        config.read_dict({"data": {"z min": 2.15, "z max": 3.2, "max num spec": 5}})
+        config.read_dict(
+            {"data": {
+                "z min": 2.15,
+                "z max": 3.2,
+                "max num spec": 5
+            }})
         quasar_catalogue = QuasarCatalogue(config["data"])
         quasar_catalogue.catalogue = catalogue.copy()
         # trimming function sorts the catalogue
@@ -252,7 +249,12 @@ class QuasarCatalogueTest(AbstractTest):
 
         # load instance with maximum number of objects
         config = ConfigParser()
-        config.read_dict({"data": {"z min": 2.15, "z max": 3.2, "max num spec": 1}})
+        config.read_dict(
+            {"data": {
+                "z min": 2.15,
+                "z max": 3.2,
+                "max num spec": 1
+            }})
         quasar_catalogue = QuasarCatalogue(config["data"])
         quasar_catalogue.catalogue = catalogue.copy()
         # trimming function sorts the catalogue
@@ -270,16 +272,18 @@ class QuasarCatalogueTest(AbstractTest):
         setup_logger(log_file=out_file)
 
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "z min": 2.15,
-                    "z max": 3.2,
-                    "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits",
-                    "keep surveys": "all special",
-                }
+        config.read_dict({
+            "data": {
+                "z min":
+                    2.15,
+                "z max":
+                    3.2,
+                "catalogue":
+                    f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits",
+                "keep surveys":
+                    "all special",
             }
-        )
+        })
 
         for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
@@ -304,17 +308,20 @@ class QuasarCatalogueTest(AbstractTest):
 
         # test filtering with one survey
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "z min": 2.15,
-                    "z max": 3.2,
-                    "max_num_spec": 1,
-                    "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
-                    "keep surveys": "sv3",
-                }
+        config.read_dict({
+            "data": {
+                "z min":
+                    2.15,
+                "z max":
+                    3.2,
+                "max_num_spec":
+                    1,
+                "catalogue":
+                    f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys":
+                    "sv3",
             }
-        )
+        })
 
         for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
@@ -332,17 +339,20 @@ class QuasarCatalogueTest(AbstractTest):
 
         # test filtering with two survey
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "z min": 2.15,
-                    "z max": 3.2,
-                    "max_num_spec": 1,
-                    "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
-                    "keep surveys": "main sv3",
-                }
+        config.read_dict({
+            "data": {
+                "z min":
+                    2.15,
+                "z max":
+                    3.2,
+                "max_num_spec":
+                    1,
+                "catalogue":
+                    f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys":
+                    "main sv3",
             }
-        )
+        })
 
         for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
@@ -361,17 +371,20 @@ class QuasarCatalogueTest(AbstractTest):
 
         # now test the behaviour of all
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "z min": 2.15,
-                    "z max": 3.2,
-                    "max_num_spec": 1,
-                    "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
-                    "keep surveys": "all",
-                }
+        config.read_dict({
+            "data": {
+                "z min":
+                    2.15,
+                "z max":
+                    3.2,
+                "max_num_spec":
+                    1,
+                "catalogue":
+                    f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys":
+                    "all",
             }
-        )
+        })
 
         for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
@@ -396,17 +409,20 @@ class QuasarCatalogueTest(AbstractTest):
 
         # now test the behaviour of sv1 + all
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "z min": 2.15,
-                    "z max": 3.2,
-                    "max_num_spec": 1,
-                    "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
-                    "keep surveys": "sv1 all",
-                }
+        config.read_dict({
+            "data": {
+                "z min":
+                    2.15,
+                "z max":
+                    3.2,
+                "max_num_spec":
+                    1,
+                "catalogue":
+                    f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys":
+                    "sv1 all",
             }
-        )
+        })
 
         for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
@@ -431,17 +447,20 @@ class QuasarCatalogueTest(AbstractTest):
 
         # now test the behaviour of all + special
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "z min": 2.15,
-                    "z max": 3.2,
-                    "max_num_spec": 1,
-                    "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
-                    "keep surveys": "all special",
-                }
+        config.read_dict({
+            "data": {
+                "z min":
+                    2.15,
+                "z max":
+                    3.2,
+                "max_num_spec":
+                    1,
+                "catalogue":
+                    f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys":
+                    "all special",
             }
-        )
+        })
 
         for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
@@ -471,17 +490,20 @@ class QuasarCatalogueTest(AbstractTest):
         setup_logger(log_file=None)
 
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": {
-                    "z min": 2.15,
-                    "z max": 3.2,
-                    "max num spec": 1,
-                    "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
-                    "keep surveys": "all",
-                }
+        config.read_dict({
+            "data": {
+                "z min":
+                    2.15,
+                "z max":
+                    3.2,
+                "max num spec":
+                    1,
+                "catalogue":
+                    f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys":
+                    "all",
             }
-        )
+        })
 
         for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:

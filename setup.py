@@ -8,10 +8,8 @@ from pathlib import Path
 
 scripts = sorted(glob.glob("bin/picca*"))
 
-description = (
-    f"Package for Igm Cosmological-Correlations Analyses\n"
-    f"commit hash: {git.Repo('.').head.object.hexsha}"
-)
+description = (f"Package for Igm Cosmological-Correlations Analyses\n"
+               f"commit hash: {git.Repo('.').head.object.hexsha}")
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
@@ -25,7 +23,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/igmhub/picca",
-    author="Nicolas Busca, Helion du Mas des Bourboux, Ignasi Pérez-Ràfols et al",
+    author=
+    "Nicolas Busca, Helion du Mas des Bourboux, Ignasi Pérez-Ràfols et al",
     author_email="iprafols@gmail.com",
     packages=find_namespace_packages(where="py"),
     package_dir={"": "py"},

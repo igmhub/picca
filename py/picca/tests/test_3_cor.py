@@ -90,9 +90,8 @@ class TestCor(AbstractTest):
         cmd = "picca_cf1d.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
-        cmd += (
-            " --out " + self._branchFiles + "/Products/Correlations/cf1d_cross.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/cf1d_cross.fits.gz")
         cmd += " --nproc 1"
         print(repr(cmd))
         picca.bin.picca_cf1d.main(cmd.split()[1:])
@@ -224,9 +223,8 @@ class TestCor(AbstractTest):
         ### Send
         cmd = "picca_metal_dmat.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-        cmd += (
-            " --out " + self._branchFiles + "/Products/Correlations/metal_dmat.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/metal_dmat.fits.gz")
         cmd += r" --abs-igm SiIII(1207)"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
@@ -287,9 +285,8 @@ class TestCor(AbstractTest):
         cmd = "picca_export.py"
         cmd += " --data " + self._masterFiles + "/test_cor/cf.fits.gz"
         cmd += " --dmat " + self._masterFiles + "/test_cor/dmat.fits.gz"
-        cmd += (
-            " --out " + self._branchFiles + "/Products/Correlations/exported_cf.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/exported_cf.fits.gz")
         print(repr(cmd))
         picca.bin.picca_export.main(cmd.split()[1:])
         return
@@ -336,9 +333,8 @@ class TestCor(AbstractTest):
         cmd = "picca_dmat.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
-        cmd += (
-            " --out " + self._branchFiles + "/Products/Correlations/dmat_cross.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/dmat_cross.fits.gz")
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -370,11 +366,8 @@ class TestCor(AbstractTest):
         cmd = "picca_metal_dmat.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
-        cmd += (
-            " --out "
-            + self._branchFiles
-            + "/Products/Correlations/metal_dmat_cross.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/metal_dmat_cross.fits.gz")
         cmd += r" --abs-igm SiIII(1207)"
         cmd += r" --abs-igm2 SiIII(1207)"
         cmd += " --rp-min -60.0"
@@ -392,9 +385,8 @@ class TestCor(AbstractTest):
         ### Test
         if self._test:
             path1 = self._masterFiles + "/test_cor/metal_dmat_cross.fits.gz"
-            path2 = (
-                self._branchFiles + "/Products/Correlations/metal_dmat_cross.fits.gz"
-            )
+            path2 = (self._branchFiles +
+                     "/Products/Correlations/metal_dmat_cross.fits.gz")
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
 
         return
@@ -409,11 +401,8 @@ class TestCor(AbstractTest):
         cmd = "picca_export.py"
         cmd += " --data " + self._masterFiles + "/test_cor/cf_cross.fits.gz"
         cmd += " --dmat " + self._masterFiles + "/test_cor/dmat_cross.fits.gz"
-        cmd += (
-            " --out "
-            + self._branchFiles
-            + "/Products/Correlations/exported_cf_cross.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/exported_cf_cross.fits.gz")
         print(repr(cmd))
         picca.bin.picca_export.main(cmd.split()[1:])
 
@@ -509,9 +498,8 @@ class TestCor(AbstractTest):
         cmd = "picca_metal_xdmat.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
-        cmd += (
-            " --out " + self._branchFiles + "/Products/Correlations/metal_xdmat.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/metal_xdmat.fits.gz")
         cmd += r" --abs-igm SiIII(1207)"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
@@ -571,11 +559,8 @@ class TestCor(AbstractTest):
         cmd = "picca_export.py"
         cmd += " --data " + self._masterFiles + "/test_cor/xcf.fits.gz"
         cmd += " --dmat " + self._masterFiles + "/test_cor/xdmat.fits.gz"
-        cmd += (
-            " --out "
-            + self._branchFiles
-            + "/Products/Correlations/exported_xcf.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/exported_xcf.fits.gz")
         print(repr(cmd))
         picca.bin.picca_export.main(cmd.split()[1:])
 
@@ -592,10 +577,8 @@ class TestCor(AbstractTest):
         cmd += " --data1 " + self._masterFiles + "/test_cor/cf.fits.gz"
         cmd += " --data2 " + self._masterFiles + "/test_cor/xcf.fits.gz"
         cmd += (
-            " --out "
-            + self._branchFiles
-            + "/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz"
-        )
+            " --out " + self._branchFiles +
+            "/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz")
         print(repr(cmd))
         picca.bin.picca_export_cross_covariance.main(cmd.split()[1:])
 
@@ -623,11 +606,8 @@ class TestCor(AbstractTest):
         ### Send
         cmd = "picca_co.py"
         cmd += " --drq " + self._masterFiles + "/test_delta/random.fits"
-        cmd += (
-            " --out "
-            + self._branchFiles
-            + "/Products/Correlations/Co_Random/co_RR.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/Co_Random/co_RR.fits.gz")
         cmd += " --rp-min 0."
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -641,11 +621,8 @@ class TestCor(AbstractTest):
         cmd = "picca_co.py"
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
         cmd += " --drq2 " + self._masterFiles + "/test_delta/random.fits"
-        cmd += (
-            " --out "
-            + self._branchFiles
-            + "/Products/Correlations/Co_Random/co_DR.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/Co_Random/co_DR.fits.gz")
         cmd += " --rp-min 0."
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -659,11 +636,8 @@ class TestCor(AbstractTest):
         cmd = "picca_co.py"
         cmd += " --drq " + self._masterFiles + "/test_delta/random.fits"
         cmd += " --drq2 " + self._masterFiles + "/test_delta/cat.fits"
-        cmd += (
-            " --out "
-            + self._branchFiles
-            + "/Products/Correlations/Co_Random/co_RD.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/Co_Random/co_RD.fits.gz")
         cmd += " --rp-min 0."
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -706,9 +680,8 @@ class TestCor(AbstractTest):
         cmd += " --RR-file " + self._masterFiles + "/test_cor/co_RR.fits.gz"
         cmd += " --DR-file " + self._masterFiles + "/test_cor/co_DR.fits.gz"
         cmd += " --RD-file " + self._masterFiles + "/test_cor/co_RD.fits.gz"
-        cmd += (
-            " --out " + self._branchFiles + "/Products/Correlations/exported_co.fits.gz"
-        )
+        cmd += (" --out " + self._branchFiles +
+                "/Products/Correlations/exported_co.fits.gz")
         cmd += " --get-cov-from-poisson"
         print(repr(cmd))
         picca.bin.picca_export_co.main(cmd.split()[1:])

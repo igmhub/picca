@@ -10,24 +10,20 @@ from scipy.interpolate import interp1d
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
 from picca.delta_extraction.data_catalogues.desi_healpix import (
-    defaults as defaults_desi_healpix,
-)
+    defaults as defaults_desi_healpix,)
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
 from picca.delta_extraction.data_catalogues.sdss_data import (
-    defaults as defaults_sdss_data,
-)
+    defaults as defaults_sdss_data,)
 from picca.delta_extraction.data_catalogues.desisim_mocks import DesisimMocks
 from picca.delta_extraction.data_catalogues.desisim_mocks import (
-    defaults as defaults_desisim_data,
-)
+    defaults as defaults_desisim_data,)
 from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
     Dr16ExpectedFlux,
     compute_continuum,
 )
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
-    defaults as defaults_dr16_expected_flux,
-)
+    defaults as defaults_dr16_expected_flux,)
 from picca.delta_extraction.expected_fluxes.true_continuum import (
     TrueContinuum,
     defaults as defaults_true_continuum,
@@ -67,23 +63,20 @@ class ExpectedFluxTest(AbstractTest):
         Load an Dr16ExpectedFlux instance.
         """
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
         # this should raise an error as Forest variables are not defined
         expected_message = (
             "Forest class variables need to be set before initializing "
-            "variables here."
-        )
+            "variables here.")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             expected_flux = Dr16ExpectedFlux(config["expected flux"])
         self.compare_error_message(context_manager, expected_message)
@@ -96,7 +89,8 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_fudge, interp1d))
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
-        self.assertTrue(isinstance(expected_flux.log_lambda_var_func_grid, np.ndarray))
+        self.assertTrue(
+            isinstance(expected_flux.log_lambda_var_func_grid, np.ndarray))
 
         # setup Forest variables; case: linear wavelength solution
         reset_forest()
@@ -107,7 +101,8 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_fudge, interp1d))
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
-        self.assertTrue(isinstance(expected_flux.log_lambda_var_func_grid, np.ndarray))
+        self.assertTrue(
+            isinstance(expected_flux.log_lambda_var_func_grid, np.ndarray))
 
     def test_dr16_expected_flux_compute_continuum_lin(self):
         """Test method compute_continuum for class Dr16ExpectedFlux for
@@ -119,16 +114,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize DesiHealpix and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": desi_healpix_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -189,22 +182,22 @@ class ExpectedFluxTest(AbstractTest):
                 if continua.get(forest.los_id) is not None:
                     print(
                         f"For forest with los_id {forest.los_id}, new continuum "
-                        "is None. Expected continua:"
-                    )
+                        "is None. Expected continua:")
                     print(continua.get(forest.los_id))
                 self.assertTrue(continua.get(forest.los_id) is None)
             elif continua.get(forest.los_id) is None:
                 self.assertTrue(forest.continuum is None)
             else:
-                if not np.allclose(forest.continuum, continua.get(forest.los_id)):
+                if not np.allclose(forest.continuum, continua.get(
+                        forest.los_id)):
                     print("Difference found in forest.continuum")
                     print(f"forest.los_id: {forest.los_id}")
                     print(f"result test are_close result-test")
-                    for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
+                    for i1, i2 in zip(forest.continuum,
+                                      continua.get(forest.los_id)):
                         print(i1, i2, np.isclose(i1, i2), i1 - i2)
                 self.assertTrue(
-                    np.allclose(forest.continuum, continua.get(forest.los_id))
-                )
+                    np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
 
         # check that we loaded all quasars
@@ -220,16 +213,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": sdss_data_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -286,9 +277,11 @@ class ExpectedFluxTest(AbstractTest):
                 print("Difference found in forest.continuum")
                 print(f"forest.los_id: {forest.los_id}")
                 print(f"result test are_close result-test")
-                for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
+                for i1, i2 in zip(forest.continuum,
+                                  continua.get(forest.los_id)):
                     print(i1, i2, np.isclose(i1, i2), i1 - i2)
-            self.assertTrue(np.allclose(forest.continuum, continua.get(forest.los_id)))
+            self.assertTrue(
+                np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
 
         # check that we loaded all quasars
@@ -304,16 +297,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": desi_healpix_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -348,7 +339,8 @@ class ExpectedFluxTest(AbstractTest):
         f = open(out_file, "w")
         f.write("# log_lambda delta\n")
         for log_lambda in np.arange(3.5563025, 3.7123025 + 3e-4, 3e-4):
-            f.write(f"{log_lambda} {expected_flux.get_stack_delta(log_lambda)}\n")
+            f.write(
+                f"{log_lambda} {expected_flux.get_stack_delta(log_lambda)}\n")
         f.close()
 
         # load expected delta stack
@@ -375,16 +367,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": sdss_data_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -419,7 +409,8 @@ class ExpectedFluxTest(AbstractTest):
         f = open(out_file, "w")
         f.write("# log_lambda delta\n")
         for log_lambda in np.arange(3.5563025, 3.7123025 + 3e-4, 3e-4):
-            f.write(f"{log_lambda} {expected_flux.get_stack_delta(log_lambda)}\n")
+            f.write(
+                f"{log_lambda} {expected_flux.get_stack_delta(log_lambda)}\n")
         f.close()
 
         # load expected delta stack
@@ -448,16 +439,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": desi_healpix_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix_compute_expected_flux_lin",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix_compute_expected_flux_lin",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -490,16 +479,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": sdss_data_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix_compute_expected_flux_log",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix_compute_expected_flux_log",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -530,16 +517,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": desi_healpix_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -601,16 +586,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": sdss_data_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -673,16 +656,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": desi_healpix_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -752,16 +733,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": sdss_data_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -835,16 +814,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a Dr16ExpectedFlux with missing 'force stack delta to zero'
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out prefix": f"iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
             }
-        )
+        })
         expected_message = (
             "Missing argument 'force stack delta to zero' required by Dr16ExpectedFlux"
         )
@@ -854,17 +831,15 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a Dr16ExpectedFlux with missing 'limit eta'
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out prefix": f"iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                    "force stack delta to zero": True,
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
             }
-        )
+        })
         expected_message = "Missing argument 'limit eta' required by Dr16ExpectedFlux"
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
@@ -872,87 +847,76 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a Dr16ExpectedFlux with missing 'limit var lss'
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out prefix": f"iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                    "force stack delta to zero": True,
-                    "limit eta": "0.0, 1.90",
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
             }
-        )
+        })
         expected_message = (
-            "Missing argument 'limit var lss' required by Dr16ExpectedFlux"
-        )
+            "Missing argument 'limit var lss' required by Dr16ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Dr16ExpectedFlux with missing num_iterations
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out prefix": f"iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                    "force stack delta to zero": True,
-                    "limit eta": "0.0, 1.90",
-                    "limit var lss": "0.0, 1.90",
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.0, 1.90",
             }
-        )
+        })
         expected_message = (
-            "Missing argument 'min qso in fit' required by Dr16ExpectedFlux"
-        )
+            "Missing argument 'min qso in fit' required by Dr16ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Dr16ExpectedFlux with missing num_iterations
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out prefix": f"iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                    "force stack delta to zero": True,
-                    "limit eta": "0.0, 1.90",
-                    "limit var lss": "0.0, 1.90",
-                    "min num qso in fit": 100,
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.0, 1.90",
+                "min num qso in fit": 100,
             }
-        )
+        })
         expected_message = (
-            "Missing argument 'num iterations' required by Dr16ExpectedFlux"
-        )
+            "Missing argument 'num iterations' required by Dr16ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a Dr16ExpectedFlux with missing order
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out prefix": f"iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                    "force stack delta to zero": True,
-                    "limit eta": "0.0, 1.90",
-                    "limit var lss": "0.0, 1.90",
-                    "min num qso in fit": 100,
-                    "num iterations": 5,
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.0, 1.90",
+                "min num qso in fit": 100,
+                "num iterations": 5,
             }
-        )
+        })
         expected_message = "Missing argument 'order' required by Dr16ExpectedFlux"
         with self.assertRaises(ExpectedFluxError) as context_manager:
             Dr16ExpectedFlux(config["expected_flux"])
@@ -960,22 +924,20 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a Dr16ExpectedFlux with missing use_constant_weight
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out prefix": f"iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                    "force stack delta to zero": True,
-                    "limit eta": "0.0, 1.90",
-                    "limit var lss": "0.0, 1.90",
-                    "min num qso in fit": 100,
-                    "num iterations": 5,
-                    "order": 1,
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.0, 1.90",
+                "min num qso in fit": 100,
+                "num iterations": 5,
+                "order": 1,
             }
-        )
+        })
         expected_message = (
             "Missing argument 'use constant weight' required by Dr16ExpectedFlux"
         )
@@ -985,23 +947,21 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a Dr16ExpectedFlux with missing use_ivar_as_weight
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out prefix": f"iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                    "force stack delta to zero": True,
-                    "limit eta": "0.0, 1.90",
-                    "limit var lss": "0.0, 1.90",
-                    "min num qso in fit": 100,
-                    "num iterations": 5,
-                    "order": 1,
-                    "use constant weight": False,
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.0, 1.90",
+                "min num qso in fit": 100,
+                "num iterations": 5,
+                "order": 1,
+                "use constant weight": False,
             }
-        )
+        })
         expected_message = (
             "Missing argument 'use ivar as weight' required by Dr16ExpectedFlux"
         )
@@ -1011,48 +971,44 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a Dr16ExpectedFlux instance; case: limit eta and limit var_lss with ()
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out prefix": f"iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                    "force stack delta to zero": True,
-                    "limit eta": "(0.0, 1.90)",
-                    "limit var lss": "(0.5, 1.40)",
-                    "min num qso in fit": 100,
-                    "num iterations": 5,
-                    "order": 1,
-                    "use constant weight": False,
-                    "use ivar as weight": False,
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "(0.0, 1.90)",
+                "limit var lss": "(0.5, 1.40)",
+                "min num qso in fit": 100,
+                "num iterations": 5,
+                "order": 1,
+                "use constant weight": False,
+                "use ivar as weight": False,
             }
-        )
+        })
         expected_flux = Dr16ExpectedFlux(config["expected_flux"])
         self.assertTrue(np.allclose(expected_flux.limit_eta, (0.0, 1.9)))
         self.assertTrue(np.allclose(expected_flux.limit_var_lss, (0.5, 1.4)))
 
         # create a Dr16ExpectedFlux instance; case: limit eta and limit var_lss with []
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out prefix": f"iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                    "force stack delta to zero": True,
-                    "limit eta": "[0.0, 1.90]",
-                    "limit var lss": "[0.5, 1.40]",
-                    "min num qso in fit": 100,
-                    "num iterations": 5,
-                    "order": 1,
-                    "use constant weight": False,
-                    "use ivar as weight": False,
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "[0.0, 1.90]",
+                "limit var lss": "[0.5, 1.40]",
+                "min num qso in fit": 100,
+                "num iterations": 5,
+                "order": 1,
+                "use constant weight": False,
+                "use ivar as weight": False,
             }
-        )
+        })
         expected_flux = Dr16ExpectedFlux(config["expected_flux"])
         self.assertTrue(np.allclose(expected_flux.limit_eta, (0.0, 1.9)))
         self.assertTrue(np.allclose(expected_flux.limit_var_lss, (0.5, 1.4)))
@@ -1060,24 +1016,22 @@ class ExpectedFluxTest(AbstractTest):
         # create a Dr16ExpectedFlux instance; case: limit eta and limit var_lss
         # without parenthesis
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out prefix": f"iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                    "force stack delta to zero": True,
-                    "limit eta": "0.0, 1.90",
-                    "limit var lss": "0.5, 1.40",
-                    "min num qso in fit": 100,
-                    "num iterations": 5,
-                    "order": 1,
-                    "use constant weight": False,
-                    "use ivar as weight": False,
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out prefix": f"iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+                "force stack delta to zero": True,
+                "limit eta": "0.0, 1.90",
+                "limit var lss": "0.5, 1.40",
+                "min num qso in fit": 100,
+                "num iterations": 5,
+                "order": 1,
+                "use constant weight": False,
+                "use ivar as weight": False,
             }
-        )
+        })
         expected_flux = Dr16ExpectedFlux(config["expected_flux"])
         self.assertTrue(np.allclose(expected_flux.limit_eta, (0.0, 1.9)))
         self.assertTrue(np.allclose(expected_flux.limit_var_lss, (0.5, 1.4)))
@@ -1089,16 +1043,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": sdss_data_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix_log",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix_log",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -1144,16 +1096,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": desi_healpix_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix_lin",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix_lin",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -1181,7 +1131,8 @@ class ExpectedFluxTest(AbstractTest):
             )
             forest.bad_continuum_reason = bad_continuum_reason
             forest.continuum = cont_model
-            continuum_fit_parameters_dict[forest.los_id] = continuum_fit_parameters
+            continuum_fit_parameters_dict[
+                forest.los_id] = continuum_fit_parameters
         expected_flux.continuum_fit_parameters = continuum_fit_parameters_dict
 
         # compute variance functions and statistics
@@ -1207,16 +1158,14 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": sdss_data_kwargs,
-                "expected flux": {
-                    "iter out prefix": "iter_out_prefix_log",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix_log",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -1261,21 +1210,18 @@ class ExpectedFluxTest(AbstractTest):
         """
         # initialize ExpectedFlux instance
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected flux": {
-                    "iter out prefix": "delta_attributes",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "expected flux": {
+                "iter out prefix": "delta_attributes",
+                "out dir": f"{THIS_DIR}/results/",
+                "num bins variance": 20,
+                "num processors": 1,
+            },
+        })
         # this should raise an error as Forest variables are not defined
         expected_message = (
             "Forest class variables need to be set before initializing "
-            "variables here."
-        )
+            "variables here.")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             expected_flux = ExpectedFlux(config["expected flux"])
         self.compare_error_message(context_manager, expected_message)
@@ -1285,9 +1231,8 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux = ExpectedFlux(config["expected flux"])
 
         # compute_expected_flux should not be defined
-        expected_message = (
-            "Function 'compute_expected_flux' was not " "overloaded by child class"
-        )
+        expected_message = ("Function 'compute_expected_flux' was not "
+                            "overloaded by child class")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             expected_flux.compute_expected_flux([])
         self.compare_error_message(context_manager, expected_message)
@@ -1321,20 +1266,17 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a ExpectedFlux with invalid iter_out_prefix
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected flux": {
-                    "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
-                }
+        config.read_dict({
+            "expected flux": {
+                "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
             }
-        )
+        })
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
         expected_message = (
             "Error constructing ExpectedFlux. 'iter out prefix' should not "
-            f"incude folders. Found: {THIS_DIR}/results/iter_out_prefix"
-        )
+            f"incude folders. Found: {THIS_DIR}/results/iter_out_prefix")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             ExpectedFlux(config["expected flux"])
         self.compare_error_message(context_manager, expected_message)
@@ -1342,29 +1284,23 @@ class ExpectedFluxTest(AbstractTest):
         # create a ExpectedFlux with missing num_bins_variance
         config = ConfigParser()
         config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out Prefix": f"delta_attributes",
-                }
-            }
-        )
+            {"expected_flux": {
+                "iter out Prefix": f"delta_attributes",
+            }})
         expected_message = (
-            "Missing argument 'num bins variance' required by ExpectedFlux"
-        )
+            "Missing argument 'num bins variance' required by ExpectedFlux")
         with self.assertRaises(ExpectedFluxError) as context_manager:
             ExpectedFlux(config["expected_flux"])
         self.compare_error_message(context_manager, expected_message)
 
         # create a ExpectedFlux with missing num_processors
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out Prefix": f"delta_attributes",
-                    "num bins variance": 20,
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out Prefix": f"delta_attributes",
+                "num bins variance": 20,
             }
-        )
+        })
         expected_message = "Missing argument 'num processors' required by ExpectedFlux"
         with self.assertRaises(ExpectedFluxError) as context_manager:
             ExpectedFlux(config["expected_flux"])
@@ -1372,15 +1308,13 @@ class ExpectedFluxTest(AbstractTest):
 
         # create a ExpectedFlux with missing out_dir
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected_flux": {
-                    "iter out Prefix": f"delta_attributes",
-                    "num bins variance": 20,
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "expected_flux": {
+                "iter out Prefix": f"delta_attributes",
+                "num bins variance": 20,
+                "num processors": 1,
             }
-        )
+        })
         expected_message = "Missing argument 'out dir' required by ExpectedFlux"
         with self.assertRaises(ExpectedFluxError) as context_manager:
             ExpectedFlux(config["expected_flux"])
@@ -1391,16 +1325,14 @@ class ExpectedFluxTest(AbstractTest):
         Load a TrueContinuum instance.
         """
         config = ConfigParser()
-        config.read_dict(
-            {
-                "expected flux": {
-                    "input directory": f"{THIS_DIR}/data",
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                }
+        config.read_dict({
+            "expected flux": {
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             }
-        )
+        })
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
@@ -1432,8 +1364,7 @@ class ExpectedFluxTest(AbstractTest):
             expected_flux = TrueContinuum(config["expected flux"])
         expected_message = (
             "Couldn't find compatible raw satistics file. Provide a custom one using"
-            " 'raw statistics file' field."
-        )
+            " 'raw statistics file' field.")
         self.compare_error_message(context_manager, expected_message)
 
     def test_true_continuum_compute_mean_cont_lin(self):
@@ -1446,18 +1377,16 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": desi_mock_data_kwargs,
-                "expected flux": {
-                    "type": "TrueContinuum",
-                    "input directory": f"{THIS_DIR}/data",
-                    "iter out prefix": "iter_out_prefix",
-                    "num processors": 1,
-                    "out dir": f"{THIS_DIR}/results/",
-                },
-            }
-        )
+        config.read_dict({
+            "data": desi_mock_data_kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "num processors": 1,
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
 
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
@@ -1474,10 +1403,8 @@ class ExpectedFluxTest(AbstractTest):
         f = open(out_file, "w")
         f.write("# log_lambda mean_cont mean_cont_weight\n")
         for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
-            f.write(
-                f"{log_lambda} {expected_flux.get_mean_cont(log_lambda)} "
-                f"{expected_flux.get_mean_cont_weight(log_lambda)}\n"
-            )
+            f.write(f"{log_lambda} {expected_flux.get_mean_cont(log_lambda)} "
+                    f"{expected_flux.get_mean_cont_weight(log_lambda)}\n")
         f.close()
 
         # load the expected results
@@ -1496,16 +1423,17 @@ class ExpectedFluxTest(AbstractTest):
 
         # compare mean_flux data with obtained results
         mean_cont_weight = expected_flux.get_mean_cont_weight(
-            expectations["log_lambda"]
-        )
+            expectations["log_lambda"])
         if not np.allclose(mean_cont_weight, expectations["mean_cont_weight"]):
             print(f"\nOriginal file: {test_file}")
             print(f"New file: {out_file}")
             print("Difference found in mean_cont_weight")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont_weight, expectations["mean_cont_weight"]):
+            for i1, i2 in zip(mean_cont_weight,
+                              expectations["mean_cont_weight"]):
                 print(i1, i2, np.isclose(i1, i2), i1 - i2)
-        self.assertTrue(np.allclose(mean_cont_weight, expectations["mean_cont_weight"]))
+        self.assertTrue(
+            np.allclose(mean_cont_weight, expectations["mean_cont_weight"]))
 
     def test_true_continuum_compute_mean_cont_log(self):
         """Test method compute_mean_cont for class TrueContinuum using
@@ -1519,18 +1447,16 @@ class ExpectedFluxTest(AbstractTest):
         config = ConfigParser()
         kwargs = desi_mock_data_kwargs.copy()
         kwargs["wave solution"] = "log"
-        config.read_dict(
-            {
-                "data": kwargs,
-                "expected flux": {
-                    "type": "TrueContinuum",
-                    "input directory": f"{THIS_DIR}/data",
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
 
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
@@ -1548,10 +1474,8 @@ class ExpectedFluxTest(AbstractTest):
         f = open(out_file, "w")
         f.write("# log_lambda mean_cont mean_cont_weight\n")
         for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
-            f.write(
-                f"{log_lambda} {expected_flux.get_mean_cont(log_lambda)} "
-                f"{expected_flux.get_mean_cont_weight(log_lambda)}\n"
-            )
+            f.write(f"{log_lambda} {expected_flux.get_mean_cont(log_lambda)} "
+                    f"{expected_flux.get_mean_cont_weight(log_lambda)}\n")
         f.close()
 
         # load the expected results
@@ -1570,16 +1494,17 @@ class ExpectedFluxTest(AbstractTest):
 
         # compare mean_flux data with obtained results
         mean_cont_weight = expected_flux.get_mean_cont_weight(
-            expectations["log_lambda"]
-        )
+            expectations["log_lambda"])
         if not np.allclose(mean_cont_weight, expectations["mean_cont_weight"]):
             print(f"\nOriginal file: {test_file}")
             print(f"New file: {out_file}")
             print("Difference found in mean_cont_weight")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont_weight, expectations["mean_cont_weight"]):
+            for i1, i2 in zip(mean_cont_weight,
+                              expectations["mean_cont_weight"]):
                 print(i1, i2, np.isclose(i1, i2), i1 - i2)
-        self.assertTrue(np.allclose(mean_cont_weight, expectations["mean_cont_weight"]))
+        self.assertTrue(
+            np.allclose(mean_cont_weight, expectations["mean_cont_weight"]))
 
     def test_true_continuum_expected_flux_lin(self):
         """Test method compute expected flux for class TrueContinuum for
@@ -1593,18 +1518,21 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": desi_mock_data_kwargs,
-                "expected flux": {
-                    "type": "TrueContinuum",
-                    "input directory": f"{THIS_DIR}/data",
-                    "iter out prefix": "true_iter_out_prefix_compute_expected_flux_lin",
-                    "num processors": 1,
-                    "out dir": f"{THIS_DIR}/results/",
-                },
-            }
-        )
+        config.read_dict({
+            "data": desi_mock_data_kwargs,
+            "expected flux": {
+                "type":
+                    "TrueContinuum",
+                "input directory":
+                    f"{THIS_DIR}/data",
+                "iter out prefix":
+                    "true_iter_out_prefix_compute_expected_flux_lin",
+                "num processors":
+                    1,
+                "out dir":
+                    f"{THIS_DIR}/results/",
+            },
+        })
 
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
@@ -1634,18 +1562,21 @@ class ExpectedFluxTest(AbstractTest):
         config = ConfigParser()
         kwargs = desi_mock_data_kwargs.copy()
         kwargs["wave solution"] = "log"
-        config.read_dict(
-            {
-                "data": kwargs,
-                "expected flux": {
-                    "type": "TrueContinuum",
-                    "input directory": f"{THIS_DIR}/data",
-                    "iter out prefix": "true_iter_out_prefix_compute_expected_flux_log",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": kwargs,
+            "expected flux": {
+                "type":
+                    "TrueContinuum",
+                "input directory":
+                    f"{THIS_DIR}/data",
+                "iter out prefix":
+                    "true_iter_out_prefix_compute_expected_flux_log",
+                "out dir":
+                    f"{THIS_DIR}/results/",
+                "num processors":
+                    1,
+            },
+        })
 
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
@@ -1671,18 +1602,16 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": desi_mock_data_kwargs,
-                "expected flux": {
-                    "type": "TrueContinuum",
-                    "input directory": f"{THIS_DIR}/data/data",
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": desi_mock_data_kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
 
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
@@ -1696,10 +1625,8 @@ class ExpectedFluxTest(AbstractTest):
         f = open(out_file, "w")
         f.write("# log_lambda var_lss mean_flux\n")
         for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
-            f.write(
-                f"{log_lambda} {expected_flux.get_var_lss(log_lambda)} "
-                f"{expected_flux.get_mean_flux(log_lambda)}\n"
-            )
+            f.write(f"{log_lambda} {expected_flux.get_var_lss(log_lambda)} "
+                    f"{expected_flux.get_mean_flux(log_lambda)}\n")
         f.close()
 
         # load the expected results
@@ -1738,18 +1665,16 @@ class ExpectedFluxTest(AbstractTest):
         config = ConfigParser()
         kwargs = desi_mock_data_kwargs.copy()
         kwargs["wave solution"] = "log"
-        config.read_dict(
-            {
-                "data": kwargs,
-                "expected flux": {
-                    "type": "TrueContinuum",
-                    "input directory": f"{THIS_DIR}/data/data",
-                    "iter out prefix": "iter_out_prefix",
-                    "num processors": 1,
-                    "out dir": f"{THIS_DIR}/results/",
-                },
-            }
-        )
+        config.read_dict({
+            "data": kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data/data",
+                "iter out prefix": "iter_out_prefix",
+                "num processors": 1,
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
 
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
@@ -1763,10 +1688,8 @@ class ExpectedFluxTest(AbstractTest):
         f = open(out_file, "w")
         f.write("# log_lambda var_lss mean_flux\n")
         for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
-            f.write(
-                f"{log_lambda} {expected_flux.get_var_lss(log_lambda)} "
-                f"{expected_flux.get_mean_flux(log_lambda)}\n"
-            )
+            f.write(f"{log_lambda} {expected_flux.get_var_lss(log_lambda)} "
+                    f"{expected_flux.get_mean_flux(log_lambda)}\n")
         f.close()
 
         # load the expected results
@@ -1803,18 +1726,16 @@ class ExpectedFluxTest(AbstractTest):
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
-        config.read_dict(
-            {
-                "data": desi_mock_data_kwargs,
-                "expected flux": {
-                    "type": "TrueContinuum",
-                    "input directory": f"{THIS_DIR}/data",
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": desi_mock_data_kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
 
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
@@ -1859,22 +1780,22 @@ class ExpectedFluxTest(AbstractTest):
                 if continua.get(forest.los_id) is not None:
                     print(
                         f"For forest with los_id {forest.los_id}, new continuum "
-                        "is None. Expected continua:"
-                    )
+                        "is None. Expected continua:")
                     print(continua.get(forest.los_id))
                 self.assertTrue(continua.get(forest.los_id) is None)
             elif continua.get(forest.los_id) is None:
                 self.assertTrue(forest.continuum is None)
             else:
-                if not np.allclose(forest.continuum, continua.get(forest.los_id)):
+                if not np.allclose(forest.continuum, continua.get(
+                        forest.los_id)):
                     print("Difference found in forest.continuum")
                     print(f"forest.los_id: {forest.los_id}")
                     print(f"result test are_close result-test")
-                    for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
+                    for i1, i2 in zip(forest.continuum,
+                                      continua.get(forest.los_id)):
                         print(i1, i2, np.isclose(i1, i2), i1 - i2)
                 self.assertTrue(
-                    np.allclose(forest.continuum, continua.get(forest.los_id))
-                )
+                    np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
 
         # check that we loaded all quasars
@@ -1891,18 +1812,16 @@ class ExpectedFluxTest(AbstractTest):
         config = ConfigParser()
         kwargs = desi_mock_data_kwargs.copy()
         kwargs["wave solution"] = "log"
-        config.read_dict(
-            {
-                "data": kwargs,
-                "expected flux": {
-                    "type": "TrueContinuum",
-                    "input directory": f"{THIS_DIR}/data",
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
 
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
@@ -1947,22 +1866,22 @@ class ExpectedFluxTest(AbstractTest):
                 if continua.get(forest.los_id) is not None:
                     print(
                         f"For forest with los_id {forest.los_id}, new continuum "
-                        "is None. Expected continua:"
-                    )
+                        "is None. Expected continua:")
                     print(continua.get(forest.los_id))
                 self.assertTrue(continua.get(forest.los_id) is None)
             elif continua.get(forest.los_id) is None:
                 self.assertTrue(forest.continuum is None)
             else:
-                if not np.allclose(forest.continuum, continua.get(forest.los_id)):
+                if not np.allclose(forest.continuum, continua.get(
+                        forest.los_id)):
                     print("Difference found in forest.continuum")
                     print(f"forest.los_id: {forest.los_id}")
                     print(f"result test are_close result-test")
-                    for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
+                    for i1, i2 in zip(forest.continuum,
+                                      continua.get(forest.los_id)):
                         print(i1, i2, np.isclose(i1, i2), i1 - i2)
                 self.assertTrue(
-                    np.allclose(forest.continuum, continua.get(forest.los_id))
-                )
+                    np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
 
         # check that we loaded all quasars
@@ -1979,18 +1898,16 @@ class ExpectedFluxTest(AbstractTest):
         config = ConfigParser()
         kwargs = desi_mock_data_kwargs.copy()
         kwargs["wave solution"] = "log"
-        config.read_dict(
-            {
-                "data": kwargs,
-                "expected flux": {
-                    "type": "TrueContinuum",
-                    "input directory": f"{THIS_DIR}/data",
-                    "iter out prefix": "iter_out_prefix",
-                    "out dir": f"{THIS_DIR}/results/",
-                    "num processors": 1,
-                },
-            }
-        )
+        config.read_dict({
+            "data": kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
+            },
+        })
 
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
@@ -2012,8 +1929,7 @@ class ExpectedFluxTest(AbstractTest):
                 np.allclose(
                     expected_flux.los_ids[59152][key],
                     np.loadtxt(f"{test_folder}/los_ids_{i}.txt"),
-                )
-            )
+                ))
 
 
 if __name__ == "__main__":

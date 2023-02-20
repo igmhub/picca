@@ -223,9 +223,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
             # this bit is what is actually freeing eta for the fit
             self.fit_variance_functions.append("eta")
 
-        self.get_eta = interp1d(
-            self.log_lambda_var_func_grid, eta, fill_value="extrapolate", kind="nearest"
-        )
+        self.get_eta = interp1d(self.log_lambda_var_func_grid,
+                                eta,
+                                fill_value="extrapolate",
+                                kind="nearest")
 
     def _initialize_get_fudge(self):
         """Initialiaze function get_fudge"""
@@ -275,16 +276,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # if use_ivar_as_weight is set, eta, var_lss and fudge will be ignored
         # print a message to inform the user
         if self.use_ivar_as_weight:
-            self.logger.info(
-                ("using ivar as weights, ignoring eta, " "var_lss, fudge fits")
-            )
+            self.logger.info(("using ivar as weights, ignoring eta, "
+                              "var_lss, fudge fits"))
             valid_fit = np.ones(self.num_bins_variance, dtype=bool)
         # if use_constant_weight is set then initialize eta, var_lss, and fudge
         # with values to have constant weights
         elif self.use_constant_weight:
-            self.logger.info(
-                ("using constant weights, ignoring eta, " "var_lss, fudge fits")
-            )
+            self.logger.info(("using constant weights, ignoring eta, "
+                              "var_lss, fudge fits"))
             valid_fit = np.ones(self.num_bins_variance, dtype=bool)
         # normal initialization: eta, var_lss, and fudge are ignored in the
         # first iteration
@@ -320,7 +319,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ------
         ExpectedFluxError if variables are not valid
         """
-        self.force_stack_delta_to_zero = config.getboolean("force stack delta to zero")
+        self.force_stack_delta_to_zero = config.getboolean(
+            "force stack delta to zero")
         if self.force_stack_delta_to_zero is None:
             raise ExpectedFluxError(
                 "Missing argument 'force stack delta to zero' required by Dr16ExpectedFlux"
@@ -329,8 +329,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         limit_eta_string = config.get("limit eta")
         if limit_eta_string is None:
             raise ExpectedFluxError(
-                "Missing argument 'limit eta' required by Dr16ExpectedFlux"
-            )
+                "Missing argument 'limit eta' required by Dr16ExpectedFlux")
         limit_eta = limit_eta_string.split(",")
         if limit_eta[0].startswith("(") or limit_eta[0].startswith("["):
             eta_min = float(limit_eta[0][1:])
@@ -345,8 +344,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         limit_var_lss_string = config.get("limit var lss")
         if limit_var_lss_string is None:
             raise ExpectedFluxError(
-                "Missing argument 'limit var lss' required by Dr16ExpectedFlux"
-            )
+                "Missing argument 'limit var lss' required by Dr16ExpectedFlux")
         limit_var_lss = limit_var_lss_string.split(",")
         if limit_var_lss[0].startswith("(") or limit_var_lss[0].startswith("["):
             var_lss_min = float(limit_var_lss[0][1:])
@@ -373,8 +371,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.order = config.getint("order")
         if self.order is None:
             raise ExpectedFluxError(
-                "Missing argument 'order' required by Dr16ExpectedFlux"
-            )
+                "Missing argument 'order' required by Dr16ExpectedFlux")
 
         self.use_constant_weight = config.getboolean("use constant weight")
         if self.use_constant_weight is None:
@@ -386,8 +383,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 "Deprecation Warning: option 'use constant weight' is now deprecated "
                 "and will be removed in future versions. Consider using class "
                 "Dr16FixedEtaVarlssFudgeExpectedFlux with options 'eta = 0', "
-                "'var lss = 1' and 'fudge = 0'"
-            )
+                "'var lss = 1' and 'fudge = 0'")
             # if use_ivar_as_weight is set, we fix eta=1, var_lss=0 and fudge=0
             # if use_constant_weight is set, we fix eta=0, var_lss=1, and fudge=0
 
@@ -401,8 +397,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 "Deprecation Warning: option 'use ivar as weight' is now deprecated "
                 "and will be removed in future versions. Consider using class "
                 "Dr16FixedEtaVarlssFudgeExpectedFlux with options 'eta = 1', "
-                "'var lss = 0' and 'fudge = 0'"
-            )
+                "'var lss = 0' and 'fudge = 0'")
 
     def compute_expected_flux(self, forests):
         """Compute the mean expected flux of the forests.
@@ -426,31 +421,27 @@ class Dr16ExpectedFlux(ExpectedFlux):
             )
             if self.num_processors > 1:
                 with context.Pool(processes=self.num_processors) as pool:
-                    arguments = [
-                        (
-                            forest,
-                            self.get_mean_cont,
-                            self.get_eta,
-                            self.get_var_lss,
-                            self.get_fudge,
-                            self.use_constant_weight,
-                            self.order,
-                        )
-                        for forest in forests
-                    ]
+                    arguments = [(
+                        forest,
+                        self.get_mean_cont,
+                        self.get_eta,
+                        self.get_var_lss,
+                        self.get_fudge,
+                        self.use_constant_weight,
+                        self.order,
+                    ) for forest in forests]
                     imap_it = pool.starmap(compute_continuum, arguments)
 
                     self.continuum_fit_parameters = {}
                     for forest, (
-                        cont_model,
-                        bad_continuum_reason,
-                        continuum_fit_parameters,
+                            cont_model,
+                            bad_continuum_reason,
+                            continuum_fit_parameters,
                     ) in zip(forests, imap_it):
                         forest.bad_continuum_reason = bad_continuum_reason
                         forest.continuum = cont_model
                         self.continuum_fit_parameters[
-                            forest.los_id
-                        ] = continuum_fit_parameters
+                            forest.los_id] = continuum_fit_parameters
 
             else:
                 self.continuum_fit_parameters = {}
@@ -472,8 +463,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     forest.bad_continuum_reason = bad_continuum_reason
                     forest.continuum = cont_model
                     self.continuum_fit_parameters[
-                        forest.los_id
-                    ] = continuum_fit_parameters
+                        forest.los_id] = continuum_fit_parameters
             t1 = time.time()
             self.logger.info(f"Time spent computing quasar continua: {t1-t0}")
 
@@ -482,7 +472,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 t0 = time.time()
                 self.compute_mean_cont(forests)
                 t1 = time.time()
-                self.logger.info(f"Time spent computing the mean continuum: {t1-t0}")
+                self.logger.info(
+                    f"Time spent computing the mean continuum: {t1-t0}")
 
                 # Compute observer-frame mean quantities (var_lss, eta, fudge)
                 if not (self.use_ivar_as_weight or self.use_constant_weight):
@@ -490,8 +481,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     self.compute_var_stats(forests)
                     t1 = time.time()
                     self.logger.info(
-                        f"Time spent computing eta, var_lss and fudge: {t1-t0}"
-                    )
+                        f"Time spent computing eta, var_lss and fudge: {t1-t0}")
 
             # compute the mean deltas
             t0 = time.time()
@@ -507,8 +497,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             self.logger.progress(
                 f"Continuum fitting: ending iteration {iteration} of "
-                f"{self.num_iterations}"
-            )
+                f"{self.num_iterations}")
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
@@ -528,7 +517,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         variance = np.empty_like(forest.log_lambda)
         variance[~w] = np.inf
 
-        var_pipe = 1.0 / forest.ivar[w] / continuum[w] ** 2
+        var_pipe = 1.0 / forest.ivar[w] / continuum[w]**2
         var_lss = self.get_var_lss(forest.log_lambda[w])
         eta = self.get_eta(forest.log_lambda[w])
         fudge = self.get_fudge(forest.log_lambda[w])
@@ -560,8 +549,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
 
         super()._compute_mean_cont(
-            forests, lambda forest: forest.flux / (forest.continuum + 1e-16)
-        )
+            forests, lambda forest: forest.flux / (forest.continuum + 1e-16))
 
     def compute_var_stats(self, forests):
         """Compute variance functions and statistics
@@ -607,8 +595,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         self.logger.progress(" Mean quantities in observer-frame")
         self.logger.progress(
-            " loglam    eta      var_lss  fudge    chi2     num_pix valid_fit"
-        )
+            " loglam    eta      var_lss  fudge    chi2     num_pix valid_fit")
         for index in range(self.num_bins_variance):
             leasts_squares.set_fit_bins(index)
 
@@ -628,8 +615,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
             minimizer.errordef = 1.0
             minimizer.print_level = 0
             minimizer.fixed["eta"] = "eta" not in self.fit_variance_functions
-            minimizer.fixed["var_lss"] = "var_lss" not in self.fit_variance_functions
-            minimizer.fixed["fudge"] = "fudge" not in self.fit_variance_functions
+            minimizer.fixed[
+                "var_lss"] = "var_lss" not in self.fit_variance_functions
+            minimizer.fixed[
+                "fudge"] = "fudge" not in self.fit_variance_functions
             minimizer.migrad()
 
             if minimizer.valid:
@@ -781,7 +770,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 stack_delta = self.get_stack_delta(forest.log_lambda)
                 mean_expected_flux *= stack_delta
 
-            weights = 1.0 / self.compute_forest_variance(forest, mean_expected_flux)
+            weights = 1.0 / self.compute_forest_variance(
+                forest, mean_expected_flux)
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,
@@ -790,7 +780,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             }
             if isinstance(forest, Pk1dForest):
                 eta = self.get_eta(forest.log_lambda)
-                ivar = forest.ivar / (eta + (eta == 0)) * (mean_expected_flux**2)
+                ivar = forest.ivar / (eta +
+                                      (eta == 0)) * (mean_expected_flux**2)
 
                 forest_info["ivar"] = ivar
             self.los_ids[forest.los_id] = forest_info

@@ -74,7 +74,8 @@ class RejectionLogFromImage(RejectionLog):
 
         size = forest.flux.size
 
-        self.data.append(tuple(forest.get_metadata() + [size, rejection_status]))
+        self.data.append(tuple(forest.get_metadata() +
+                               [size, rejection_status]))
 
     def save_rejection_log(self):
         """Saves the rejection log arrays.

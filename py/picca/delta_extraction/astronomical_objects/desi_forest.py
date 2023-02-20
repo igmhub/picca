@@ -65,9 +65,8 @@ class DesiForest(Forest):
 
         self.targetid = kwargs.get("targetid")
         if self.targetid is None:
-            raise AstronomicalObjectError(
-                "Error constructing DesiForest. " "Missing variable 'targetid'"
-            )
+            raise AstronomicalObjectError("Error constructing DesiForest. "
+                                          "Missing variable 'targetid'")
         del kwargs["targetid"]
 
         self.tile = []
@@ -98,8 +97,7 @@ class DesiForest(Forest):
             raise AstronomicalObjectError(
                 "Error coadding DesiForest. Expected "
                 "DesiForest instance in other. Found: "
-                f"{type(other).__name__}"
-            )
+                f"{type(other).__name__}")
         self.night += other.night
         self.petal += other.petal
         self.tile += other.tile

@@ -14,8 +14,7 @@ from picca.delta_extraction.data_catalogues.desi_data import (
     merge_new_forest,
 )
 from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
-    defaults,
-    accepted_options,
+    defaults, accepted_options,
 )
 from picca.delta_extraction.errors import DataError
 
@@ -70,8 +69,7 @@ class DesiTile(DesiData):
             glob.glob(
                 os.path.join(self.input_directory, f"**/{coadd_name}-*.fits"),
                 recursive=True,
-            )
-        )
+            ))
 
         if "cumulative" in self.input_directory:
             petal_tile_night = [
@@ -111,7 +109,8 @@ class DesiTile(DesiData):
                 )
                 for forests_by_targetid_aux, _ in imap_it:
                     # Merge each dict to master forests_by_targetid
-                    merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
+                    merge_new_forest(forests_by_targetid,
+                                     forests_by_targetid_aux)
         else:
             num_data = 0
             reader = DesiTileFileHandler(
@@ -122,13 +121,11 @@ class DesiTile(DesiData):
             )
             for index, filename in enumerate(filenames):
                 forests_by_targetid_aux, num_data_aux = reader(
-                    (filename, self.catalogue)
-                )
+                    (filename, self.catalogue))
                 merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
                 num_data += num_data_aux
                 self.logger.progress(
-                    f"read tile {index} of {len(filename)}. ndata: {num_data}"
-                )
+                    f"read tile {index} of {len(filename)}. ndata: {num_data}")
 
                 self.logger.progress(f"Found {num_data} quasars in input files")
 
@@ -155,7 +152,8 @@ class DesiTileFileHandler(DesiDataFileHandler):
     (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
     """
 
-    def __init__(self, analysis_type, use_non_coadded_spectra, logger, input_directory):
+    def __init__(self, analysis_type, use_non_coadded_spectra, logger,
+                 input_directory):
         """Initialize file handler
 
         Arguments
@@ -229,8 +227,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
                 spec["WAVELENGTH"] = hdul[f"{color}_WAVELENGTH"].read()
                 spec["FLUX"] = hdul[f"{color}_FLUX"].read()
                 spec["IVAR"] = hdul[f"{color}_IVAR"].read() * (
-                    hdul[f"{color}_MASK"].read() == 0
-                )
+                    hdul[f"{color}_MASK"].read() == 0)
                 if self.analysis_type == "PK 1D":
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
@@ -239,8 +236,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
                             "Error while reading {color} band from "
                             "{filename}. Analysis type is  'PK 1D', "
                             "but file does not contain HDU "
-                            f"'{color}_RESOLUTION' "
-                        )
+                            f"'{color}_RESOLUTION' ")
                 w = np.isnan(spec["FLUX"]) | np.isnan(spec["IVAR"])
                 for key in ["FLUX", "IVAR"]:
                     spec[key][w] = 0.0
@@ -248,26 +244,20 @@ class DesiTileFileHandler(DesiDataFileHandler):
             except OSError:
                 self.logger.warning(
                     f"Error while reading {color} band from {filename}."
-                    "Ignoring color."
-                )
+                    "Ignoring color.")
 
         hdul.close()
 
         if "cumulative" in self.input_directory:
-            select = (
-                (catalogue["TILEID"] == tile_spec)
-                & (catalogue["PETAL_LOC"] == petal_spec)
-                & (catalogue["LASTNIGHT"] == night_spec)
-            )
+            select = ((catalogue["TILEID"] == tile_spec) &
+                      (catalogue["PETAL_LOC"] == petal_spec) &
+                      (catalogue["LASTNIGHT"] == night_spec))
         else:
-            select = (
-                (catalogue["TILEID"] == tile_spec)
-                & (catalogue["PETAL_LOC"] == petal_spec)
-                & (catalogue["NIGHT"] == night_spec)
-            )
+            select = ((catalogue["TILEID"] == tile_spec) &
+                      (catalogue["PETAL_LOC"] == petal_spec) &
+                      (catalogue["NIGHT"] == night_spec))
         self.logger.progress(
-            f"This is tile {tile_spec}, petal {petal_spec}, night {night_spec}"
-        )
+            f"This is tile {tile_spec}, petal {petal_spec}, night {night_spec}")
 
         forests_by_targetid, num_data = self.format_data(
             catalogue[select],

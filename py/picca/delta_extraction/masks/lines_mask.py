@@ -57,9 +57,8 @@ class LinesMask(Mask):
             self.mask_rest_frame = mask[select_rest_frame_mask]
             self.mask_obs_frame = mask[select_obs_mask]
         except (OSError, ValueError) as error:
-            raise MaskError(
-                "Error loading SkyMask. Unable to read mask file. " f"File {mask_file}"
-            ) from error
+            raise MaskError("Error loading SkyMask. Unable to read mask file. "
+                            f"File {mask_file}") from error
 
     def apply_mask(self, forest):
         """Apply the mask. The mask is done by removing the affected
@@ -78,7 +77,10 @@ class LinesMask(Mask):
         w = np.ones(forest.log_lambda.size, dtype=bool)
         mask_idx_ranges = np.searchsorted(
             forest.log_lambda,
-            [self.mask_obs_frame["log_wave_min"], self.mask_obs_frame["log_wave_max"]],
+            [
+                self.mask_obs_frame["log_wave_min"],
+                self.mask_obs_frame["log_wave_max"]
+            ],
         ).T
         for idx1, idx2 in mask_idx_ranges:
             w[idx1:idx2] = 0

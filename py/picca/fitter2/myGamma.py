@@ -32,7 +32,7 @@ def gamma(z):  # great function from Wiki, but maybe could use memorization?
         x += pval / (z + i + 1)
 
     t = z + len(p) - 0.5
-    result = sqrt(2 * pi) * t ** (z + 0.5) * exp(-t) * x
+    result = sqrt(2 * pi) * t**(z + 0.5) * exp(-t) * x
 
     if withinepsilon(result.imag):
         return result.real

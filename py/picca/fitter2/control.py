@@ -29,7 +29,5 @@ class fitter2:
             self.chi2.fastMC()
             self.chi2.export()
         else:
-            raise ValueError(
-                'You called "fitter.run()" without \
-                asking for chi2. Set "chi2 = True" in [control]'
-            )
+            raise ValueError('You called "fitter.run()" without \
+                asking for chi2. Set "chi2 = True" in [control]')

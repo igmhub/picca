@@ -78,24 +78,17 @@ class OpticalDepthCorrection(Correction):
         self.lambda_rest_frame_list = [
             ABSORBER_IGM[absorber] for absorber in absorber_list
         ]
-        if not (
-            len(self.tau_list) == len(self.gamma_list)
-            and len(self.tau_list) == len(self.lambda_rest_frame_list)
-        ):
-            raise CorrectionError(
-                "Variables 'optical depth tau', 'optical "
-                "depth gamma' and 'optical depth absorber' "
-                "should have the same number of entries"
-            )
+        if not (len(self.tau_list) == len(self.gamma_list) and
+                len(self.tau_list) == len(self.lambda_rest_frame_list)):
+            raise CorrectionError("Variables 'optical depth tau', 'optical "
+                                  "depth gamma' and 'optical depth absorber' "
+                                  "should have the same number of entries")
 
         self.logger.info(f"Adding {len(self.tau_list)} optical depths")
-        for tau, gamma, lambda_rest_frame in zip(
-            self.tau_list, self.gamma_list, self.lambda_rest_frame_list
-        ):
-            self.logger.info(
-                f"   tau = {tau}, gamma = {gamma}, "
-                f"lambda_rest_frame = {lambda_rest_frame}"
-            )
+        for tau, gamma, lambda_rest_frame in zip(self.tau_list, self.gamma_list,
+                                                 self.lambda_rest_frame_list):
+            self.logger.info(f"   tau = {tau}, gamma = {gamma}, "
+                             f"lambda_rest_frame = {lambda_rest_frame}")
 
     def apply_correction(self, forest):
         """Apply the correction. Correction is applied by dividing the
@@ -108,11 +101,10 @@ class OpticalDepthCorrection(Correction):
         A Forest instance to which the correction is applied
         """
         mean_optical_depth = np.ones(forest.log_lambda.size)
-        for tau, gamma, lambda_rest_frame in zip(
-            self.tau_list, self.gamma_list, self.lambda_rest_frame_list
-        ):
+        for tau, gamma, lambda_rest_frame in zip(self.tau_list, self.gamma_list,
+                                                 self.lambda_rest_frame_list):
             w = 10.0**forest.log_lambda / (1.0 + forest.z) <= lambda_rest_frame
             z = 10.0**forest.log_lambda / lambda_rest_frame - 1.0
-            mean_optical_depth[w] *= np.exp(-tau * (1.0 + z[w]) ** gamma)
+            mean_optical_depth[w] *= np.exp(-tau * (1.0 + z[w])**gamma)
 
         forest.transmission_correction *= mean_optical_depth

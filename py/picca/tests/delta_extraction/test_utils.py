@@ -48,9 +48,8 @@ def setup_forest(wave_solution, rebin=1, pixel_step=None):
     pixel_step *= rebin
     pixel_step_rf = pixel_step
 
-    Forest.set_class_variables(
-        3600.0, 5500.0, 1040.0, 1200.0, pixel_step, pixel_step_rf, wave_solution
-    )
+    Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step,
+                               pixel_step_rf, wave_solution)
 
 
 setup_forest("log", rebin=3)
@@ -94,7 +93,8 @@ forest1.rebin()
 assert np.allclose(forest1.flux, np.ones_like(forest1_log_lambda))
 assert np.allclose(forest1.log_lambda, forest1_log_lambda)
 assert np.allclose(forest1.ivar, np.ones_like(forest1_log_lambda) * 4)
-assert np.allclose(forest1.transmission_correction, np.ones_like(forest1_log_lambda))
+assert np.allclose(forest1.transmission_correction,
+                   np.ones_like(forest1_log_lambda))
 
 # create SdssForest instance forest2
 # has:
@@ -120,7 +120,8 @@ forest2.rebin()
 assert np.allclose(forest2.flux, np.ones_like(forest2_log_lambda))
 assert np.allclose(forest2.log_lambda, forest2_log_lambda)
 assert np.allclose(forest2.ivar, np.ones_like(forest2_log_lambda) * 4)
-assert np.allclose(forest2.transmission_correction, np.ones_like(forest2_log_lambda))
+assert np.allclose(forest2.transmission_correction,
+                   np.ones_like(forest2_log_lambda))
 
 # create SdssForest instance forest3
 # has:
@@ -146,7 +147,8 @@ forest3.rebin()
 assert np.allclose(forest3.flux, np.ones_like(forest3_log_lambda))
 assert np.allclose(forest3.log_lambda, forest3_log_lambda)
 assert np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda) * 4)
-assert np.allclose(forest3.transmission_correction, np.ones_like(forest3_log_lambda))
+assert np.allclose(forest3.transmission_correction,
+                   np.ones_like(forest3_log_lambda))
 
 # Dictionary to load data
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -160,21 +162,17 @@ kwargs_data = {
 
 # Dictionary to load DesiHealpix
 desi_healpix_kwargs = kwargs_data.copy()
-desi_healpix_kwargs.update(
-    {
-        "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-        "num processors": 1,
-    }
-)
+desi_healpix_kwargs.update({
+    "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+    "num processors": 1,
+})
 
 # Dictionary to load SdssData
 sdss_data_kwargs = kwargs_data.copy()
-sdss_data_kwargs.update(
-    {
-        "drq catalogue": f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-        "num processors": 1,
-    }
-)
+sdss_data_kwargs.update({
+    "drq catalogue": f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+    "num processors": 1,
+})
 sdss_data_kwargs_filter_forest = {
     "input directory": f"{THIS_DIR}/data",
     "out dir": f"{THIS_DIR}/results",

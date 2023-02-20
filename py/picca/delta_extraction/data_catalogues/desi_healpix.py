@@ -14,8 +14,7 @@ from picca.delta_extraction.data_catalogues.desi_data import (
     merge_new_forest,
 )
 from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
-    defaults,
-    accepted_options,
+    defaults, accepted_options,
 )
 from picca.delta_extraction.errors import DataError
 
@@ -82,8 +81,7 @@ class DesiHealpix(DesiData):
         coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
         filename = (
             f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
-            f"dark-{healpix}.fits"
-        )
+            f"dark-{healpix}.fits")
         # TODO: not sure if we want the dark survey to be hard coded
         # in here, probably won't run on anything else, but still
         return filename, False
@@ -123,27 +121,27 @@ class DesiHealpix(DesiData):
             context = multiprocessing.get_context("fork")
             with context.Pool(processes=self.num_processors) as pool:
                 imap_it = pool.imap(
-                    DesiHealpixFileHandler(
-                        self.analysis_type, self.use_non_coadded_spectra, self.logger
-                    ),
+                    DesiHealpixFileHandler(self.analysis_type,
+                                           self.use_non_coadded_spectra,
+                                           self.logger),
                     arguments,
                 )
                 for forests_by_targetid_aux, _ in imap_it:
                     # Merge each dict to master forests_by_targetid
-                    merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
+                    merge_new_forest(forests_by_targetid,
+                                     forests_by_targetid_aux)
 
         else:
-            reader = DesiHealpixFileHandler(
-                self.analysis_type, self.use_non_coadded_spectra, self.logger
-            )
+            reader = DesiHealpixFileHandler(self.analysis_type,
+                                            self.use_non_coadded_spectra,
+                                            self.logger)
             num_data = 0
             for index, this_arg in enumerate(arguments):
                 forests_by_targetid_aux, num_data_aux = reader(this_arg)
                 merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
                 num_data += num_data_aux
-                self.logger.progress(
-                    f"Read {index} of {len(arguments)}. " f"num_data: {num_data}"
-                )
+                self.logger.progress(f"Read {index} of {len(arguments)}. "
+                                     f"num_data: {num_data}")
 
         if len(forests_by_targetid) == 0:
             raise DataError("No quasars found, stopping here")
@@ -204,15 +202,17 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
         if "Z_FLUX" in hdul:
             colors.append("Z")
         else:
-            self.logger.warning(f"Missing Z band from {filename}. Ignoring color.")
+            self.logger.warning(
+                f"Missing Z band from {filename}. Ignoring color.")
 
         hdul_truth = None
         reso_from_truth = False
         if self.analysis_type == "PK 1D" and any(
-            f"{c}_RESOLUTION" not in hdul for c in colors
-        ):
-            self.logger.debug("no resolution in files, reading from truth files")
-            basename_truth = os.path.basename(filename).replace("spectra-", "truth-")
+                f"{c}_RESOLUTION" not in hdul for c in colors):
+            self.logger.debug(
+                "no resolution in files, reading from truth files")
+            basename_truth = os.path.basename(filename).replace(
+                "spectra-", "truth-")
             pathname_truth = os.path.dirname(filename)
             filename_truth = f"{pathname_truth}/{basename_truth}"
             if os.path.exists(filename_truth):
@@ -225,12 +225,10 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             if hdul_truth is not None:
                 return hdul_truth[f"{color}_RESOLUTION"].read()
 
-            raise DataError(
-                f"Error while reading {color} band from "
-                f"{filename}. Analysis type is 'PK 1D', "
-                "but file does not contain HDU "
-                f"'{color}_RESOLUTION'"
-            )
+            raise DataError(f"Error while reading {color} band from "
+                            f"{filename}. Analysis type is 'PK 1D', "
+                            "but file does not contain HDU "
+                            f"'{color}_RESOLUTION'")
 
         for color in colors:
             spec = {}
@@ -238,8 +236,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
                 spec["WAVELENGTH"] = hdul[f"{color}_WAVELENGTH"].read()
                 spec["FLUX"] = hdul[f"{color}_FLUX"].read()
                 spec["IVAR"] = hdul[f"{color}_IVAR"].read() * (
-                    hdul[f"{color}_MASK"].read() == 0
-                )
+                    hdul[f"{color}_MASK"].read() == 0)
                 w = np.isnan(spec["FLUX"]) | np.isnan(spec["IVAR"])
                 for key in ["FLUX", "IVAR"]:
                     spec[key][w] = 0.0
@@ -251,8 +248,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             except OSError:
                 self.logger.warning(
                     f"Error while reading {color} band from {filename}. "
-                    "Ignoring color."
-                )
+                    "Ignoring color.")
         hdul.close()
         if hdul_truth is not None:
             hdul_truth.close()

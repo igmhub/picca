@@ -7,24 +7,31 @@ import argparse
 
 def main(cmdargs):
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument(
-        "--prefix-pk", type=str, default=None, required=True, help="Prefix to pk file"
-    )
+    parser.add_argument("--prefix-pk",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Prefix to pk file")
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
-    parser.add_argument(
-        "--zref", type=float, default=None, required=True, help="Reference redshift"
-    )
+    parser.add_argument("--zref",
+                        type=float,
+                        default=None,
+                        required=True,
+                        help="Reference redshift")
 
-    parser.add_argument(
-        "--Om", type=float, default=None, required=True, help="Matter density parameter"
-    )
+    parser.add_argument("--Om",
+                        type=float,
+                        default=None,
+                        required=True,
+                        help="Matter density parameter")
 
     parser.add_argument(
         "--Ok",
@@ -42,9 +49,11 @@ def main(cmdargs):
         help="Dark energy equation of state",
     )
 
-    parser.add_argument(
-        "--H0", type=float, default=None, required=True, help="Hubble constant"
-    )
+    parser.add_argument("--H0",
+                        type=float,
+                        default=None,
+                        required=True,
+                        help="Hubble constant")
 
     parser.add_argument(
         "--sigma8",

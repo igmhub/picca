@@ -8,13 +8,13 @@ Fvoigt_data = []
 
 
 class pk:
+
     def __init__(self, func, name_model=None):
         self.func = func
         global Fvoigt_data
         if (not name_model is None) and (Fvoigt_data == []):
             path = "{}/models/fvoigt_models/Fvoigt_{}.txt".format(
-                resource_filename("picca", "fitter2"), name_model
-            )
+                resource_filename("picca", "fitter2"), name_model)
             Fvoigt_data = np.loadtxt(path)
 
     def __call__(self, k, pk_lin, tracer1, tracer2, **kwargs):
@@ -22,8 +22,8 @@ class pk:
 
     def __mul__(self, func2):
         func = lambda k, pk_lin, tracer1, tracer2, **kwargs: self(
-            k, pk_lin, tracer1, tracer2, **kwargs
-        ) * func2(k, pk_lin, tracer1, tracer2, **kwargs)
+            k, pk_lin, tracer1, tracer2, **kwargs) * func2(
+                k, pk_lin, tracer1, tracer2, **kwargs)
         return pk(func)
 
     __imul__ = __mul__
@@ -33,8 +33,8 @@ class pk:
 def pk_NL(k, pk_lin, tracer1, tracer2, **kwargs):
     kp = k * muk
     kt = k * np.sqrt(1 - muk**2)
-    st2 = kwargs["sigmaNL_per"] ** 2
-    sp2 = kwargs["sigmaNL_par"] ** 2
+    st2 = kwargs["sigmaNL_per"]**2
+    sp2 = kwargs["sigmaNL_par"]**2
     return np.exp(-(kp**2 * sp2 + kt**2 * st2) / 2)
 
 
@@ -56,22 +56,15 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
     F_hcd = utils.sinc(kp * L0)
 
     bias_eff1 = bias1 + bias_hcd * F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd * beta_hcd * F_hcd) / (
-        bias1 + bias_hcd * F_hcd
-    )
+    beta_eff1 = (bias1 * beta1 +
+                 bias_hcd * beta_hcd * F_hcd) / (bias1 + bias_hcd * F_hcd)
 
     bias_eff2 = bias2 + bias_hcd * F_hcd
-    beta_eff2 = (bias2 * beta2 + bias_hcd * beta_hcd * F_hcd) / (
-        bias2 + bias_hcd * F_hcd
-    )
+    beta_eff2 = (bias2 * beta2 +
+                 bias_hcd * beta_hcd * F_hcd) / (bias2 + bias_hcd * F_hcd)
 
-    pk = (
-        pk_lin
-        * bias_eff1
-        * bias_eff2
-        * (1 + beta_eff1 * muk**2)
-        * (1 + beta_eff2 * muk**2)
-    )
+    pk = (pk_lin * bias_eff1 * bias_eff2 * (1 + beta_eff1 * muk**2) *
+          (1 + beta_eff2 * muk**2))
 
     return pk
 
@@ -102,22 +95,15 @@ def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
     F_hcd = np.exp(-L0 * kp)
 
     bias_eff1 = bias1 + bias_hcd * F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd * beta_hcd * F_hcd) / (
-        bias1 + bias_hcd * F_hcd
-    )
+    beta_eff1 = (bias1 * beta1 +
+                 bias_hcd * beta_hcd * F_hcd) / (bias1 + bias_hcd * F_hcd)
 
     bias_eff2 = bias2 + bias_hcd * F_hcd
-    beta_eff2 = (bias2 * beta2 + bias_hcd * beta_hcd * F_hcd) / (
-        bias2 + bias_hcd * F_hcd
-    )
+    beta_eff2 = (bias2 * beta2 +
+                 bias_hcd * beta_hcd * F_hcd) / (bias2 + bias_hcd * F_hcd)
 
-    pk = (
-        pk_lin
-        * bias_eff1
-        * bias_eff2
-        * (1 + beta_eff1 * muk**2)
-        * (1 + beta_eff2 * muk**2)
-    )
+    pk = (pk_lin * bias_eff1 * bias_eff2 * (1 + beta_eff1 * muk**2) *
+          (1 + beta_eff2 * muk**2))
 
     return pk
 
@@ -148,22 +134,15 @@ def pk_hcd_no_mask(k, pk_lin, tracer1, tracer2, **kwargs):
     F_hcd = np.interp(L0 * kp, k_data, F_data, left=0, right=0)
 
     bias_eff1 = bias1 + bias_hcd * F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd * beta_hcd * F_hcd) / (
-        bias1 + bias_hcd * F_hcd
-    )
+    beta_eff1 = (bias1 * beta1 +
+                 bias_hcd * beta_hcd * F_hcd) / (bias1 + bias_hcd * F_hcd)
 
     bias_eff2 = bias2 + bias_hcd * F_hcd
-    beta_eff2 = (bias2 * beta2 + bias_hcd * beta_hcd * F_hcd) / (
-        bias2 + bias_hcd * F_hcd
-    )
+    beta_eff2 = (bias2 * beta2 +
+                 bias_hcd * beta_hcd * F_hcd) / (bias2 + bias_hcd * F_hcd)
 
-    pk = (
-        pk_lin
-        * bias_eff1
-        * bias_eff2
-        * (1 + beta_eff1 * muk**2)
-        * (1 + beta_eff2 * muk**2)
-    )
+    pk = (pk_lin * bias_eff1 * bias_eff2 * (1 + beta_eff1 * muk**2) *
+          (1 + beta_eff2 * muk**2))
 
     return pk
 
@@ -207,22 +186,15 @@ def pk_hcd_uv(k, pk_lin, tracer1, tracer2, **kwargs):
     F_hcd = utils.sinc(kp * L0)
 
     bias_eff1 = bias1 + bias_hcd * F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd * beta_hcd * F_hcd) / (
-        bias1 + bias_hcd * F_hcd
-    )
+    beta_eff1 = (bias1 * beta1 +
+                 bias_hcd * beta_hcd * F_hcd) / (bias1 + bias_hcd * F_hcd)
 
     bias_eff2 = bias2 + bias_hcd * F_hcd
-    beta_eff2 = (bias2 * beta2 + bias_hcd * beta_hcd * F_hcd) / (
-        bias2 + bias_hcd * F_hcd
-    )
+    beta_eff2 = (bias2 * beta2 +
+                 bias_hcd * beta_hcd * F_hcd) / (bias2 + bias_hcd * F_hcd)
 
-    pk = (
-        pk_lin
-        * bias_eff1
-        * bias_eff2
-        * (1 + beta_eff1 * muk**2)
-        * (1 + beta_eff2 * muk**2)
-    )
+    pk = (pk_lin * bias_eff1 * bias_eff2 * (1 + beta_eff1 * muk**2) *
+          (1 + beta_eff2 * muk**2))
 
     return pk
 
@@ -253,30 +225,23 @@ def pk_hcd_Rogers2018_uv(k, pk_lin, tracer1, tracer2, **kwargs):
     F_hcd = np.exp(-kp * L0)
 
     bias_eff1 = bias1 + bias_hcd * F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd * beta_hcd * F_hcd) / (
-        bias1 + bias_hcd * F_hcd
-    )
+    beta_eff1 = (bias1 * beta1 +
+                 bias_hcd * beta_hcd * F_hcd) / (bias1 + bias_hcd * F_hcd)
 
     bias_eff2 = bias2 + bias_hcd * F_hcd
-    beta_eff2 = (bias2 * beta2 + bias_hcd * beta_hcd * F_hcd) / (
-        bias2 + bias_hcd * F_hcd
-    )
+    beta_eff2 = (bias2 * beta2 +
+                 bias_hcd * beta_hcd * F_hcd) / (bias2 + bias_hcd * F_hcd)
 
-    pk = (
-        pk_lin
-        * bias_eff1
-        * bias_eff2
-        * (1 + beta_eff1 * muk**2)
-        * (1 + beta_eff2 * muk**2)
-    )
+    pk = (pk_lin * bias_eff1 * bias_eff2 * (1 + beta_eff1 * muk**2) *
+          (1 + beta_eff2 * muk**2))
 
     return pk
 
 
 def dnl_mcdonald(k, pk_lin, tracer1, tracer2, pk_fid, **kwargs):
     assert tracer1["name"] == "LYA" and tracer2["name"] == "LYA"
-    kvel = 1.22 * (1 + k / 0.923) ** 0.451
-    dnl = np.exp((k / 6.4) ** 0.569 - (k / 15.3) ** 2.01 - (k * muk / kvel) ** 1.5)
+    kvel = 1.22 * (1 + k / 0.923)**0.451
+    dnl = np.exp((k / 6.4)**0.569 - (k / 15.3)**2.01 - (k * muk / kvel)**1.5)
     return dnl
 
 
@@ -303,7 +268,8 @@ def cached_g2(function):
         Lpar = kwargs["par binsize {}".format(dataset_name)]
         Lper = kwargs["per binsize {}".format(dataset_name)]
 
-        if dataset_name in memo and np.allclose(memo[dataset_name][0], [Lpar, Lper]):
+        if dataset_name in memo and np.allclose(memo[dataset_name][0],
+                                                [Lpar, Lper]):
             return memo[dataset_name][1]
         else:
             rv = function(*args, **kwargs)
@@ -325,9 +291,8 @@ def G2(k, pk_lin, tracer1, tracer2, dataset_name=None, **kwargs):
 
 def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    assert (tracer1["name"] == "LYA" or tracer2["name"] == "LYA") and (
-        tracer1["name"] != tracer2["name"]
-    )
+    assert (tracer1["name"] == "LYA" or
+            tracer2["name"] == "LYA") and (tracer1["name"] != tracer2["name"])
 
     bias_hcd = kwargs["bias_hcd"]
     beta_hcd = kwargs["beta_hcd"]
@@ -338,37 +303,24 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 
     if tracer1["name"] == "LYA":
         bias_eff1 = bias1 + bias_hcd * F_hcd
-        beta_eff1 = (bias1 * beta1 + bias_hcd * beta_hcd * F_hcd) / (
-            bias1 + bias_hcd * F_hcd
-        )
-        pk = (
-            pk_lin
-            * bias_eff1
-            * bias2
-            * (1 + beta_eff1 * muk**2)
-            * (1 + beta2 * muk**2)
-        )
+        beta_eff1 = (bias1 * beta1 +
+                     bias_hcd * beta_hcd * F_hcd) / (bias1 + bias_hcd * F_hcd)
+        pk = (pk_lin * bias_eff1 * bias2 * (1 + beta_eff1 * muk**2) *
+              (1 + beta2 * muk**2))
     else:
         bias_eff2 = bias2 + bias_hcd * F_hcd
-        beta_eff2 = (bias2 * beta2 + bias_hcd * beta_hcd * F_hcd) / (
-            bias2 + bias_hcd * F_hcd
-        )
-        pk = (
-            pk_lin
-            * bias1
-            * bias_eff2
-            * (1 + beta1 * muk**2)
-            * (1 + beta_eff2 * muk**2)
-        )
+        beta_eff2 = (bias2 * beta2 +
+                     bias_hcd * beta_hcd * F_hcd) / (bias2 + bias_hcd * F_hcd)
+        pk = (pk_lin * bias1 * bias_eff2 * (1 + beta1 * muk**2) *
+              (1 + beta_eff2 * muk**2))
 
     return pk
 
 
 def pk_hcd_Rogers2018_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    assert (tracer1["name"] == "LYA" or tracer2["name"] == "LYA") and (
-        tracer1["name"] != tracer2["name"]
-    )
+    assert (tracer1["name"] == "LYA" or
+            tracer2["name"] == "LYA") and (tracer1["name"] != tracer2["name"])
 
     key = "bias_hcd_{}".format(kwargs["name"])
     if key in kwargs:
@@ -383,37 +335,24 @@ def pk_hcd_Rogers2018_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 
     if tracer1["name"] == "LYA":
         bias_eff1 = bias1 + bias_hcd * F_hcd
-        beta_eff1 = (bias1 * beta1 + bias_hcd * beta_hcd * F_hcd) / (
-            bias1 + bias_hcd * F_hcd
-        )
-        pk = (
-            pk_lin
-            * bias_eff1
-            * bias2
-            * (1 + beta_eff1 * muk**2)
-            * (1 + beta2 * muk**2)
-        )
+        beta_eff1 = (bias1 * beta1 +
+                     bias_hcd * beta_hcd * F_hcd) / (bias1 + bias_hcd * F_hcd)
+        pk = (pk_lin * bias_eff1 * bias2 * (1 + beta_eff1 * muk**2) *
+              (1 + beta2 * muk**2))
     else:
         bias_eff2 = bias2 + bias_hcd * F_hcd
-        beta_eff2 = (bias2 * beta2 + bias_hcd * beta_hcd * F_hcd) / (
-            bias2 + bias_hcd * F_hcd
-        )
-        pk = (
-            pk_lin
-            * bias1
-            * bias_eff2
-            * (1 + beta1 * muk**2)
-            * (1 + beta_eff2 * muk**2)
-        )
+        beta_eff2 = (bias2 * beta2 +
+                     bias_hcd * beta_hcd * F_hcd) / (bias2 + bias_hcd * F_hcd)
+        pk = (pk_lin * bias1 * bias_eff2 * (1 + beta1 * muk**2) *
+              (1 + beta_eff2 * muk**2))
 
     return pk
 
 
 def pk_hcd_cross_no_mask(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    assert (tracer1["name"] == "LYA" or tracer2["name"] == "LYA") and (
-        tracer1["name"] != tracer2["name"]
-    )
+    assert (tracer1["name"] == "LYA" or
+            tracer2["name"] == "LYA") and (tracer1["name"] != tracer2["name"])
 
     key = "bias_hcd_{}".format(kwargs["name"])
     if key in kwargs:
@@ -430,37 +369,24 @@ def pk_hcd_cross_no_mask(k, pk_lin, tracer1, tracer2, **kwargs):
 
     if tracer1["name"] == "LYA":
         bias_eff1 = bias1 + bias_hcd * F_hcd
-        beta_eff1 = (bias1 * beta1 + bias_hcd * beta_hcd * F_hcd) / (
-            bias1 + bias_hcd * F_hcd
-        )
-        pk = (
-            pk_lin
-            * bias_eff1
-            * bias2
-            * (1 + beta_eff1 * muk**2)
-            * (1 + beta2 * muk**2)
-        )
+        beta_eff1 = (bias1 * beta1 +
+                     bias_hcd * beta_hcd * F_hcd) / (bias1 + bias_hcd * F_hcd)
+        pk = (pk_lin * bias_eff1 * bias2 * (1 + beta_eff1 * muk**2) *
+              (1 + beta2 * muk**2))
     else:
         bias_eff2 = bias2 + bias_hcd * F_hcd
-        beta_eff2 = (bias2 * beta2 + bias_hcd * beta_hcd * F_hcd) / (
-            bias2 + bias_hcd * F_hcd
-        )
-        pk = (
-            pk_lin
-            * bias1
-            * bias_eff2
-            * (1 + beta1 * muk**2)
-            * (1 + beta_eff2 * muk**2)
-        )
+        beta_eff2 = (bias2 * beta2 +
+                     bias_hcd * beta_hcd * F_hcd) / (bias2 + bias_hcd * F_hcd)
+        pk = (pk_lin * bias1 * bias_eff2 * (1 + beta1 * muk**2) *
+              (1 + beta_eff2 * muk**2))
 
     return pk
 
 
 def pk_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    assert (tracer1["type"] == "continuous" or tracer2["type"] == "continuous") and (
-        tracer1["type"] != tracer2["type"]
-    )
+    assert (tracer1["type"] == "continuous" or tracer2["type"]
+            == "continuous") and (tracer1["type"] != tracer2["type"])
 
     bias_gamma = kwargs["bias_gamma"]
     bias_prim = kwargs["bias_prim"]
@@ -480,9 +406,8 @@ def pk_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 
 def pk_hcd_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    assert (tracer1["name"] == "LYA" or tracer2["name"] == "LYA") and (
-        tracer1["name"] != tracer2["name"]
-    )
+    assert (tracer1["name"] == "LYA" or
+            tracer2["name"] == "LYA") and (tracer1["name"] != tracer2["name"])
 
     bias_gamma = kwargs["bias_gamma"]
     bias_prim = kwargs["bias_prim"]
@@ -501,39 +426,26 @@ def pk_hcd_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
         beta1 = beta1 / (1 + bias_gamma / bias1 * W / (1 + bias_prim * W))
         bias1 = bias1 + bias_gamma * W / (1 + bias_prim * W)
         bias_eff1 = bias1 + bias_hcd * F_hcd
-        beta_eff1 = (bias1 * beta1 + bias_hcd * beta_hcd * F_hcd) / (
-            bias1 + bias_hcd * F_hcd
-        )
-        pk = (
-            pk_lin
-            * bias_eff1
-            * bias2
-            * (1 + beta_eff1 * muk**2)
-            * (1 + beta2 * muk**2)
-        )
+        beta_eff1 = (bias1 * beta1 +
+                     bias_hcd * beta_hcd * F_hcd) / (bias1 + bias_hcd * F_hcd)
+        pk = (pk_lin * bias_eff1 * bias2 * (1 + beta_eff1 * muk**2) *
+              (1 + beta2 * muk**2))
     else:
         beta2 = beta2 / (1 + bias_gamma / bias2 * W / (1 + bias_prim * W))
         bias2 = bias2 + bias_gamma * W / (1 + bias_prim * W)
         bias_eff2 = bias2 + bias_hcd * F_hcd
-        beta_eff2 = (bias2 * beta2 + bias_hcd * beta_hcd * F_hcd) / (
-            bias2 + bias_hcd * F_hcd
-        )
-        pk = (
-            pk_lin
-            * bias1
-            * bias_eff2
-            * (1 + beta1 * muk**2)
-            * (1 + beta_eff2 * muk**2)
-        )
+        beta_eff2 = (bias2 * beta2 +
+                     bias_hcd * beta_hcd * F_hcd) / (bias2 + bias_hcd * F_hcd)
+        pk = (pk_lin * bias1 * bias_eff2 * (1 + beta1 * muk**2) *
+              (1 + beta_eff2 * muk**2))
 
     return pk
 
 
 def pk_hcd_Rogers2018_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    assert (tracer1["name"] == "LYA" or tracer2["name"] == "LYA") and (
-        tracer1["name"] != tracer2["name"]
-    )
+    assert (tracer1["name"] == "LYA" or
+            tracer2["name"] == "LYA") and (tracer1["name"] != tracer2["name"])
 
     bias_gamma = kwargs["bias_gamma"]
     bias_prim = kwargs["bias_prim"]
@@ -556,30 +468,18 @@ def pk_hcd_Rogers2018_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
         beta1 = beta1 / (1 + bias_gamma / bias1 * W / (1 + bias_prim * W))
         bias1 = bias1 + bias_gamma * W / (1 + bias_prim * W)
         bias_eff1 = bias1 + bias_hcd * F_hcd
-        beta_eff1 = (bias1 * beta1 + bias_hcd * beta_hcd * F_hcd) / (
-            bias1 + bias_hcd * F_hcd
-        )
-        pk = (
-            pk_lin
-            * bias_eff1
-            * bias2
-            * (1 + beta_eff1 * muk**2)
-            * (1 + beta2 * muk**2)
-        )
+        beta_eff1 = (bias1 * beta1 +
+                     bias_hcd * beta_hcd * F_hcd) / (bias1 + bias_hcd * F_hcd)
+        pk = (pk_lin * bias_eff1 * bias2 * (1 + beta_eff1 * muk**2) *
+              (1 + beta2 * muk**2))
     else:
         beta2 = beta2 / (1 + bias_gamma / bias2 * W / (1 + bias_prim * W))
         bias2 = bias2 + bias_gamma * W / (1 + bias_prim * W)
         bias_eff2 = bias2 + bias_hcd * F_hcd
-        beta_eff2 = (bias2 * beta2 + bias_hcd * beta_hcd * F_hcd) / (
-            bias2 + bias_hcd * F_hcd
-        )
-        pk = (
-            pk_lin
-            * bias1
-            * bias_eff2
-            * (1 + beta1 * muk**2)
-            * (1 + beta_eff2 * muk**2)
-        )
+        beta_eff2 = (bias2 * beta2 +
+                     bias_hcd * beta_hcd * F_hcd) / (bias2 + bias_hcd * F_hcd)
+        pk = (pk_lin * bias1 * bias_eff2 * (1 + beta1 * muk**2) *
+              (1 + beta_eff2 * muk**2))
 
     return pk
 
@@ -602,9 +502,9 @@ def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
     """
     kp = k * muk
     kt = k * np.sqrt(1.0 - muk**2)
-    st2 = kwargs["per_sigma_smooth"] ** 2
-    sp2 = kwargs["par_sigma_smooth"] ** 2
-    return np.exp(-(kp**2 * sp2 + kt**2 * st2) / 2.0) ** 2
+    st2 = kwargs["per_sigma_smooth"]**2
+    sp2 = kwargs["par_sigma_smooth"]**2
+    return np.exp(-(kp**2 * sp2 + kt**2 * st2) / 2.0)**2
 
 
 def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
@@ -614,15 +514,15 @@ def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
     """
     kp = k * muk
     kt = k * np.sqrt(1.0 - muk**2)
-    st2 = kwargs["per_sigma_smooth"] ** 2
-    sp2 = kwargs["par_sigma_smooth"] ** 2
+    st2 = kwargs["per_sigma_smooth"]**2
+    sp2 = kwargs["par_sigma_smooth"]**2
 
-    et2 = kwargs["per_exp_smooth"] ** 2
-    ep2 = kwargs["par_exp_smooth"] ** 2
+    et2 = kwargs["per_exp_smooth"]**2
+    ep2 = kwargs["par_exp_smooth"]**2
 
-    return np.exp(-(kp**2 * sp2 + kt**2 * st2) / 2.0) * np.exp(
-        -(np.absolute(kp) * ep2 + np.absolute(kt) * et2)
-    )
+    return np.exp(
+        -(kp**2 * sp2 + kt**2 * st2) /
+        2.0) * np.exp(-(np.absolute(kp) * ep2 + np.absolute(kt) * et2))
 
 
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
@@ -630,13 +530,11 @@ def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
     kp = k * muk
     smooth = np.ones(kp.shape)
     if tracer1["type"] == "discrete":
-        smooth *= np.exp(
-            -0.25 * (kp * kwargs["sigma_velo_gaus_" + tracer1["name"]]) ** 2
-        )
+        smooth *= np.exp(-0.25 *
+                         (kp * kwargs["sigma_velo_gaus_" + tracer1["name"]])**2)
     if tracer2["type"] == "discrete":
-        smooth *= np.exp(
-            -0.25 * (kp * kwargs["sigma_velo_gaus_" + tracer2["name"]]) ** 2
-        )
+        smooth *= np.exp(-0.25 *
+                         (kp * kwargs["sigma_velo_gaus_" + tracer2["name"]])**2)
     return smooth
 
 
@@ -646,10 +544,8 @@ def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
     smooth = np.ones(kp.shape)
     if tracer1["type"] == "discrete":
         smooth *= 1.0 / np.sqrt(
-            1.0 + (kp * kwargs["sigma_velo_lorentz_" + tracer1["name"]]) ** 2
-        )
+            1.0 + (kp * kwargs["sigma_velo_lorentz_" + tracer1["name"]])**2)
     if tracer2["type"] == "discrete":
         smooth *= 1.0 / np.sqrt(
-            1.0 + (kp * kwargs["sigma_velo_lorentz_" + tracer2["name"]]) ** 2
-        )
+            1.0 + (kp * kwargs["sigma_velo_lorentz_" + tracer2["name"]])**2)
     return smooth

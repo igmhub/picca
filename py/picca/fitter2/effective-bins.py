@@ -34,7 +34,7 @@ labels = {
 
 
 def derivative(f, x):
-    eps = 10 ** (-5)
+    eps = 10**(-5)
     der = (f(x + eps) - f(x)) / eps
     return der
 
@@ -44,8 +44,12 @@ def extract_h5file(fname):
 
     f = h5py.File(os.path.expandvars(fname), "r")
 
-    free_p = [el.decode("UTF-8") for el in f["best fit"].attrs["list of free pars"]]
-    fixed_p = [el.decode("UTF-8") for el in f["best fit"].attrs["list of fixed pars"]]
+    free_p = [
+        el.decode("UTF-8") for el in f["best fit"].attrs["list of free pars"]
+    ]
+    fixed_p = [
+        el.decode("UTF-8") for el in f["best fit"].attrs["list of fixed pars"]
+    ]
     pars = {el: f["best fit"].attrs[el][0] for el in free_p}
     err_pars = {el: f["best fit"].attrs[el][1] for el in free_p}
     pars.update({el: f["best fit"].attrs[el][0] for el in fixed_p})
@@ -65,9 +69,8 @@ def extract_data(chi2file, dic_init):
     zeff = cp.get("data sets", "zeff")
 
     for d in cp.get("data sets", "ini files").split():
-        dic_data = fit_parser.parse_data(
-            os.path.expandvars(d), zeff, dic_init["fiducial"]
-        )
+        dic_data = fit_parser.parse_data(os.path.expandvars(d), zeff,
+                                         dic_init["fiducial"])
         name = dic_data["data"]["name"]
         data[name] = {}
 
@@ -132,9 +135,11 @@ def compute_dm_dp(data, dic_init, freep, pars):
     dm = {}
     for p in freep:
         userprint("Parameter {}".format(p))
-        g = functools.partial(
-            xi_mod_p, data=data, dic_init=dic_init, pname=p, pars=pars
-        )
+        g = functools.partial(xi_mod_p,
+                              data=data,
+                              dic_init=dic_init,
+                              pname=p,
+                              pars=pars)
         dm[p] = derivative(g, pars[p])
 
     return dm
@@ -171,7 +176,8 @@ def plot_xi(xi, data, title=" "):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Measure the bins contribution to the fitted parameters and  compute their effective redshift",
+        description=
+        "Measure the bins contribution to the fitted parameters and  compute their effective redshift",
     )
 
     parser.add_argument(
@@ -193,7 +199,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--plot-effective-bins",
         action="store_true",
-        help="Display an image with the bins involved in the fit of each selected parameter",
+        help=
+        "Display an image with the bins involved in the fit of each selected parameter",
     )
 
     args = parser.parse_args()
@@ -202,16 +209,12 @@ if __name__ == "__main__":
     dic_init = fit_parser.parse_chi2(args.chi2_file)
 
     free_pars, fixed_pars, best_fit_pars, err_best_fit_pars = extract_h5file(
-        dic_init["outfile"]
-    )
+        dic_init["outfile"])
     if "all" in args.params:
         args.params = free_pars.copy()
     if np.any(~np.in1d(args.params, free_pars)):
-        print(
-            "ERROR: Some parameters are not fitted {}, the list is {}".format(
-                args.params, free_pars
-            )
-        )
+        print("ERROR: Some parameters are not fitted {}, the list is {}".format(
+            args.params, free_pars))
         sys.exit(12)
 
     ### Computing derivatives for each parameter, in each correlation
@@ -232,7 +235,8 @@ if __name__ == "__main__":
             tres, tden = compute_z0(M, data.z)
             res += [tres]
             den += [tden]
-            userprint("{}, <z> = {}/{} = {}".format(data.name, tres, tden, tres / tden))
+            userprint("{}, <z> = {}/{} = {}".format(data.name, tres, tden,
+                                                    tres / tden))
 
         if len(dic_init["data sets"]["data"]) > 1:
             res = np.array(res).sum()

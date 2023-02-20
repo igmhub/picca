@@ -12,6 +12,7 @@ from pkg_resources import resource_filename
 
 ### Make ConfigParser case sensitive
 class CaseConfigParser(ConfigParser.ConfigParser):
+
     def optionxform(self, optionstr):
         return optionstr
 
@@ -40,9 +41,12 @@ class AbstractTest(unittest.TestCase):
 
         return
 
-    def compare_fits(
-        self, path1, path2, nameRun="", rel_tolerance=1e-05, abs_tolerance=1e-08
-    ):
+    def compare_fits(self,
+                     path1,
+                     path2,
+                     nameRun="",
+                     rel_tolerance=1e-05,
+                     abs_tolerance=1e-08):
         """
             Compares all fits files in 2 directories against each other
 
@@ -81,33 +85,31 @@ class AbstractTest(unittest.TestCase):
             for k in ld_m:
                 d_m = m[i][k][:]
                 d_b = b[i][k][:]
-                if d_m.dtype in ["<U23", "S23"]:  # for fitsio old version compatibility
+                if d_m.dtype in ["<U23",
+                                 "S23"]:  # for fitsio old version compatibility
                     d_m = np.char.strip(d_m)
-                if d_b.dtype in ["<U23", "S23"]:  # for fitsio old version compatibility
+                if d_b.dtype in ["<U23",
+                                 "S23"]:  # for fitsio old version compatibility
                     d_b = np.char.strip(d_b)
-                self.assertEqual(
-                    d_m.size, d_b.size, "{}: Header key is {}".format(nameRun, k)
-                )
+                self.assertEqual(d_m.size, d_b.size,
+                                 "{}: Header key is {}".format(nameRun, k))
                 if not np.array_equal(d_m, d_b):
                     userprint(
-                        "WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose".format(
-                            nameRun, k
-                        )
-                    )
+                        "WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose"
+                        .format(nameRun, k))
                     diff = d_m - d_b
                     diff_abs = np.absolute(diff)
                     w = d_m != 0.0
                     diff[w] = np.absolute(diff[w] / d_m[w])
-                    allclose = np.allclose(
-                        d_m, d_b, atol=abs_tolerance, rtol=rel_tolerance
-                    )
+                    allclose = np.allclose(d_m,
+                                           d_b,
+                                           atol=abs_tolerance,
+                                           rtol=rel_tolerance)
                     self.assertTrue(
                         allclose,
-                        (
-                            f"{nameRun}: Header key is {k}, maximum relative difference is {diff.max()}, "
-                            f"maximum absolute difference is {diff_abs.max()}\n"
-                            f"file1: {path1}\nfile2: {path2}"
-                        ),
+                        (f"{nameRun}: Header key is {k}, maximum relative difference is {diff.max()}, "
+                         f"maximum absolute difference is {diff_abs.max()}\n"
+                         f"file1: {path1}\nfile2: {path2}"),
                     )
                     userprint(
                         f"OK, maximum relative difference {diff.max():.2e}, max. abs. difference is {diff_abs.max():.2e}"
@@ -129,10 +131,10 @@ class AbstractTest(unittest.TestCase):
         """
 
         def compare_attributes(atts1, atts2):
-            self.assertEqual(len(atts1.keys()), len(atts2.keys()), "{}".format(nameRun))
-            self.assertListEqual(
-                sorted(atts1.keys()), sorted(atts2.keys()), "{}".format(nameRun)
-            )
+            self.assertEqual(len(atts1.keys()), len(atts2.keys()),
+                             "{}".format(nameRun))
+            self.assertListEqual(sorted(atts1.keys()), sorted(atts2.keys()),
+                                 "{}".format(nameRun))
             for item in atts1:
                 nequal = True
                 if isinstance(atts1[item], np.ndarray):
@@ -140,31 +142,26 @@ class AbstractTest(unittest.TestCase):
                     dtype2 = atts2[item].dtype
                     if dtype1 == dtype2:
                         nequal = np.logical_not(
-                            np.array_equal(atts1[item], atts2[item])
-                        )
+                            np.array_equal(atts1[item], atts2[item]))
                     else:
                         userprint(
                             f"Note that the test file has different dtype for attribute {item}"
                         )
                         nequal = np.logical_not(
                             np.array_equal(
-                                atts1[item].astype(atts2[item].dtype), atts2[item]
-                            )
-                        )
+                                atts1[item].astype(atts2[item].dtype),
+                                atts2[item]))
                         if nequal:
                             nequal = np.logical_not(
                                 np.array_equal(
-                                    atts2[item].astype(atts1[item].dtype), atts1[item]
-                                )
-                            )
+                                    atts2[item].astype(atts1[item].dtype),
+                                    atts1[item]))
                 else:
                     nequal = atts1[item] != atts2[item]
                 if nequal:
                     userprint(
-                        "WARNING: {}: not exactly equal, using allclose for attribute {}".format(
-                            nameRun, item
-                        )
-                    )
+                        "WARNING: {}: not exactly equal, using allclose for attribute {}"
+                        .format(nameRun, item))
                     userprint(atts1[item], atts2[item])
                     allclose = np.allclose(atts1[item], atts2[item])
                     if item == "nfcn" and not allclose:
@@ -174,7 +171,8 @@ class AbstractTest(unittest.TestCase):
                     else:
                         self.assertTrue(
                             allclose,
-                            "{} results changed for attribute {}".format(nameRun, item),
+                            "{} results changed for attribute {}".format(
+                                nameRun, item),
                         )
             return
 
@@ -182,13 +180,12 @@ class AbstractTest(unittest.TestCase):
             if not np.array_equal(val1, val2):
                 userprint(
                     "WARNING: {}: {} not exactly equal, using allclose".format(
-                        nameRun, "/".join(namelist)
-                    )
-                )
+                        nameRun, "/".join(namelist)))
                 allclose = np.allclose(val1, val2)
                 self.assertTrue(
                     allclose,
-                    "{} results changed for output values for {}:\n expected:{}\n\n got:{}\n\n\n".format(
+                    "{} results changed for output values for {}:\n expected:{}\n\n got:{}\n\n\n"
+                    .format(
                         nameRun,
                         "/".join(namelist),
                         " ".join([f"{v:6.5g}" for v in val1.flatten()]),
@@ -202,7 +199,8 @@ class AbstractTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(path2), "{}".format(nameRun))
         b = h5py.File(path2, "r")
 
-        self.assertListEqual(sorted(m.keys()), sorted(b.keys()), "{}".format(nameRun))
+        self.assertListEqual(sorted(m.keys()), sorted(b.keys()),
+                             "{}".format(nameRun))
 
         ### best fit
         k = "best fit"
@@ -226,9 +224,8 @@ class AbstractTest(unittest.TestCase):
         for p in m[k].keys():
             compare_attributes(m[k][p].attrs, b[k][p].attrs)
             if p == "result":
-                compare_values(
-                    m[k][p]["values"][()], b[k][p]["values"][()], [k, p, "values"]
-                )
+                compare_values(m[k][p]["values"][()], b[k][p]["values"][()],
+                               [k, p, "values"])
 
         return
 
@@ -245,10 +242,11 @@ class AbstractTest(unittest.TestCase):
             path = picca_base + "/requirements-python2.txt"
         with open(path, "r") as f:
             for l in f:
-                l = l.replace("\n", "").replace("==", " ").replace(">=", " ").split()
-                assert (
-                    len(l) == 2
-                ), "requirements.txt attribute is not valid: {}".format(str(l))
+                l = l.replace("\n", "").replace("==", " ").replace(">=",
+                                                                   " ").split()
+                assert (len(l) == 2
+                       ), "requirements.txt attribute is not valid: {}".format(
+                           str(l))
                 req[l[0]] = l[1]
         return req
 
@@ -263,10 +261,8 @@ class AbstractTest(unittest.TestCase):
                 local_ver = __import__(req_lib).__version__
                 if local_ver != req_ver:
                     userprint(
-                        "WARNING: The local version of {}: {} is different from the required version: {}".format(
-                            req_lib, local_ver, req_ver
-                        )
-                    )
+                        "WARNING: The local version of {}: {} is different from the required version: {}"
+                        .format(req_lib, local_ver, req_ver))
             except ImportError:
                 userprint("WARNING: Module {} can't be found".format(req_lib))
 
@@ -279,7 +275,8 @@ class AbstractTest(unittest.TestCase):
         """
         cls._branchFiles = tempfile.mkdtemp() + "/"
         cls.produce_folder(cls)
-        cls.picca_base = resource_filename("picca", "./").replace("py/picca/./", "")
+        cls.picca_base = resource_filename("picca",
+                                           "./").replace("py/picca/./", "")
         cls.send_requirements(cls.load_requirements(cls.picca_base))
         np.random.seed(42)
         cls._masterFiles = cls.picca_base + "/py/picca/tests/data/"
@@ -298,8 +295,7 @@ class AbstractTest(unittest.TestCase):
                 cls._branchFiles,
                 "/tmp/last_run_picca_test/",
                 ignore=lambda path, fnames: [
-                    fname
-                    for fname in fnames
+                    fname for fname in fnames
                     if "spectra" in fname.lower() or "spectra" in path.lower()
                 ],
                 dirs_exist_ok=True,
@@ -310,9 +306,8 @@ class AbstractTest(unittest.TestCase):
                     cls._branchFiles,
                     "/tmp/last_run_picca_test/",
                     ignore=lambda path, fnames: [
-                        fname
-                        for fname in fnames
-                        if "spectra" in fname.lower() or "spectra" in path.lower()
+                        fname for fname in fnames if "spectra" in fname.lower()
+                        or "spectra" in path.lower()
                     ],
                 )
             except FileExistsError:
@@ -323,9 +318,8 @@ class AbstractTest(unittest.TestCase):
                     cls._branchFiles,
                     f"/tmp/last_run_picca_test/{np.random.randint(1000000)}",
                     ignore=lambda path, fnames: [
-                        fname
-                        for fname in fnames
-                        if "spectra" in fname.lower() or "spectra" in path.lower()
+                        fname for fname in fnames if "spectra" in fname.lower()
+                        or "spectra" in path.lower()
                     ],
                 )
 

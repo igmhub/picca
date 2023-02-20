@@ -11,8 +11,7 @@ from picca.delta_extraction.masks.dla_mask import DlaMask
 from picca.delta_extraction.masks.dla_mask import defaults as defaults_dla_mask
 from picca.delta_extraction.masks.absorber_mask import AbsorberMask
 from picca.delta_extraction.masks.absorber_mask import (
-    defaults as defaults_absorber_mask,
-)
+    defaults as defaults_absorber_mask,)
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.utils import setup_logger
 from picca.tests.delta_extraction.abstract_test import AbstractTest
@@ -61,7 +60,11 @@ class MaskTest(AbstractTest):
 
         # initialize mask
         config = ConfigParser()
-        config.read_dict({"mask": {"filename": in_file, "los_id name": "THING_ID"}})
+        config.read_dict(
+            {"mask": {
+                "filename": in_file,
+                "los_id name": "THING_ID"
+            }})
         for key, value in defaults_absorber_mask.items():
             if key not in config["mask"]:
                 config["mask"][key] = str(value)
@@ -74,16 +77,15 @@ class MaskTest(AbstractTest):
 
         w = np.ones(forest1_log_lambda.size, dtype=bool)
         w &= np.fabs(1.0e4 * (forest1_log_lambda - np.log10(5600))) > 2.5
-        self.assertTrue(np.allclose(forest1.flux, np.ones_like(forest1_log_lambda[w])))
+        self.assertTrue(
+            np.allclose(forest1.flux, np.ones_like(forest1_log_lambda[w])))
         self.assertTrue(np.allclose(forest1.log_lambda, forest1_log_lambda[w]))
         self.assertTrue(
-            np.allclose(forest1.ivar, np.ones_like(forest1_log_lambda[w]) * 4)
-        )
+            np.allclose(forest1.ivar,
+                        np.ones_like(forest1_log_lambda[w]) * 4))
         self.assertTrue(
-            np.allclose(
-                forest1.transmission_correction, np.ones_like(forest1_log_lambda[w])
-            )
-        )
+            np.allclose(forest1.transmission_correction,
+                        np.ones_like(forest1_log_lambda[w])))
 
         # apply mask to forest with 2 absorbers
         mask.apply_mask(forest2)
@@ -91,39 +93,37 @@ class MaskTest(AbstractTest):
         w = np.ones(forest2_log_lambda.size, dtype=bool)
         w &= np.fabs(1.0e4 * (forest2_log_lambda - np.log10(5600))) > 2.5
         w &= np.fabs(1.0e4 * (forest2_log_lambda - np.log10(5650))) > 2.5
-        self.assertTrue(np.allclose(forest2.flux, np.ones_like(forest2_log_lambda[w])))
+        self.assertTrue(
+            np.allclose(forest2.flux, np.ones_like(forest2_log_lambda[w])))
         self.assertTrue(np.allclose(forest2.log_lambda, forest2_log_lambda[w]))
         self.assertTrue(
-            np.allclose(forest2.ivar, np.ones_like(forest2_log_lambda[w]) * 4)
-        )
+            np.allclose(forest2.ivar,
+                        np.ones_like(forest2_log_lambda[w]) * 4))
         self.assertTrue(
-            np.allclose(
-                forest2.transmission_correction, np.ones_like(forest2_log_lambda[w])
-            )
-        )
+            np.allclose(forest2.transmission_correction,
+                        np.ones_like(forest2_log_lambda[w])))
 
         # apply mask to forest without absorbers
         mask.apply_mask(forest3)
-        self.assertTrue(np.allclose(forest2.flux, np.ones_like(forest3_log_lambda)))
-        self.assertTrue(np.allclose(forest2.log_lambda, forest3_log_lambda))
-        self.assertTrue(np.allclose(forest2.ivar, np.ones_like(forest3_log_lambda) * 4))
         self.assertTrue(
-            np.allclose(
-                forest2.transmission_correction, np.ones_like(forest3_log_lambda)
-            )
-        )
+            np.allclose(forest2.flux, np.ones_like(forest3_log_lambda)))
+        self.assertTrue(np.allclose(forest2.log_lambda, forest3_log_lambda))
+        self.assertTrue(
+            np.allclose(forest2.ivar,
+                        np.ones_like(forest3_log_lambda) * 4))
+        self.assertTrue(
+            np.allclose(forest2.transmission_correction,
+                        np.ones_like(forest3_log_lambda)))
 
         # initialize mask specifying variables
         config = ConfigParser()
-        config.read_dict(
-            {
-                "mask": {
-                    "filename": in_file,
-                    "absorber mask width": 1.5,
-                    "los_id name": "THING_ID",
-                }
+        config.read_dict({
+            "mask": {
+                "filename": in_file,
+                "absorber mask width": 1.5,
+                "los_id name": "THING_ID",
             }
-        )
+        })
         for key, value in defaults_absorber_mask.items():
             if key not in config["mask"]:
                 config["mask"][key] = str(value)
@@ -149,7 +149,11 @@ class MaskTest(AbstractTest):
 
         # initialize mask
         config = ConfigParser()
-        config.read_dict({"mask": {"filename": in_file, "los_id name": "THING_ID"}})
+        config.read_dict(
+            {"mask": {
+                "filename": in_file,
+                "los_id name": "THING_ID"
+            }})
         for key, value in defaults_dla_mask.items():
             if key not in config["mask"]:
                 config["mask"][key] = str(value)
@@ -166,14 +170,15 @@ class MaskTest(AbstractTest):
 
         # apply mask to forest without DLAs
         mask.apply_mask(forest3)
-        self.assertTrue(np.allclose(forest3.flux, np.ones_like(forest3_log_lambda)))
-        self.assertTrue(np.allclose(forest3.log_lambda, forest3_log_lambda))
-        self.assertTrue(np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda) * 4))
         self.assertTrue(
-            np.allclose(
-                forest3.transmission_correction, np.ones_like(forest3_log_lambda)
-            )
-        )
+            np.allclose(forest3.flux, np.ones_like(forest3_log_lambda)))
+        self.assertTrue(np.allclose(forest3.log_lambda, forest3_log_lambda))
+        self.assertTrue(
+            np.allclose(forest3.ivar,
+                        np.ones_like(forest3_log_lambda) * 4))
+        self.assertTrue(
+            np.allclose(forest3.transmission_correction,
+                        np.ones_like(forest3_log_lambda)))
 
         reset_logger()
         self.compare_ascii(test_file, out_file)

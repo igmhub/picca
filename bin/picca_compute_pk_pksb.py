@@ -16,14 +16,19 @@ from picca.constants import SPEED_LIGHT
 
 def main(cmdargs):
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument(
-        "-i", "--ini", type=str, required=True, help="Input config file for CAMB"
-    )
+    parser.add_argument("-i",
+                        "--ini",
+                        type=str,
+                        required=True,
+                        help="Input config file for CAMB")
 
-    parser.add_argument("-o", "--out", type=str, required=True, help="Output FITS file")
+    parser.add_argument("-o",
+                        "--out",
+                        type=str,
+                        required=True,
+                        help="Output FITS file")
 
     parser.add_argument(
         "--H0",
@@ -54,7 +59,8 @@ def main(cmdargs):
         type=float,
         required=False,
         default=None,
-        help="Power-spectrum redshift, if not given use the one from the config file",
+        help=
+        "Power-spectrum redshift, if not given use the one from the config file",
     )
 
     parser.add_argument(
@@ -84,9 +90,9 @@ def main(cmdargs):
         pars.DarkEnergy.w = args.fid_wl
 
     results = camb.get_results(pars)
-    k, z, pk = results.get_matter_power_spectrum(
-        minkh=minkh, maxkh=pars.Transfer.kmax, npoints=npoints
-    )
+    k, z, pk = results.get_matter_power_spectrum(minkh=minkh,
+                                                 maxkh=pars.Transfer.kmax,
+                                                 npoints=npoints)
     pk = pk[1]
     pars = results.Params
     pars2 = results.get_derived_params()
@@ -102,7 +108,8 @@ def main(cmdargs):
     cat["ORPHOTON"] = results.get_Omega("photon")
     cat["ORNEUTRI"] = results.get_Omega("neutrino")
     cat["OR"] = cat["ORPHOTON"] + cat["ORNEUTRI"]
-    cat["OM"] = (cat["ombh2"] + cat["omch2"] + cat["omnuh2"]) / (cat["H0"] / 100.0) ** 2
+    cat["OM"] = (cat["ombh2"] + cat["omch2"] + cat["omnuh2"]) / (cat["H0"] /
+                                                                 100.0)**2
     cat["W"] = pars.DarkEnergy.w
     cat["TCMB"] = pars.TCMB
     cat["NS"] = pars.InitPower.ns
@@ -117,7 +124,8 @@ def main(cmdargs):
     c = SPEED_LIGHT / 1000.0  ## km/s
     h = cat["H0"] / 100.0
     dh = c / (results.hubble_parameter(cat["ZREF"]) / h)
-    dm = (1.0 + cat["ZREF"]) * results.angular_diameter_distance(cat["ZREF"]) * h
+    dm = (1.0 + cat["ZREF"]) * results.angular_diameter_distance(
+        cat["ZREF"]) * h
     cat["DH"] = dh
     cat["DM"] = dm
     cat["DHoRD"] = cat["DH"] / (cat["RDRAG"] * h)
@@ -138,9 +146,9 @@ def main(cmdargs):
         par = [am3, am2, am1, a0, a1]
         model = np.zeros((len(par), r.size))
         tw = r != 0.0
-        model[0, tw] = par[0] / r[tw] ** 3
-        model[1, tw] = par[1] / r[tw] ** 2
-        model[2, tw] = par[2] / r[tw] ** 1
+        model[0, tw] = par[0] / r[tw]**3
+        model[1, tw] = par[1] / r[tw]**2
+        model[2, tw] = par[2] / r[tw]**1
         model[3, tw] = par[3]
         model[4, :] = par[4] * r
         model = np.array(model)
@@ -163,15 +171,18 @@ def main(cmdargs):
 
     out = fitsio.FITS(args.out, "rw", clobber=True)
     head = [{"name": k, "value": float(v)} for k, v in cat.items()]
-    out.write([k, pk, pkSB], names=["K", "PK", "PKSB"], header=head, extname="PK")
+    out.write([k, pk, pkSB],
+              names=["K", "PK", "PKSB"],
+              header=head,
+              extname="PK")
     out.close()
 
     if args.plot:
         plt.plot(r, xi * r**2, label="Full")
         w = (r >= sb1_rmin) & (r < sb1_rmax)
-        plt.plot(r[w], xi[w] * r[w] ** 2, label="SB1")
+        plt.plot(r[w], xi[w] * r[w]**2, label="SB1")
         w = (r >= sb2_rmin) & (r < sb2_rmax)
-        plt.plot(r[w], xi[w] * r[w] ** 2, label="SB2")
+        plt.plot(r[w], xi[w] * r[w]**2, label="SB2")
         plt.plot(r, xiSB * r**2, label="noBAO")
         plt.xlabel(r"$r\,[h^{-1}\,\mathrm{Mpc}]$")
         plt.ylabel(r"$r^{2}\,\xi(r)$")

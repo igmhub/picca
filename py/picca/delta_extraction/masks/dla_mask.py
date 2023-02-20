@@ -79,7 +79,8 @@ class DlaMask(Mask):
 
         los_id_name = config.get("los_id name")
         if los_id_name is None:
-            raise MaskError("Missing argument 'los_id name' required by DlaMask")
+            raise MaskError(
+                "Missing argument 'los_id name' required by DlaMask")
 
         self.logger.progress(f"Reading DLA catalog from: {filename}")
 
@@ -97,16 +98,13 @@ class DlaMask(Mask):
                 columns_list = [los_id_name, z_colname, "NHI"]
                 cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
         except OSError as error:
-            raise MaskError(
-                f"Error loading DlaMask. File {filename} does "
-                "not have extension 'DLACAT'"
-            ) from error
+            raise MaskError(f"Error loading DlaMask. File {filename} does "
+                            "not have extension 'DLACAT'") from error
         except ValueError as error:
             aux = "', '".join(columns_list)
             raise MaskError(
                 f"Error loading DlaMask. File {filename} does "
-                f"not have fields '{aux}' in HDU 'DLACAT'"
-            ) from error
+                f"not have fields '{aux}' in HDU 'DLACAT'") from error
 
         # group DLAs on the same line of sight together
         self.los_ids = {}
@@ -116,13 +114,15 @@ class DlaMask(Mask):
         num_dlas = np.sum([len(los_id) for los_id in self.los_ids.values()])
 
         self.logger.progress(f"In catalog: {num_dlas} DLAs")
-        self.logger.progress(f"In catalog: {len(self.los_ids)} forests have a DLA\n")
+        self.logger.progress(
+            f"In catalog: {len(self.los_ids)} forests have a DLA\n")
 
         # setup transmission limit
         # transmissions below this number are masked
         self.dla_mask_limit = config.getfloat("dla mask limit")
         if self.dla_mask_limit is None:
-            raise MaskError("Missing argument 'dla mask limit' " "required by DlaMask")
+            raise MaskError("Missing argument 'dla mask limit' "
+                            "required by DlaMask")
 
         # load mask
         mask_file = config.get("mask file")
@@ -167,9 +167,10 @@ class DlaMask(Mask):
             if len(self.mask) > 0:
                 for mask_range in self.mask:
                     for z_abs, nhi in self.los_ids.get(forest.los_id):
-                        w &= (lambda_ / (1.0 + z_abs) < mask_range["wave_min"]) | (
-                            lambda_ / (1.0 + z_abs) > mask_range["wave_max"]
-                        )
+                        w &= (lambda_ /
+                              (1.0 + z_abs) < mask_range["wave_min"]) | (
+                                  lambda_ /
+                                  (1.0 + z_abs) > mask_range["wave_max"])
 
             # do the actual masking
             forest.transmission_correction *= dla_transmission
@@ -300,9 +301,8 @@ class DlaProfile:
         lambda_rest_frame = lambda_ / (1 + z_abs)
         ## wavelength at DLA restframe [A]
 
-        u_voight = (speed_light / thermal_velocity) * (
-            lambda_lya / lambda_rest_frame - 1
-        )
+        u_voight = (speed_light /
+                    thermal_velocity) * (lambda_lya / lambda_rest_frame - 1)
         ## dimensionless frequency offset in Doppler widths.
         a_voight = lambda_lya * 1e-10 * gamma / (4 * np.pi * thermal_velocity)
         ## Voigt damping parameter
@@ -312,14 +312,8 @@ class DlaProfile:
         ## [m^2.s^-1.m/]
         ## we have b/1000 & 1.497e-15 to convert
         ## 1.497e-15*osc_strength*lambda_rest_frame*h/n to cm^2
-        tau = (
-            1.497e-15
-            * nhi_cm2
-            * osc_strength
-            * lambda_rest_frame
-            * voigt
-            / thermal_velocity
-        )
+        tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt /
+               thermal_velocity)
         return tau
 
     @staticmethod
@@ -350,18 +344,13 @@ class DlaProfile:
         nhi_cm2 = 10**nhi
         lambda_rest_frame = lambda_ / (1 + z_abs)
 
-        u_voight = (speed_light / thermal_velocity) * (lam_lyb / lambda_rest_frame - 1)
+        u_voight = (speed_light /
+                    thermal_velocity) * (lam_lyb / lambda_rest_frame - 1)
         a_voight = lam_lyb * 1e-10 * gamma / (4 * np.pi * thermal_velocity)
         voigt = DlaProfile.voigt(a_voight, u_voight)
         thermal_velocity /= 1000.0
-        tau = (
-            1.497e-15
-            * nhi_cm2
-            * osc_strength
-            * lambda_rest_frame
-            * voigt
-            / thermal_velocity
-        )
+        tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt /
+               thermal_velocity)
         return tau
 
     @staticmethod
@@ -382,6 +371,5 @@ class DlaProfile:
         The Voigt function for each element in a, u
         """
         unnormalized_voigt = np.mean(
-            1 / (a_voight**2 + (GAUSSIAN_DIST[:, None] - u_voight) ** 2), axis=0
-        )
+            1 / (a_voight**2 + (GAUSSIAN_DIST[:, None] - u_voight)**2), axis=0)
         return unnormalized_voigt * a_voight / np.sqrt(np.pi)

@@ -34,11 +34,9 @@ class fitter2_mpi(control.fitter2):
         """
 
         if not self.chi2_parallel and not self.run_sampler:
-            raise ValueError(
-                'You called the fitter with MPI but didn\'t ask \
+            raise ValueError('You called the fitter with MPI but didn\'t ask \
                 for parallelization. Add "chi2_parallel = True" to [control] \
-                for parallel chi2 or "sampler = True" to run PolyChord.'
-            )
+                for parallel chi2 or "sampler = True" to run PolyChord.')
 
         mpi_comm = MPI.COMM_WORLD
         cpu_rank = mpi_comm.Get_rank()
@@ -89,7 +87,8 @@ class fitter2_mpi(control.fitter2):
                 d.pars_init[name] = self.chi2.best_fit.values[name]
             for name in d.par_error.keys():
                 store_d_par_error[name] = d.par_error[name]
-                d.par_error[name] = self.chi2.best_fit.errors[name.split("error_")[1]]
+                d.par_error[name] = self.chi2.best_fit.errors[name.split(
+                    "error_")[1]]
             for name in d.par_fixed.keys():
                 store_d_par_fixed[name] = d.par_fixed[name]
             store_data_pars[d.name] = {
@@ -125,7 +124,8 @@ class fitter2_mpi(control.fitter2):
             """
             recv_buff = None
             if cpu_rank == 0:
-                recv_buff = np.empty([num_cpus, len(send_buff)], dtype=np.float64)
+                recv_buff = np.empty([num_cpus, len(send_buff)],
+                                     dtype=np.float64)
             mpi_comm.barrier()
             mpi_comm.Gather(send_buff, recv_buff, root=0)
             return recv_buff
@@ -192,7 +192,9 @@ class fitter2_mpi(control.fitter2):
             else:
                 j = 0
                 for __ in range(num_runs // num_cpus):
-                    result += [mpi_run_1d_set(num_cpus, grid[j : j + num_cpus], par)]
+                    result += [
+                        mpi_run_1d_set(num_cpus, grid[j:j + num_cpus], par)
+                    ]
                     j += num_cpus
                 rest = num_runs % num_cpus
                 if rest != 0:
@@ -217,7 +219,8 @@ class fitter2_mpi(control.fitter2):
                 j = 0
                 for __ in range(num_runs // num_cpus):
                     result += [
-                        mpi_run_2d_set(num_cpus, grid[j : j + num_cpus], par1, par2)
+                        mpi_run_2d_set(num_cpus, grid[j:j + num_cpus], par1,
+                                       par2)
                     ]
                     j += num_cpus
                 rest = num_runs % num_cpus
@@ -233,8 +236,7 @@ class fitter2_mpi(control.fitter2):
 
         self.chi2.dic_chi2scan_result = {}
         self.chi2.dic_chi2scan_result["params"] = np.asarray(
-            np.append(sorted(self.chi2.best_fit.values), ["fval"])
-        )
+            np.append(sorted(self.chi2.best_fit.values), ["fval"]))
         self.chi2.dic_chi2scan_result["values"] = np.asarray(result)
 
         # Set all parameters to where they were before
@@ -307,9 +309,8 @@ class fitter2_mpi(control.fitter2):
             self.chi2.fiducial_values["sigmaNL_per"] = 0
             self.chi2.fiducial_values["sigmaNL_par"] = 0
             # Compute Xi Continuum
-            d.fiducial_model += d.xi_model(
-                self.chi2.k, self.chi2.pksb_lin, self.chi2.fiducial_values
-            )
+            d.fiducial_model += d.xi_model(self.chi2.k, self.chi2.pksb_lin,
+                                           self.chi2.fiducial_values)
             self.chi2.fiducial_values["SB"] = False
             self.chi2.fiducial_values["sigmaNL_per"] = snl_per
             self.chi2.fiducial_values["sigmaNL_par"] = snl_par
@@ -334,15 +335,9 @@ class fitter2_mpi(control.fitter2):
                         self.chi2.fast_mc[p] = []
                     self.chi2.fast_mc[p].append([v, best_fit.errors[p]])
                 self.chi2.fast_mc["chi2"].append(best_fit.fval)
-                sys.stderr.write(
-                    "\nINFO: CPU #"
-                    + str(cpu_rank)
-                    + " finished fastMC iteration "
-                    + str(it + 1)
-                    + " of "
-                    + str(nfast_mc)
-                    + " \n"
-                )
+                sys.stderr.write("\nINFO: CPU #" + str(cpu_rank) +
+                                 " finished fastMC iteration " + str(it + 1) +
+                                 " of " + str(nfast_mc) + " \n")
             except ValueError:
                 best_fit = self.chi2.best_fit
                 for p, v in best_fit.values.items():
@@ -350,17 +345,12 @@ class fitter2_mpi(control.fitter2):
                         self.chi2.fast_mc[p] = []
                     self.chi2.fast_mc[p].append([np.inf, np.inf])
                 self.chi2.fast_mc["chi2"].append(np.inf)
-                sys.stderr.write(
-                    "\nINFO: CPU #"
-                    + str(cpu_rank)
-                    + " finished fastMC iteration "
-                    + str(it + 1)
-                    + " of "
-                    + str(nfast_mc)
-                    + " \n"
-                )
+                sys.stderr.write("\nINFO: CPU #" + str(cpu_rank) +
+                                 " finished fastMC iteration " + str(it + 1) +
+                                 " of " + str(nfast_mc) + " \n")
 
         save_output = copy.deepcopy(self.chi2.outfile)
-        self.chi2.outfile = self.chi2.outfile[:-3] + "_cpu" + str(cpu_rank) + ".h5"
+        self.chi2.outfile = self.chi2.outfile[:-3] + "_cpu" + str(
+            cpu_rank) + ".h5"
         self.chi2.export()
         self.chi2.outfile = save_output

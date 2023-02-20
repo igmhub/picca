@@ -16,10 +16,12 @@ def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
 
 
 class chi2:
+
     def __init__(self, dic_init):
         self.zeff = dic_init["data sets"]["zeff"]
         self.data = dic_init["data sets"]["data"]
-        self.par_names = np.unique([name for d in self.data for name in d.par_names])
+        self.par_names = np.unique(
+            [name for d in self.data for name in d.par_names])
         self.outfile = os.path.expandvars(dic_init["outfile"])
 
         self.k = dic_init["fiducial"]["k"]
@@ -66,7 +68,8 @@ class chi2:
         dic["SB"] = False
         chi2 = 0
         for d in self.data:
-            chi2 += d.chi2(self.k, self.pk_lin, self.pksb_lin, self.full_shape, dic)
+            chi2 += d.chi2(self.k, self.pk_lin, self.pksb_lin, self.full_shape,
+                           dic)
 
         for prior in priors.prior_dic.values():
             chi2 += prior(dic)
@@ -87,17 +90,16 @@ class chi2:
             name: val for d in self.data for name, val in d.pars_init.items()
         }
         par_err = {
-            k.split("error_")[1]: err
-            for d in self.data
+            k.split("error_")[1]: err for d in self.data
             for k, err in d.par_error.items()
         }
         par_lim = {
-            k.split("limit_")[1]: lim
-            for d in self.data
+            k.split("limit_")[1]: lim for d in self.data
             for k, lim in d.par_limit.items()
         }
         par_fix = {
-            k.split("fix_")[1]: fix for d in self.data for k, fix in d.par_fixed.items()
+            k.split("fix_")[1]: fix for d in self.data
+            for k, fix in d.par_fixed.items()
         }
 
         ## do an initial "fast" minimization fixing everything except the biases
@@ -144,8 +146,7 @@ class chi2:
         values["SB"] = False
         for d in self.data:
             d.best_fit_model = values["bao_amp"] * d.xi_model(
-                self.k, self.pk_lin - self.pksb_lin, values
-            )
+                self.k, self.pk_lin - self.pksb_lin, values)
 
             values["SB"] = True & (not self.full_shape)
             sigmaNL_par = values["sigmaNL_par"]
@@ -174,7 +175,8 @@ class chi2:
                 d.pars_init[name] = self.best_fit.values[name]
             for name in d.par_error.keys():
                 store_d_par_error[name] = d.par_error[name]
-                d.par_error[name] = self.best_fit.errors[name.split("error_")[1]]
+                d.par_error[name] = self.best_fit.errors[name.split("error_")
+                                                         [1]]
             for name in d.par_fixed.keys():
                 store_d_par_fixed[name] = d.par_fixed[name]
             store_data_pars[d.name] = {
@@ -215,9 +217,7 @@ class chi2:
                 result += [send_one_fit()]
                 sys.stderr.write(
                     "\nINFO: finished chi2scan iteration {} of {}\n".format(
-                        it + 1, self.dic_chi2scan[par]["grid"].size
-                    )
-                )
+                        it + 1, self.dic_chi2scan[par]["grid"].size))
         elif dim == 2:
             par1 = list(self.dic_chi2scan.keys())[0]
             par2 = list(self.dic_chi2scan.keys())[1]
@@ -231,16 +231,15 @@ class chi2:
                     result += [send_one_fit()]
                     sys.stderr.write(
                         "\nINFO: finished chi2scan iteration {} of {}\n".format(
-                            it1 * self.dic_chi2scan[par2]["grid"].size + it2 + 1,
-                            self.dic_chi2scan[par1]["grid"].size
-                            * self.dic_chi2scan[par2]["grid"].size,
-                        )
-                    )
+                            it1 * self.dic_chi2scan[par2]["grid"].size + it2 +
+                            1,
+                            self.dic_chi2scan[par1]["grid"].size *
+                            self.dic_chi2scan[par2]["grid"].size,
+                        ))
 
         self.dic_chi2scan_result = {}
         self.dic_chi2scan_result["params"] = np.asarray(
-            np.append(sorted(self.best_fit.values.to_dict().keys()), ["fval"])
-        )
+            np.append(sorted(self.best_fit.values.to_dict().keys()), ["fval"]))
         self.dic_chi2scan_result["values"] = np.asarray(result)
 
         ### Set all parameters to where they were before
@@ -280,15 +279,15 @@ class chi2:
         self.fiducial_values["SB"] = False
         for d in self.data:
             d.fiducial_model = self.fiducial_values["bao_amp"] * d.xi_model(
-                self.k, self.pk_lin - self.pksb_lin, self.fiducial_values
-            )
+                self.k, self.pk_lin - self.pksb_lin, self.fiducial_values)
 
             self.fiducial_values["SB"] = True
             snl_per = self.fiducial_values["sigmaNL_per"]
             snl_par = self.fiducial_values["sigmaNL_par"]
             self.fiducial_values["sigmaNL_per"] = 0
             self.fiducial_values["sigmaNL_par"] = 0
-            d.fiducial_model += d.xi_model(self.k, self.pksb_lin, self.fiducial_values)
+            d.fiducial_model += d.xi_model(self.k, self.pksb_lin,
+                                           self.fiducial_values)
             self.fiducial_values["SB"] = False
             self.fiducial_values["sigmaNL_per"] = snl_per
             self.fiducial_values["sigmaNL_par"] = snl_par
@@ -315,16 +314,15 @@ class chi2:
                 self.fast_mc[p].append([v, best_fit.errors[p]])
             self.fast_mc["chi2"].append(best_fit.fval)
             sys.stderr.write(
-                "\nINFO: finished fastMC iteration {} of {}\n".format(it + 1, nfast_mc)
-            )
+                "\nINFO: finished fastMC iteration {} of {}\n".format(
+                    it + 1, nfast_mc))
 
     def minos(self):
         if not hasattr(self, "minos_para"):
             return
         sigma = self.minos_para["sigma"]
         cl = scipy.stats.norm.cdf(sigma, loc=0, scale=1) - scipy.stats.norm.cdf(
-            -sigma, loc=0, scale=1
-        )
+            -sigma, loc=0, scale=1)
         # TODO: it might be more complicated to select the right cl than this, as this is for the 1d-case only
         # if old minos actually did sigmas in the n-d parameter space and new minos is doing the correct cl for that
         # dimensionality this would not be giving the correct results; I think the test case only checks 1d
@@ -332,10 +330,12 @@ class chi2:
             self.best_fit.minos(cl=cl)
         else:
             fixed_pars = [
-                name for (name, fix) in self.best_fit.fixed.to_dict().items() if fix
+                name for (name, fix) in self.best_fit.fixed.to_dict().items()
+                if fix
             ]
             varied_pars = [
-                name for (name, fix) in self.best_fit.fixed.to_dict().items() if not fix
+                name for (name, fix) in self.best_fit.fixed.to_dict().items()
+                if not fix
             ]
             for var in self.minos_para["parameters"]:
                 if var in varied_pars:  # testing for varied parameters
@@ -343,16 +343,12 @@ class chi2:
                 else:
                     if var in fixed_pars:  # testing for fixed parameters
                         userprint(
-                            "WARNING: Can not run minos on a fixed parameter: {}".format(
-                                var
-                            )
-                        )
+                            "WARNING: Can not run minos on a fixed parameter: {}"
+                            .format(var))
                     else:
                         userprint(
-                            "WARNING: Can not run minos on a unknown parameter: {}".format(
-                                var
-                            )
-                        )
+                            "WARNING: Can not run minos on a unknown parameter: {}"
+                            .format(var))
 
     def export(self):
         f = h5py.File(self.outfile, "w")
@@ -364,7 +360,8 @@ class chi2:
             name for (name, fix) in self.best_fit.fixed.to_dict().items() if fix
         ]
         varied_pars = [
-            name for (name, fix) in self.best_fit.fixed.to_dict().items() if not fix
+            name for (name, fix) in self.best_fit.fixed.to_dict().items()
+            if not fix
         ]
 
         for i, p in enumerate(self.best_fit.values.to_dict().keys()):
@@ -378,9 +375,8 @@ class chi2:
             for i2, p2 in enumerate(self.best_fit.values.to_dict().keys()):
                 if p1 in varied_pars and p2 in varied_pars:
                     # only store correlations for params that have been varied
-                    g.attrs["cov[{}, {}]".format(p1, p2)] = self.best_fit.covariance[
-                        i1, i2
-                    ]  # cov
+                    g.attrs["cov[{}, {}]".format(
+                        p1, p2)] = self.best_fit.covariance[i1, i2]  # cov
 
         if len(priors.prior_dic) != 0:
             for prior in priors.prior_dic.values():
@@ -419,15 +415,11 @@ class chi2:
         dic_fmin = {k: getattr(self.best_fit.fmin, k) for k in fmin_keys}
         for item, value in dic_fmin.items():
             g.attrs[item] = value
-        g.attrs[
-            "ncalls"
-        ] = (
+        g.attrs["ncalls"] = (
             self.best_fit.nfcn
         )  # this should probably be changed to new nomenclature in the outputs instead of using the old kw; note that fmin.nfcn is the same now, but has been different before
         g.attrs["tolerance"] = self.best_fit.tol
-        g.attrs[
-            "up"
-        ] = (
+        g.attrs["up"] = (
             self.best_fit.errordef
         )  # this should probably be changed to new nomenclature in the outputs instead of using the old kw
 
@@ -436,9 +428,8 @@ class chi2:
         for d in self.data:
             g = f.create_group(d.name)
             g.attrs["ndata"] = d.mask.sum()
-            g.attrs["chi2"] = d.chi2(
-                self.k, self.pk_lin, self.pksb_lin, self.full_shape, values
-            )
+            g.attrs["chi2"] = d.chi2(self.k, self.pk_lin, self.pksb_lin,
+                                     self.full_shape, values)
             fit = g.create_dataset("fit", d.da.shape, dtype="f")
             fit[...] = d.best_fit_model
             if not d.bb is None:
@@ -446,7 +437,9 @@ class chi2:
                 for bbs in d.bb.values():
                     for bb in bbs:
                         tbb = bb(d.r, d.mu, **values)
-                        bband = gbb.create_dataset(bb.name, tbb.shape, dtype="f")
+                        bband = gbb.create_dataset(bb.name,
+                                                   tbb.shape,
+                                                   dtype="f")
                         bband[...] = tbb
 
         if hasattr(self, "fast_mc"):
@@ -468,9 +461,9 @@ class chi2:
                     fid.append(p.encode("utf8"))
                 g.attrs["list of fiducial pars"] = fid
                 for d in self.data:
-                    fiducial = g.create_dataset(
-                        "{}_fiducial".format(d.name), d.da.shape, dtype="f"
-                    )
+                    fiducial = g.create_dataset("{}_fiducial".format(d.name),
+                                                d.da.shape,
+                                                dtype="f")
                     fiducial[...] = d.fiducial_model
             for p in self.fast_mc:
                 vals = np.array(self.fast_mc[p])
@@ -478,13 +471,13 @@ class chi2:
                     d = g.create_dataset("{}".format(p), vals.shape, dtype="f")
                     d[...] = vals
                 else:
-                    d = g.create_dataset(
-                        "{}/values".format(p), vals[:, 0].shape, dtype="f"
-                    )
+                    d = g.create_dataset("{}/values".format(p),
+                                         vals[:, 0].shape,
+                                         dtype="f")
                     d[...] = vals[:, 0]
-                    d = g.create_dataset(
-                        "{}/errors".format(p), vals[:, 1].shape, dtype="f"
-                    )
+                    d = g.create_dataset("{}/errors".format(p),
+                                         vals[:, 1].shape,
+                                         dtype="f")
                     d[...] = vals[:, 1]
             for p in self.fast_mc_data:
                 xi = self.fast_mc_data[p]
@@ -514,10 +507,13 @@ class chi2:
                     "upper_new_min",
                     "upper_valid",
                 ]
-                dic_minos = {k: getattr(minos_results[par], k) for k in minos_keys}
+                dic_minos = {
+                    k: getattr(minos_results[par], k) for k in minos_keys
+                }
                 for item, value in dic_minos.items():
                     if item == "name":
-                        value = str(value)  ###TODO: Fix h5py not handling numpy.str_
+                        value = str(
+                            value)  ###TODO: Fix h5py not handling numpy.str_
                     subgrp.attrs[item] = value
 
         if hasattr(self, "dic_chi2scan"):

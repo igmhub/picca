@@ -9,16 +9,13 @@ import numpy as np
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.corrections.calibration_correction import (
-    CalibrationCorrection,
-)
+    CalibrationCorrection,)
 from picca.delta_extraction.corrections.dust_correction import DustCorrection
 from picca.delta_extraction.corrections.dust_correction import (
-    defaults as defaults_dust_correction,
-)
+    defaults as defaults_dust_correction,)
 from picca.delta_extraction.corrections.ivar_correction import IvarCorrection
 from picca.delta_extraction.corrections.optical_depth_correction import (
-    OpticalDepthCorrection,
-)
+    OpticalDepthCorrection,)
 from picca.delta_extraction.errors import CorrectionError
 from picca.delta_extraction.utils import setup_logger
 from picca.tests.delta_extraction.abstract_test import AbstractTest
@@ -55,9 +52,8 @@ class CorrectionTest(AbstractTest):
         # run apply_correction, this should raise CorrectionError
         forest = copy.deepcopy(forest1)
 
-        expected_message = (
-            "Function 'apply_correction' was not overloaded by " "child class"
-        )
+        expected_message = ("Function 'apply_correction' was not overloaded by "
+                            "child class")
         with self.assertRaises(CorrectionError) as context_manager:
             correction.apply_correction(forest)
         self.compare_error_message(context_manager, expected_message)
@@ -82,15 +78,15 @@ class CorrectionTest(AbstractTest):
         correction.apply_correction(forest)
 
         self.assertTrue(
-            np.allclose(forest.flux, np.ones_like(forest1_log_lambda) * 0.5)
-        )
+            np.allclose(forest.flux,
+                        np.ones_like(forest1_log_lambda) * 0.5))
         self.assertTrue(np.allclose(forest.log_lambda, forest1_log_lambda))
-        self.assertTrue(np.allclose(forest.ivar, np.ones_like(forest1_log_lambda) * 16))
         self.assertTrue(
-            np.allclose(
-                forest.transmission_correction, np.ones_like(forest1_log_lambda)
-            )
-        )
+            np.allclose(forest.ivar,
+                        np.ones_like(forest1_log_lambda) * 16))
+        self.assertTrue(
+            np.allclose(forest.transmission_correction,
+                        np.ones_like(forest1_log_lambda)))
 
     def test_calibration_correction_missing_options(self):
         """Test correct error reporting when initializing with missing options
@@ -100,9 +96,8 @@ class CorrectionTest(AbstractTest):
         config = ConfigParser()
         config.read_dict({"corrections": {}})
 
-        expected_message = (
-            "Missing argument 'filename' required by " "SdssCalibrationCorrection"
-        )
+        expected_message = ("Missing argument 'filename' required by "
+                            "SdssCalibrationCorrection")
         with self.assertRaises(CorrectionError) as context_manager:
             correction = CalibrationCorrection(config["corrections"])
         self.compare_error_message(context_manager, expected_message)
@@ -136,17 +131,18 @@ class CorrectionTest(AbstractTest):
         # TODO: add checks in ivar and flux
         self.assertTrue(np.allclose(forest.log_lambda, forest1_log_lambda))
         self.assertTrue(
-            np.allclose(
-                forest.transmission_correction, np.ones_like(forest1_log_lambda)
-            )
-        )
+            np.allclose(forest.transmission_correction,
+                        np.ones_like(forest1_log_lambda)))
 
         # create DustCorrection instance specifying the extinction conversion
         # factor
         config = ConfigParser()
-        config.read_dict(
-            {"corrections": {"filename": in_file, "extinction_conversion_r": 3.5}}
-        )
+        config.read_dict({
+            "corrections": {
+                "filename": in_file,
+                "extinction_conversion_r": 3.5
+            }
+        })
         correction = DustCorrection(config["corrections"])
         self.assertTrue(len(correction.extinction_bv_map) == 1)
         self.assertTrue(correction.extinction_bv_map.get(100000) == 1 / 3.5)
@@ -159,8 +155,8 @@ class CorrectionTest(AbstractTest):
         config = ConfigParser()
         config.read_dict({"corrections": {}})
         expected_message = (
-            "Missing argument 'extinction_conversion_r' required " "by DustCorrection"
-        )
+            "Missing argument 'extinction_conversion_r' required "
+            "by DustCorrection")
         with self.assertRaises(CorrectionError) as context_manager:
             correction = DustCorrection(config["corrections"])
         self.compare_error_message(context_manager, expected_message)
@@ -184,14 +180,15 @@ class CorrectionTest(AbstractTest):
         forest = copy.deepcopy(forest1)
         correction.apply_correction(forest)
 
-        self.assertTrue(np.allclose(forest.flux, np.ones_like(forest1_log_lambda)))
-        self.assertTrue(np.allclose(forest.log_lambda, forest1_log_lambda))
-        self.assertTrue(np.allclose(forest.ivar, np.ones_like(forest1_log_lambda) * 2))
         self.assertTrue(
-            np.allclose(
-                forest.transmission_correction, np.ones_like(forest1_log_lambda)
-            )
-        )
+            np.allclose(forest.flux, np.ones_like(forest1_log_lambda)))
+        self.assertTrue(np.allclose(forest.log_lambda, forest1_log_lambda))
+        self.assertTrue(
+            np.allclose(forest.ivar,
+                        np.ones_like(forest1_log_lambda) * 2))
+        self.assertTrue(
+            np.allclose(forest.transmission_correction,
+                        np.ones_like(forest1_log_lambda)))
 
     def test_ivar_correction_missing_options(self):
         """Test correct error reporting when initializing with missing options
@@ -200,9 +197,8 @@ class CorrectionTest(AbstractTest):
         # create IvarCorrection instance with missing options
         config = ConfigParser()
         config.read_dict({"corrections": {}})
-        expected_message = (
-            "Missing argument 'filename' required " "by SdssIvarCorrection"
-        )
+        expected_message = ("Missing argument 'filename' required "
+                            "by SdssIvarCorrection")
         with self.assertRaises(CorrectionError) as context_manager:
             correction = IvarCorrection(config["corrections"])
         self.compare_error_message(context_manager, expected_message)
@@ -223,16 +219,14 @@ class CorrectionTest(AbstractTest):
         Forest.wave_solution = "log"
 
         config = ConfigParser()
-        config.read_dict(
-            {
-                "corrections": {
-                    "filename": in_file,
-                    "optical depth tau": "1",
-                    "optical depth gamma": "0",
-                    "optical depth absorber": "LYA",
-                }
+        config.read_dict({
+            "corrections": {
+                "filename": in_file,
+                "optical depth tau": "1",
+                "optical depth gamma": "0",
+                "optical depth absorber": "LYA",
             }
-        )
+        })
         correction = OpticalDepthCorrection(config["corrections"])
         self.assertTrue(isinstance(correction, Correction))
 
@@ -240,15 +234,17 @@ class CorrectionTest(AbstractTest):
         forest = copy.deepcopy(forest1)
         correction.apply_correction(forest)
 
-        self.assertTrue(np.allclose(forest.flux, np.ones_like(forest1_log_lambda)))
+        self.assertTrue(
+            np.allclose(forest.flux, np.ones_like(forest1_log_lambda)))
         self.assertTrue(np.allclose(forest.log_lambda, forest1_log_lambda))
-        self.assertTrue(np.allclose(forest.ivar, np.ones_like(forest1_log_lambda) * 4))
+        self.assertTrue(
+            np.allclose(forest.ivar,
+                        np.ones_like(forest1_log_lambda) * 4))
         self.assertTrue(
             np.allclose(
                 forest.transmission_correction,
                 np.ones_like(forest1_log_lambda) * 0.36787944117144233,
-            )
-        )
+            ))
 
         reset_logger()
         self.compare_ascii(test_file, out_file)
@@ -260,10 +256,8 @@ class CorrectionTest(AbstractTest):
         # create OpticalDepthCorrection instance with missing options
         config = ConfigParser()
         config.read_dict({"corrections": {}})
-        expected_message = (
-            "Missing argument 'optical depth tau' required "
-            "by SdssOpticalDepthCorrection"
-        )
+        expected_message = ("Missing argument 'optical depth tau' required "
+                            "by SdssOpticalDepthCorrection")
         with self.assertRaises(CorrectionError) as context_manager:
             correction = OpticalDepthCorrection(config["corrections"])
         self.compare_error_message(context_manager, expected_message)

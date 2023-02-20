@@ -40,15 +40,15 @@ def main(cmdargs):
     forests."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=(
-            "Compute the wick covariance for the cross-correlation of "
-            "object x forests."
-        ),
+        description=("Compute the wick covariance for the cross-correlation of "
+                     "object x forests."),
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     parser.add_argument(
         "--in-dir",
@@ -99,13 +99,17 @@ def main(cmdargs):
         help="Max r-transverse [h^-1 Mpc]",
     )
 
-    parser.add_argument(
-        "--np", type=int, default=100, required=False, help="Number of r-parallel bins"
-    )
+    parser.add_argument("--np",
+                        type=int,
+                        default=100,
+                        required=False,
+                        help="Number of r-parallel bins")
 
-    parser.add_argument(
-        "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
-    )
+    parser.add_argument("--nt",
+                        type=int,
+                        default=50,
+                        required=False,
+                        help="Number of r-transverse bins")
 
     parser.add_argument(
         "--z-min-obj",
@@ -128,11 +132,9 @@ def main(cmdargs):
         type=float,
         default=0.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift larger than "
-            "z-cut-min"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift larger than "
+              "z-cut-min"),
     )
 
     parser.add_argument(
@@ -140,11 +142,9 @@ def main(cmdargs):
         type=float,
         default=10.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift smaller than "
-            "z-cut-max"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift smaller than "
+              "z-cut-max"),
     )
 
     parser.add_argument(
@@ -152,15 +152,15 @@ def main(cmdargs):
         type=str,
         default="LYA",
         required=False,
-        help=(
-            "Name of the absorption in picca.constants defining the redshift "
-            "of the delta"
-        ),
+        help=("Name of the absorption in picca.constants defining the redshift "
+              "of the delta"),
     )
 
-    parser.add_argument(
-        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
-    )
+    parser.add_argument("--z-ref",
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help="Reference redshift")
 
     parser.add_argument(
         "--z-evol-del",
@@ -222,9 +222,8 @@ def main(cmdargs):
         "--cf1d",
         type=str,
         required=True,
-        help=(
-            "1D auto-correlation of pixels from the same forest file: " "picca_cf1d.py"
-        ),
+        help=("1D auto-correlation of pixels from the same forest file: "
+              "picca_cf1d.py"),
     )
 
     parser.add_argument(
@@ -232,7 +231,8 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=("3D auto-correlation of pixels from different forests: " "picca_cf.py"),
+        help=("3D auto-correlation of pixels from different forests: "
+              "picca_cf.py"),
     )
 
     parser.add_argument(
@@ -240,19 +240,21 @@ def main(cmdargs):
         type=float,
         default=1.0,
         required=False,
-        help=(
-            "Fraction of rejected object-forests pairs: -1=no rejection, "
-            "1=all rejection"
-        ),
+        help=("Fraction of rejected object-forests pairs: -1=no rejection, "
+              "1=all rejection"),
     )
 
-    parser.add_argument(
-        "--nside", type=int, default=16, required=False, help="Healpix nside"
-    )
+    parser.add_argument("--nside",
+                        type=int,
+                        default=16,
+                        required=False,
+                        help="Healpix nside")
 
-    parser.add_argument(
-        "--nproc", type=int, default=None, required=False, help="Number of processors"
-    )
+    parser.add_argument("--nproc",
+                        type=int,
+                        default=None,
+                        required=False,
+                        help="Number of processors")
 
     parser.add_argument(
         "--nspec",
@@ -296,9 +298,8 @@ def main(cmdargs):
 
     # load fiducial cosmology
     if (args.fid_Or != 0.0) or (args.fid_Ok != 0.0) or (args.fid_wl != -1.0):
-        userprint(
-            ("ERROR: Cosmology with other than Omega_m set are not yet " "implemented")
-        )
+        userprint(("ERROR: Cosmology with other than Omega_m set are not yet "
+                   "implemented"))
         sys.exit()
     cosmo = constants.Cosmo(
         Om=args.fid_Om,
@@ -324,15 +325,15 @@ def main(cmdargs):
         for delta in deltas:
             delta.fname = "D1"
             for item in [
-                "cont",
-                "delta",
-                "order",
-                "ivar",
-                "exposures_diff",
-                "mean_snr",
-                "mean_reso",
-                "mean_z",
-                "delta_log_lambda",
+                    "cont",
+                    "delta",
+                    "order",
+                    "ivar",
+                    "exposures_diff",
+                    "mean_snr",
+                    "mean_reso",
+                    "mean_z",
+                    "delta_log_lambda",
             ]:
                 setattr(delta, item, None)
     xcf.data = data
@@ -510,9 +511,21 @@ def main(cmdargs):
             "value": xcf.z_cut_max,
             "comment": "Maximum redshift of pairs",
         },
-        {"name": "REJ", "value": xcf.reject, "comment": "Rejection factor"},
-        {"name": "NPALL", "value": npairs, "comment": "Number of pairs"},
-        {"name": "NPUSED", "value": npairs_used, "comment": "Number of used pairs"},
+        {
+            "name": "REJ",
+            "value": xcf.reject,
+            "comment": "Rejection factor"
+        },
+        {
+            "name": "NPALL",
+            "value": npairs,
+            "comment": "Number of pairs"
+        },
+        {
+            "name": "NPUSED",
+            "value": npairs_used,
+            "comment": "Number of used pairs"
+        },
         {
             "name": "OMEGAM",
             "value": args.fid_Om,
@@ -529,9 +542,12 @@ def main(cmdargs):
             "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            "name": "WL",
-            "value": args.fid_wl,
-            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+            "name":
+                "WL",
+            "value":
+                args.fid_wl,
+            "comment":
+                "Equation of state of dark energy of fiducial LambdaCDM cosmology",
         },
         {
             "name": "BLINDING",

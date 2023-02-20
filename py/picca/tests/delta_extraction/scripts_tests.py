@@ -52,8 +52,10 @@ class ScriptsTest(AbstractTest):
             raise e
 
         # compare attributes
-        test_files = sorted(glob.glob(f"{test_dir}/Log/delta_attributes*.fits.gz"))
-        out_files = sorted(glob.glob(f"{out_dir}/Log/delta_attributes*.fits.gz"))
+        test_files = sorted(
+            glob.glob(f"{test_dir}/Log/delta_attributes*.fits.gz"))
+        out_files = sorted(
+            glob.glob(f"{out_dir}/Log/delta_attributes*.fits.gz"))
         for test_file, out_file in zip(test_files, out_files):
             self.assertTrue(test_file.split("/")[-1] == out_file.split("/")[-1])
             self.compare_fits(test_file, out_file)
@@ -133,7 +135,8 @@ class ScriptsTest(AbstractTest):
     def test_delta_lya_nomask_nodla(self):
         """End-to-end test using 'LYA' setup wihtout masking sky lines nor DLAs"""
         config_file = "{}/data/delta_lya_nomask_nodla.ini".format(THIS_DIR)
-        out_dir = "{}/results/delta_extraction_lya_nomask_nodla".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_lya_nomask_nodla".format(
+            THIS_DIR)
         test_dir = "{}/data/delta_extraction_lya_nomask_nodla".format(THIS_DIR)
 
         self.run_delta_extraction(config_file, out_dir, test_dir)

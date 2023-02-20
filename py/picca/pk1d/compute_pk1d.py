@@ -96,17 +96,15 @@ def split_forest(
 
     for index in range(1, num_parts):
         lambda_or_log_lambda_limit.append(
-            lambda_or_log_lambda[num_bins * index + first_pixel_index]
-        )
+            lambda_or_log_lambda[num_bins * index + first_pixel_index])
 
     lambda_or_log_lambda_limit.append(
-        lambda_or_log_lambda[len(lambda_or_log_lambda) - 1] + 0.1 * pixel_step
-    )
+        lambda_or_log_lambda[len(lambda_or_log_lambda) - 1] + 0.1 * pixel_step)
 
     for index in range(num_parts):
-        selection = (lambda_or_log_lambda >= lambda_or_log_lambda_limit[index]) & (
-            lambda_or_log_lambda < lambda_or_log_lambda_limit[index + 1]
-        )
+        selection = (
+            lambda_or_log_lambda >= lambda_or_log_lambda_limit[index]) & (
+                lambda_or_log_lambda < lambda_or_log_lambda_limit[index + 1])
 
         lambda_or_log_lambda_part = lambda_or_log_lambda[selection].copy()
         lambda_abs_igm = constants.ABSORBER_IGM[abs_igm]
@@ -114,7 +112,8 @@ def split_forest(
         if linear_binning:
             mean_z = np.mean(lambda_or_log_lambda_part) / lambda_abs_igm - 1.0
         else:
-            mean_z = np.mean(10**lambda_or_log_lambda_part) / lambda_abs_igm - 1.0
+            mean_z = np.mean(10**
+                             lambda_or_log_lambda_part) / lambda_abs_igm - 1.0
 
         if reso_matrix is not None:
             reso_matrix_part = reso_matrix[:, selection].copy()
@@ -180,11 +179,8 @@ def rebin_diff_noise(pixel_step, lambda_or_log_lambda, exposures_diff):
     rebin_delta_lambda_or_log_lambda = rebin * pixel_step
 
     # rebin not mixing pixels separated by masks
-    bins = np.floor(
-        (lambda_or_log_lambda - lambda_or_log_lambda.min())
-        / rebin_delta_lambda_or_log_lambda
-        + 0.5
-    ).astype(int)
+    bins = np.floor((lambda_or_log_lambda - lambda_or_log_lambda.min()) /
+                    rebin_delta_lambda_or_log_lambda + 0.5).astype(int)
 
     rebin_exposure_diff = np.bincount(bins.astype(int), weights=exposures_diff)
     rebin_counts = np.bincount(bins.astype(int))
@@ -196,10 +192,11 @@ def rebin_diff_noise(pixel_step, lambda_or_log_lambda, exposures_diff):
     # now merge the rebinned array into a noise array
     noise = np.zeros(exposures_diff.size)
     for index in range(len(exposures_diff) // len(rebin_exposure_diff) + 1):
-        length_max = min(len(exposures_diff), (index + 1) * len(rebin_exposure_diff))
-        noise[index * len(rebin_exposure_diff) : length_max] = rebin_exposure_diff[
-            : (length_max - index * len(rebin_exposure_diff))
-        ]
+        length_max = min(len(exposures_diff),
+                         (index + 1) * len(rebin_exposure_diff))
+        noise[index *
+              len(rebin_exposure_diff):length_max] = rebin_exposure_diff[:(
+                  length_max - index * len(rebin_exposure_diff))]
         # shuffle the array before the next iteration
         np.random.shuffle(rebin_exposure_diff)
 
@@ -324,12 +321,8 @@ def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False):
     if linear_binning:  # spectral length in AA
         length_lambda = delta_lambda_or_log_lambda * len(delta)
     else:  # spectral length in km/s
-        length_lambda = (
-            delta_lambda_or_log_lambda
-            * constants.SPEED_LIGHT
-            * np.log(10.0)
-            * len(delta)
-        )
+        length_lambda = (delta_lambda_or_log_lambda * constants.SPEED_LIGHT *
+                         np.log(10.0) * len(delta))
 
     # make 1D FFT
     num_pixels = len(delta)
@@ -395,16 +388,16 @@ def compute_pk_noise(
         for _ in range(num_noise_exposures):
             delta_exp = np.zeros(num_pixels)
             delta_exp[w] = np.random.normal(0.0, error[w])
-            _, pk_exp = compute_pk_raw(
-                delta_lambda_or_log_lambda, delta_exp, linear_binning=linear_binning
-            )
+            _, pk_exp = compute_pk_raw(delta_lambda_or_log_lambda,
+                                       delta_exp,
+                                       linear_binning=linear_binning)
             pk_noise += pk_exp
 
         pk_noise /= float(num_noise_exposures)
 
-    _, pk_diff = compute_pk_raw(
-        delta_lambda_or_log_lambda, exposures_diff, linear_binning=linear_binning
-    )
+    _, pk_diff = compute_pk_raw(delta_lambda_or_log_lambda,
+                                exposures_diff,
+                                linear_binning=linear_binning)
 
     return pk_noise, pk_diff
 
@@ -432,9 +425,9 @@ def compute_correction_reso(delta_pixel, mean_reso, k):
     num_bins_fft = len(k)
     correction = np.ones(num_bins_fft)
 
-    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi)) ** 2
+    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))**2
 
-    correction *= np.exp(-((k * mean_reso) ** 2))
+    correction *= np.exp(-((k * mean_reso)**2))
     correction *= pixelization_factor
     return correction
 
@@ -475,13 +468,12 @@ def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel):
         except AssertionError as error:
             raise AssertionError(
                 "for some reason the resolution matrix correction has "
-                "different k scaling than the pk"
-            ) from error
+                "different k scaling than the pk") from error
         w2 /= w2[0]
         w2_arr.append(w2)
 
     w_res2 = np.mean(w2_arr, axis=0)
-    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi)) ** 2
+    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))**2
 
     # the following assumes that the resolution matrix is storing the actual
     # resolution convolved with the pixelization kernel along each matrix axis

@@ -36,14 +36,15 @@ def main(cmdargs):
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=(
-            "Compute the auto and cross-correlation between catalogs " "of objects"
-        ),
+        description=("Compute the auto and cross-correlation between catalogs "
+                     "of objects"),
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     parser.add_argument(
         "--drq",
@@ -93,23 +94,25 @@ def main(cmdargs):
         help="Max r-transverse [h^-1 Mpc]",
     )
 
-    parser.add_argument(
-        "--np", type=int, default=50, required=False, help="Number of r-parallel bins"
-    )
+    parser.add_argument("--np",
+                        type=int,
+                        default=50,
+                        required=False,
+                        help="Number of r-parallel bins")
 
-    parser.add_argument(
-        "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
-    )
+    parser.add_argument("--nt",
+                        type=int,
+                        default=50,
+                        required=False,
+                        help="Number of r-transverse bins")
 
     parser.add_argument(
         "--z-cut-min",
         type=float,
         default=0.0,
         required=False,
-        help=(
-            "Use only pairs of object x object with the mean redshift larger "
-            "than z-cut-min"
-        ),
+        help=("Use only pairs of object x object with the mean redshift larger "
+              "than z-cut-min"),
     )
 
     parser.add_argument(
@@ -117,10 +120,8 @@ def main(cmdargs):
         type=float,
         default=10.0,
         required=False,
-        help=(
-            "Use only pairs of object x object with the mean redshift lower "
-            "than z-cut-max"
-        ),
+        help=("Use only pairs of object x object with the mean redshift lower "
+              "than z-cut-max"),
     )
 
     parser.add_argument(
@@ -139,9 +140,11 @@ def main(cmdargs):
         help="Max redshift for object field",
     )
 
-    parser.add_argument(
-        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
-    )
+    parser.add_argument("--z-ref",
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help="Reference redshift")
 
     parser.add_argument(
         "--z-evol-obj",
@@ -199,13 +202,17 @@ def main(cmdargs):
         help="type of correlation: DD, RR, DR, RD, xDD, xRR, xD1R2, xR1D2",
     )
 
-    parser.add_argument(
-        "--nside", type=int, default=16, required=False, help="Healpix nside"
-    )
+    parser.add_argument("--nside",
+                        type=int,
+                        default=16,
+                        required=False,
+                        help="Healpix nside")
 
-    parser.add_argument(
-        "--nproc", type=int, default=None, required=False, help="Number of processors"
-    )
+    parser.add_argument("--nproc",
+                        type=int,
+                        default=None,
+                        required=False,
+                        help="Number of processors")
 
     args = parser.parse_args(cmdargs)
 
@@ -222,13 +229,11 @@ def main(cmdargs):
     co.num_bins_r_trans = args.nt
     co.nside = args.nside
     co.type_corr = args.type_corr
-    if co.type_corr not in ["DD", "RR", "DR", "RD", "xDD", "xRR", "xD1R2", "xR1D2"]:
-        userprint(
-            (
-                "ERROR: type-corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', "
-                "'xRR', 'xD1R2', 'xR1D2']"
-            )
-        )
+    if co.type_corr not in [
+            "DD", "RR", "DR", "RD", "xDD", "xRR", "xD1R2", "xR1D2"
+    ]:
+        userprint(("ERROR: type-corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', "
+                   "'xRR', 'xD1R2', 'xR1D2']"))
         sys.exit()
     if args.drq2 is None:
         co.x_correlation = False
@@ -236,9 +241,10 @@ def main(cmdargs):
         co.x_correlation = True
 
     # load fiducial cosmology
-    cosmo = constants.Cosmo(
-        Om=args.fid_Om, Or=args.fid_Or, Ok=args.fid_Ok, wl=args.fid_wl
-    )
+    cosmo = constants.Cosmo(Om=args.fid_Om,
+                            Or=args.fid_Or,
+                            Ok=args.fid_Ok,
+                            wl=args.fid_wl)
 
     ### Read objects 1
     objs, z_min = io.read_objects(
@@ -280,7 +286,8 @@ def main(cmdargs):
     cpu_data = {healpix: [healpix] for healpix in co.objs}
     context = multiprocessing.get_context("fork")
     pool = context.Pool(processes=args.nproc)
-    correlation_function_data = pool.map(corr_func, sorted(list(cpu_data.values())))
+    correlation_function_data = pool.map(corr_func,
+                                         sorted(list(cpu_data.values())))
     pool.close()
 
     # group data from parallelisation
@@ -328,12 +335,23 @@ def main(cmdargs):
             "value": co.num_bins_r_trans,
             "comment": "Number of bins in r-transverse",
         },
-        {"name": "NSIDE", "value": co.nside, "comment": "Healpix nside"},
-        {"name": "TYPECORR", "value": co.type_corr, "comment": "Correlation type"},
         {
-            "name": "NOBJ",
-            "value": len([obj for healpix in co.objs for obj in co.objs[healpix]]),
-            "comment": "Number of objects",
+            "name": "NSIDE",
+            "value": co.nside,
+            "comment": "Healpix nside"
+        },
+        {
+            "name": "TYPECORR",
+            "value": co.type_corr,
+            "comment": "Correlation type"
+        },
+        {
+            "name":
+                "NOBJ",
+            "value":
+                len([obj for healpix in co.objs for obj in co.objs[healpix]]),
+            "comment":
+                "Number of objects",
         },
         {
             "name": "OMEGAM",
@@ -351,21 +369,25 @@ def main(cmdargs):
             "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            "name": "WL",
-            "value": args.fid_wl,
-            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+            "name":
+                "WL",
+            "value":
+                args.fid_wl,
+            "comment":
+                "Equation of state of dark energy of fiducial LambdaCDM cosmology",
         },
     ]
     if co.x_correlation:
-        header += [
-            {
-                "name": "NOBJ2",
-                "value": len(
-                    [obj2 for healpix in co.objs2 for obj2 in co.objs2[healpix]]
-                ),
-                "comment": "Number of objects 2",
-            }
-        ]
+        header += [{
+            "name":
+                "NOBJ2",
+            "value":
+                len([
+                    obj2 for healpix in co.objs2 for obj2 in co.objs2[healpix]
+                ]),
+            "comment":
+                "Number of objects 2",
+        }]
 
     comment = ["R-parallel", "R-transverse", "Redshift", "Number of pairs"]
     units = ["h^-1 Mpc", "h^-1 Mpc", "", ""]
@@ -379,7 +401,11 @@ def main(cmdargs):
     )
 
     comment = ["Healpix index", "Sum of weight", "Number of pairs"]
-    header2 = [{"name": "HLPXSCHM", "value": "RING", "comment": "healpix scheme"}]
+    header2 = [{
+        "name": "HLPXSCHM",
+        "value": "RING",
+        "comment": "healpix scheme"
+    }]
     results.write(
         [healpix_list, weights_list, num_pairs_list],
         names=["HEALPID", "WE", "NB"],

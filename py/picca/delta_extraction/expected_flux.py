@@ -13,7 +13,9 @@ from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
 from picca.delta_extraction.utils import find_bins
 
-accepted_options = ["iter out prefix", "num bins variance", "num processors", "out dir"]
+accepted_options = [
+    "iter out prefix", "num bins variance", "num processors", "out dir"
+]
 
 defaults = {
     "iter out prefix": "delta_attributes",
@@ -70,8 +72,7 @@ class ExpectedFlux:
         except AstronomicalObjectError as error:
             raise ExpectedFluxError(
                 "Forest class variables need to be set "
-                "before initializing variables here."
-            ) from error
+                "before initializing variables here.") from error
 
         # initialize wavelength array for variance functions
         self.log_lambda_var_func_grid = None
@@ -117,22 +118,20 @@ class ExpectedFlux:
         # du Mas des Bourboux et al. 2020 for details on these variables)
         if Forest.wave_solution == "log":
             self.log_lambda_var_func_grid = (
-                Forest.log_lambda_grid[0]
-                + (np.arange(self.num_bins_variance) + 0.5)
-                * (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0])
-                / self.num_bins_variance
-            )
+                Forest.log_lambda_grid[0] +
+                (np.arange(self.num_bins_variance) + 0.5) *
+                (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
+                self.num_bins_variance)
         # TODO: this is related with the todo in check the effect of finding
         # the nearest bin in log_lambda space versus lambda space infunction
         # find_bins in utils.py. Once we understand that we can remove
         # the dependence from Forest from here too.
         elif Forest.wave_solution == "lin":
             self.log_lambda_var_func_grid = np.log10(
-                10 ** Forest.log_lambda_grid[0]
-                + (np.arange(self.num_bins_variance) + 0.5)
-                * (10 ** Forest.log_lambda_grid[-1] - 10 ** Forest.log_lambda_grid[0])
-                / self.num_bins_variance
-            )
+                10**Forest.log_lambda_grid[0] +
+                (np.arange(self.num_bins_variance) + 0.5) *
+                (10**Forest.log_lambda_grid[-1] -
+                 10**Forest.log_lambda_grid[0]) / self.num_bins_variance)
 
         # TODO: Replace the if/else block above by something like the commented
         # block below. We need to check the impact of doing this on the final
@@ -158,34 +157,30 @@ class ExpectedFlux:
         self.iter_out_prefix = config.get("iter out prefix")
         if self.iter_out_prefix is None:
             raise ExpectedFluxError(
-                "Missing argument 'iter out prefix' required " "by ExpectedFlux"
-            )
+                "Missing argument 'iter out prefix' required "
+                "by ExpectedFlux")
         if "/" in self.iter_out_prefix:
             raise ExpectedFluxError(
                 "Error constructing ExpectedFlux. "
                 "'iter out prefix' should not incude folders. "
-                f"Found: {self.iter_out_prefix}"
-            )
+                f"Found: {self.iter_out_prefix}")
 
         self.num_bins_variance = config.getint("num bins variance")
         if self.num_bins_variance is None:
             raise ExpectedFluxError(
-                "Missing argument 'num bins variance' required by ExpectedFlux"
-            )
+                "Missing argument 'num bins variance' required by ExpectedFlux")
 
         self.num_processors = config.getint("num processors")
         if self.num_processors is None:
             raise ExpectedFluxError(
-                "Missing argument 'num processors' required by ExpectedFlux"
-            )
+                "Missing argument 'num processors' required by ExpectedFlux")
         if self.num_processors == 0:
             self.num_processors = multiprocessing.cpu_count() // 2
 
         self.out_dir = config.get("out dir")
         if self.out_dir is None:
             raise ExpectedFluxError(
-                "Missing argument 'out dir' required by ExpectedFlux"
-            )
+                "Missing argument 'out dir' required by ExpectedFlux")
         self.out_dir += "Log/"
 
     def compute_delta_stack(self, forests, stack_from_deltas=False):
@@ -214,17 +209,17 @@ class ExpectedFlux:
                 delta = np.zeros_like(forest.log_lambda)
                 w = forest.ivar > 0
                 delta[w] = forest.flux[w] / forest.continuum[w]
-                weights = 1.0 / self.compute_forest_variance(forest, forest.continuum)
+                weights = 1.0 / self.compute_forest_variance(
+                    forest, forest.continuum)
 
-            bins = find_bins(
-                forest.log_lambda, Forest.log_lambda_grid, Forest.wave_solution
-            )
-            stack_delta += np.bincount(
-                bins, weights=delta * weights, minlength=stack_delta.size
-            )
-            stack_weight += np.bincount(
-                bins, weights=weights, minlength=stack_delta.size
-            )
+            bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
+                             Forest.wave_solution)
+            stack_delta += np.bincount(bins,
+                                       weights=delta * weights,
+                                       minlength=stack_delta.size)
+            stack_weight += np.bincount(bins,
+                                        weights=weights,
+                                        minlength=stack_delta.size)
 
         w = stack_weight > 0
         stack_delta[w] /= stack_weight[w]
@@ -258,11 +253,12 @@ class ExpectedFlux:
         -----
         MeanExpectedFluxError if function was not overloaded by child class
         """
-        raise ExpectedFluxError(
-            "Function 'compute_expected_flux' was not " "overloaded by child class"
-        )
+        raise ExpectedFluxError("Function 'compute_expected_flux' was not "
+                                "overloaded by child class")
 
-    def _compute_mean_cont(self, forests, which_cont=lambda forest: forest.continuum):
+    def _compute_mean_cont(self,
+                           forests,
+                           which_cont=lambda forest: forest.continuum):
         """Compute the mean quasar continuum over the whole sample.
         Then updates the value of self.get_mean_cont to contain it
 
@@ -290,14 +286,15 @@ class ExpectedFlux:
                 Forest.wave_solution,
             )
 
-            weights = 1.0 / self.compute_forest_variance(forest, forest.continuum)
+            weights = 1.0 / self.compute_forest_variance(
+                forest, forest.continuum)
             forest_continuum = which_cont(forest)
-            mean_cont += np.bincount(
-                bins, weights=forest_continuum * weights, minlength=mean_cont.size
-            )
-            mean_cont_weight += np.bincount(
-                bins, weights=weights, minlength=mean_cont.size
-            )
+            mean_cont += np.bincount(bins,
+                                     weights=forest_continuum * weights,
+                                     minlength=mean_cont.size)
+            mean_cont_weight += np.bincount(bins,
+                                            weights=weights,
+                                            minlength=mean_cont.size)
 
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
@@ -307,12 +304,13 @@ class ExpectedFlux:
         # the new mean continuum is multiplied by the previous one to recover
         # <F/spectrum_dependent_fitting_function>
         new_cont = self.get_mean_cont(log_lambda_cont) * mean_cont[w]
-        self.get_mean_cont = interp1d(
-            log_lambda_cont, new_cont, fill_value="extrapolate"
-        )
-        self.get_mean_cont_weight = interp1d(
-            log_lambda_cont, mean_cont_weight[w], fill_value=0.0, bounds_error=False
-        )
+        self.get_mean_cont = interp1d(log_lambda_cont,
+                                      new_cont,
+                                      fill_value="extrapolate")
+        self.get_mean_cont_weight = interp1d(log_lambda_cont,
+                                             mean_cont_weight[w],
+                                             fill_value=0.0,
+                                             bounds_error=False)
 
     def compute_forest_variance(self, forest, continuum):
         """Compute the forest variance
@@ -329,9 +327,8 @@ class ExpectedFlux:
         -----
         MeanExpectedFluxError if function was not overloaded by child class
         """
-        raise ExpectedFluxError(
-            "Function 'compute_forest_variance' was not " "overloaded by child class"
-        )
+        raise ExpectedFluxError("Function 'compute_forest_variance' was not "
+                                "overloaded by child class")
 
     def extract_deltas(self, forest):
         """Apply the continuum to compute the delta field
@@ -344,7 +341,8 @@ class ExpectedFlux:
         if self.los_ids.get(forest.los_id) is not None:
             w = self.los_ids.get(forest.los_id).get("weights") > 0
 
-            expected_flux = self.los_ids.get(forest.los_id).get("mean expected flux")
+            expected_flux = self.los_ids.get(
+                forest.los_id).get("mean expected flux")
             forest.deltas = np.zeros_like(forest.flux)
             forest.deltas[w] = forest.flux[w] / expected_flux[w] - 1
             forest.weights = self.los_ids.get(forest.los_id).get("weights")
@@ -434,7 +432,8 @@ class ExpectedFlux:
         else:
             iter_out_file = self.iter_out_prefix + f"_iteration{iteration+1}.fits.gz"
 
-        with fitsio.FITS(self.out_dir + iter_out_file, "rw", clobber=True) as results:
+        with fitsio.FITS(self.out_dir + iter_out_file, "rw",
+                         clobber=True) as results:
             self.hdu_stack_deltas(results)
             self.hdu_var_func(results)
             self.hdu_cont(results)

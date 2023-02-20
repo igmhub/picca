@@ -42,14 +42,15 @@ def main(cmdargs):
     object."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=(
-            "Compute the distortion matrix of the cross-correlation " "delta x object."
-        ),
+        description=("Compute the distortion matrix of the cross-correlation "
+                     "delta x object."),
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     parser.add_argument(
         "--in-dir",
@@ -100,22 +101,25 @@ def main(cmdargs):
         help="Max r-transverse [h^-1 Mpc]",
     )
 
-    parser.add_argument(
-        "--np", type=int, default=100, required=False, help="Number of r-parallel bins"
-    )
+    parser.add_argument("--np",
+                        type=int,
+                        default=100,
+                        required=False,
+                        help="Number of r-parallel bins")
 
-    parser.add_argument(
-        "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
-    )
+    parser.add_argument("--nt",
+                        type=int,
+                        default=50,
+                        required=False,
+                        help="Number of r-transverse bins")
 
     parser.add_argument(
         "--coef-binning-model",
         type=int,
         default=1,
         required=False,
-        help=(
-            "Coefficient multiplying np and nt to get finner binning for the " "model"
-        ),
+        help=("Coefficient multiplying np and nt to get finner binning for the "
+              "model"),
     )
 
     parser.add_argument(
@@ -139,11 +143,9 @@ def main(cmdargs):
         type=float,
         default=0.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift larger than "
-            "z-cut-min"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift larger than "
+              "z-cut-min"),
     )
 
     parser.add_argument(
@@ -151,11 +153,9 @@ def main(cmdargs):
         type=float,
         default=10.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift smaller than "
-            "z-cut-max"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift smaller than "
+              "z-cut-max"),
     )
 
     parser.add_argument(
@@ -163,15 +163,15 @@ def main(cmdargs):
         type=str,
         default="LYA",
         required=False,
-        help=(
-            "Name of the absorption in picca.constants defining the redshift "
-            "of the delta"
-        ),
+        help=("Name of the absorption in picca.constants defining the redshift "
+              "of the delta"),
     )
 
-    parser.add_argument(
-        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
-    )
+    parser.add_argument("--z-ref",
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help="Reference redshift")
 
     parser.add_argument(
         "--z-evol-del",
@@ -229,13 +229,17 @@ def main(cmdargs):
         help="Fraction of rejected pairs: -1=no rejection, 1=all rejection",
     )
 
-    parser.add_argument(
-        "--nside", type=int, default=16, required=False, help="Healpix nside"
-    )
+    parser.add_argument("--nside",
+                        type=int,
+                        default=16,
+                        required=False,
+                        help="Healpix nside")
 
-    parser.add_argument(
-        "--nproc", type=int, default=None, required=False, help="Number of processors"
-    )
+    parser.add_argument("--nproc",
+                        type=int,
+                        default=None,
+                        required=False,
+                        help="Number of processors")
 
     parser.add_argument(
         "--nspec",
@@ -425,9 +429,21 @@ def main(cmdargs):
             "value": xcf.z_cut_max,
             "comment": "Maximum redshift of pairs",
         },
-        {"name": "REJ", "value": xcf.reject, "comment": "Rejection factor"},
-        {"name": "NPALL", "value": num_pairs, "comment": "Number of pairs"},
-        {"name": "NPUSED", "value": num_pairs_used, "comment": "Number of used pairs"},
+        {
+            "name": "REJ",
+            "value": xcf.reject,
+            "comment": "Rejection factor"
+        },
+        {
+            "name": "NPALL",
+            "value": num_pairs,
+            "comment": "Number of pairs"
+        },
+        {
+            "name": "NPUSED",
+            "value": num_pairs_used,
+            "comment": "Number of used pairs"
+        },
         {
             "name": "OMEGAM",
             "value": args.fid_Om,
@@ -444,9 +460,12 @@ def main(cmdargs):
             "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            "name": "WL",
-            "value": args.fid_wl,
-            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+            "name":
+                "WL",
+            "value":
+                args.fid_wl,
+            "comment":
+                "Equation of state of dark energy of fiducial LambdaCDM cosmology",
         },
         {
             "name": "BLINDING",

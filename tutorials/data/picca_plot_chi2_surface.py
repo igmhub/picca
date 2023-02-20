@@ -84,10 +84,12 @@ if __name__ == "__main__":
         first_line = first_line.replace("#", "")
         first_line = first_line.split()
         fromkeytoindex_bestfitBAO = {el: i for i, el in enumerate(first_line)}
-        chi2_bestfitBAO = np.loadtxt(path.replace(".ap.at.scan.dat", ".save.pars"))
+        chi2_bestfitBAO = np.loadtxt(
+            path.replace(".ap.at.scan.dat", ".save.pars"))
 
         ### Read the convertion from delta-chi2 to sigma
-        if not os.path.isfile(path.replace(".ap.at.scan.dat", ".dchi2.to.sigma")):
+        if not os.path.isfile(path.replace(".ap.at.scan.dat",
+                                           ".dchi2.to.sigma")):
             print(
                 "WARNING: did not find .dchi2.to.sigma to convert delta-chi2 to sigma, assuming Linear mapping"
             )
@@ -109,12 +111,15 @@ if __name__ == "__main__":
                 first_line = f.readline()
             first_line = first_line.replace("#", "")
             first_line = first_line.split()
-            fromkeytoindex_bestfitfiducial = {el: i for i, el in enumerate(first_line)}
+            fromkeytoindex_bestfitfiducial = {
+                el: i for i, el in enumerate(first_line)
+            }
             chi2_bestfitfiducial = sp.loadtxt(
-                path.replace(".ap.at.scan.dat", ".fiducial")
-            )
-            dhord = chi2_bestfitfiducial[fromkeytoindex_bestfitfiducial["Dh/rd"]]
-            dmord = chi2_bestfitfiducial[fromkeytoindex_bestfitfiducial["Dm/rd"]]
+                path.replace(".ap.at.scan.dat", ".fiducial"))
+            dhord = chi2_bestfitfiducial[
+                fromkeytoindex_bestfitfiducial["Dh/rd"]]
+            dmord = chi2_bestfitfiducial[
+                fromkeytoindex_bestfitfiducial["Dm/rd"]]
         else:
             dhord = 1.0
             dmord = 1.0
@@ -142,10 +147,14 @@ if __name__ == "__main__":
         zzz = convert1DTo2D(zzz, nb1, nb2)
         extent = [min2, max2, min1, max1]
 
-        plt.contour(zzz, levels=levels, extent=extent, origin="lower", colors=color[i])
-        plt.plot(
-            [0.0], [0.0], color=color[i], label=r"$\mathrm{" + args.label[i] + "}$"
-        )
+        plt.contour(zzz,
+                    levels=levels,
+                    extent=extent,
+                    origin="lower",
+                    colors=color[i])
+        plt.plot([0.0], [0.0],
+                 color=color[i],
+                 label=r"$\mathrm{" + args.label[i] + "}$")
         plt.errorbar([val2], [val1], fmt="o", color=color[i])
 
     if args.d_over_rd:

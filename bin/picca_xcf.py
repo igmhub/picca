@@ -42,15 +42,15 @@ def main(cmdargs):
     field."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=(
-            "Compute the cross-correlation between a catalog of "
-            "objects and a delta field."
-        ),
+        description=("Compute the cross-correlation between a catalog of "
+                     "objects and a delta field."),
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     parser.add_argument(
         "--in-dir",
@@ -101,13 +101,17 @@ def main(cmdargs):
         help="Max r-transverse [h^-1 Mpc]",
     )
 
-    parser.add_argument(
-        "--np", type=int, default=100, required=False, help="Number of r-parallel bins"
-    )
+    parser.add_argument("--np",
+                        type=int,
+                        default=100,
+                        required=False,
+                        help="Number of r-parallel bins")
 
-    parser.add_argument(
-        "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
-    )
+    parser.add_argument("--nt",
+                        type=int,
+                        default=50,
+                        required=False,
+                        help="Number of r-transverse bins")
 
     parser.add_argument(
         "--z-min-obj",
@@ -130,11 +134,9 @@ def main(cmdargs):
         type=float,
         default=0.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift larger than "
-            "z-cut-min"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift larger than "
+              "z-cut-min"),
     )
 
     parser.add_argument(
@@ -142,11 +144,9 @@ def main(cmdargs):
         type=float,
         default=10.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift smaller than "
-            "z-cut-max"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift smaller than "
+              "z-cut-max"),
     )
 
     parser.add_argument(
@@ -154,15 +154,15 @@ def main(cmdargs):
         type=str,
         default="LYA",
         required=False,
-        help=(
-            "Name of the absorption in picca.constants defining the redshift "
-            "of the delta"
-        ),
+        help=("Name of the absorption in picca.constants defining the redshift "
+              "of the delta"),
     )
 
-    parser.add_argument(
-        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
-    )
+    parser.add_argument("--z-ref",
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help="Reference redshift")
 
     parser.add_argument(
         "--z-evol-del",
@@ -226,13 +226,17 @@ def main(cmdargs):
         help="Do not remove mean delta versus lambda_obs",
     )
 
-    parser.add_argument(
-        "--nside", type=int, default=16, required=False, help="Healpix nside"
-    )
+    parser.add_argument("--nside",
+                        type=int,
+                        default=16,
+                        required=False,
+                        help="Healpix nside")
 
-    parser.add_argument(
-        "--nproc", type=int, default=None, required=False, help="Number of processors"
-    )
+    parser.add_argument("--nproc",
+                        type=int,
+                        default=None,
+                        required=False,
+                        help="Number of processors")
 
     parser.add_argument(
         "--nspec",
@@ -247,10 +251,8 @@ def main(cmdargs):
         type=int,
         default=None,
         required=False,
-        help=(
-            "Shuffle the distribution of objects on the sky following the "
-            "given seed. Do not shuffle if None"
-        ),
+        help=("Shuffle the distribution of objects on the sky following the "
+              "given seed. Do not shuffle if None"),
     )
 
     parser.add_argument(
@@ -258,10 +260,8 @@ def main(cmdargs):
         type=int,
         default=None,
         required=False,
-        help=(
-            "Shuffle the distribution of forests on the sky following the "
-            "given seed. Do not shuffle if None"
-        ),
+        help=("Shuffle the distribution of forests on the sky following the "
+              "given seed. Do not shuffle if None"),
     )
 
     parser.add_argument(
@@ -349,43 +349,35 @@ def main(cmdargs):
         Forest.delta_log_lambda = None
         for healpix in xcf.data:
             for delta in xcf.data[healpix]:
-                delta_log_lambda = np.asarray(
-                    [
-                        delta.log_lambda[index] - delta.log_lambda[index - 1]
-                        for index in range(1, delta.log_lambda.size)
-                    ]
-                ).min()
+                delta_log_lambda = np.asarray([
+                    delta.log_lambda[index] - delta.log_lambda[index - 1]
+                    for index in range(1, delta.log_lambda.size)
+                ]).min()
                 if Forest.delta_log_lambda is None:
                     Forest.delta_log_lambda = delta_log_lambda
                 else:
-                    Forest.delta_log_lambda = min(
-                        delta_log_lambda, Forest.delta_log_lambda
-                    )
-        Forest.log_lambda_min = (
-            np.log10((z_min + 1.0) * xcf.lambda_abs) - Forest.delta_log_lambda / 2.0
-        )
-        Forest.log_lambda_max = (
-            np.log10((z_max + 1.0) * xcf.lambda_abs) + Forest.delta_log_lambda / 2.0
-        )
+                    Forest.delta_log_lambda = min(delta_log_lambda,
+                                                  Forest.delta_log_lambda)
+        Forest.log_lambda_min = (np.log10(
+            (z_min + 1.0) * xcf.lambda_abs) - Forest.delta_log_lambda / 2.0)
+        Forest.log_lambda_max = (np.log10(
+            (z_max + 1.0) * xcf.lambda_abs) + Forest.delta_log_lambda / 2.0)
         log_lambda, mean_delta, stack_weight = prep_del.stack(
-            xcf.data, stack_from_deltas=True
-        )
+            xcf.data, stack_from_deltas=True)
         del log_lambda, stack_weight
         for healpix in xcf.data:
             for delta in xcf.data[healpix]:
-                bins = (
-                    (delta.log_lambda - Forest.log_lambda_min) / Forest.delta_log_lambda
-                    + 0.5
-                ).astype(int)
+                bins = ((delta.log_lambda - Forest.log_lambda_min) /
+                        Forest.delta_log_lambda + 0.5).astype(int)
                 delta.delta -= mean_delta[bins]
 
     # shuffle forests and objects
     if not args.shuffle_distrib_obj_seed is None:
-        xcf.objs = utils.shuffle_distrib_forests(objs, args.shuffle_distrib_obj_seed)
+        xcf.objs = utils.shuffle_distrib_forests(objs,
+                                                 args.shuffle_distrib_obj_seed)
     if not args.shuffle_distrib_forest_seed is None:
         xcf.data = utils.shuffle_distrib_forests(
-            xcf.data, args.shuffle_distrib_forest_seed
-        )
+            xcf.data, args.shuffle_distrib_forest_seed)
 
     userprint("")
 
@@ -465,7 +457,11 @@ def main(cmdargs):
             "value": xcf.z_cut_max,
             "comment": "Maximum redshift of pairs",
         },
-        {"name": "NSIDE", "value": xcf.nside, "comment": "Healpix nside"},
+        {
+            "name": "NSIDE",
+            "value": xcf.nside,
+            "comment": "Healpix nside"
+        },
         {
             "name": "OMEGAM",
             "value": args.fid_Om,
@@ -482,9 +478,12 @@ def main(cmdargs):
             "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            "name": "WL",
-            "value": args.fid_wl,
-            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+            "name":
+                "WL",
+            "value":
+                args.fid_wl,
+            "comment":
+                "Equation of state of dark energy of fiducial LambdaCDM cosmology",
         },
         {
             "name": "BLINDING",
@@ -501,7 +500,11 @@ def main(cmdargs):
         extname="ATTRI",
     )
 
-    header2 = [{"name": "HLPXSCHM", "value": "RING", "comment": "Healpix scheme"}]
+    header2 = [{
+        "name": "HLPXSCHM",
+        "value": "RING",
+        "comment": "Healpix scheme"
+    }]
     da_name = "DA"
     if blinding != "none":
         da_name += "_BLIND"

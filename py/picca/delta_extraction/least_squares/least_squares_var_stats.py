@@ -89,14 +89,9 @@ class LeastsSquaresVarStats:
         # the measured pipeline variance of the deltas will be averaged using the
         # same binning, and the two arrays will be compared to fit the functions
         # eta, var_lss, and fudge
-        self.var_pipe_values = 10 ** (
-            VAR_PIPE_MIN
-            + (
-                (np.arange(NUM_VAR_BINS) + 0.5)
-                * (VAR_PIPE_MAX - VAR_PIPE_MIN)
-                / NUM_VAR_BINS
-            )
-        )
+        self.var_pipe_values = 10**(
+            VAR_PIPE_MIN + ((np.arange(NUM_VAR_BINS) + 0.5) *
+                            (VAR_PIPE_MAX - VAR_PIPE_MIN) / NUM_VAR_BINS))
 
         # initialize arrays to compute the statistics of deltas
         self.var_delta = None
@@ -128,20 +123,15 @@ class LeastsSquaresVarStats:
         chi2: float
         The chi2 for this run
         """
-        variance = (
-            eta * self.var_pipe_values
-            + var_lss
-            + fudge * FUDGE_REF / self.var_pipe_values
-        )
+        variance = (eta * self.var_pipe_values + var_lss +
+                    fudge * FUDGE_REF / self.var_pipe_values)
         chi2_contribution = (
-            self.var_delta[self.running_indexs[0] : self.running_indexs[1]] - variance
-        )
-        weights = self.var2_delta[self.running_indexs[0] : self.running_indexs[1]]
-        w = (
-            self.num_qso[self.running_indexs[0] : self.running_indexs[1]]
-            > self.min_num_qso_in_fit
-        )
-        return np.sum(chi2_contribution[w] ** 2 / weights[w])
+            self.var_delta[self.running_indexs[0]:self.running_indexs[1]] -
+            variance)
+        weights = self.var2_delta[self.running_indexs[0]:self.running_indexs[1]]
+        w = (self.num_qso[self.running_indexs[0]:self.running_indexs[1]] >
+             self.min_num_qso_in_fit)
+        return np.sum(chi2_contribution[w]**2 / weights[w])
 
     def initialize_delta_arrays(self, forests):
         """Initialize arrays to compute the statistics of deltas
@@ -165,19 +155,16 @@ class LeastsSquaresVarStats:
 
             w = forest.ivar > 0
             var_pipe = np.empty_like(forest.log_lambda)
-            var_pipe[w] = 1 / forest.ivar[w] / forest.continuum[w] ** 2
+            var_pipe[w] = 1 / forest.ivar[w] / forest.continuum[w]**2
             var_pipe[~w] = np.inf
 
-            w &= (np.log10(var_pipe) > VAR_PIPE_MIN) & (
-                np.log10(var_pipe) < VAR_PIPE_MAX
-            )
+            w &= (np.log10(var_pipe) > VAR_PIPE_MIN) & (np.log10(var_pipe) <
+                                                        VAR_PIPE_MAX)
 
             # select the pipeline variance bins
             var_pipe_bins = np.floor(
-                (np.log10(var_pipe[w]) - VAR_PIPE_MIN)
-                / (VAR_PIPE_MAX - VAR_PIPE_MIN)
-                * NUM_VAR_BINS
-            ).astype(int)
+                (np.log10(var_pipe[w]) - VAR_PIPE_MIN) /
+                (VAR_PIPE_MAX - VAR_PIPE_MIN) * NUM_VAR_BINS).astype(int)
 
             # select the wavelength bins
             log_lambda_bins = find_bins(
@@ -193,13 +180,15 @@ class LeastsSquaresVarStats:
             delta = forest.flux[w] / forest.continuum[w] - 1
 
             # add contributions to delta statistics
-            mean_delta += np.bincount(bins, weights=delta, minlength=mean_delta.size)
-            var_delta += np.bincount(
-                bins, weights=delta**2, minlength=mean_delta.size
-            )
-            var2_delta += np.bincount(
-                bins, weights=delta**4, minlength=mean_delta.size
-            )
+            mean_delta += np.bincount(bins,
+                                      weights=delta,
+                                      minlength=mean_delta.size)
+            var_delta += np.bincount(bins,
+                                     weights=delta**2,
+                                     minlength=mean_delta.size)
+            var2_delta += np.bincount(bins,
+                                      weights=delta**4,
+                                      minlength=mean_delta.size)
 
             num_pixels += np.bincount(bins, minlength=mean_delta.size)
             num_qso[np.unique(bins)] += 1
@@ -220,7 +209,8 @@ class LeastsSquaresVarStats:
 
     def get_num_pixels(self):
         """Return the number of pixels participating in the fit"""
-        return self.num_pixels[self.running_indexs[0] : self.running_indexs[1]].sum()
+        return self.num_pixels[self.running_indexs[0]:self.
+                               running_indexs[1]].sum()
 
     def set_fit_bins(self, index):
         """Set the  selected bins for the fits

@@ -16,12 +16,13 @@ from picca.utils import userprint
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument(
-        "--plate", type=int, default=None, required=True, help="Plate of spectrum"
-    )
+    parser.add_argument("--plate",
+                        type=int,
+                        default=None,
+                        required=True,
+                        help="Plate of spectrum")
 
     parser.add_argument(
         "--mjd",
@@ -31,15 +32,23 @@ if __name__ == "__main__":
         help="Modified Julian Date of spectrum",
     )
 
-    parser.add_argument(
-        "--fiberid", type=int, default=None, required=True, help="fiber of spectrum"
-    )
+    parser.add_argument("--fiberid",
+                        type=int,
+                        default=None,
+                        required=True,
+                        help="fiber of spectrum")
 
-    parser.add_argument("--drq", type=str, default=None, required=True, help="DRQ file")
+    parser.add_argument("--drq",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="DRQ file")
 
-    parser.add_argument(
-        "--nside", type=int, default=16, required=False, help="healpix nside"
-    )
+    parser.add_argument("--nside",
+                        type=int,
+                        default=16,
+                        required=False,
+                        help="healpix nside")
 
     parser.add_argument(
         "--spectrum",
@@ -56,9 +65,11 @@ if __name__ == "__main__":
         help="do not project out continuum fitting modes",
     )
 
-    parser.add_argument(
-        "--in-dir", type=str, default=None, required=True, help="data directory"
-    )
+    parser.add_argument("--in-dir",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="data directory")
 
     parser.add_argument(
         "--lambda-min",
@@ -97,7 +108,8 @@ if __name__ == "__main__":
         type=int,
         default=3,
         required=False,
-        help="rebin wavelength grid by combining this number of adjacent pixels (ivar weight)",
+        help=
+        "rebin wavelength grid by combining this number of adjacent pixels (ivar weight)",
     )
 
     parser.add_argument(
@@ -108,16 +120,19 @@ if __name__ == "__main__":
         help="open mode: pix, spec, spcframe",
     )
 
-    parser.add_argument(
-        "--dla-vac", type=str, default=None, required=False, help="dla catalog file"
-    )
+    parser.add_argument("--dla-vac",
+                        type=str,
+                        default=None,
+                        required=False,
+                        help="dla catalog file")
 
     parser.add_argument(
         "--dla-mask",
         type=float,
         default=0.8,
         required=False,
-        help="lower limit on the DLA transmission. Transmissions below this number are masked",
+        help=
+        "lower limit on the DLA transmission. Transmissions below this number are masked",
     )
 
     parser.add_argument(
@@ -125,7 +140,8 @@ if __name__ == "__main__":
         type=str,
         default=None,
         required=False,
-        help="Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]",
+        help=
+        "Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]",
     )
 
     parser.add_argument(
@@ -133,7 +149,8 @@ if __name__ == "__main__":
         type=str,
         default=None,
         required=False,
-        help="Path to file to previously produced picca_delta.py file to correct for multiplicative errors in the flux calibration",
+        help=
+        "Path to file to previously produced picca_delta.py file to correct for multiplicative errors in the flux calibration",
     )
 
     parser.add_argument(
@@ -141,7 +158,8 @@ if __name__ == "__main__":
         type=str,
         default=None,
         required=False,
-        help="Path to previously produced picca_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration",
+        help=
+        "Path to previously produced picca_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration",
     )
 
     args = parser.parse_args()
@@ -157,9 +175,10 @@ if __name__ == "__main__":
 
     ### Get Healpy pixel of the given QSO
     objs = {}
-    ra, dec, zqso, thid, plate, mjd, fid = io.read_drq(
-        args.drq, 0.0, 1000.0, keep_bal=True
-    )
+    ra, dec, zqso, thid, plate, mjd, fid = io.read_drq(args.drq,
+                                                       0.0,
+                                                       1000.0,
+                                                       keep_bal=True)
     cut = (plate == args.plate) & (mjd == args.mjd) & (fid == args.fiberid)
     if cut.sum() == 0:
         userprint("Object not in drq")
@@ -234,10 +253,13 @@ if __name__ == "__main__":
             ll_st = vac[1]["loglam"][:]
             st = vac[1]["stack"][:]
             w = st != 0.0
-            forest.correc_flux = interp1d(ll_st[w], st[w], fill_value="extrapolate")
+            forest.correc_flux = interp1d(ll_st[w],
+                                          st[w],
+                                          fill_value="extrapolate")
             vac.close()
         except:
-            userprint(" Error while reading flux_calib file {}".format(args.flux_calib))
+            userprint(" Error while reading flux_calib file {}".format(
+                args.flux_calib))
             sys.exit(1)
 
     ### Correct multiplicative pipeline inverse variance calibration
@@ -246,12 +268,14 @@ if __name__ == "__main__":
             vac = fitsio.FITS(args.ivar_calib)
             ll = vac[2]["LOGLAM"][:]
             eta = vac[2]["ETA"][:]
-            forest.correc_ivar = interp1d(
-                ll, eta, fill_value="extrapolate", kind="nearest"
-            )
+            forest.correc_ivar = interp1d(ll,
+                                          eta,
+                                          fill_value="extrapolate",
+                                          kind="nearest")
             vac.close()
         except:
-            userprint(" Error while reading ivar_calib file {}".format(args.ivar_calib))
+            userprint(" Error while reading ivar_calib file {}".format(
+                args.ivar_calib))
             sys.exit(1)
 
     ### Get the lines to veto
@@ -267,11 +291,8 @@ if __name__ == "__main__":
             mask["log_wave_min"] = np.log10(mask["wave_min"])
             mask["log_wave_max"] = np.log10(mask["wave_max"])
         except (OSError, ValueError):
-            userprint(
-                ("ERROR: Error while reading mask_file " "file {}").format(
-                    args.mask_file
-                )
-            )
+            userprint(("ERROR: Error while reading mask_file "
+                       "file {}").format(args.mask_file))
             sys.exit(1)
 
     ### Veto lines
@@ -293,7 +314,9 @@ if __name__ == "__main__":
     hdus = fitsio.FITS(f)
     ds = [delta.from_fitsio(h) for h in hdus[1:]]
     for d in ds:
-        if (d.plate == args.plate) and (d.mjd == args.mjd) and (d.fid == args.fiberid):
+        if (d.plate == args.plate) and (d.mjd
+                                        == args.mjd) and (d.fid
+                                                          == args.fiberid):
             d.project()
             done_delta = d
             hdus.close()
@@ -307,14 +330,16 @@ if __name__ == "__main__":
     plt.errorbar(10**data.ll, data.fl, linewidth=2, color="black")
     plt.errorbar(10**done_delta.ll, done_delta.co, linewidth=4, color="red")
     plt.xlabel(r"$\lambda_{\mathrm{Obs.}} \, [\mathrm{\AA}]$", fontsize=30)
-    plt.ylabel(r"$f \, [10^{-19} \mathrm{W \, m^{-2} \, nm^{-1}}]$", fontsize=30)
+    plt.ylabel(r"$f \, [10^{-19} \mathrm{W \, m^{-2} \, nm^{-1}}]$",
+               fontsize=30)
     plt.grid()
     plt.show()
 
     ### RF l
-    plt.errorbar(
-        10**data.ll / (1.0 + done_delta.zqso), data.fl, linewidth=4, color="black"
-    )
+    plt.errorbar(10**data.ll / (1.0 + done_delta.zqso),
+                 data.fl,
+                 linewidth=4,
+                 color="black")
     plt.errorbar(
         10**done_delta.ll / (1.0 + done_delta.zqso),
         done_delta.co,
@@ -322,6 +347,7 @@ if __name__ == "__main__":
         color="red",
     )
     plt.xlabel(r"$\lambda_{\mathrm{R.F.}} \, [\mathrm{\AA}]$", fontsize=30)
-    plt.ylabel(r"$f \, [10^{-19} \mathrm{W \, m^{-2} \, nm^{-1}}]$", fontsize=30)
+    plt.ylabel(r"$f \, [10^{-19} \mathrm{W \, m^{-2} \, nm^{-1}}]$",
+               fontsize=30)
     plt.grid()
     plt.show()

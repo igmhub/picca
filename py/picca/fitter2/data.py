@@ -9,6 +9,7 @@ from . import pk, xi
 
 
 class data:
+
     def __init__(self, dic_init):
         self.name = dic_init["data"]["name"]
         self.tracer1 = {}
@@ -45,8 +46,7 @@ class data:
         elif self._blinding == "desi_y3":
             raise ValueError(
                 "Running on DESI Y3 data and fitter2 does not support "
-                "full-shape blinding. Use Vega instead."
-            )
+                "full-shape blinding. Use Vega instead.")
         else:
             raise ValueError("Unknown blinding strategy", self._blinding)
 
@@ -147,11 +147,12 @@ class data:
             self.pk = pk.pk(getattr(pk, dic_init["model"]["model-pk"]))
         self.pk *= partial(getattr(pk, "G2"), dataset_name=self.name)
         if "pk-gauss-smoothing" in dic_init["model"]:
-            self.pk *= partial(getattr(pk, dic_init["model"]["pk-gauss-smoothing"]))
+            self.pk *= partial(
+                getattr(pk, dic_init["model"]["pk-gauss-smoothing"]))
         if "small scale nl" in dic_init["model"]:
             self.pk *= partial(
                 getattr(pk, dic_init["model"]["small scale nl"]),
-                pk_fid=dic_init["model"]["pk"] * ((1 + zref) / (1.0 + zeff)) ** 2,
+                pk_fid=dic_init["model"]["pk"] * ((1 + zref) / (1.0 + zeff))**2,
             )
 
         if "velocity dispersion" in dic_init["model"]:
@@ -160,15 +161,18 @@ class data:
         ## add non linear large scales
         self.pk *= pk.pk_NL
 
-        self.xi = partial(getattr(xi, dic_init["model"]["model-xi"]), name=self.name)
+        self.xi = partial(getattr(xi, dic_init["model"]["model-xi"]),
+                          name=self.name)
 
         self.z_evol = {}
         self.z_evol[self.tracer1["name"]] = partial(
-            getattr(xi, dic_init["model"]["z evol {}".format(self.tracer1["name"])]),
+            getattr(xi, dic_init["model"]["z evol {}".format(
+                self.tracer1["name"])]),
             zref=zeff,
         )
         self.z_evol[self.tracer2["name"]] = partial(
-            getattr(xi, dic_init["model"]["z evol {}".format(self.tracer2["name"])]),
+            getattr(xi, dic_init["model"]["z evol {}".format(
+                self.tracer2["name"])]),
             zref=zeff,
         )
         if dic_init["model"]["growth function"] in ["growth_factor_de"]:
@@ -179,15 +183,15 @@ class data:
                 OL=OL,
             )
         else:
-            self.growth_function = partial(
-                getattr(xi, dic_init["model"]["growth function"]), zref=zref
-            )
+            self.growth_function = partial(getattr(
+                xi, dic_init["model"]["growth function"]),
+                                           zref=zref)
 
         self.xi_rad_model = None
         if "radiation effects" in dic_init["model"]:
-            self.xi_rad_model = partial(
-                getattr(xi, dic_init["model"]["radiation effects"]), name=self.name
-            )
+            self.xi_rad_model = partial(getattr(
+                xi, dic_init["model"]["radiation effects"]),
+                                        name=self.name)
 
         self.xi_rel_model = None
         if "relativistic correction" in dic_init["model"]:
@@ -198,9 +202,9 @@ class data:
 
         self.xi_asy_model = None
         if "standard asymmetry" in dic_init["model"]:
-            self.xi_asy_model = partial(
-                getattr(xi, dic_init["model"]["standard asymmetry"]), name=self.name
-            )
+            self.xi_asy_model = partial(getattr(
+                xi, dic_init["model"]["standard asymmetry"]),
+                                        name=self.name)
 
         self.bb = {}
         self.bb["pre-add"] = []
@@ -208,9 +212,10 @@ class data:
         self.bb["pre-mul"] = []
         self.bb["pos-mul"] = []
         if "broadband" in dic_init:
-            for ibb, dic_bb in enumerate(
-                [el for el in dic_init["broadband"] if el["func"] != "broadband_sky"]
-            ):
+            for ibb, dic_bb in enumerate([
+                    el for el in dic_init["broadband"]
+                    if el["func"] != "broadband_sky"
+            ]):
                 deg_r_min = dic_bb["deg_r_min"]
                 deg_r_max = dic_bb["deg_r_max"]
                 ddeg_r = dic_bb["ddeg_r"]
@@ -223,9 +228,9 @@ class data:
                 if dic_bb["pre"] == "pre":
                     tbin_size_rp /= coef_binning_model
 
-                name = "BB-{}-{} {} {} {}".format(
-                    self.name, ibb, dic_bb["type"], dic_bb["pre"], dic_bb["rp_rt"]
-                )
+                name = "BB-{}-{} {} {} {}".format(self.name, ibb,
+                                                  dic_bb["type"], dic_bb["pre"],
+                                                  dic_bb["rp_rt"])
 
                 bb_pars = {
                     "{} ({},{})".format(name, i, j): 0
@@ -253,15 +258,12 @@ class data:
 
                 self.bb[dic_bb["pre"] + "-" + dic_bb["type"]].append(bb)
 
-            size_bb = (
-                len(self.bb["pre-add"])
-                + len(self.bb["pos-add"])
-                + len(self.bb["pre-mul"])
-                + len(self.bb["pos-mul"])
-            )
-            for ibb, dic_bb in enumerate(
-                [el for el in dic_init["broadband"] if el["func"] == "broadband_sky"]
-            ):
+            size_bb = (len(self.bb["pre-add"]) + len(self.bb["pos-add"]) +
+                       len(self.bb["pre-mul"]) + len(self.bb["pos-mul"]))
+            for ibb, dic_bb in enumerate([
+                    el for el in dic_init["broadband"]
+                    if el["func"] == "broadband_sky"
+            ]):
                 ibb += size_bb
                 name = "BB-{}-{}-{}".format(self.name, ibb, dic_bb["func"])
 
@@ -272,13 +274,12 @@ class data:
                 for k in ["scale-sky", "sigma-sky"]:
                     if not name + "-" + k in dic_init["parameters"]["values"]:
                         dic_init["parameters"]["values"][name + "-" + k] = 1.0
-                        dic_init["parameters"]["errors"][
-                            "error_" + name + "-" + k
-                        ] = 0.01
+                        dic_init["parameters"]["errors"]["error_" + name + "-" +
+                                                         k] = 0.01
 
-                bb = partial(
-                    getattr(xi, dic_bb["func"]), bin_size_rp=tbin_size_rp, name=name
-                )
+                bb = partial(getattr(xi, dic_bb["func"]),
+                             bin_size_rp=tbin_size_rp,
+                             name=name)
 
                 bb.name = name
                 self.bb[dic_bb["pre"] + "-" + dic_bb["type"]].append(bb)
@@ -289,14 +290,15 @@ class data:
         self.par_limit = dic_init["parameters"]["limits"]
         self.par_fixed = dic_init["parameters"]["fix"]
 
-        if (self._blinding == "minimal") and (
-            ("fix_ap" not in self.par_fixed.keys()) or (not self.par_fixed["fix_ap"])
-        ):
-            raise ValueError("Running with minimal blinding, please fix ap (and at)!")
+        if (self._blinding
+                == "minimal") and (("fix_ap" not in self.par_fixed.keys()) or
+                                   (not self.par_fixed["fix_ap"])):
+            raise ValueError(
+                "Running with minimal blinding, please fix ap (and at)!")
 
-        if (self._blinding == "minimal") and (
-            ("fix_at" not in self.par_fixed.keys()) or (not self.par_fixed["fix_at"])
-        ):
+        if (self._blinding
+                == "minimal") and (("fix_at" not in self.par_fixed.keys()) or
+                                   (not self.par_fixed["fix_at"])):
             raise ValueError(
                 "Running with minimal blinding, please fix at (ap is fixed already)!"
             )
@@ -304,8 +306,7 @@ class data:
         if self._blinding == "desi_y3":
             raise ValueError(
                 "Running on DESI Y3 data and fitter2 does not support "
-                "full-shape blinding. Use Vega instead."
-            )
+                "full-shape blinding. Use Vega instead.")
 
         self.dm_met = {}
         self.rp_met = {}
@@ -317,14 +318,15 @@ class data:
             self.pk_met *= partial(getattr(pk, "G2"), dataset_name=self.name)
 
             if "velocity dispersion" in dic_init["model"]:
-                self.pk_met *= getattr(pk, dic_init["model"]["velocity dispersion"])
+                self.pk_met *= getattr(pk,
+                                       dic_init["model"]["velocity dispersion"])
 
             ## add non linear large scales
             self.pk_met *= pk.pk_NL
 
-            self.xi_met = partial(
-                getattr(xi, dic_init["metals"]["model-xi-met"]), name=self.name
-            )
+            self.xi_met = partial(getattr(xi,
+                                          dic_init["metals"]["model-xi-met"]),
+                                  name=self.name)
 
             self.tracerMet = {}
             self.tracerMet[self.tracer1["name"]] = self.tracer1
@@ -338,167 +340,158 @@ class data:
 
             hmet = fitsio.FITS(dic_init["metals"]["filename"])
 
-            assert (
-                "in tracer1" in dic_init["metals"] or "in tracer2" in dic_init["metals"]
-            )
+            assert ("in tracer1" in dic_init["metals"] or
+                    "in tracer2" in dic_init["metals"])
 
             if self.tracer1 == self.tracer2:
-                assert (
-                    dic_init["metals"]["in tracer1"] == dic_init["metals"]["in tracer2"]
-                )
+                assert (dic_init["metals"]["in tracer1"] == dic_init["metals"]
+                        ["in tracer2"])
 
                 for m in dic_init["metals"]["in tracer1"]:
-                    self.z_evol[m] = partial(
-                        getattr(xi, dic_init["metals"]["z evol"]), zref=zeff
-                    )
-                    self.rp_met[(self.tracer1["name"], m)] = hmet[2][
-                        "RP_{}_{}".format(self.tracer1["name"], m)
-                    ][:]
-                    self.rt_met[(self.tracer1["name"], m)] = hmet[2][
-                        "RT_{}_{}".format(self.tracer1["name"], m)
-                    ][:]
-                    self.z_met[(self.tracer1["name"], m)] = hmet[2][
-                        "Z_{}_{}".format(self.tracer1["name"], m)
-                    ][:]
+                    self.z_evol[m] = partial(getattr(
+                        xi, dic_init["metals"]["z evol"]),
+                                             zref=zeff)
+                    self.rp_met[(self.tracer1["name"],
+                                 m)] = hmet[2]["RP_{}_{}".format(
+                                     self.tracer1["name"], m)][:]
+                    self.rt_met[(self.tracer1["name"],
+                                 m)] = hmet[2]["RT_{}_{}".format(
+                                     self.tracer1["name"], m)][:]
+                    self.z_met[(self.tracer1["name"],
+                                m)] = hmet[2]["Z_{}_{}".format(
+                                    self.tracer1["name"], m)][:]
 
                     metal_mat_name = "DM_{}_{}".format(self.tracer1["name"], m)
                     if self._blinding != "none":
                         metal_mat_name = "DM_BLIND_{}_{}".format(
-                            self.tracer1["name"], m
-                        )
+                            self.tracer1["name"], m)
                     try:
                         self.dm_met[(self.tracer1["name"], m)] = csr_matrix(
-                            hmet[2][metal_mat_name][:]
-                        )
+                            hmet[2][metal_mat_name][:])
                     except:
                         self.dm_met[(self.tracer1["name"], m)] = csr_matrix(
-                            hmet[3][metal_mat_name][:]
-                        )
+                            hmet[3][metal_mat_name][:])
 
-                    self.rp_met[(m, self.tracer1["name"])] = hmet[2][
-                        "RP_{}_{}".format(self.tracer1["name"], m)
-                    ][:]
-                    self.rt_met[(m, self.tracer1["name"])] = hmet[2][
-                        "RT_{}_{}".format(self.tracer1["name"], m)
-                    ][:]
-                    self.z_met[(m, self.tracer1["name"])] = hmet[2][
-                        "Z_{}_{}".format(self.tracer1["name"], m)
-                    ][:]
+                    self.rp_met[(
+                        m, self.tracer1["name"])] = hmet[2]["RP_{}_{}".format(
+                            self.tracer1["name"], m)][:]
+                    self.rt_met[(
+                        m, self.tracer1["name"])] = hmet[2]["RT_{}_{}".format(
+                            self.tracer1["name"], m)][:]
+                    self.z_met[(
+                        m, self.tracer1["name"])] = hmet[2]["Z_{}_{}".format(
+                            self.tracer1["name"], m)][:]
                     try:
                         self.dm_met[(m, self.tracer1["name"])] = csr_matrix(
-                            hmet[2][metal_mat_name][:]
-                        )
+                            hmet[2][metal_mat_name][:])
                     except:
                         self.dm_met[(m, self.tracer1["name"])] = csr_matrix(
-                            hmet[3][metal_mat_name][:]
-                        )
+                            hmet[3][metal_mat_name][:])
 
             else:
                 if "in tracer2" in dic_init["metals"]:
                     for m in dic_init["metals"]["in tracer2"]:
-                        self.z_evol[m] = partial(
-                            getattr(xi, dic_init["metals"]["z evol"]), zref=zeff
-                        )
-                        self.rp_met[(self.tracer1["name"], m)] = hmet[2][
-                            "RP_{}_{}".format(self.tracer1["name"], m)
-                        ][:]
-                        self.rt_met[(self.tracer1["name"], m)] = hmet[2][
-                            "RT_{}_{}".format(self.tracer1["name"], m)
-                        ][:]
-                        self.z_met[(self.tracer1["name"], m)] = hmet[2][
-                            "Z_{}_{}".format(self.tracer1["name"], m)
-                        ][:]
+                        self.z_evol[m] = partial(getattr(
+                            xi, dic_init["metals"]["z evol"]),
+                                                 zref=zeff)
+                        self.rp_met[(self.tracer1["name"],
+                                     m)] = hmet[2]["RP_{}_{}".format(
+                                         self.tracer1["name"], m)][:]
+                        self.rt_met[(self.tracer1["name"],
+                                     m)] = hmet[2]["RT_{}_{}".format(
+                                         self.tracer1["name"], m)][:]
+                        self.z_met[(self.tracer1["name"],
+                                    m)] = hmet[2]["Z_{}_{}".format(
+                                        self.tracer1["name"], m)][:]
 
-                        metal_mat_name = "DM_{}_{}".format(self.tracer1["name"], m)
+                        metal_mat_name = "DM_{}_{}".format(
+                            self.tracer1["name"], m)
                         if self._blinding != "none":
                             metal_mat_name = "DM_BLIND_{}_{}".format(
-                                self.tracer1["name"], m
-                            )
+                                self.tracer1["name"], m)
                         try:
                             self.dm_met[(self.tracer1["name"], m)] = csr_matrix(
-                                hmet[2][metal_mat_name][:]
-                            )
+                                hmet[2][metal_mat_name][:])
                         except:
                             self.dm_met[(self.tracer1["name"], m)] = csr_matrix(
-                                hmet[3][metal_mat_name][:]
-                            )
+                                hmet[3][metal_mat_name][:])
 
                 if "in tracer1" in dic_init["metals"]:
                     for m in dic_init["metals"]["in tracer1"]:
-                        self.z_evol[m] = partial(
-                            getattr(xi, dic_init["metals"]["z evol"]), zref=zeff
-                        )
-                        self.rp_met[(m, self.tracer2["name"])] = hmet[2][
-                            "RP_{}_{}".format(m, self.tracer2["name"])
-                        ][:]
-                        self.rt_met[(m, self.tracer2["name"])] = hmet[2][
-                            "RT_{}_{}".format(m, self.tracer2["name"])
-                        ][:]
-                        self.z_met[(m, self.tracer2["name"])] = hmet[2][
-                            "Z_{}_{}".format(m, self.tracer2["name"])
-                        ][:]
+                        self.z_evol[m] = partial(getattr(
+                            xi, dic_init["metals"]["z evol"]),
+                                                 zref=zeff)
+                        self.rp_met[(
+                            m,
+                            self.tracer2["name"])] = hmet[2]["RP_{}_{}".format(
+                                m, self.tracer2["name"])][:]
+                        self.rt_met[(
+                            m,
+                            self.tracer2["name"])] = hmet[2]["RT_{}_{}".format(
+                                m, self.tracer2["name"])][:]
+                        self.z_met[(
+                            m,
+                            self.tracer2["name"])] = hmet[2]["Z_{}_{}".format(
+                                m, self.tracer2["name"])][:]
 
-                        metal_mat_name = "DM_{}_{}".format(m, self.tracer2["name"])
+                        metal_mat_name = "DM_{}_{}".format(
+                            m, self.tracer2["name"])
                         if self._blinding != "none":
                             metal_mat_name = "DM_BLIND_{}_{}".format(
-                                m, self.tracer2["name"]
-                            )
+                                m, self.tracer2["name"])
                         try:
                             self.dm_met[(m, self.tracer2["name"])] = csr_matrix(
-                                hmet[2][metal_mat_name][:]
-                            )
+                                hmet[2][metal_mat_name][:])
                         except:
                             self.dm_met[(m, self.tracer2["name"])] = csr_matrix(
-                                hmet[3][metal_mat_name][:]
-                            )
+                                hmet[3][metal_mat_name][:])
 
             ## add metal-metal cross correlations
-            if (
-                "in tracer1" in dic_init["metals"]
-                and "in tracer2" in dic_init["metals"]
-            ):
+            if ("in tracer1" in dic_init["metals"] and
+                    "in tracer2" in dic_init["metals"]):
                 for i, m1 in enumerate(dic_init["metals"]["in tracer1"]):
                     j0 = 0
                     if self.tracer1 == self.tracer2:
                         j0 = i
                     for m2 in dic_init["metals"]["in tracer2"][j0:]:
-                        self.rp_met[(m1, m2)] = hmet[2]["RP_{}_{}".format(m1, m2)][:]
-                        self.rt_met[(m1, m2)] = hmet[2]["RT_{}_{}".format(m1, m2)][:]
-                        self.z_met[(m1, m2)] = hmet[2]["Z_{}_{}".format(m1, m2)][:]
+                        self.rp_met[(m1,
+                                     m2)] = hmet[2]["RP_{}_{}".format(m1,
+                                                                      m2)][:]
+                        self.rt_met[(m1,
+                                     m2)] = hmet[2]["RT_{}_{}".format(m1,
+                                                                      m2)][:]
+                        self.z_met[(m1, m2)] = hmet[2]["Z_{}_{}".format(m1,
+                                                                        m2)][:]
 
                         metal_mat_name = "DM_{}_{}".format(m1, m2)
                         if self._blinding != "none":
                             metal_mat_name = "DM_BLIND_{}_{}".format(m1, m2)
                         try:
                             self.dm_met[(m1, m2)] = csr_matrix(
-                                hmet[2][metal_mat_name][:]
-                            )
+                                hmet[2][metal_mat_name][:])
                         except ValueError:
                             self.dm_met[(m1, m2)] = csr_matrix(
-                                hmet[3][metal_mat_name][:]
-                            )
+                                hmet[3][metal_mat_name][:])
 
             hmet.close()
 
     def xi_model(self, k, pk_lin, pars):
         pars["blinding"] = self._blinding
 
-        xi = self.xi(
-            self.r,
-            self.mu,
-            k,
-            pk_lin,
-            self.pk,
-            tracer1=self.tracer1,
-            tracer2=self.tracer2,
-            ell_max=self.ell_max,
-            **pars
-        )
+        xi = self.xi(self.r,
+                     self.mu,
+                     k,
+                     pk_lin,
+                     self.pk,
+                     tracer1=self.tracer1,
+                     tracer2=self.tracer2,
+                     ell_max=self.ell_max,
+                     **pars)
 
         xi *= self.z_evol[self.tracer1["name"]](
-            self.z, self.tracer1, **pars
-        ) * self.z_evol[self.tracer2["name"]](self.z, self.tracer2, **pars)
-        xi *= self.growth_function(self.z, **pars) ** 2
+            self.z, self.tracer1, **pars) * self.z_evol[self.tracer2["name"]](
+                self.z, self.tracer2, **pars)
+        xi *= self.growth_function(self.z, **pars)**2
 
         for tracer1, tracer2 in self.dm_met:
             rp = self.rp_met[(tracer1, tracer2)]
@@ -509,37 +502,34 @@ class data:
             w = r == 0
             r[w] = 1e-6
             mu = rp / r
-            xi_met = self.xi_met(
-                r,
-                mu,
-                k,
-                pk_lin,
-                self.pk_met,
-                tracer1=self.tracerMet[tracer1],
-                tracer2=self.tracerMet[tracer2],
-                ell_max=self.ell_max,
-                **pars
-            )
+            xi_met = self.xi_met(r,
+                                 mu,
+                                 k,
+                                 pk_lin,
+                                 self.pk_met,
+                                 tracer1=self.tracerMet[tracer1],
+                                 tracer2=self.tracerMet[tracer2],
+                                 ell_max=self.ell_max,
+                                 **pars)
 
             xi_met *= self.z_evol[tracer1](
-                z, self.tracerMet[tracer1], **pars
-            ) * self.z_evol[tracer2](z, self.tracerMet[tracer2], **pars)
-            xi_met *= self.growth_function(z, **pars) ** 2
+                z, self.tracerMet[tracer1], **pars) * self.z_evol[tracer2](
+                    z, self.tracerMet[tracer2], **pars)
+            xi_met *= self.growth_function(z, **pars)**2
             xi_met = dm_met.dot(xi_met)
             xi += xi_met
 
         if self.xi_rad_model is not None and pars["SB"] == True:
-            xi += self.xi_rad_model(self.r, self.mu, self.tracer1, self.tracer2, **pars)
+            xi += self.xi_rad_model(self.r, self.mu, self.tracer1, self.tracer2,
+                                    **pars)
 
         if self.xi_rel_model is not None:
-            xi += self.xi_rel_model(
-                self.r, self.mu, k, pk_lin, self.tracer1, self.tracer2, **pars
-            )
+            xi += self.xi_rel_model(self.r, self.mu, k, pk_lin, self.tracer1,
+                                    self.tracer2, **pars)
 
         if self.xi_asy_model is not None:
-            xi += self.xi_asy_model(
-                self.r, self.mu, k, pk_lin, self.tracer1, self.tracer2, **pars
-            )
+            xi += self.xi_asy_model(self.r, self.mu, k, pk_lin, self.tracer1,
+                                    self.tracer2, **pars)
 
         ## pre-distortion broadband
         for bb in self.bb["pre-mul"]:
@@ -587,7 +577,8 @@ class data:
         """
 
         chi2 = self.chi2(k, pk_lin, pksb_lin, full_shape, pars)
-        log_lik = -0.5 * len(self.da_cut) * np.log(2 * np.pi) - 0.5 * self.log_co_det
+        log_lik = -0.5 * len(self.da_cut) * np.log(
+            2 * np.pi) - 0.5 * self.log_co_det
         log_lik -= 0.5 * chi2
 
         return log_lik

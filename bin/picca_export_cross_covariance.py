@@ -12,7 +12,8 @@ from picca.utils import compute_cov, userprint
 def main(cmdargs):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=("Compute the cross-covariance matrix between two " "correlations"),
+        description=("Compute the cross-covariance matrix between two "
+                     "correlations"),
     )
 
     parser.add_argument(
@@ -31,9 +32,11 @@ def main(cmdargs):
         help="Correlation 2 produced via picca_cf.py, picca_xcf.py, ...",
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     args = parser.parse_args(cmdargs)
 
@@ -65,19 +68,13 @@ def main(cmdargs):
 
     # exit if NSIDE1 != NSIDE2
     if data[0]["NSIDE"] != data[1]["NSIDE"]:
-        userprint(
-            ("ERROR: NSIDE are different: {} != " "{}").format(
-                data[0]["NSIDE"], data[1]["NSIDE"]
-            )
-        )
+        userprint(("ERROR: NSIDE are different: {} != "
+                   "{}").format(data[0]["NSIDE"], data[1]["NSIDE"]))
         sys.exit()
     # exit if HLPXSCHM1 != HLPXSCHM2
     if data[0]["HLPXSCHM"] != data[1]["HLPXSCHM"]:
-        userprint(
-            ("ERROR: HLPXSCHM are different: {} != " "{}").format(
-                data[0]["HLPXSCHM"], data[1]["HLPXSCHM"]
-            )
-        )
+        userprint(("ERROR: HLPXSCHM are different: {} != "
+                   "{}").format(data[0]["HLPXSCHM"], data[1]["HLPXSCHM"]))
         sys.exit()
 
     # Add unshared healpix as empty data
@@ -88,15 +85,14 @@ def main(cmdargs):
             new_healpix = data[key2]["HEALPID"][w]
             num_new_healpix = new_healpix.size
             num_bins = data[key]["DA"].shape[1]
-            userprint(
-                ("Some healpix are unshared in data {}: " "{}").format(key, new_healpix)
-            )
-            data[key]["DA"] = np.append(
-                data[key]["DA"], np.zeros((num_new_healpix, num_bins)), axis=0
-            )
-            data[key]["WE"] = np.append(
-                data[key]["WE"], np.zeros((num_new_healpix, num_bins)), axis=0
-            )
+            userprint(("Some healpix are unshared in data {}: "
+                       "{}").format(key, new_healpix))
+            data[key]["DA"] = np.append(data[key]["DA"],
+                                        np.zeros((num_new_healpix, num_bins)),
+                                        axis=0)
+            data[key]["WE"] = np.append(data[key]["WE"],
+                                        np.zeros((num_new_healpix, num_bins)),
+                                        axis=0)
             data[key]["HEALPID"] = np.append(data[key]["HEALPID"], new_healpix)
 
     # Sort the data by the healpix values

@@ -42,15 +42,14 @@ def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key="Z"):
         for key in from_key_to_index.keys():
             value = cols[from_key_to_index[key]]
             if key == "MJD-plate-fiber":
-                for key2, value2 in zip("MJD-plate-fiber".split("-"), value.split("-")):
+                for key2, value2 in zip("MJD-plate-fiber".split("-"),
+                                        value.split("-")):
                     dla_cat[key2] += [value2]
             dla_cat[key] += [value]
     filename.close()
-    userprint(
-        ("INFO: Found {} DLA from {} " "quasars").format(
-            len(dla_cat["ThingID"]), np.unique(dla_cat["ThingID"]).size
-        )
-    )
+    userprint(("INFO: Found {} DLA from {} "
+               "quasars").format(len(dla_cat["ThingID"]),
+                                 np.unique(dla_cat["ThingID"]).size))
 
     # convert Noterdaemem keys to picca keys
     from_noterdaeme_key_to_picca_key = {
@@ -85,15 +84,11 @@ def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key="Z"):
 
     # apply cuts
     w = cat["THING_ID"] > 0
-    userprint(
-        ("INFO: Removed {} DLA, because " "THING_ID<=0").format(
-            (cat["THING_ID"] <= 0).sum()
-        )
-    )
+    userprint(("INFO: Removed {} DLA, because "
+               "THING_ID<=0").format((cat["THING_ID"] <= 0).sum()))
     w &= cat["Z"] > 0.0
-    userprint(
-        ("INFO: Removed {} DLA, because " "Z<=0.").format((cat["Z"] <= 0.0).sum())
-    )
+    userprint(("INFO: Removed {} DLA, because "
+               "Z<=0.").format((cat["Z"] <= 0.0).sum()))
     for key in cat:
         cat[key] = cat[key][w]
 
@@ -105,29 +100,26 @@ def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key="Z"):
     z_qso = hdul[1][drq_z_key][:]
     hdul.close()
     from_thingid_to_index = {t: index for index, t in enumerate(thingid)}
-    cat["RA"] = np.array([ra[from_thingid_to_index[t]] for t in cat["THING_ID"]])
-    cat["DEC"] = np.array([dec[from_thingid_to_index[t]] for t in cat["THING_ID"]])
-    cat["ZQSO"] = np.array([z_qso[from_thingid_to_index[t]] for t in cat["THING_ID"]])
+    cat["RA"] = np.array(
+        [ra[from_thingid_to_index[t]] for t in cat["THING_ID"]])
+    cat["DEC"] = np.array(
+        [dec[from_thingid_to_index[t]] for t in cat["THING_ID"]])
+    cat["ZQSO"] = np.array(
+        [z_qso[from_thingid_to_index[t]] for t in cat["THING_ID"]])
 
     # apply cuts
     w = cat["RA"] != cat["DEC"]
-    userprint(
-        ("INFO: Removed {} DLA, because " "RA==DEC").format(
-            (cat["RA"] == cat["DEC"]).sum()
-        )
-    )
+    userprint(("INFO: Removed {} DLA, because "
+               "RA==DEC").format((cat["RA"] == cat["DEC"]).sum()))
     w &= cat["RA"] != 0.0
-    userprint(
-        ("INFO: Removed {} DLA, because " "RA==0").format((cat["RA"] == 0.0).sum())
-    )
+    userprint(("INFO: Removed {} DLA, because "
+               "RA==0").format((cat["RA"] == 0.0).sum()))
     w &= cat["DEC"] != 0.0
-    userprint(
-        ("INFO: Removed {} DLA, because " "DEC==0").format((cat["DEC"] == 0.0).sum())
-    )
+    userprint(("INFO: Removed {} DLA, because "
+               "DEC==0").format((cat["DEC"] == 0.0).sum()))
     w &= cat["ZQSO"] > 0.0
-    userprint(
-        ("INFO: Removed {} DLA, because " "ZQSO<=0.").format((cat["ZQSO"] <= 0.0).sum())
-    )
+    userprint(("INFO: Removed {} DLA, because "
+               "ZQSO<=0.").format((cat["ZQSO"] <= 0.0).sum()))
     for key in cat:
         cat[key] = cat[key][w]
 
@@ -180,11 +172,9 @@ def desi_convert_dla(in_path, out_path):
     for key, value in from_desi_key_to_picca_key.items():
         cat[key] = hdul["DLACAT"][value][:]
     hdul.close()
-    userprint(
-        ("INFO: Found {} DLA from {} " "quasars").format(
-            cat["Z"].size, np.unique(cat["THING_ID"]).size
-        )
-    )
+    userprint(("INFO: Found {} DLA from {} "
+               "quasars").format(cat["Z"].size,
+                                 np.unique(cat["THING_ID"]).size))
     # sort by THING_ID
     w = np.argsort(cat["THING_ID"])
     for key in cat:
@@ -201,7 +191,10 @@ def desi_convert_dla(in_path, out_path):
     results.close()
 
 
-def desi_from_truth_to_drq(truth_filename, targets_filename, out_path, spec_type="QSO"):
+def desi_from_truth_to_drq(truth_filename,
+                           targets_filename,
+                           out_path,
+                           spec_type="QSO"):
     """Transform a desi truth.fits file and a desi targets.fits into a drq
     like file
 
@@ -222,9 +215,8 @@ def desi_from_truth_to_drq(truth_filename, targets_filename, out_path, spec_type
     w = np.ones(hdul[1]["TARGETID"][:].size).astype(bool)
     userprint(" start                 : nb object in cat = {}".format(w.sum()))
     w &= np.char.strip(hdul[1]["TRUESPECTYPE"][:].astype(str)) == spec_type
-    userprint(
-        " and TRUESPECTYPE=={}  : nb object in cat = {}".format(spec_type, w.sum())
-    )
+    userprint(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(
+        spec_type, w.sum()))
     # load the arrays
     thingid = hdul[1]["TARGETID"][:][w]
     z_qso = hdul[1]["TRUEZ"][:][w]
@@ -258,7 +250,8 @@ def desi_from_truth_to_drq(truth_filename, targets_filename, out_path, spec_type
     if (ra == 0.0).sum() != 0 or (dec == 0.0).sum() != 0:
         w = ra != 0.0
         w &= dec != 0.0
-        userprint((" and RA and DEC        : nb object in cat = " "{}").format(w.sum()))
+        userprint((" and RA and DEC        : nb object in cat = "
+                   "{}").format(w.sum()))
 
         ra = ra[w]
         dec = dec[w]
@@ -309,13 +302,13 @@ def desi_from_ztarget_to_drq(
     spec_type_list = np.char.strip(hdul[1]["SPECTYPE"][:].astype(str))
 
     # apply cuts
-    userprint(
-        (" start               : nb object in cat = " "{}").format(spec_type_list.size)
-    )
+    userprint((" start               : nb object in cat = "
+               "{}").format(spec_type_list.size))
     w = hdul[1]["ZWARN"][:] == 0.0
     userprint(" and zwarn==0        : nb object in cat = {}".format(w.sum()))
     w &= spec_type_list == spec_type
-    userprint(" and spectype=={}    : nb object in cat = {}".format(spec_type, w.sum()))
+    userprint(" and spectype=={}    : nb object in cat = {}".format(
+        spec_type, w.sum()))
     # load the arrays
     cat = {}
     from_desi_key_to_picca_key = {
@@ -338,23 +331,16 @@ def desi_from_ztarget_to_drq(
     if gauss_redshift_error is not None:
         SPEED_LIGHT = speed_light / 1000.0  # [km/s]
         np.random.seed(0)
-        dz = (
-            gauss_redshift_error
-            / SPEED_LIGHT
-            * (1.0 + cat["Z"])
-            * np.random.normal(0, 1, cat["Z"].size)
-        )
+        dz = (gauss_redshift_error / SPEED_LIGHT * (1.0 + cat["Z"]) *
+              np.random.normal(0, 1, cat["Z"].size))
         cat["Z"] += dz
 
     # apply downsampling
     if downsampling_z_cut is not None and downsampling_num is not None:
         if cat["RA"].size < downsampling_num:
-            userprint(
-                (
-                    "WARNING:: Trying to downsample, when nb cat = {} and "
-                    "nb downsampling = {}"
-                ).format(cat["RA"].size, downsampling_num)
-            )
+            userprint(("WARNING:: Trying to downsample, when nb cat = {} and "
+                       "nb downsampling = {}").format(cat["RA"].size,
+                                                      downsampling_num))
         else:
             z_cut_num = (cat["Z"] > downsampling_z_cut).sum()
             select_fraction = downsampling_num / z_cut_num
@@ -367,18 +353,13 @@ def desi_from_ztarget_to_drq(
                 )
                 for key in cat:
                     cat[key] = cat[key][w]
-                userprint(
-                    (
-                        " and downsampling : nb object in cat = {}, nb z > " "{} = {}"
-                    ).format(cat["RA"].size, downsampling_z_cut, z_cut_num)
-                )
+                userprint((" and downsampling : nb object in cat = {}, nb z > "
+                           "{} = {}").format(cat["RA"].size, downsampling_z_cut,
+                                             z_cut_num))
             else:
-                userprint(
-                    (
-                        "WARNING:: Trying to downsample, when nb QSOs with "
-                        "z > {} = {} and downsampling = {}"
-                    ).format(downsampling_z_cut, z_cut_num, downsampling_num)
-                )
+                userprint(("WARNING:: Trying to downsample, when nb QSOs with "
+                           "z > {} = {} and downsampling = {}").format(
+                               downsampling_z_cut, z_cut_num, downsampling_num))
 
     # sort by THING_ID
     w = np.argsort(cat["THING_ID"])

@@ -66,4 +66,5 @@ class Mask:
         ------
         MaskError if function was not overloaded by child class
         """
-        raise MaskError("Function 'apply_mask' was not overloaded by child class")
+        raise MaskError(
+            "Function 'apply_mask' was not overloaded by child class")

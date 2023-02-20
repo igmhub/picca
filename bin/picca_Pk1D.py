@@ -56,8 +56,7 @@ def check_linear_binning(delta):
         )
     else:
         raise ValueError(
-            "Could not figure out if linear or log wavelength binning was used"
-        )
+            "Could not figure out if linear or log wavelength binning was used")
 
     return linear_binning, pixel_step
 
@@ -70,21 +69,25 @@ def process_all_files(index_file_args):
     global num_data
     file_index, file, args = index_file_args
     if file_index % 5 == 0:
-        userprint(
-            "\rread {} of {} {}".format(file_index, args.len_files, num_data), end=""
-        )
+        userprint("\rread {} of {} {}".format(file_index, args.len_files,
+                                              num_data),
+                  end="")
 
     # read fits or ascii file
     if args.in_format == "fits":
         hdul = fitsio.FITS(file)
         try:
-            deltas = [Delta.from_fitsio(hdu, pk1d_type=True) for hdu in hdul[1:]]
+            deltas = [
+                Delta.from_fitsio(hdu, pk1d_type=True) for hdu in hdul[1:]
+            ]
             running_on_raw_transmission = False
         except ValueError:
             print(
                 "\nPk1d_type=True didn't work on read in, maybe perfect model? Trying without any noise or resolution corrections!"
             )
-            deltas = [Delta.from_fitsio(hdu, pk1d_type=False) for hdu in hdul[1:]]
+            deltas = [
+                Delta.from_fitsio(hdu, pk1d_type=False) for hdu in hdul[1:]
+            ]
             for delta in deltas:
                 delta.ivar = np.ones(delta.delta.shape) * 1e10
                 delta.mean_snr = 1e5
@@ -101,11 +104,9 @@ def process_all_files(index_file_args):
     linear_binning, pixel_step = check_linear_binning(delta)
     if linear_binning:
         userprint("\n\nUsing linear binning, results will have units of AA")
-        if (
-            args.disable_reso_matrix
-            or not hasattr(delta, "resolution_matrix")
-            or delta.resolution_matrix is None
-        ):
+        if (args.disable_reso_matrix or
+                not hasattr(delta, "resolution_matrix") or
+                delta.resolution_matrix is None):
             userprint(
                 "Resolution matrix not found or disabled, using Gaussian resolution correction\n"
             )
@@ -141,11 +142,8 @@ def process_all_files(index_file_args):
         selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
         # this works as selected_pixels returns a bool and argmax points
         # towards the first occurance for equal values
-        first_pixel_index = (
-            np.argmax(selected_pixels)
-            if np.any(selected_pixels)
-            else len(selected_pixels)
-        )
+        first_pixel_index = (np.argmax(selected_pixels) if
+                             np.any(selected_pixels) else len(selected_pixels))
 
         # minimum number of pixel in forest
         min_num_pixels = args.nb_pixel_min
@@ -153,7 +151,8 @@ def process_all_files(index_file_args):
             continue
 
         # Split the forest in n parts
-        max_num_parts = (len(delta.log_lambda) - first_pixel_index) // min_num_pixels
+        max_num_parts = (len(delta.log_lambda) -
+                         first_pixel_index) // min_num_pixels
         num_parts = min(args.nb_part, max_num_parts)
 
         # the split_forest function works with either binning, but needs to be uniform
@@ -166,9 +165,8 @@ def process_all_files(index_file_args):
                 delta.exposures_diff,
                 delta.ivar,
                 first_pixel_index,
-                reso_matrix=(
-                    delta.resolution_matrix if reso_correction == "matrix" else None
-                ),
+                reso_matrix=(delta.resolution_matrix
+                             if reso_correction == "matrix" else None),
                 linear_binning=True,
             )
             if reso_correction == "matrix":
@@ -208,10 +206,8 @@ def process_all_files(index_file_args):
         # the rebin_diff_noise function works with either binning, but needs to be uniform
         for part_index in range(num_parts):
             # rebin exposures_diff spectrum
-            if (
-                args.noise_estimate == "rebin_diff"
-                or args.noise_estimate == "mean_rebin_diff"
-            ):
+            if (args.noise_estimate == "rebin_diff" or
+                    args.noise_estimate == "mean_rebin_diff"):
                 if linear_binning:
                     exposures_diff_array[part_index] = rebin_diff_noise(
                         pixel_step,
@@ -263,9 +259,13 @@ def process_all_files(index_file_args):
 
             # Compute pk_raw, needs uniform binning
             if linear_binning:
-                k, pk_raw = compute_pk_raw(pixel_step, delta_new, linear_binning=True)
+                k, pk_raw = compute_pk_raw(pixel_step,
+                                           delta_new,
+                                           linear_binning=True)
             else:
-                k, pk_raw = compute_pk_raw(pixel_step, delta_new, linear_binning=False)
+                k, pk_raw = compute_pk_raw(pixel_step,
+                                           delta_new,
+                                           linear_binning=False)
 
             # Compute pk_noise
             run_noise = False
@@ -297,7 +297,8 @@ def process_all_files(index_file_args):
                 # in this case all is in AA space
                 if reso_correction == "matrix":
                     correction_reso = compute_correction_reso_matrix(
-                        reso_matrix=np.mean(reso_matrix_array[part_index], axis=1),
+                        reso_matrix=np.mean(reso_matrix_array[part_index],
+                                            axis=1),
                         k=k,
                         delta_pixel=pixel_step,
                         num_pixel=len(lambda_new),
@@ -307,18 +308,16 @@ def process_all_files(index_file_args):
                     # and then multiplying with pixel size
                     mean_reso_AA = pixel_step * delta.mean_reso_pix
                     correction_reso = compute_correction_reso(
-                        delta_pixel=pixel_step, mean_reso=mean_reso_AA, k=k
-                    )
+                        delta_pixel=pixel_step, mean_reso=mean_reso_AA, k=k)
             elif not running_on_raw_transmission:
                 # in this case all is in velocity space
-                delta_pixel = pixel_step * np.log(10.0) * constants.speed_light / 1000.0
+                delta_pixel = pixel_step * np.log(
+                    10.0) * constants.speed_light / 1000.0
                 correction_reso = compute_correction_reso(
-                    delta_pixel=delta_pixel, mean_reso=delta.mean_reso, k=k
-                )
+                    delta_pixel=delta_pixel, mean_reso=delta.mean_reso, k=k)
             else:
                 correction_reso = compute_correction_reso(
-                    delta_pixel=pixel_step, mean_reso=0.0, k=k
-                )
+                    delta_pixel=pixel_step, mean_reso=0.0, k=k)
 
             # Compute 1D Pk
             if args.noise_estimate == "pipeline" or running_on_raw_transmission:
@@ -330,15 +329,10 @@ def process_all_files(index_file_args):
                 elif args.kmin_noise_avg is None:
                     selection = (k > 0) & (k < 0.02)
                 else:
-                    selection = (
-                        (k > args.kmin_noise_avg)
-                        if args.kmax_noise_avg is not None
-                        else 1
-                    ) & (
-                        (k < args.kmax_noise_avg)
-                        if args.kmax_noise_avg is not None
-                        else 1
-                    )
+                    selection = ((k > args.kmin_noise_avg)
+                                 if args.kmax_noise_avg is not None else 1) & (
+                                     (k < args.kmax_noise_avg)
+                                     if args.kmax_noise_avg is not None else 1)
                 mean_pk_noise = np.mean(pk_noise[selection])
                 pk = (pk_raw - pk_noise) / correction_reso
 
@@ -351,15 +345,10 @@ def process_all_files(index_file_args):
                 elif args.kmin_noise_avg is None:
                     selection = (k > 0) & (k < 0.02)
                 else:
-                    selection = (
-                        (k > args.kmin_noise_avg)
-                        if args.kmax_noise_avg is not None
-                        else 1
-                    ) & (
-                        (k < args.kmax_noise_avg)
-                        if args.kmax_noise_avg is not None
-                        else 1
-                    )
+                    selection = ((k > args.kmin_noise_avg)
+                                 if args.kmax_noise_avg is not None else 1) & (
+                                     (k < args.kmax_noise_avg)
+                                     if args.kmax_noise_avg is not None else 1)
                 mean_pk_diff = np.mean(pk_diff[selection])
                 pk = (pk_raw - mean_pk_diff) / correction_reso
 
@@ -386,7 +375,11 @@ def process_all_files(index_file_args):
                         "value": delta.dec,
                         "comment": "QSO's Declination [degrees]",
                     },
-                    {"name": "Z", "value": delta.z_qso, "comment": "QSO's redshift"},
+                    {
+                        "name": "Z",
+                        "value": delta.z_qso,
+                        "comment": "QSO's redshift"
+                    },
                     {
                         "name": "MEANZ",
                         "value": mean_z_array[part_index],
@@ -408,14 +401,20 @@ def process_all_files(index_file_args):
                         "comment": "Number of masked pixels in the section",
                     },
                     {
-                        "name": "LIN_BIN",
-                        "value": linear_binning,
-                        "comment": "analysis was performed on delta with linear binned lambda",
+                        "name":
+                            "LIN_BIN",
+                        "value":
+                            linear_binning,
+                        "comment":
+                            "analysis was performed on delta with linear binned lambda",
                     },
                     {
-                        "name": "LOS_ID",
-                        "value": delta.los_id,
-                        "comment": "line of sight identifier, e.g. THING_ID or TARGETID",
+                        "name":
+                            "LOS_ID",
+                        "value":
+                            delta.los_id,
+                        "comment":
+                            "line of sight identifier, e.g. THING_ID or TARGETID",
                     },
                 ]
 
@@ -443,25 +442,25 @@ def process_all_files(index_file_args):
                 ]
 
                 try:
-                    results.write(
-                        cols, names=names, header=header, comments=comments, units=units
-                    )
+                    results.write(cols,
+                                  names=names,
+                                  header=header,
+                                  comments=comments,
+                                  units=units)
                 except AttributeError:
-                    userprint(
-                        "writing to "
-                        + args.out_dir
-                        + "/Pk1D-"
-                        + str(file_index)
-                        + ".fits.gz"
-                    )
+                    userprint("writing to " + args.out_dir + "/Pk1D-" +
+                              str(file_index) + ".fits.gz")
                     results = fitsio.FITS(
-                        (args.out_dir + "/Pk1D-" + str(file_index) + ".fits.gz"),
+                        (args.out_dir + "/Pk1D-" + str(file_index) +
+                         ".fits.gz"),
                         "rw",
                         clobber=True,
                     )
-                    results.write(
-                        cols, names=names, header=header, comment=comments, units=units
-                    )
+                    results.write(cols,
+                                  names=names,
+                                  header=header,
+                                  comment=comments,
+                                  units=units)
 
     if args.out_format == "fits" and results is not None:
         results.close()
@@ -478,9 +477,11 @@ def main(cmdargs):
         description="Compute the 1D power spectrum",
     )
 
-    parser.add_argument(
-        "--out-dir", type=str, default=None, required=True, help="Output directory"
-    )
+    parser.add_argument("--out-dir",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output directory")
 
     parser.add_argument(
         "--out-format",
@@ -569,8 +570,7 @@ def main(cmdargs):
         required=False,
         help=(
             "Estimate of Pk_noise "
-            "pipeline/mean_pipeline/diff/mean_diff/rebin_diff/mean_rebin_diff"
-        ),
+            "pipeline/mean_pipeline/diff/mean_diff/rebin_diff/mean_rebin_diff"),
     )
 
     parser.add_argument(
@@ -586,10 +586,8 @@ def main(cmdargs):
         type=str,
         default="LYA",
         required=False,
-        help=(
-            "Name of the absorption line in picca.constants defining the "
-            "redshift of the forest pixels"
-        ),
+        help=("Name of the absorption line in picca.constants defining the "
+              "redshift of the forest pixels"),
     )
 
     # additional options
@@ -614,10 +612,8 @@ def main(cmdargs):
         default=False,
         action="store_true",
         required=False,
-        help=(
-            "do not use the resolution matrix even "
-            "if it exists and we are on linear binning"
-        ),
+        help=("do not use the resolution matrix even "
+              "if it exists and we are on linear binning"),
     )
 
     parser.add_argument(
@@ -625,8 +621,8 @@ def main(cmdargs):
         default=False,
         action="store_true",
         required=False,
-        help=(
-            "store outputs in units of velocity even for linear binning computations"
+        help=
+        ("store outputs in units of velocity even for linear binning computations"
         ),
     )
 
@@ -635,8 +631,8 @@ def main(cmdargs):
         default=4,
         required=False,
         type=int,
-        help=(
-            "seed for random number generator, default 4, let system determine seed if set to 0"
+        help=
+        ("seed for random number generator, default 4, let system determine seed if set to 0"
         ),
     )
 
@@ -645,8 +641,8 @@ def main(cmdargs):
         default=None,
         required=False,
         type=float,
-        help=(
-            "minimal mode to take into account when computing noise/diff power average"
+        help=
+        ("minimal mode to take into account when computing noise/diff power average"
         ),
     )
     parser.add_argument(
@@ -654,8 +650,8 @@ def main(cmdargs):
         default=None,
         required=False,
         type=float,
-        help=(
-            "maximal mode to take into account when computing noise/diff power average"
+        help=
+        ("maximal mode to take into account when computing noise/diff power average"
         ),
     )
 

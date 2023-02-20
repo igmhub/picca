@@ -49,8 +49,7 @@ class IvarCorrection(Correction):
         filename = config.get("filename")
         if filename is None:
             raise CorrectionError(
-                "Missing argument 'filename' required by SdssIvarCorrection"
-            )
+                "Missing argument 'filename' required by SdssIvarCorrection")
         try:
             hdu = fitsio.read(filename, ext="VAR_FUNC")
             if "loglam" in hdu.dtype.names:
@@ -59,34 +58,30 @@ class IvarCorrection(Correction):
                 self.logger.warning(
                     "DeprecationWarning: Reading correction using 'lambda'. "
                     "Newer versions of picca always save 'log_lambda' and "
-                    "so this option will be removed in the future."
-                )
+                    "so this option will be removed in the future.")
                 log_lambda = np.log10(hdu["lambda"])
             else:
-                raise CorrectionError(
-                    "Error loading IvarCorrection. In "
-                    "extension 'VAR_FUNC' in file "
-                    f"{filename} one of the fields 'loglam' "
-                    "or 'lambda' should be present. I did not"
-                    "find them."
-                )
+                raise CorrectionError("Error loading IvarCorrection. In "
+                                      "extension 'VAR_FUNC' in file "
+                                      f"{filename} one of the fields 'loglam' "
+                                      "or 'lambda' should be present. I did not"
+                                      "find them.")
 
             eta = hdu["eta"]
         except OSError as error:
             raise CorrectionError(
                 "Error loading CalibrationCorrection. "
-                f"Failed to find or open file {filename}"
-            ) from error
+                f"Failed to find or open file {filename}") from error
         except ValueError as error:
             raise CorrectionError(
                 "Error loading IvarCorrection. "
                 f"File {filename} does not have fields "
-                "'loglam' and/or 'eta' in HDU 'VAR_FUNC'"
-            ) from error
+                "'loglam' and/or 'eta' in HDU 'VAR_FUNC'") from error
 
-        self.correct_ivar = interp1d(
-            log_lambda, eta, fill_value="extrapolate", kind="nearest"
-        )
+        self.correct_ivar = interp1d(log_lambda,
+                                     eta,
+                                     fill_value="extrapolate",
+                                     kind="nearest")
 
     def apply_correction(self, forest):
         """Apply the correction. Correction is applied by dividing the

@@ -15,8 +15,8 @@ from picca.delta_extraction.utils import update_accepted_options, update_default
 
 accepted_options = update_accepted_options(accepted_options, ["fudge value"])
 accepted_options = update_accepted_options(
-    accepted_options, ["use constant weight", "use ivar as weight"], remove=True
-)
+    accepted_options, ["use constant weight", "use ivar as weight"],
+    remove=True)
 
 defaults = update_default_options(
     defaults,
@@ -65,11 +65,13 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
     def _initialize_get_fudge(self):
         """Initialiaze function get_fudge"""
         # initialize fudge factor
-        if self.fudge_value.endswith(".fits") or self.fudge_value.endswith(".fits.gz"):
+        if self.fudge_value.endswith(".fits") or self.fudge_value.endswith(
+                ".fits.gz"):
             hdu = fitsio.read(self.fudge_value, ext="VAR_FUNC")
-            self.get_fudge = interp1d(
-                hdu["loglam"], hdu["fudge"], fill_value="extrapolate", kind="nearest"
-            )
+            self.get_fudge = interp1d(hdu["loglam"],
+                                      hdu["fudge"],
+                                      fill_value="extrapolate",
+                                      kind="nearest")
         else:
             fudge = np.ones(self.num_bins_variance) * float(self.fudge_value)
             self.get_fudge = interp1d(
@@ -97,17 +99,14 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
         """
         self.fudge_value = config.get("fudge value")
         if self.fudge_value is None:
-            raise ExpectedFluxError(
-                "Missing argument 'fudge value' required " "by Dr16FixFudgeExpectedFlux"
-            )
-        if not (
-            self.fudge_value.endswith(".fits") or self.fudge_value.endswith(".fits.gz")
-        ):
+            raise ExpectedFluxError("Missing argument 'fudge value' required "
+                                    "by Dr16FixFudgeExpectedFlux")
+        if not (self.fudge_value.endswith(".fits") or
+                self.fudge_value.endswith(".fits.gz")):
             try:
                 _ = float(self.fudge_value)
             except ValueError as error:
                 raise ExpectedFluxError(
                     "Wrong argument 'fudge value' passed to "
                     "Dr16FixFudgeExpectedFlux. Expected a fits file or "
-                    f"a float. Found {self.fudge_value}"
-                ) from error
+                    f"a float. Found {self.fudge_value}") from error

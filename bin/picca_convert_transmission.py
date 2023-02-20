@@ -7,7 +7,8 @@ from picca import raw_io
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Script to convert noiseless transmission files to delta picca files",
+        description=
+        "Script to convert noiseless transmission files to delta picca files",
     )
 
     parser.add_argument(
@@ -35,9 +36,11 @@ if __name__ == "__main__":
         nargs="*",
     )
 
-    parser.add_argument(
-        "--out-dir", type=str, default=None, required=True, help="Output directory"
-    )
+    parser.add_argument("--out-dir",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output directory")
 
     parser.add_argument(
         "--lambda-min",
@@ -111,9 +114,11 @@ if __name__ == "__main__":
         help="Whether to use the old weighting scheme for raw deltas.",
     )
 
-    parser.add_argument(
-        "--tracer", type=str, default="F_LYA", required=False, help="Tracer to use"
-    )
+    parser.add_argument("--tracer",
+                        type=str,
+                        default="F_LYA",
+                        required=False,
+                        help="Tracer to use")
 
     parser.add_argument(
         "--use-splines",

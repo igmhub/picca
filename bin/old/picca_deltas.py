@@ -42,21 +42,22 @@ def get_metadata(data):
     # TODO: change mean_snr_save to mean_snr once this is properly treated
     # in data.py
     for field in [
-        "ra",
-        "dec",
-        "z_qso",
-        "thingid",
-        "plate",
-        "mjd",
-        "fiberid",
-        "mean_snr_save",
-        "p0",
-        "p1",
+            "ra",
+            "dec",
+            "z_qso",
+            "thingid",
+            "plate",
+            "mjd",
+            "fiberid",
+            "mean_snr_save",
+            "p0",
+            "p1",
     ]:
         column_values = []
         for healpix in data:
             for forest in data[healpix]:
-                if field in forest.__dict__ and not forest.__dict__[field] is None:
+                if field in forest.__dict__ and not forest.__dict__[
+                        field] is None:
                     column_values.append(forest.__dict__[field])
                 else:
                     column_values.append(0)
@@ -66,9 +67,8 @@ def get_metadata(data):
     for healpix in data:
         for forest in data[healpix]:
             if "delta" in forest.__dict__ and not forest.delta is None:
-                mean_delta2 = np.average(
-                    forest.delta * forest.delta, weights=forest.ivar
-                )
+                mean_delta2 = np.average(forest.delta * forest.delta,
+                                         weights=forest.ivar)
                 mean_delta2_values.append(mean_delta2)
             else:
                 mean_delta2_values.append(-100)
@@ -86,9 +86,12 @@ def get_metadata(data):
     return tab
 
 
-def get_delta_from_forest(
-    forest, get_stack_delta, get_var_lss, get_eta, get_fudge, use_mock_cont=False
-):
+def get_delta_from_forest(forest,
+                          get_stack_delta,
+                          get_var_lss,
+                          get_eta,
+                          get_fudge,
+                          use_mock_cont=False):
     """Computes delta field from forest
 
     Args:
@@ -139,12 +142,15 @@ def main(cmdargs):
     """Computes delta field"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=("Compute the delta field " "from a list of spectra"),
+        description=("Compute the delta field "
+                     "from a list of spectra"),
     )
 
-    parser.add_argument(
-        "--out-dir", type=str, default=None, required=True, help="Output directory"
-    )
+    parser.add_argument("--out-dir",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output directory")
 
     parser.add_argument(
         "--drq",
@@ -162,9 +168,11 @@ def main(cmdargs):
         help="Directory to spectra files",
     )
 
-    parser.add_argument(
-        "--log", type=str, default="input.log", required=False, help="Log input data"
-    )
+    parser.add_argument("--log",
+                        type=str,
+                        default="input.log",
+                        required=False,
+                        help="Log input data")
 
     parser.add_argument(
         "--iter-out-prefix",
@@ -191,31 +199,29 @@ def main(cmdargs):
         ],
         default="pix",
         required=False,
-        help=(
-            """Open mode of the spectra files: pix, spec,
+        help=("""Open mode of the spectra files: pix, spec,
                               spcframe, spplate, desi_mocks (formerly known as desi),
                               desi_healpix (for healpix based coadded data),
                               desi_survey_tilebased (for tilebased data with coadding),
                               desi_sv_no_coadd (without coadding across tiles, will output in tile format)"""
-        ),
+             ),
     )
 
     parser.add_argument(
         "--best-obs",
         action="store_true",
         required=False,
-        help=("If mode == spcframe, then use only the best " "observation"),
+        help=("If mode == spcframe, then use only the best "
+              "observation"),
     )
 
     parser.add_argument(
         "--single-exp",
         action="store_true",
         required=False,
-        help=(
-            "If mode == spcframe, then use only one of the "
-            "available exposures. If best-obs then choose it "
-            "among those contributing to the best obs"
-        ),
+        help=("If mode == spcframe, then use only one of the "
+              "available exposures. If best-obs then choose it "
+              "among those contributing to the best obs"),
     )
 
     parser.add_argument(
@@ -246,7 +252,8 @@ def main(cmdargs):
         type=float,
         required=False,
         default=None,
-        help=("Maximum CIV balnicity index in drq (overrides " "--keep-bal)"),
+        help=("Maximum CIV balnicity index in drq (overrides "
+              "--keep-bal)"),
     )
 
     parser.add_argument(
@@ -286,10 +293,8 @@ def main(cmdargs):
         type=int,
         default=3,
         required=False,
-        help=(
-            "Rebin wavelength grid by combining this number "
-            "of adjacent pixels (ivar weight)"
-        ),
+        help=("Rebin wavelength grid by combining this number "
+              "of adjacent pixels (ivar weight)"),
     )
 
     parser.add_argument(
@@ -300,19 +305,19 @@ def main(cmdargs):
         help="Minimum of rebined pixels",
     )
 
-    parser.add_argument(
-        "--dla-vac", type=str, default=None, required=False, help="DLA catalog file"
-    )
+    parser.add_argument("--dla-vac",
+                        type=str,
+                        default=None,
+                        required=False,
+                        help="DLA catalog file")
 
     parser.add_argument(
         "--dla-mask",
         type=float,
         default=0.8,
         required=False,
-        help=(
-            "Lower limit on the DLA transmission. "
-            "Transmissions below this number are masked"
-        ),
+        help=("Lower limit on the DLA transmission. "
+              "Transmissions below this number are masked"),
     )
 
     parser.add_argument(
@@ -328,11 +333,9 @@ def main(cmdargs):
         type=float,
         default=2.5,
         required=False,
-        help=(
-            "Mask width on each side of the absorber central "
-            "observed wavelength in units of "
-            "1e4*dlog10(lambda)"
-        ),
+        help=("Mask width on each side of the absorber central "
+              "observed wavelength in units of "
+              "1e4*dlog10(lambda)"),
     )
 
     parser.add_argument(
@@ -340,11 +343,9 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "Path to file to mask regions in lambda_OBS and "
-            "lambda_RF. In file each line is: region_name "
-            "region_min region_max (OBS or RF) [Angstrom]"
-        ),
+        help=("Path to file to mask regions in lambda_OBS and "
+              "lambda_RF. In file each line is: region_name "
+              "region_min region_max (OBS or RF) [Angstrom]"),
     )
 
     parser.add_argument(
@@ -353,10 +354,8 @@ def main(cmdargs):
         default=None,
         required=False,
         nargs="*",
-        help=(
-            "Correct for the optical depth: tau_1 gamma_1 "
-            "absorber_1 tau_2 gamma_2 absorber_2 ..."
-        ),
+        help=("Correct for the optical depth: tau_1 gamma_1 "
+              "absorber_1 tau_2 gamma_2 absorber_2 ..."),
     )
 
     parser.add_argument(
@@ -364,10 +363,8 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "Path to DRQ catalog of objects for dust map to "
-            "apply the Schlegel correction"
-        ),
+        help=("Path to DRQ catalog of objects for dust map to "
+              "apply the Schlegel correction"),
     )
 
     parser.add_argument(
@@ -375,11 +372,9 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "Path to previously produced picca_delta.py file "
-            "to correct for multiplicative errors in the "
-            "pipeline flux calibration"
-        ),
+        help=("Path to previously produced picca_delta.py file "
+              "to correct for multiplicative errors in the "
+              "pipeline flux calibration"),
     )
 
     parser.add_argument(
@@ -387,20 +382,22 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "Path to previously produced picca_delta.py file "
-            "to correct for multiplicative errors in the "
-            "pipeline inverse variance calibration"
-        ),
+        help=("Path to previously produced picca_delta.py file "
+              "to correct for multiplicative errors in the "
+              "pipeline inverse variance calibration"),
     )
 
-    parser.add_argument(
-        "--eta-min", type=float, default=0.5, required=False, help="Lower limit for eta"
-    )
+    parser.add_argument("--eta-min",
+                        type=float,
+                        default=0.5,
+                        required=False,
+                        help="Lower limit for eta")
 
-    parser.add_argument(
-        "--eta-max", type=float, default=1.5, required=False, help="Upper limit for eta"
-    )
+    parser.add_argument("--eta-max",
+                        type=float,
+                        default=1.5,
+                        required=False,
+                        help="Upper limit for eta")
 
     parser.add_argument(
         "--vlss-min",
@@ -430,17 +427,16 @@ def main(cmdargs):
         "--use-ivar-as-weight",
         action="store_true",
         default=False,
-        help=("Use ivar as weights (implemented as eta = 1, " "sigma_lss = fudge = 0)"),
+        help=("Use ivar as weights (implemented as eta = 1, "
+              "sigma_lss = fudge = 0)"),
     )
 
     parser.add_argument(
         "--use-constant-weight",
         action="store_true",
         default=False,
-        help=(
-            "Set all the delta weights to one (implemented "
-            "as eta = 0, sigma_lss = 1, fudge = 0)"
-        ),
+        help=("Set all the delta weights to one (implemented "
+              "as eta = 0, sigma_lss = 1, fudge = 0)"),
     )
 
     parser.add_argument(
@@ -448,10 +444,8 @@ def main(cmdargs):
         type=int,
         default=1,
         required=False,
-        help=(
-            "Order of the log10(lambda) polynomial for the "
-            "continuum fit, by default 1."
-        ),
+        help=("Order of the log10(lambda) polynomial for the "
+              "continuum fit, by default 1."),
     )
 
     parser.add_argument(
@@ -459,15 +453,15 @@ def main(cmdargs):
         type=int,
         default=5,
         required=False,
-        help=(
-            "Number of iterations to determine the mean "
-            "continuum shape, LSS variances, etc."
-        ),
+        help=("Number of iterations to determine the mean "
+              "continuum shape, LSS variances, etc."),
     )
 
-    parser.add_argument(
-        "--nproc", type=int, default=None, required=False, help="Number of processors"
-    )
+    parser.add_argument("--nproc",
+                        type=int,
+                        default=None,
+                        required=False,
+                        help="Number of processors")
 
     parser.add_argument(
         "--nspec",
@@ -484,20 +478,20 @@ def main(cmdargs):
         help="use the mock continuum for computing the deltas",
     )
 
-    parser.add_argument(
-        "--spall", type=str, default=None, required=False, help=("Path to spAll file")
-    )
+    parser.add_argument("--spall",
+                        type=str,
+                        default=None,
+                        required=False,
+                        help=("Path to spAll file"))
 
     parser.add_argument(
         "--bal-catalog",
         type=str,
         default=None,
         required=False,
-        help=(
-            "BAL catalog location, used if BAL information is"
-            " not included in the quasar catalog.  Use with "
-            "--keep-bal to mask BAL features"
-        ),
+        help=("BAL catalog location, used if BAL information is"
+              " not included in the quasar catalog.  Use with "
+              "--keep-bal to mask BAL features"),
     )
 
     parser.add_argument(
@@ -514,10 +508,8 @@ def main(cmdargs):
         choices=("desi", "eboss"),
         default="desi",
         required=False,
-        help=(
-            "Survey the catalog comes from. Defines which "
-            "naming conventions to use when masking BALs."
-        ),
+        help=("Survey the catalog comes from. Defines which "
+              "naming conventions to use when masking BALs."),
     )
 
     parser.add_argument(
@@ -582,31 +574,29 @@ def main(cmdargs):
     # -- Pipeline ivar correction term : fudge
     # -- Mean continuum : mean_cont
     log_lambda_temp = Forest.log_lambda_min + np.arange(2) * (
-        Forest.log_lambda_max - Forest.log_lambda_min
-    )
-    log_lambda_rest_frame_temp = Forest.log_lambda_min_rest_frame + np.arange(2) * (
-        Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame
-    )
-    Forest.get_var_lss = interp1d(
-        log_lambda_temp, 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest"
-    )
-    Forest.get_eta = interp1d(
-        log_lambda_temp, np.ones(2), fill_value="extrapolate", kind="nearest"
-    )
-    Forest.get_fudge = interp1d(
-        log_lambda_temp, np.zeros(2), fill_value="extrapolate", kind="nearest"
-    )
+        Forest.log_lambda_max - Forest.log_lambda_min)
+    log_lambda_rest_frame_temp = Forest.log_lambda_min_rest_frame + np.arange(
+        2) * (Forest.log_lambda_max_rest_frame -
+              Forest.log_lambda_min_rest_frame)
+    Forest.get_var_lss = interp1d(log_lambda_temp,
+                                  0.2 + np.zeros(2),
+                                  fill_value="extrapolate",
+                                  kind="nearest")
+    Forest.get_eta = interp1d(log_lambda_temp,
+                              np.ones(2),
+                              fill_value="extrapolate",
+                              kind="nearest")
+    Forest.get_fudge = interp1d(log_lambda_temp,
+                                np.zeros(2),
+                                fill_value="extrapolate",
+                                kind="nearest")
     Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp, 1 + np.zeros(2))
 
     # -- Check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
         if (args.order != 0) and (args.order != 1):
-            userprint(
-                (
-                    "ERROR : invalid value for order, must be eqal to 0 or"
-                    "1. Here order = {:d}"
-                ).format(args.order)
-            )
+            userprint(("ERROR : invalid value for order, must be eqal to 0 or"
+                       "1. Here order = {:d}").format(args.order))
             sys.exit(12)
 
     # -- Correct multiplicative pipeline flux calibration
@@ -627,9 +617,10 @@ def main(cmdargs):
         hdu = fitsio.read(args.ivar_calib, ext=2)
         log_lambda = hdu["loglam"]
         eta = hdu["eta"]
-        Forest.correct_ivar = interp1d(
-            log_lambda, eta, fill_value="extrapolate", kind="nearest"
-        )
+        Forest.correct_ivar = interp1d(log_lambda,
+                                       eta,
+                                       fill_value="extrapolate",
+                                       kind="nearest")
 
     ### Apply dust correction
     if not args.dust_map is None:
@@ -676,23 +667,18 @@ def main(cmdargs):
             mask["log_wave_min"] = np.log10(mask["wave_min"])
             mask["log_wave_max"] = np.log10(mask["wave_max"])
         except (OSError, ValueError):
-            userprint(
-                ("ERROR: Error while reading mask_file " "file {}").format(
-                    args.mask_file
-                )
-            )
+            userprint(("ERROR: Error while reading mask_file "
+                       "file {}").format(args.mask_file))
             sys.exit(1)
     else:
-        mask = Table(
-            names=(
-                "type",
-                "wave_min",
-                "wave_max",
-                "frame",
-                "log_wave_min",
-                "log_wave_max",
-            )
-        )
+        mask = Table(names=(
+            "type",
+            "wave_min",
+            "wave_max",
+            "frame",
+            "log_wave_min",
+            "log_wave_max",
+        ))
 
     ### Mask lines
     for healpix in data:
@@ -714,22 +700,18 @@ def main(cmdargs):
 
     ### Add optical depth contribution
     if not args.optical_depth is None:
-        userprint(
-            ("INFO: Adding {} optical" "depths").format(len(args.optical_depth) // 3)
-        )
+        userprint(("INFO: Adding {} optical"
+                   "depths").format(len(args.optical_depth) // 3))
         assert len(args.optical_depth) % 3 == 0
         for index in range(len(args.optical_depth) // 3):
             tau = float(args.optical_depth[3 * index])
             gamma = float(args.optical_depth[3 * index + 1])
-            lambda_rest_frame = constants.ABSORBER_IGM[
-                args.optical_depth[3 * index + 2]
-            ]
+            lambda_rest_frame = constants.ABSORBER_IGM[args.optical_depth[
+                3 * index + 2]]
             userprint(
-                (
-                    "INFO: Adding optical depth for tau = {}, gamma = {}, "
-                    "lambda_rest_frame = {} A"
-                ).format(tau, gamma, lambda_rest_frame)
-            )
+                ("INFO: Adding optical depth for tau = {}, gamma = {}, "
+                 "lambda_rest_frame = {} A").format(tau, gamma,
+                                                    lambda_rest_frame))
             for healpix in data:
                 for forest in data[healpix]:
                     forest.add_optical_depth(tau, gamma, lambda_rest_frame)
@@ -761,7 +743,8 @@ def main(cmdargs):
         num_bal = 0
         for healpix in data:
             for forest in data[healpix]:
-                bal_mask = bal_tools.add_bal_mask(bal_cat, forest.thingid, args.mode)
+                bal_mask = bal_tools.add_bal_mask(bal_cat, forest.thingid,
+                                                  args.mode)
                 forest.mask(bal_mask)
             if len(bal_mask) > 0:
                 num_bal += 1
@@ -769,49 +752,37 @@ def main(cmdargs):
 
     ## Apply cuts
     log_file.write(
-        ("INFO: Input sample has {} " "forests\n").format(
-            np.sum([len(forest) for forest in data.values()])
-        )
-    )
+        ("INFO: Input sample has {} "
+         "forests\n").format(np.sum([len(forest) for forest in data.values()])))
     remove_keys = []
     for healpix in data:
         forests = []
         for forest in data[healpix]:
-            if (forest.log_lambda is None) or len(forest.log_lambda) < args.npix_min:
+            if (forest.log_lambda is None) or len(
+                    forest.log_lambda) < args.npix_min:
                 if forest.log_lambda is None:
                     forest_size = 0
                 else:
                     forest_size = len(forest.log_lambda)
-                log_file.write(
-                    ("INFO: Rejected {} due to forest too " "short ({})\n").format(
-                        forest.thingid, forest_size
-                    )
-                )
+                log_file.write(("INFO: Rejected {} due to forest too "
+                                "short ({})\n").format(forest.thingid,
+                                                       forest_size))
                 continue
 
             if np.isnan((forest.flux * forest.ivar).sum()):
-                log_file.write(
-                    ("INFO: Rejected {} due to nan " "found\n").format(forest.thingid)
-                )
+                log_file.write(("INFO: Rejected {} due to nan "
+                                "found\n").format(forest.thingid))
                 continue
 
-            if args.use_constant_weight and (
-                forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0
-            ):
-                log_file.write(
-                    (
-                        "INFO: Rejected {} due to negative mean or "
-                        "too low SNR found\n"
-                    ).format(forest.thingid)
-                )
+            if args.use_constant_weight and (forest.flux.mean() <= 0.0 or
+                                             forest.mean_snr <= 1.0):
+                log_file.write(("INFO: Rejected {} due to negative mean or "
+                                "too low SNR found\n").format(forest.thingid))
                 continue
 
             forests.append(forest)
-            log_file.write(
-                "{} {}-{}-{} accepted\n".format(
-                    forest.thingid, forest.plate, forest.mjd, forest.fiberid
-                )
-            )
+            log_file.write("{} {}-{}-{} accepted\n".format(
+                forest.thingid, forest.plate, forest.mjd, forest.fiberid))
         data[healpix][:] = forests
         if len(data[healpix]) == 0:
             remove_keys += [healpix]
@@ -820,7 +791,8 @@ def main(cmdargs):
         del data[healpix]
 
     num_forests = np.sum([len(forest) for forest in data.values()])
-    log_file.write(("INFO: Remaining sample has {} " "forests\n").format(num_forests))
+    log_file.write(("INFO: Remaining sample has {} "
+                    "forests\n").format(num_forests))
     userprint(f"Remaining sample has {num_forests} forests")
 
     # Sanity check: all forests must have the attribute log_lambda
@@ -866,9 +838,9 @@ def main(cmdargs):
             w = mean_cont_weight > 0.0
             log_lambda_cont = log_lambda_rest_frame[w]
             new_cont = Forest.get_mean_cont(log_lambda_cont) * mean_cont[w]
-            Forest.get_mean_cont = interp1d(
-                log_lambda_cont, new_cont, fill_value="extrapolate"
-            )
+            Forest.get_mean_cont = interp1d(log_lambda_cont,
+                                            new_cont,
+                                            fill_value="extrapolate")
 
             # -- Compute observer-frame mean quantities (var_lss, eta, fudge)
             if not (args.use_ivar_as_weight or args.use_constant_weight):
@@ -887,45 +859,37 @@ def main(cmdargs):
                     error_eta,
                     error_var_lss,
                     error_fudge,
-                ) = prep_del.compute_var_stats(
-                    data, (args.eta_min, args.eta_max), (args.vlss_min, args.vlss_max)
-                )
+                ) = prep_del.compute_var_stats(data,
+                                               (args.eta_min, args.eta_max),
+                                               (args.vlss_min, args.vlss_max))
                 w = num_pixels > 0
-                Forest.get_eta = interp1d(
-                    log_lambda[w], eta[w], fill_value="extrapolate", kind="nearest"
-                )
-                Forest.get_var_lss = interp1d(
-                    log_lambda[w], var_lss[w], fill_value="extrapolate", kind="nearest"
-                )
-                Forest.get_fudge = interp1d(
-                    log_lambda[w], fudge[w], fill_value="extrapolate", kind="nearest"
-                )
+                Forest.get_eta = interp1d(log_lambda[w],
+                                          eta[w],
+                                          fill_value="extrapolate",
+                                          kind="nearest")
+                Forest.get_var_lss = interp1d(log_lambda[w],
+                                              var_lss[w],
+                                              fill_value="extrapolate",
+                                              kind="nearest")
+                Forest.get_fudge = interp1d(log_lambda[w],
+                                            fudge[w],
+                                            fill_value="extrapolate",
+                                            kind="nearest")
             else:
                 num_bins = 10  # this value is arbitrary
                 log_lambda = (
-                    Forest.log_lambda_min
-                    + (np.arange(num_bins) + 0.5)
-                    * (Forest.log_lambda_max - Forest.log_lambda_min)
-                    / num_bins
-                )
+                    Forest.log_lambda_min + (np.arange(num_bins) + 0.5) *
+                    (Forest.log_lambda_max - Forest.log_lambda_min) / num_bins)
 
                 if args.use_ivar_as_weight:
-                    userprint(
-                        (
-                            "INFO: using ivar as weights, skipping eta, "
-                            "var_lss, fudge fits"
-                        )
-                    )
+                    userprint(("INFO: using ivar as weights, skipping eta, "
+                               "var_lss, fudge fits"))
                     eta = np.ones(num_bins)
                     var_lss = np.zeros(num_bins)
                     fudge = np.zeros(num_bins)
                 else:
-                    userprint(
-                        (
-                            "INFO: using constant weights, skipping eta, "
-                            "var_lss, fudge fits"
-                        )
-                    )
+                    userprint(("INFO: using constant weights, skipping eta, "
+                               "var_lss, fudge fits"))
                     eta = np.zeros(num_bins)
                     var_lss = np.ones(num_bins)
                     fudge = np.zeros(num_bins)
@@ -942,15 +906,18 @@ def main(cmdargs):
                 count = np.zeros((num_bins, num_bins))
                 num_qso = np.zeros((num_bins, num_bins))
 
-                Forest.get_eta = interp1d(
-                    log_lambda, eta, fill_value="extrapolate", kind="nearest"
-                )
-                Forest.get_var_lss = interp1d(
-                    log_lambda, var_lss, fill_value="extrapolate", kind="nearest"
-                )
-                Forest.get_fudge = interp1d(
-                    log_lambda, fudge, fill_value="extrapolate", kind="nearest"
-                )
+                Forest.get_eta = interp1d(log_lambda,
+                                          eta,
+                                          fill_value="extrapolate",
+                                          kind="nearest")
+                Forest.get_var_lss = interp1d(log_lambda,
+                                              var_lss,
+                                              fill_value="extrapolate",
+                                              kind="nearest")
+                Forest.get_fudge = interp1d(log_lambda,
+                                            fudge,
+                                            fill_value="extrapolate",
+                                            kind="nearest")
 
         stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
         get_stack_delta = interp1d(
@@ -1009,8 +976,7 @@ def main(cmdargs):
                 extname="CONT",
             )
             var_pipe_values_out = np.broadcast_to(
-                var_pipe_values.reshape(1, -1), var_delta.shape
-            )
+                var_pipe_values.reshape(1, -1), var_delta.shape)
             results.write(
                 [
                     var_pipe_values_out,
@@ -1020,7 +986,9 @@ def main(cmdargs):
                     num_qso,
                     chi2_in_bin,
                 ],
-                names=["var_pipe", "var_del", "var2_del", "count", "nqsos", "chi2"],
+                names=[
+                    "var_pipe", "var_del", "var2_del", "count", "nqsos", "chi2"
+                ],
                 extname="VAR",
             )
 
@@ -1049,15 +1017,12 @@ def main(cmdargs):
         ]
 
     for forest in data_bad_cont:
-        log_file.write(
-            "INFO: Rejected {} due to {}\n".format(forest.thingid, forest.bad_cont)
-        )
+        log_file.write("INFO: Rejected {} due to {}\n".format(
+            forest.thingid, forest.bad_cont))
 
     log_file.write(
-        ("INFO: Accepted sample has {}" "forests\n").format(
-            np.sum([len(p) for p in deltas.values()])
-        )
-    )
+        ("INFO: Accepted sample has {}"
+         "forests\n").format(np.sum([len(p) for p in deltas.values()])))
 
     t2 = time.time()
     tmin = (t2 - t1) / 60
@@ -1066,18 +1031,21 @@ def main(cmdargs):
     ### Read metadata from forests and export it
     if not args.metadata is None:
         tab_cont = get_metadata(data)
-        tab_cont.write(os.path.expandvars(args.metadata), format="fits", overwrite=True)
+        tab_cont.write(os.path.expandvars(args.metadata),
+                       format="fits",
+                       overwrite=True)
 
     ### Save delta
     for healpix in sorted(deltas.keys()):
         if args.delta_format == "Pk1D_ascii":
-            results = open(args.out_dir + "/delta-{}".format(healpix) + ".txt", "w")
+            results = open(args.out_dir + "/delta-{}".format(healpix) + ".txt",
+                           "w")
             for delta in deltas[healpix]:
                 num_pixels = len(delta.delta)
                 if args.mode == "desi":
                     delta_log_lambda = (
-                        delta.log_lambda[-1] - delta.log_lambda[0]
-                    ) / float(len(delta.log_lambda) - 1)
+                        delta.log_lambda[-1] -
+                        delta.log_lambda[0]) / float(len(delta.log_lambda) - 1)
                 else:
                     delta_log_lambda = delta.delta_log_lambda
                 line = "{} {} {} ".format(delta.plate, delta.mjd, delta.fiberid)
@@ -1115,26 +1083,41 @@ def main(cmdargs):
                         "value": delta.ra,
                         "comment": "Right Ascension [rad]",
                     },
-                    {"name": "DEC", "value": delta.dec, "comment": "Declination [rad]"},
-                    {"name": "Z", "value": delta.z_qso, "comment": "Redshift"},
                     {
-                        "name": "PMF",
-                        "value": "{}-{}-{}".format(
-                            delta.plate, delta.mjd, delta.fiberid
-                        ),
+                        "name": "DEC",
+                        "value": delta.dec,
+                        "comment": "Declination [rad]"
+                    },
+                    {
+                        "name": "Z",
+                        "value": delta.z_qso,
+                        "comment": "Redshift"
+                    },
+                    {
+                        "name":
+                            "PMF",
+                        "value":
+                            "{}-{}-{}".format(delta.plate, delta.mjd,
+                                              delta.fiberid),
                     },
                     {
                         "name": "THING_ID",
                         "value": delta.thingid,
                         "comment": "Object identification",
                     },
-                    {"name": "PLATE", "value": delta.plate},
+                    {
+                        "name": "PLATE",
+                        "value": delta.plate
+                    },
                     {
                         "name": "MJD",
                         "value": delta.mjd,
                         "comment": "Modified Julian date",
                     },
-                    {"name": "FIBERID", "value": delta.fiberid},
+                    {
+                        "name": "FIBERID",
+                        "value": delta.fiberid
+                    },
                     {
                         "name": "ORDER",
                         "value": delta.order,
@@ -1170,23 +1153,24 @@ def main(cmdargs):
                         },
                     ]
                     if args.mode == "desi":
-                        delta_log_lambda = (
-                            delta.log_lambda[-1] - delta.log_lambda[0]
-                        ) / float(len(delta.log_lambda) - 1)
+                        delta_log_lambda = (delta.log_lambda[-1] -
+                                            delta.log_lambda[0]
+                                           ) / float(len(delta.log_lambda) - 1)
                     else:
                         delta_log_lambda = delta.delta_log_lambda
-                    header += [
-                        {
-                            "name": "DLL",
-                            "value": delta_log_lambda,
-                            "comment": "Loglam bin size [log Angstrom]",
-                        }
-                    ]
+                    header += [{
+                        "name": "DLL",
+                        "value": delta_log_lambda,
+                        "comment": "Loglam bin size [log Angstrom]",
+                    }]
                     exposures_diff = delta.exposures_diff
                     if exposures_diff is None:
                         exposures_diff = delta.log_lambda * 0
 
-                    cols = [delta.log_lambda, delta.delta, delta.ivar, exposures_diff]
+                    cols = [
+                        delta.log_lambda, delta.delta, delta.ivar,
+                        exposures_diff
+                    ]
                     names = ["LOGLAM", delta_name, "IVAR", "DIFF"]
                     units = ["log Angstrom", "", "", ""]
                     comments = [

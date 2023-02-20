@@ -27,42 +27,32 @@ def compute_mean_cont(data):
             mean_cont: Mean quasar continuum over the whole sample
             mean_cont_weight: Total weight on the mean quasar continuum
     """
-    num_bins = (
-        int(
-            (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame)
-            / Forest.delta_log_lambda
-        )
-        + 1
-    )
+    num_bins = (int(
+        (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame) /
+        Forest.delta_log_lambda) + 1)
     mean_cont = np.zeros(num_bins)
     mean_cont_weight = np.zeros(num_bins)
     log_lambda_rest_frame = (
-        Forest.log_lambda_min_rest_frame
-        + (np.arange(num_bins) + 0.5)
-        * (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame)
-        / num_bins
-    )
+        Forest.log_lambda_min_rest_frame + (np.arange(num_bins) + 0.5) *
+        (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame) /
+        num_bins)
     for healpix in sorted(list(data.keys())):
         for forest in data[healpix]:
-            bins = (
-                (
-                    forest.log_lambda
-                    - Forest.log_lambda_min_rest_frame
-                    - np.log10(1 + forest.z_qso)
-                )
-                / (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame)
-                * num_bins
-            ).astype(int)
+            bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
+                     np.log10(1 + forest.z_qso)) /
+                    (Forest.log_lambda_max_rest_frame -
+                     Forest.log_lambda_min_rest_frame) * num_bins).astype(int)
             var_lss = Forest.get_var_lss(forest.log_lambda)
             eta = Forest.get_eta(forest.log_lambda)
             fudge = Forest.get_fudge(forest.log_lambda)
             var_pipe = 1.0 / forest.ivar / forest.cont**2
             variance = eta * var_pipe + var_lss + fudge / var_pipe
             weights = 1 / variance
-            cont = np.bincount(bins, weights=forest.flux / forest.cont * weights)
-            mean_cont[: len(cont)] += cont
+            cont = np.bincount(bins,
+                               weights=forest.flux / forest.cont * weights)
+            mean_cont[:len(cont)] += cont
             cont = np.bincount(bins, weights=weights)
-            mean_cont_weight[: len(cont)] += cont
+            mean_cont_weight[:len(cont)] += cont
 
     w = mean_cont_weight > 0
     mean_cont[w] /= mean_cont_weight[w]
@@ -117,12 +107,8 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0.0, 0.3)):
     error_var_lss = np.zeros(num_bins)
     error_fudge = np.zeros(num_bins)
     num_pixels = np.zeros(num_bins)
-    log_lambda = (
-        Forest.log_lambda_min
-        + (np.arange(num_bins) + 0.5)
-        * (Forest.log_lambda_max - Forest.log_lambda_min)
-        / num_bins
-    )
+    log_lambda = (Forest.log_lambda_min + (np.arange(num_bins) + 0.5) *
+                  (Forest.log_lambda_max - Forest.log_lambda_min) / num_bins)
 
     # define an array to contain the possible values of pipeline variances
     # the measured pipeline variance of the deltas will be averaged using the
@@ -131,14 +117,9 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0.0, 0.3)):
     num_var_bins = 100
     var_pipe_min = np.log10(1e-5)
     var_pipe_max = np.log10(2.0)
-    var_pipe_values = 10 ** (
-        var_pipe_min
-        + (
-            (np.arange(num_var_bins) + 0.5)
-            * (var_pipe_max - var_pipe_min)
-            / num_var_bins
-        )
-    )
+    var_pipe_values = 10**(var_pipe_min +
+                           ((np.arange(num_var_bins) + 0.5) *
+                            (var_pipe_max - var_pipe_min) / num_var_bins))
 
     # initialize arrays to compute the statistics of deltas
     var_delta = np.zeros(num_bins * num_var_bins)
@@ -151,21 +132,16 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0.0, 0.3)):
     for healpix in sorted(list(data.keys())):
         for forest in data[healpix]:
             var_pipe = 1 / forest.ivar / forest.cont**2
-            w = (np.log10(var_pipe) > var_pipe_min) & (
-                np.log10(var_pipe) < var_pipe_max
-            )
+            w = (np.log10(var_pipe) > var_pipe_min) & (np.log10(var_pipe) <
+                                                       var_pipe_max)
 
             # select the wavelength and the pipeline variance bins
-            log_lambda_bins = (
-                (forest.log_lambda - Forest.log_lambda_min)
-                / (Forest.log_lambda_max - Forest.log_lambda_min)
-                * num_bins
-            ).astype(int)
+            log_lambda_bins = ((forest.log_lambda - Forest.log_lambda_min) /
+                               (Forest.log_lambda_max - Forest.log_lambda_min) *
+                               num_bins).astype(int)
             var_pipe_bins = np.floor(
-                (np.log10(var_pipe) - var_pipe_min)
-                / (var_pipe_max - var_pipe_min)
-                * num_var_bins
-            ).astype(int)
+                (np.log10(var_pipe) - var_pipe_min) /
+                (var_pipe_max - var_pipe_min) * num_var_bins).astype(int)
 
             # filter the values with a pipeline variance out of range
             log_lambda_bins = log_lambda_bins[w]
@@ -180,16 +156,16 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0.0, 0.3)):
 
             # add contributions to delta statistics
             rebin = np.bincount(bins, weights=delta)
-            mean_delta[: len(rebin)] += rebin
+            mean_delta[:len(rebin)] += rebin
 
             rebin = np.bincount(bins, weights=delta**2)
-            var_delta[: len(rebin)] += rebin
+            var_delta[:len(rebin)] += rebin
 
             rebin = np.bincount(bins, weights=delta**4)
-            var2_delta[: len(rebin)] += rebin
+            var2_delta[:len(rebin)] += rebin
 
             rebin = np.bincount(bins)
-            count[: len(rebin)] += rebin
+            count[:len(rebin)] += rebin
             num_qso[np.unique(bins)] += 1
 
     # normalise and finish the computation of delta statistics
@@ -244,19 +220,21 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0.0, 0.3)):
             Returns:
                 The obtained chi2
             """
-            variance = (
-                eta * var_pipe_values + var_lss + fudge * fudge_ref / var_pipe_values
-            )
+            variance = (eta * var_pipe_values + var_lss +
+                        fudge * fudge_ref / var_pipe_values)
             chi2_contribution = (
-                var_delta[index * num_var_bins : (index + 1) * num_var_bins] - variance
-            )
-            weights = var2_delta[index * num_var_bins : (index + 1) * num_var_bins]
-            w = num_qso[index * num_var_bins : (index + 1) * num_var_bins] > 100
-            return np.sum(chi2_contribution[w] ** 2 / weights[w])
+                var_delta[index * num_var_bins:(index + 1) * num_var_bins] -
+                variance)
+            weights = var2_delta[index * num_var_bins:(index + 1) *
+                                 num_var_bins]
+            w = num_qso[index * num_var_bins:(index + 1) * num_var_bins] > 100
+            return np.sum(chi2_contribution[w]**2 / weights[w])
 
-        minimizer = iminuit.Minuit(
-            chi2, name=("eta", "var_lss", "fudge"), eta=1.0, var_lss=0.1, fudge=1.0
-        )
+        minimizer = iminuit.Minuit(chi2,
+                                   name=("eta", "var_lss", "fudge"),
+                                   eta=1.0,
+                                   var_lss=0.1,
+                                   fudge=1.0)
         minimizer.errors["eta"] = 0.05
         minimizer.errors["var_lss"] = 0.05
         minimizer.errors["fudge"] = 0.05
@@ -282,17 +260,14 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0.0, 0.3)):
             error_eta[index] = 0.0
             error_var_lss[index] = 0.0
             error_fudge[index] = 0.0
-        num_pixels[index] = count[
-            index * num_var_bins : (index + 1) * num_var_bins
-        ].sum()
+        num_pixels[index] = count[index * num_var_bins:(index + 1) *
+                                  num_var_bins].sum()
         chi2_in_bin[index] = minimizer.fval
 
         # note that this has been changed for debugging purposes
-        userprint(
-            f" {log_lambda[index]:.3e} "
-            f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "
-            + f"{chi2_in_bin[index]:.2e} {int(num_pixels[index]):d} "
-        )
+        userprint(f" {log_lambda[index]:.3e} "
+                  f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} " +
+                  f"{chi2_in_bin[index]:.2e} {int(num_pixels[index]):d} ")
         # f"{error_eta[index]:.2e} {error_var_lss[index]:.2e} {error_fudge[index]:.2e}")
 
     return (
@@ -330,13 +305,10 @@ def stack(data, stack_from_deltas=False):
             stack_delta: The stacked delta field.
             stack_weight: Total weight on the delta_stack
     """
-    num_bins = (
-        int((Forest.log_lambda_max - Forest.log_lambda_min) / Forest.delta_log_lambda)
-        + 1
-    )
-    stack_log_lambda = (
-        Forest.log_lambda_min + np.arange(num_bins) * Forest.delta_log_lambda
-    )
+    num_bins = (int((Forest.log_lambda_max - Forest.log_lambda_min) /
+                    Forest.delta_log_lambda) + 1)
+    stack_log_lambda = (Forest.log_lambda_min +
+                        np.arange(num_bins) * Forest.delta_log_lambda)
     stack_delta = np.zeros(num_bins)
     stack_weight = np.zeros(num_bins)
     for healpix in sorted(list(data.keys())):
@@ -353,14 +325,12 @@ def stack(data, stack_from_deltas=False):
                 variance = eta * var + var_lss + fudge / var
                 weights = 1.0 / variance
 
-            bins = (
-                (forest.log_lambda - Forest.log_lambda_min) / Forest.delta_log_lambda
-                + 0.5
-            ).astype(int)
+            bins = ((forest.log_lambda - Forest.log_lambda_min) /
+                    Forest.delta_log_lambda + 0.5).astype(int)
             rebin = np.bincount(bins, weights=delta * weights)
-            stack_delta[: len(rebin)] += rebin
+            stack_delta[:len(rebin)] += rebin
             rebin = np.bincount(bins, weights=weights)
-            stack_weight[: len(rebin)] += rebin
+            stack_weight[:len(rebin)] += rebin
 
     w = stack_weight > 0
     stack_delta[w] /= stack_weight[w]

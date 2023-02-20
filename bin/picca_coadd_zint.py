@@ -21,7 +21,9 @@ def coadd_correlations(input_files, output_file):
 
     # specify which header entries we want to check are consistent across all
     # files being coadded
-    headers_to_check_match = ["NP", "NT", "OMEGAM", "OMEGAR", "OMEGAK", "WL", "NSIDE"]
+    headers_to_check_match = [
+        "NP", "NT", "OMEGAM", "OMEGAR", "OMEGAK", "WL", "NSIDE"
+    ]
 
     # initialize coadd arrays, fill them with zeros
     with fitsio.FITS(input_files[0]) as hdul:
@@ -34,7 +36,9 @@ def coadd_correlations(input_files, output_file):
 
         # get values of header entries to check with other files
         header = hdul[1].read_header()
-        headers_to_check_match_values = {h: header[h] for h in headers_to_check_match}
+        headers_to_check_match_values = {
+            h: header[h] for h in headers_to_check_match
+        }
 
     # initialise header quantities
     r_par_min = 1.0e6
@@ -151,8 +155,16 @@ def coadd_correlations(input_files, output_file):
             "value": headers_to_check_match_values["NT"],
             "comment": "Number of bins in r-transverse",
         },
-        {"name": "ZCUTMIN", "value": z_cut_min, "comment": "Minimum redshift of pairs"},
-        {"name": "ZCUTMAX", "value": z_cut_max, "comment": "Maximum redshift of pairs"},
+        {
+            "name": "ZCUTMIN",
+            "value": z_cut_min,
+            "comment": "Minimum redshift of pairs"
+        },
+        {
+            "name": "ZCUTMAX",
+            "value": z_cut_max,
+            "comment": "Maximum redshift of pairs"
+        },
         {
             "name": "NSIDE",
             "value": headers_to_check_match_values["NSIDE"],
@@ -174,9 +186,12 @@ def coadd_correlations(input_files, output_file):
             "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            "name": "WL",
-            "value": headers_to_check_match_values["WL"],
-            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+            "name":
+                "WL",
+            "value":
+                headers_to_check_match_values["WL"],
+            "comment":
+                "Equation of state of dark energy of fiducial LambdaCDM cosmology",
         },
     ]
     results.write(
@@ -188,7 +203,11 @@ def coadd_correlations(input_files, output_file):
         extname="ATTRI",
     )
 
-    header2 = [{"name": "HLPXSCHM", "value": "RING", "comment": "Healpix scheme"}]
+    header2 = [{
+        "name": "HLPXSCHM",
+        "value": "RING",
+        "comment": "Healpix scheme"
+    }]
     results.write(
         [healpixs, weights, xi],
         names=["HEALPID", "WE", "DA"],
@@ -236,7 +255,9 @@ def coadd_dmats(input_files, output_file):
 
         # get values of header entries to check with other files
         header = hdul[1].read_header()
-        headers_to_check_match_values = {h: header[h] for h in headers_to_check_match}
+        headers_to_check_match_values = {
+            h: header[h] for h in headers_to_check_match
+        }
 
     # initialise header quantities
     num_pairs = 0
@@ -319,15 +340,31 @@ def coadd_dmats(input_files, output_file):
             "value": headers_to_check_match_values["COEFMOD"],
             "comment": "Coefficient for model binning",
         },
-        {"name": "ZCUTMIN", "value": z_cut_min, "comment": "Minimum redshift of pairs"},
-        {"name": "ZCUTMAX", "value": z_cut_max, "comment": "Maximum redshift of pairs"},
+        {
+            "name": "ZCUTMIN",
+            "value": z_cut_min,
+            "comment": "Minimum redshift of pairs"
+        },
+        {
+            "name": "ZCUTMAX",
+            "value": z_cut_max,
+            "comment": "Maximum redshift of pairs"
+        },
         {
             "name": "REJ",
             "value": headers_to_check_match_values["REJ"],
             "comment": "Rejection factor",
         },
-        {"name": "NPALL", "value": num_pairs, "comment": "Number of pairs"},
-        {"name": "NPUSED", "value": num_pairs_used, "comment": "Number of used pairs"},
+        {
+            "name": "NPALL",
+            "value": num_pairs,
+            "comment": "Number of pairs"
+        },
+        {
+            "name": "NPUSED",
+            "value": num_pairs_used,
+            "comment": "Number of used pairs"
+        },
         {
             "name": "OMEGAM",
             "value": headers_to_check_match_values["OMEGAM"],
@@ -344,9 +381,12 @@ def coadd_dmats(input_files, output_file):
             "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            "name": "WL",
-            "value": headers_to_check_match_values["WL"],
-            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+            "name":
+                "WL",
+            "value":
+                headers_to_check_match_values["WL"],
+            "comment":
+                "Equation of state of dark energy of fiducial LambdaCDM cosmology",
         },
     ]
     results.write(
@@ -381,7 +421,10 @@ def main(cmdargs):
         help="the (x)cf....fits files to be coadded",
     )
 
-    parser.add_argument("--out", type=str, required=False, help="name of output file")
+    parser.add_argument("--out",
+                        type=str,
+                        required=False,
+                        help="name of output file")
 
     parser.add_argument(
         "--dmats",
@@ -391,9 +434,10 @@ def main(cmdargs):
         help="the (x)dmat....fits files to be coadded.",
     )
 
-    parser.add_argument(
-        "--out-dmat", type=str, required=False, help="name of dmat output file"
-    )
+    parser.add_argument("--out-dmat",
+                        type=str,
+                        required=False,
+                        help="name of dmat output file")
 
     args = parser.parse_args(cmdargs)
 
@@ -403,14 +447,16 @@ def main(cmdargs):
     if args.data is not None:
         for file in args.data:
             if not os.path.isfile(file):
-                userprint("WARN: could not find file {}, removing it".format(file))
+                userprint(
+                    "WARN: could not find file {}, removing it".format(file))
                 args.data.remove(file)
         coadd_correlations(args.data, args.out)
 
     if args.dmats is not None:
         for file in args.dmats:
             if not os.path.isfile(file):
-                userprint("WARN: could not find file {}, removing it".format(file))
+                userprint(
+                    "WARN: could not find file {}, removing it".format(file))
                 args.data.remove(file)
         coadd_dmats(args.dmats, args.out_dmat)
 

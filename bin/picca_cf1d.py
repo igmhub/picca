@@ -38,15 +38,15 @@ def main(cmdargs):
     forest."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=(
-            "Compute the 1D auto or cross-correlation between delta "
-            "field from the same forest."
-        ),
+        description=("Compute the 1D auto or cross-correlation between delta "
+                     "field from the same forest."),
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     parser.add_argument(
         "--in-dir",
@@ -80,19 +80,19 @@ def main(cmdargs):
         help="Upper limit on observed wavelength [Angstrom]",
     )
 
-    parser.add_argument(
-        "--dll", type=float, default=3.0e-4, required=False, help="Loglam bin size"
-    )
+    parser.add_argument("--dll",
+                        type=float,
+                        default=3.0e-4,
+                        required=False,
+                        help="Loglam bin size")
 
     parser.add_argument(
         "--lambda-abs",
         type=str,
         default="LYA",
         required=False,
-        help=(
-            "Name of the absorption in picca.constants defining the redshift "
-            "of the delta"
-        ),
+        help=("Name of the absorption in picca.constants defining the redshift "
+              "of the delta"),
     )
 
     parser.add_argument(
@@ -100,15 +100,15 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "Name of the absorption in picca.constants defining the redshift "
-            "of the 2nd delta (if not give, same as 1st delta)"
-        ),
+        help=("Name of the absorption in picca.constants defining the redshift "
+              "of the 2nd delta (if not give, same as 1st delta)"),
     )
 
-    parser.add_argument(
-        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
-    )
+    parser.add_argument("--z-ref",
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help="Reference redshift")
 
     parser.add_argument(
         "--z-evol",
@@ -133,13 +133,17 @@ def main(cmdargs):
         help="Do not project out continuum fitting modes",
     )
 
-    parser.add_argument(
-        "--nside", type=int, default=16, required=False, help="Healpix nside"
-    )
+    parser.add_argument("--nside",
+                        type=int,
+                        default=16,
+                        required=False,
+                        help="Healpix nside")
 
-    parser.add_argument(
-        "--nproc", type=int, default=None, required=False, help="Number of processors"
-    )
+    parser.add_argument("--nproc",
+                        type=int,
+                        default=None,
+                        required=False,
+                        help="Number of processors")
 
     parser.add_argument(
         "--nspec",
@@ -159,9 +163,8 @@ def main(cmdargs):
     cf.log_lambda_min = np.log10(args.lambda_min)
     cf.log_lambda_max = np.log10(args.lambda_max)
     cf.delta_log_lambda = args.dll
-    cf.num_pixels = int(
-        (cf.log_lambda_max - cf.log_lambda_min) / cf.delta_log_lambda + 1
-    )
+    cf.num_pixels = int((cf.log_lambda_max - cf.log_lambda_min) /
+                        cf.delta_log_lambda + 1)
     cf.x_correlation = False
 
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
@@ -233,9 +236,9 @@ def main(cmdargs):
     pool = context.Pool(processes=args.nproc)
 
     if cf.x_correlation:
-        healpixs = sorted(
-            [key for key in list(cf.data.keys()) if key in list(cf.data2.keys())]
-        )
+        healpixs = sorted([
+            key for key in list(cf.data.keys()) if key in list(cf.data2.keys())
+        ])
     else:
         healpixs = sorted(list(cf.data.keys()))
     correlation_function_data = pool.map(corr_func, healpixs)
@@ -293,11 +296,11 @@ def main(cmdargs):
     num_pairs_list = num_pairs_list[w]
 
     rebin = np.bincount(dbin, weights=xi * weights_list)
-    xi_1d[: len(rebin)] = rebin
+    xi_1d[:len(rebin)] = rebin
     rebin = np.bincount(dbin, weights=weights_list)
-    weights_1d[: len(rebin)] = rebin
+    weights_1d[:len(rebin)] = rebin
     rebin = np.bincount(dbin, weights=num_pairs_list)
-    num_pairs1d[: len(rebin)] = rebin
+    num_pairs1d[:len(rebin)] = rebin
 
     w = weights_1d > 0
     xi_1d[w] /= weights_1d[w]

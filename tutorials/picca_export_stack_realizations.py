@@ -36,9 +36,11 @@ if __name__ == "__main__":
         help="Do not smooth the covariance matrix",
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     args = parser.parse_args()
 
@@ -110,10 +112,26 @@ if __name__ == "__main__":
     ###
     h = fitsio.FITS(args.out, "rw", clobber=True)
     head = [
-        {"name": "RPMIN", "value": head["RPMIN"], "comment": "Minimum r-parallel"},
-        {"name": "RPMAX", "value": head["RPMAX"], "comment": "Maximum r-parallel"},
-        {"name": "RTMAX", "value": head["RTMAX"], "comment": "Maximum r-transverse"},
-        {"name": "NP", "value": head["NP"], "comment": "Number of bins in r-parallel"},
+        {
+            "name": "RPMIN",
+            "value": head["RPMIN"],
+            "comment": "Minimum r-parallel"
+        },
+        {
+            "name": "RPMAX",
+            "value": head["RPMAX"],
+            "comment": "Maximum r-parallel"
+        },
+        {
+            "name": "RTMAX",
+            "value": head["RTMAX"],
+            "comment": "Maximum r-transverse"
+        },
+        {
+            "name": "NP",
+            "value": head["NP"],
+            "comment": "Number of bins in r-parallel"
+        },
         {
             "name": "NT",
             "value": head["NT"],
@@ -130,10 +148,15 @@ if __name__ == "__main__":
         "Number of pairs",
     ]
     keys = ["RP", "RT", "Z", "DA", "CO", "DM", "NB"]
-    h.write(
-        [dic[k] for k in keys], names=keys, comment=comment, header=head, extname="COR"
-    )
+    h.write([dic[k] for k in keys],
+            names=keys,
+            comment=comment,
+            header=head,
+            extname="COR")
     comment = ["R-parallel model", "R-transverse model", "Redshift model"]
     keys = ["DMRP", "DMRT", "DMZ"]
-    h.write([dic[k] for k in keys], names=keys, comment=comment, extname="DMATTRI")
+    h.write([dic[k] for k in keys],
+            names=keys,
+            comment=comment,
+            extname="DMATTRI")
     h.close()

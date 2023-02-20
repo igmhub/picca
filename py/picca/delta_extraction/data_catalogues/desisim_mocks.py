@@ -4,8 +4,7 @@ import logging
 
 from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
 from picca.delta_extraction.data_catalogues.desi_healpix import (  # pylint: disable=unused-import
-    defaults,
-    accepted_options,
+    defaults, accepted_options,
 )
 
 
@@ -51,8 +50,7 @@ class DesisimMocks(DesiHealpix):
         if self.use_non_coadded_spectra:
             self.logger.warning(
                 'the "use_non_coadded_spectra" option was set, '
-                "but has no effect on Mocks, will proceed as normal"
-            )
+                "but has no effect on Mocks, will proceed as normal")
 
     def get_filename(self, survey, healpix):
         """Get the name of the file to read
@@ -73,8 +71,6 @@ class DesisimMocks(DesiHealpix):
         is_mock: bool
         True, as we are reading mocks
         """
-        filename = (
-            f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
-            f"{self.in_nside}-{healpix}.fits"
-        )
+        filename = (f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
+                    f"{self.in_nside}-{healpix}.fits")
         return filename, True

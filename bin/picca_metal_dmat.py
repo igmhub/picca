@@ -40,7 +40,9 @@ def calc_metal_dmat(abs_igm1, abs_igm2, healpixs):
     """
     cf.fill_neighs(healpixs)
     np.random.seed(healpixs[0])
-    dmat_data = cf.compute_metal_dmat(healpixs, abs_igm1=abs_igm1, abs_igm2=abs_igm2)
+    dmat_data = cf.compute_metal_dmat(healpixs,
+                                      abs_igm1=abs_igm1,
+                                      abs_igm2=abs_igm2)
     return dmat_data
 
 
@@ -50,15 +52,15 @@ def main(cmdargs):
     absorption."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=(
-            "Compute the auto and cross-correlation of delta fields "
-            "for a list of IGM absorption."
-        ),
+        description=("Compute the auto and cross-correlation of delta fields "
+                     "for a list of IGM absorption."),
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     parser.add_argument(
         "--in-dir",
@@ -100,22 +102,25 @@ def main(cmdargs):
         help="Max r-transverse [h^-1 Mpc]",
     )
 
-    parser.add_argument(
-        "--np", type=int, default=50, required=False, help="Number of r-parallel bins"
-    )
+    parser.add_argument("--np",
+                        type=int,
+                        default=50,
+                        required=False,
+                        help="Number of r-parallel bins")
 
-    parser.add_argument(
-        "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
-    )
+    parser.add_argument("--nt",
+                        type=int,
+                        default=50,
+                        required=False,
+                        help="Number of r-transverse bins")
 
     parser.add_argument(
         "--coef-binning-model",
         type=int,
         default=1,
         required=False,
-        help=(
-            "Coefficient multiplying np and nt to get finner binning for the " "model"
-        ),
+        help=("Coefficient multiplying np and nt to get finner binning for the "
+              "model"),
     )
 
     parser.add_argument(
@@ -123,11 +128,9 @@ def main(cmdargs):
         type=float,
         default=0.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift larger than "
-            "z-cut-min"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift larger than "
+              "z-cut-min"),
     )
 
     parser.add_argument(
@@ -135,11 +138,9 @@ def main(cmdargs):
         type=float,
         default=10.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift smaller than "
-            "z-cut-max"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift smaller than "
+              "z-cut-max"),
     )
 
     parser.add_argument(
@@ -147,10 +148,8 @@ def main(cmdargs):
         type=str,
         default="LYA",
         required=False,
-        help=(
-            "Name of the absorption in picca.constants defining the redshift "
-            "of the delta"
-        ),
+        help=("Name of the absorption in picca.constants defining the redshift "
+              "of the delta"),
     )
 
     parser.add_argument(
@@ -158,10 +157,8 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "Name of the absorption in picca.constants defining the redshift "
-            "of the 2nd delta"
-        ),
+        help=("Name of the absorption in picca.constants defining the redshift "
+              "of the 2nd delta"),
     )
 
     parser.add_argument(
@@ -170,9 +167,8 @@ def main(cmdargs):
         default=[],
         required=False,
         nargs="*",
-        help=(
-            "List of names of metal absorption in picca.constants present in " "forest"
-        ),
+        help=("List of names of metal absorption in picca.constants present in "
+              "forest"),
     )
 
     parser.add_argument(
@@ -181,15 +177,15 @@ def main(cmdargs):
         default=[],
         required=False,
         nargs="*",
-        help=(
-            "List of names of metal absorption in picca.constants present in "
-            "2nd forest"
-        ),
+        help=("List of names of metal absorption in picca.constants present in "
+              "2nd forest"),
     )
 
-    parser.add_argument(
-        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
-    )
+    parser.add_argument("--z-ref",
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help="Reference redshift")
 
     parser.add_argument(
         "--z-evol",
@@ -259,19 +255,21 @@ def main(cmdargs):
         type=float,
         default=1.0,
         required=False,
-        help=(
-            "Fraction of rejected forest-forest pairs: -1=no rejection, "
-            "1=all rejection"
-        ),
+        help=("Fraction of rejected forest-forest pairs: -1=no rejection, "
+              "1=all rejection"),
     )
 
-    parser.add_argument(
-        "--nside", type=int, default=16, required=False, help="Healpix nside"
-    )
+    parser.add_argument("--nside",
+                        type=int,
+                        default=16,
+                        required=False,
+                        help="Healpix nside")
 
-    parser.add_argument(
-        "--nproc", type=int, default=None, required=False, help="Number of processors"
-    )
+    parser.add_argument("--nproc",
+                        type=int,
+                        default=None,
+                        required=False,
+                        help="Number of processors")
 
     parser.add_argument(
         "--nspec",
@@ -285,10 +283,8 @@ def main(cmdargs):
         "--unfold-cf",
         action="store_true",
         required=False,
-        help=(
-            "rp can be positive or negative depending on the relative "
-            "position between absorber1 and absorber2"
-        ),
+        help=("rp can be positive or negative depending on the relative "
+              "position between absorber1 and absorber2"),
     )
 
     parser.add_argument(
@@ -391,12 +387,14 @@ def main(cmdargs):
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
-        cf.ang_max = utils.compute_ang_max(cf.cosmo, cf.r_trans_max, z_min, z_min2)
+        cf.ang_max = utils.compute_ang_max(cf.cosmo, cf.r_trans_max, z_min,
+                                           z_min2)
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
 
     t1 = time.time()
-    userprint(f"picca_metal_dmat.py - Time reading data: {(t1-t0)/60:.3f} minutes")
+    userprint(
+        f"picca_metal_dmat.py - Time reading data: {(t1-t0)/60:.3f} minutes")
 
     cf.counter = Value("i", 0)
     cf.lock = Lock()
@@ -438,17 +436,20 @@ def main(cmdargs):
             if index1 == 0 and index2 == 0:
                 continue
             cf.counter.value = 0
-            calc_metal_dmat_wrapper = partial(calc_metal_dmat, abs_igm1, abs_igm2)
+            calc_metal_dmat_wrapper = partial(calc_metal_dmat, abs_igm1,
+                                              abs_igm2)
             userprint("")
 
             # compute the distortion matrix
             if args.nproc > 1:
                 context = multiprocessing.get_context("fork")
                 pool = context.Pool(processes=args.nproc)
-                dmat_data = pool.map(calc_metal_dmat_wrapper, sorted(cpu_data.values()))
+                dmat_data = pool.map(calc_metal_dmat_wrapper,
+                                     sorted(cpu_data.values()))
                 pool.close()
             elif args.nproc == 1:
-                dmat_data = map(calc_metal_dmat_wrapper, sorted(cpu_data.values()))
+                dmat_data = map(calc_metal_dmat_wrapper,
+                                sorted(cpu_data.values()))
                 dmat_data = list(dmat_data)
 
             # merge the results from different CPUs
@@ -528,7 +529,11 @@ def main(cmdargs):
             "value": cf.z_cut_max,
             "comment": "Maximum redshift of pairs",
         },
-        {"name": "REJ", "value": cf.reject, "comment": "Rejection factor"},
+        {
+            "name": "REJ",
+            "value": cf.reject,
+            "comment": "Rejection factor"
+        },
         {
             "name": "ALPHAMET",
             "value": args.metal_alpha,
@@ -550,9 +555,12 @@ def main(cmdargs):
             "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            "name": "WL",
-            "value": args.fid_wl,
-            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+            "name":
+                "WL",
+            "value":
+                args.fid_wl,
+            "comment":
+                "Equation of state of dark energy of fiducial LambdaCDM cosmology",
         },
         {
             "name": "BLINDING",
@@ -563,7 +571,11 @@ def main(cmdargs):
     len_names = np.array([len(name) for name in names]).max()
     names = np.array(names, dtype="S" + str(len_names))
     results.write(
-        [np.array(num_pairs_all), np.array(num_pairs_used_all), np.array(names)],
+        [
+            np.array(num_pairs_all),
+            np.array(num_pairs_used_all),
+            np.array(names)
+        ],
         names=["NPALL", "NPUSED", "ABS_IGM"],
         header=header,
         comment=["Number of pairs", "Number of used pairs", "Absorption name"],
@@ -604,9 +616,11 @@ def main(cmdargs):
         out_comment += ["Sum of weight"]
         out_units += [""]
 
-    results.write(
-        out_list, names=out_names, comment=out_comment, units=out_units, extname="MDMAT"
-    )
+    results.write(out_list,
+                  names=out_names,
+                  comment=out_comment,
+                  units=out_units,
+                  extname="MDMAT")
     results.close()
 
     t3 = time.time()

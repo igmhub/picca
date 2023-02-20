@@ -1,14 +1,12 @@
 """This module defines the class Dr16FixedEtaVarlssExpectedFlux"""
 from picca.delta_extraction.expected_fluxes.dr16_fixed_eta_expected_flux import (
-    Dr16FixedEtaExpectedFlux,
-)
+    Dr16FixedEtaExpectedFlux,)
 from picca.delta_extraction.expected_fluxes.dr16_fixed_eta_expected_flux import (
     defaults,
     accepted_options,
 )
 from picca.delta_extraction.expected_fluxes.dr16_fixed_varlss_expected_flux import (
-    Dr16FixedVarlssExpectedFlux,
-)
+    Dr16FixedVarlssExpectedFlux,)
 from picca.delta_extraction.expected_fluxes.dr16_fixed_varlss_expected_flux import (
     defaults as defaults2,
     accepted_options as accepted_options2,
@@ -25,9 +23,8 @@ accepted_options = update_accepted_options(
 defaults = update_default_options(defaults, defaults2)
 
 
-class Dr16FixedEtaVarlssExpectedFlux(
-    Dr16FixedEtaExpectedFlux, Dr16FixedVarlssExpectedFlux
-):
+class Dr16FixedEtaVarlssExpectedFlux(Dr16FixedEtaExpectedFlux,
+                                     Dr16FixedVarlssExpectedFlux):
     """Class to the expected flux similar to Dr16ExpectedFlux but fixing both
     eta and var_lss
 

@@ -45,33 +45,26 @@ class DustCorrection(Correction):
         """
         extinction_conversion_r = config.getfloat("extinction_conversion_r")
         if extinction_conversion_r is None:
-            raise CorrectionError(
-                "Missing argument 'extinction_conversion_r' "
-                "required by DustCorrection"
-            )
+            raise CorrectionError("Missing argument 'extinction_conversion_r' "
+                                  "required by DustCorrection")
 
         filename = config.get("filename")
         if filename is None:
-            raise CorrectionError(
-                "Missing argument 'filename' " "required by DustCorrection"
-            )
+            raise CorrectionError("Missing argument 'filename' "
+                                  "required by DustCorrection")
         try:
             hdu = fitsio.read(filename, ext="CATALOG")
             thingid = hdu["THING_ID"]
             ext = hdu["EXTINCTION"][:, 1] / extinction_conversion_r
         except OSError as error:
-            raise CorrectionError(
-                "Error loading DustCorrection. "
-                f"File {filename} does not have extension "
-                "'CATALOG'"
-            ) from error
+            raise CorrectionError("Error loading DustCorrection. "
+                                  f"File {filename} does not have extension "
+                                  "'CATALOG'") from error
         except ValueError as error:
-            raise CorrectionError(
-                "Error loading DustCorrection. "
-                f"File {filename} does not have fields "
-                "'THING_ID' and/or 'EXTINCTION' in HDU "
-                "'CATALOG'"
-            ) from error
+            raise CorrectionError("Error loading DustCorrection. "
+                                  f"File {filename} does not have fields "
+                                  "'THING_ID' and/or 'EXTINCTION' in HDU "
+                                  "'CATALOG'") from error
         self.extinction_bv_map = dict(zip(thingid, ext))
 
     def apply_correction(self, forest):
@@ -153,11 +146,9 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
         xuv = xspluv
 
     yuv = c1 + c2 * xuv
-    yuv = yuv + c3 * xuv**2 / ((xuv**2 - x0**2) ** 2 + (xuv * gamma) ** 2)
-    yuv = yuv + c4 * (
-        0.5392 * (np.maximum(xuv, 5.9) - 5.9) ** 2
-        + 0.05644 * (np.maximum(xuv, 5.9) - 5.9) ** 3
-    )
+    yuv = yuv + c3 * xuv**2 / ((xuv**2 - x0**2)**2 + (xuv * gamma)**2)
+    yuv = yuv + c4 * (0.5392 * (np.maximum(xuv, 5.9) - 5.9)**2 + 0.05644 *
+                      (np.maximum(xuv, 5.9) - 5.9)**3)
     yuv = yuv + R_V
     yspluv = yuv[0:2]  # save spline points
 
@@ -167,29 +158,26 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     # Compute optical portion of A(lambda)/E(B-V) curve
     # using cubic spline anchored in UV, optical, and IR
     xsplopir = np.concatenate(
-        ([0], 10000.0 / np.array([26500.0, 12200.0, 6000.0, 5470.0, 4670.0, 4110.0]))
-    )
+        ([0], 10000.0 /
+         np.array([26500.0, 12200.0, 6000.0, 5470.0, 4670.0, 4110.0])))
     ysplir = np.array([0.0, 0.26469, 0.82925]) * R_V / 3.1
-    ysplop = np.array(
-        (
-            np.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1], R_V),
-            np.polyval([-5.13540e-02, 1.00216, -7.35778e-05][::-1], R_V),
-            np.polyval([7.00127e-01, 1.00184, -3.32598e-05][::-1], R_V),
-            np.polyval(
-                [1.19456, 1.01707, -5.46959e-03, 7.97809e-04, -4.45636e-05][::-1], R_V
-            ),
-        )
-    )
+    ysplop = np.array((
+        np.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1], R_V),
+        np.polyval([-5.13540e-02, 1.00216, -7.35778e-05][::-1], R_V),
+        np.polyval([7.00127e-01, 1.00184, -3.32598e-05][::-1], R_V),
+        np.polyval([1.19456, 1.01707, -5.46959e-03, 7.97809e-04,
+                    -4.45636e-05][::-1], R_V),
+    ))
     ysplopir = np.concatenate((ysplir, ysplop))
 
     if Nopir > 0:
-        tck = interpolate.splrep(
-            np.concatenate((xsplopir, xspluv)), np.concatenate((ysplopir, yspluv)), s=0
-        )
+        tck = interpolate.splrep(np.concatenate((xsplopir, xspluv)),
+                                 np.concatenate((ysplopir, yspluv)),
+                                 s=0)
         curve[iopir] = interpolate.splev(x[iopir], tck)
 
     # Now apply extinction correction to input flux vector
     curve *= ebv
-    corr = 1.0 / (10.0 ** (0.4 * curve))
+    corr = 1.0 / (10.0**(0.4 * curve))
 
     return corr

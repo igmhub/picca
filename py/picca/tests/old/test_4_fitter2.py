@@ -79,7 +79,8 @@ class TestFitter(AbstractTest):
         self.update_system_status_values(path, "metals", "filename", value)
 
         ### Send
-        picca_fitter2.main(self._branchFiles + "/Products/Correlations/Fit/chi2.ini")
+        picca_fitter2.main(self._branchFiles +
+                           "/Products/Correlations/Fit/chi2.ini")
 
         ###These commented lines are to simplify accessing test outputs if needed
         # if os.path.exists(self._masterFiles+'new/'):

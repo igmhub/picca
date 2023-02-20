@@ -4,16 +4,20 @@ import argparse
 import numpy as np
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--spall", type=str, required=True, help="Path to spAll file")
+parser.add_argument("--spall",
+                    type=str,
+                    required=True,
+                    help="Path to spAll file")
 parser.add_argument(
     "--qso-catalog",
     type=str,
     required=True,
     help="Path to file containing THING_ID (e.g. DR16Q.fits)",
 )
-parser.add_argument(
-    "--output", type=str, required=True, help="Path to output reduced spAll file"
-)
+parser.add_argument("--output",
+                    type=str,
+                    required=True,
+                    help="Path to output reduced spAll file")
 
 args = parser.parse_args()
 
@@ -30,6 +34,5 @@ w = np.in1d(spall["THING_ID"], qso_catalog["THING_ID"])
 spall_qso = spall[w]
 # -- Columns required for picca_deltas.py for spec, spplate formats and usage of multiple observations
 spall_qso.keep_columns(
-    ["THING_ID", "PLATE", "MJD", "FIBERID", "PLATEQUALITY", "ZWARNING"]
-)
+    ["THING_ID", "PLATE", "MJD", "FIBERID", "PLATEQUALITY", "ZWARNING"])
 spall_qso.write(args.output, overwrite=True)

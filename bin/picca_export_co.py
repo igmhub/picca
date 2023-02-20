@@ -15,14 +15,15 @@ def main(cmdargs):
     fitter."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=(
-            "Export auto and cross-correlation of catalog of objects " "for the fitter."
-        ),
+        description=("Export auto and cross-correlation of catalog of objects "
+                     "for the fitter."),
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     parser.add_argument(
         "--DD-file",
@@ -107,26 +108,18 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "Path to a covariance matrix file (if not provided it will be "
-            "calculated by subsampling or from Poisson statistics)"
-        ),
+        help=("Path to a covariance matrix file (if not provided it will be "
+              "calculated by subsampling or from Poisson statistics)"),
     )
 
     args = parser.parse_args(cmdargs)
 
     ### Auto or cross correlation?
-    if (
-        (args.DD_file is None and args.xDD_file is None)
-        or (args.DD_file is not None and args.xDD_file is not None)
-        or (args.cov is not None and not args.get_cov_from_poisson)
-    ):
-        userprint(
-            (
-                "ERROR: No data files, or both auto and cross data files, "
-                "or two different method for covariance"
-            )
-        )
+    if ((args.DD_file is None and args.xDD_file is None) or
+        (args.DD_file is not None and args.xDD_file is not None) or
+        (args.cov is not None and not args.get_cov_from_poisson)):
+        userprint(("ERROR: No data files, or both auto and cross data files, "
+                   "or two different method for covariance"))
         sys.exit()
     elif args.DD_file is not None:
         corr = "AUTO"
@@ -175,7 +168,8 @@ def main(cmdargs):
         data[type_corr]["HLPXSCHM"] = hdul[2].read_header()["HLPXSCHM"]
         w = np.array(hdul[2]["WE"][:]).sum(axis=1) > 0.0
         if w.sum() != w.size:
-            userprint("INFO: {} sub-samples were empty".format(w.size - w.sum()))
+            userprint("INFO: {} sub-samples were empty".format(w.size -
+                                                               w.sum()))
         data[type_corr]["HEALPID"] = hdul[2]["HEALPID"][:][w]
         data[type_corr]["WE"] = hdul[2]["WE"][:][w] / coef
         hdul.close()
@@ -188,12 +182,8 @@ def main(cmdargs):
         xi_random_data = data["RD"]["WE"].sum(axis=0)
         w = xi_random_random > 0.0
         xi = np.zeros(xi_data_data.size)
-        xi[w] = (
-            xi_data_data[w]
-            + xi_random_random[w]
-            - xi_random_data[w]
-            - xi_data_random[w]
-        ) / xi_random_random[w]
+        xi[w] = (xi_data_data[w] + xi_random_random[w] - xi_random_data[w] -
+                 xi_data_random[w]) / xi_random_random[w]
     else:
         xi_data_data = data["xDD"]["WE"].sum(axis=0)
         xi_random_random = data["xRR"]["WE"].sum(axis=0)
@@ -201,12 +191,8 @@ def main(cmdargs):
         xi_data2_random1 = data["xR1D2"]["WE"].sum(axis=0)
         w = xi_random_random > 0.0
         xi = np.zeros(xi_data_data.size)
-        xi[w] = (
-            xi_data_data[w]
-            + xi_random_random[w]
-            - xi_data1_random2[w]
-            - xi_data2_random1[w]
-        ) / xi_random_random[w]
+        xi[w] = (xi_data_data[w] + xi_random_random[w] - xi_data1_random2[w] -
+                 xi_data2_random1[w]) / xi_random_random[w]
     data["DA"] = xi
     data["corr_DD"] = xi_data_data
     data["corr_RR"] = xi_random_random
@@ -221,9 +207,8 @@ def main(cmdargs):
         userprint("INFO: Compute covariance from Poisson statistics")
         w = data["corr_RR"] > 0.0
         covariance = np.zeros(data["corr_DD"].size)
-        covariance[w] = (data["COEF"] / 2.0 * data["corr_DD"][w]) ** 2 / (
-            data["COEF"] / 2.0 * data["corr_RR"][w]
-        ) ** 3
+        covariance[w] = (data["COEF"] / 2.0 * data["corr_DD"][w])**2 / (
+            data["COEF"] / 2.0 * data["corr_RR"][w])**3
         data["CO"] = np.diag(covariance)
     else:
         userprint("INFO: Compute covariance from sub-sampling")
@@ -232,42 +217,33 @@ def main(cmdargs):
         for type_corr1 in list(correlation_files):
             for type_corr2 in list(correlation_files):
                 if data[type_corr1]["NSIDE"] != data[type_corr2]["NSIDE"]:
-                    userprint(
-                        "ERROR: NSIDE are different: {} != "
-                        "{}".format(
-                            data[type_corr1]["NSIDE"], data[type_corr2]["NSIDE"]
-                        )
-                    )
+                    userprint("ERROR: NSIDE are different: {} != "
+                              "{}".format(data[type_corr1]["NSIDE"],
+                                          data[type_corr2]["NSIDE"]))
                     sys.exit()
                 if data[type_corr1]["HLPXSCHM"] != data[type_corr2]["HLPXSCHM"]:
-                    userprint(
-                        "ERROR: HLPXSCHM are different: {} != "
-                        "{}".format(
-                            data[type_corr1]["HLPXSCHM"], data[type_corr2]["HLPXSCHM"]
-                        )
-                    )
+                    userprint("ERROR: HLPXSCHM are different: {} != "
+                              "{}".format(data[type_corr1]["HLPXSCHM"],
+                                          data[type_corr2]["HLPXSCHM"]))
                     sys.exit()
 
                 w = np.logical_not(
-                    np.in1d(data[type_corr1]["HEALPID"], data[type_corr2]["HEALPID"])
-                )
+                    np.in1d(data[type_corr1]["HEALPID"],
+                            data[type_corr2]["HEALPID"]))
                 if w.sum() != 0:
-                    userprint(
-                        "WARNING: HEALPID are different by {} for {}:{} "
-                        "and {}:{}".format(
-                            w.sum(),
-                            type_corr1,
-                            data[type_corr1]["HEALPID"].size,
-                            type_corr2,
-                            data[type_corr2]["HEALPID"].size,
-                        )
-                    )
+                    userprint("WARNING: HEALPID are different by {} for {}:{} "
+                              "and {}:{}".format(
+                                  w.sum(),
+                                  type_corr1,
+                                  data[type_corr1]["HEALPID"].size,
+                                  type_corr2,
+                                  data[type_corr2]["HEALPID"].size,
+                              ))
                     new_healpix = data[type_corr1]["HEALPID"][w]
                     num_new_healpix = new_healpix.size
                     num_bins = data[type_corr2]["WE"].shape[1]
                     data[type_corr2]["HEALPID"] = np.append(
-                        data[type_corr2]["HEALPID"], new_healpix
-                    )
+                        data[type_corr2]["HEALPID"], new_healpix)
                     data[type_corr2]["WE"] = np.append(
                         data[type_corr2]["WE"],
                         np.zeros((num_new_healpix, num_bins)),
@@ -287,12 +263,8 @@ def main(cmdargs):
             xi_random_data = data["RD"]["WE"]
             w = xi_random_random > 0.0
             xi = np.zeros(xi_data_data.shape)
-            xi[w] = (
-                xi_data_data[w]
-                + xi_random_random[w]
-                - xi_data_random[w]
-                - xi_random_data[w]
-            ) / xi_random_random[w]
+            xi[w] = (xi_data_data[w] + xi_random_random[w] - xi_data_random[w] -
+                     xi_random_data[w]) / xi_random_random[w]
             weights = data["DD"]["WE"]
         else:
             xi_data_data = data["xDD"]["WE"]
@@ -301,12 +273,8 @@ def main(cmdargs):
             xi_data2_random1 = data["xR1D2"]["WE"]
             w = xi_random_random > 0.0
             xi = np.zeros(xi_data_data.shape)
-            xi[w] = (
-                xi_data_data[w]
-                + xi_random_random[w]
-                - xi_data1_random2[w]
-                - xi_data2_random1[w]
-            ) / xi_random_random[w]
+            xi[w] = (xi_data_data[w] + xi_random_random[w] - xi_data1_random2[w]
+                     - xi_data2_random1[w]) / xi_random_random[w]
             weights = data["xDD"]["WE"]
         data["HLP_DA"] = xi
         data["HLP_WE"] = weights
@@ -344,16 +312,36 @@ def main(cmdargs):
     else:
         nside = data["xDD"]["NSIDE"]
     header = [
-        {"name": "RPMIN", "value": data["RPMIN"], "comment": "Minimum r-parallel"},
-        {"name": "RPMAX", "value": data["RPMAX"], "comment": "Maximum r-parallel"},
-        {"name": "RTMAX", "value": data["RTMAX"], "comment": "Maximum r-transverse"},
-        {"name": "NP", "value": data["NP"], "comment": "Number of bins in r-parallel"},
+        {
+            "name": "RPMIN",
+            "value": data["RPMIN"],
+            "comment": "Minimum r-parallel"
+        },
+        {
+            "name": "RPMAX",
+            "value": data["RPMAX"],
+            "comment": "Maximum r-parallel"
+        },
+        {
+            "name": "RTMAX",
+            "value": data["RTMAX"],
+            "comment": "Maximum r-transverse"
+        },
+        {
+            "name": "NP",
+            "value": data["NP"],
+            "comment": "Number of bins in r-parallel"
+        },
         {
             "name": "NT",
             "value": data["NT"],
             "comment": "Number of bins in r-transverse",
         },
-        {"name": "NSIDE", "value": nside, "comment": "Healpix nside"},
+        {
+            "name": "NSIDE",
+            "value": nside,
+            "comment": "Healpix nside"
+        },
         {
             "name": "OMEGAM",
             "value": fid_Om,
@@ -370,9 +358,12 @@ def main(cmdargs):
             "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            "name": "WL",
-            "value": fid_wl,
-            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+            "name":
+                "WL",
+            "value":
+                fid_wl,
+            "comment":
+                "Equation of state of dark energy of fiducial LambdaCDM cosmology",
         },
     ]
     names = ["RP", "RT", "Z", "DA", "CO", "DM", "NB"]
@@ -400,9 +391,11 @@ def main(cmdargs):
         else:
             healpix_scheme = data["xDD"]["HLPXSCHM"]
             healpix_list = data["xDD"]["HEALPID"]
-        header2 = [
-            {"name": "HLPXSCHM", "value": healpix_scheme, "comment": "healpix scheme"}
-        ]
+        header2 = [{
+            "name": "HLPXSCHM",
+            "value": healpix_scheme,
+            "comment": "healpix scheme"
+        }]
         comment = ["Healpix index", "Sum of weight", "Correlation"]
         results.write(
             [healpix_list, data["HLP_WE"], data["HLP_DA"]],

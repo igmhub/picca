@@ -39,15 +39,8 @@ def tau(lamb, z, N_hi):
     u = (lamb_rf - lamb_alpha) / Deltat_lamb
     H = voigt(u, np.sqrt(1 / 2), a)
 
-    absorb = (
-        np.sqrt(np.pi)
-        * e**2
-        * f
-        * lamb_alpha**2
-        * 1e-10
-        / (4 * np.pi * epsilon0 * me * c**2 * Deltat_lamb)
-        * H
-    )
+    absorb = (np.sqrt(np.pi) * e**2 * f * lamb_alpha**2 * 1e-10 /
+              (4 * np.pi * epsilon0 * me * c**2 * Deltat_lamb) * H)
     # 10^N_hi en cm^-2 et absorb en m^2
     return 10**N_hi * 1e4 * absorb
 
@@ -58,14 +51,13 @@ def profile_voigt_lambda(x, z, N_hi):
 
 
 def profile_lambda_to_r(
-    lamb, profile_lambda, fidcosmo
-):  # pour Lyman_alpha --> sinon mettre une autre raie
+        lamb, profile_lambda,
+        fidcosmo):  # pour Lyman_alpha --> sinon mettre une autre raie
     z = lamb / constants.ABSORBER_IGM["LYA"] - 1
     r = fidcosmo.get_r_comov(z)
     rr = np.linspace(r[0], r[-1], r.size)
     profile_r = np.interp(
-        rr, r, profile_lambda
-    )  # pour reavoir un echantillonage lineaire
+        rr, r, profile_lambda)  # pour reavoir un echantillonage lineaire
     return rr, profile_r
 
 
@@ -85,9 +77,8 @@ def lambda_to_r(lamb, profile_lambda, fidcosmo):
     z = lamb / constants.ABSORBER_IGM["LYA"] - 1
     r = fidcosmo.get_r_comov(z)
     rr = np.linspace(r[0], r[-1], r.size)
-    profile_lambda = (
-        profile_lambda * fidcosmo.get_hubble(z) * constants.ABSORBER_IGM["LYA"] / 3e5
-    )
+    profile_lambda = (profile_lambda * fidcosmo.get_hubble(z) *
+                      constants.ABSORBER_IGM["LYA"] / 3e5)
     profile_r = np.interp(rr, r, profile_lambda)
     return rr, profile_r
 
@@ -111,7 +102,8 @@ def compute_dla_prob_per_nhi(wavelength, nhi, dla, qso, dnhi):
     wbins[:-1] = wavelength - dwave / 2
     wbins[-1] = wavelength[-1] + dwave[-1] / 2.0
 
-    ndla, _ = np.histogram(dla_lamb[np.abs(dla_nhi - nhi) < dnhi / 2], bins=wbins)
+    ndla, _ = np.histogram(dla_lamb[np.abs(dla_nhi - nhi) < dnhi / 2],
+                           bins=wbins)
 
     f = np.zeros(wavelength.size)
     for i, wave in enumerate(wavelength):
@@ -136,9 +128,11 @@ def compute_dla_prob(wavelength, NHI, dla, qso, weight):
     mean_density = np.zeros(NHI.size)
     for i, nhi in enumerate(NHI):
         userprint("compute prob(NHI={}) ({}/{})".format(nhi, (i + 1), NHI.size))
-        f = compute_dla_prob_per_nhi(
-            wavelength, nhi=nhi, dla=dla, qso=qso, dnhi=dnhi[i]
-        )
+        f = compute_dla_prob_per_nhi(wavelength,
+                                     nhi=nhi,
+                                     dla=dla,
+                                     qso=qso,
+                                     dnhi=dnhi[i])
         mean_density[i] = np.sum(f * weight) / np.sum(weight)
     return mean_density
 
@@ -146,14 +140,12 @@ def compute_dla_prob(wavelength, NHI, dla, qso, weight):
 def main(cmdargs):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=(
-            "Computes the convolution term Fvoigt(k) and saves it in "
-            "an ASCII file. The inputs are a DLA and a QSO catalog "
-            "(both as fits binary tables). The DLA table must contain "
-            'the columns "MOCKID" matching qso "THING_ID", and '
-            '"Z_DLA_RSD". The QSO table must contain the columns '
-            '"THING_ID", and "Z"'
-        ),
+        description=("Computes the convolution term Fvoigt(k) and saves it in "
+                     "an ASCII file. The inputs are a DLA and a QSO catalog "
+                     "(both as fits binary tables). The DLA table must contain "
+                     'the columns "MOCKID" matching qso "THING_ID", and '
+                     '"Z_DLA_RSD". The QSO table must contain the columns '
+                     '"THING_ID", and "Z"'),
     )
 
     parser.add_argument(
@@ -161,9 +153,9 @@ def main(cmdargs):
         type=str,
         default=None,
         required=True,
-        help=(
-            "DLA catalog fits file , like "
-            "/project/projectdirs/desi/mocks/lya_forest/develop/saclay/v4.4/v4.4.3/master_DLA.fits"
+        help=
+        ("DLA catalog fits file , like "
+         "/project/projectdirs/desi/mocks/lya_forest/develop/saclay/v4.4/v4.4.3/master_DLA.fits"
         ),
     )
 
@@ -172,9 +164,9 @@ def main(cmdargs):
         type=str,
         default=None,
         required=True,
-        help=(
-            "DRQ catalog fits file, like "
-            "/project/projectdirs/desi/mocks/lya_forest/develop/saclay/v4.4/v4.4.3/eboss-0.2/zcat_desi_drq.fits"
+        help=
+        ("DRQ catalog fits file, like "
+         "/project/projectdirs/desi/mocks/lya_forest/develop/saclay/v4.4/v4.4.3/eboss-0.2/zcat_desi_drq.fits"
         ),
     )
 
@@ -183,10 +175,8 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "sum of delta weight as a function of wavelength (two columns "
-            "ASCII file)"
-        ),
+        help=("sum of delta weight as a function of wavelength (two columns "
+              "ASCII file)"),
     )
 
     parser.add_argument(
@@ -200,7 +190,10 @@ def main(cmdargs):
 
     parser.add_argument("-d", "--debug", action="store_true", default=True)
 
-    parser.add_argument("-p", "--plot", action="store_true", help="show some plots")
+    parser.add_argument("-p",
+                        "--plot",
+                        action="store_true",
+                        help="show some plots")
 
     args = parser.parse_args(cmdargs)
 
@@ -220,7 +213,8 @@ def main(cmdargs):
 
     if args.weight_vs_wavelength is None:
         filename = "/global/common/software/desi/users/jguy/igmhub/code_stage_lbl/build_Fvoigt/data/weight_lambda.txt"
-        userprint("WARNING: Hardcoded weight vs wavelength file {}".format(filename))
+        userprint(
+            "WARNING: Hardcoded weight vs wavelength file {}".format(filename))
         args.weight_vs_wavelength = filename
 
     if args.weight_vs_wavelength is not None:
@@ -236,7 +230,11 @@ def main(cmdargs):
 
     # probability of finding a DLA at NHI in a QSO LOS (per A and per unit NHI)
     # averaged over wavelength, using the provided wavelength weight
-    prob = compute_dla_prob(coarse_wavelength, NHI, dla=dla, qso=qso, weight=weight)
+    prob = compute_dla_prob(coarse_wavelength,
+                            NHI,
+                            dla=dla,
+                            qso=qso,
+                            weight=weight)
 
     ii = prob > 0
     prob = prob[ii]
@@ -252,17 +250,18 @@ def main(cmdargs):
     wavelength = np.arange(3000, 8000, 1.0)
     # conversion A -> Mpc/h
     fidcosmo = constants.Cosmo(Om=0.3)
-    r_wave = fidcosmo.get_r_comov(wavelength / constants.ABSORBER_IGM["LYA"] - 1)
+    r_wave = fidcosmo.get_r_comov(wavelength / constants.ABSORBER_IGM["LYA"] -
+                                  1)
     # linear grid of Mpc/h (need to convert to linear grid for the FFT)
     r_lin = np.linspace(r_wave[0], r_wave[-1], r_wave.size)
 
     for i in range(NHI.size):
         if args.debug:
-            userprint(
-                "compute dF/dNHI for NHI={} ({}/{})".format(NHI[i], (i + 1), NHI.size)
-            )
+            userprint("compute dF/dNHI for NHI={} ({}/{})".format(
+                NHI[i], (i + 1), NHI.size))
         profile = profile_voigt_lambda(wavelength, zdla, NHI[i])
-        profile_r = np.interp(r_lin, r_wave, profile)  # interpolation to linear r grid
+        profile_r = np.interp(r_lin, r_wave,
+                              profile)  # interpolation to linear r grid
         # r is in Mpc h^-1 --> k in h*Mpc^-1
         ft_profile, k = fft_profile(profile_r, np.abs(r_lin[1] - r_lin[0]))
         ft_profile = np.abs(ft_profile)

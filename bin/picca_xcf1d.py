@@ -32,16 +32,16 @@ def main(cmdargs):
     field as a function of wavelength ratio"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=(
-            "Compute the 1D cross-correlation between a catalog of "
-            "objects and a delta field as a function of wavelength "
-            "ratio"
-        ),
+        description=("Compute the 1D cross-correlation between a catalog of "
+                     "objects and a delta field as a function of wavelength "
+                     "ratio"),
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     parser.add_argument(
         "--in-dir",
@@ -113,11 +113,9 @@ def main(cmdargs):
         type=float,
         default=0.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift larger than "
-            "z-cut-min"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift larger than "
+              "z-cut-min"),
     )
 
     parser.add_argument(
@@ -125,11 +123,9 @@ def main(cmdargs):
         type=float,
         default=10.0,
         required=False,
-        help=(
-            "Use only pairs of forest x object with the mean of the last "
-            "absorber redshift and the object redshift smaller than "
-            "z-cut-max"
-        ),
+        help=("Use only pairs of forest x object with the mean of the last "
+              "absorber redshift and the object redshift smaller than "
+              "z-cut-max"),
     )
 
     parser.add_argument(
@@ -137,10 +133,8 @@ def main(cmdargs):
         type=str,
         default="LYA",
         required=False,
-        help=(
-            "Name of the absorption in picca.constants defining the redshift "
-            "of the delta"
-        ),
+        help=("Name of the absorption in picca.constants defining the redshift "
+              "of the delta"),
     )
 
     parser.add_argument(
@@ -148,14 +142,15 @@ def main(cmdargs):
         type=str,
         default="LYA",
         required=False,
-        help=(
-            "Name of the absorption in picca.constants the object is " "considered as"
-        ),
+        help=("Name of the absorption in picca.constants the object is "
+              "considered as"),
     )
 
-    parser.add_argument(
-        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
-    )
+    parser.add_argument("--z-ref",
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help="Reference redshift")
 
     parser.add_argument(
         "--z-evol-del",
@@ -187,13 +182,17 @@ def main(cmdargs):
         help="Do not remove mean delta versus lambda_obs",
     )
 
-    parser.add_argument(
-        "--nside", type=int, default=16, required=False, help="Healpix nside"
-    )
+    parser.add_argument("--nside",
+                        type=int,
+                        default=16,
+                        required=False,
+                        help="Healpix nside")
 
-    parser.add_argument(
-        "--nproc", type=int, default=None, required=False, help="Number of processors"
-    )
+    parser.add_argument("--nproc",
+                        type=int,
+                        default=None,
+                        required=False,
+                        help="Number of processors")
 
     parser.add_argument(
         "--nspec",
@@ -241,34 +240,26 @@ def main(cmdargs):
         Forest.delta_log_lambda = None
         for healpix in xcf.data:
             for delta in xcf.data[healpix]:
-                delta_log_lambda = np.asarray(
-                    [
-                        delta.log_lambda[index] - delta.log_lambda[index - 1]
-                        for index in range(1, delta.log_lambda.size)
-                    ]
-                ).min()
+                delta_log_lambda = np.asarray([
+                    delta.log_lambda[index] - delta.log_lambda[index - 1]
+                    for index in range(1, delta.log_lambda.size)
+                ]).min()
                 if Forest.delta_log_lambda is None:
                     Forest.delta_log_lambda = delta_log_lambda
                 else:
-                    Forest.delta_log_lambda = min(
-                        delta_log_lambda, Forest.delta_log_lambda
-                    )
-        Forest.log_lambda_min = (
-            np.log10((z_min + 1.0) * lambda_abs) - Forest.delta_log_lambda / 2.0
-        )
-        Forest.log_lambda_max = (
-            np.log10((z_max + 1.0) * lambda_abs) + Forest.delta_log_lambda / 2.0
-        )
+                    Forest.delta_log_lambda = min(delta_log_lambda,
+                                                  Forest.delta_log_lambda)
+        Forest.log_lambda_min = (np.log10(
+            (z_min + 1.0) * lambda_abs) - Forest.delta_log_lambda / 2.0)
+        Forest.log_lambda_max = (np.log10(
+            (z_max + 1.0) * lambda_abs) + Forest.delta_log_lambda / 2.0)
         log_lambda, mean_delta, stack_weight = prep_del.stack(
-            xcf.data, stack_from_deltas=True
-        )
+            xcf.data, stack_from_deltas=True)
         del log_lambda, stack_weight
         for healpix in xcf.data:
             for delta in xcf.data[healpix]:
-                bins = (
-                    (delta.log_lambda - Forest.log_lambda_min) / Forest.delta_log_lambda
-                    + 0.5
-                ).astype(int)
+                bins = ((delta.log_lambda - Forest.log_lambda_min) /
+                        Forest.delta_log_lambda + 0.5).astype(int)
                 delta.delta -= mean_delta[bins]
 
     ### Read objects
@@ -287,8 +278,7 @@ def main(cmdargs):
     for healpix in xcf.objs:
         for obj in xcf.objs[healpix]:
             obj.log_lambda = np.log10(
-                (1.0 + obj.z_qso) * constants.ABSORBER_IGM[args.lambda_abs_obj]
-            )
+                (1.0 + obj.z_qso) * constants.ABSORBER_IGM[args.lambda_abs_obj])
     sys.stderr.write("\n")
 
     # Compute the correlation function, use pool to parallelize
@@ -306,8 +296,7 @@ def main(cmdargs):
     z_list = correlation_function_data[:, 3, :]
     num_pairs_list = correlation_function_data[:, 4, :].astype(np.int64)
     healpix_list = np.array(
-        [healpix for healpix in sorted(data) if healpix in xcf.objs]
-    )
+        [healpix for healpix in sorted(data) if healpix in xcf.objs])
 
     w = weights_list.sum(axis=0) > 0.0
     r_par = (r_par_list * weights_list).sum(axis=0)
@@ -343,7 +332,11 @@ def main(cmdargs):
             "value": xcf.z_cut_max,
             "comment": "Maximum redshift of pairs",
         },
-        {"name": "NSIDE", "value": xcf.nside, "comment": "Healpix nside"},
+        {
+            "name": "NSIDE",
+            "value": xcf.nside,
+            "comment": "Healpix nside"
+        },
     ]
     results.write(
         [r_par, z, num_pairs],
@@ -354,7 +347,11 @@ def main(cmdargs):
         extname="ATTRI",
     )
 
-    header2 = [{"name": "HLPXSCHM", "value": "RING", "comment": "Healpix scheme"}]
+    header2 = [{
+        "name": "HLPXSCHM",
+        "value": "RING",
+        "comment": "Healpix scheme"
+    }]
     results.write(
         [healpix_list, weights_list, xi_list],
         names=["HEALPID", "WE", "DA"],

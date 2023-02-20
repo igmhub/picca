@@ -42,13 +42,8 @@ def Pk2Mp(ar, k, pk, ell_vals, tform=None):
             pk_ell = pk
             n = 2.0
         else:
-            pk_ell = (
-                np.sum(dmuk * L(muk, ell) * pk, axis=0)
-                * (2 * ell + 1)
-                * (-1) ** (ell // 2)
-                / 2
-                / np.pi**2
-            )
+            pk_ell = (np.sum(dmuk * L(muk, ell) * pk, axis=0) * (2 * ell + 1) *
+                      (-1)**(ell // 2) / 2 / np.pi**2)
             n = 2.0
         mu = ell + 0.5
         q = 2 - n - 0.5
@@ -56,15 +51,18 @@ def Pk2Mp(ar, k, pk, ell_vals, tform=None):
         lg1 = myGamma.LogGammaLanczos((mu + 1 + x) / 2)
         lg2 = myGamma.LogGammaLanczos((mu + 1 - x) / 2)
 
-        um = (k0 * r0) ** (-2 * np.pi * 1j * emm / l) * 2**x * np.exp(lg1 - lg2)
+        um = (k0 * r0)**(-2 * np.pi * 1j * emm / l) * 2**x * np.exp(lg1 - lg2)
         um[0] = np.real(um[0])
         an = fft.fft(pk_ell * k**n * np.sqrt(np.pi / 2))
         an *= um
         xi_loc = fft.ifft(an)
         xi_loc = xi_loc[s]
-        xi_loc /= r ** (3 - n)
+        xi_loc /= r**(3 - n)
         xi_loc[-1] = 0
-        spline = scipy.interpolate.splrep(np.log(r) - dr / 2, np.real(xi_loc), k=3, s=0)
+        spline = scipy.interpolate.splrep(np.log(r) - dr / 2,
+                                          np.real(xi_loc),
+                                          k=3,
+                                          s=0)
         xi[ell // 2, :] = scipy.interpolate.splev(np.log(ar), spline)
 
     return xi
@@ -94,9 +92,8 @@ def Pk2XiRel(ar, mur, k, pk, kwargs):
     """
     ell_vals = [1, 3]
     xi = Pk2Mp(ar, k, pk, ell_vals, tform="rel")
-    return kwargs["Arel1"] * xi[1 // 2, :] * L(mur, 1) + kwargs["Arel3"] * xi[
-        3 // 2, :
-    ] * L(mur, 3)
+    return kwargs["Arel1"] * xi[1 // 2, :] * L(
+        mur, 1) + kwargs["Arel3"] * xi[3 // 2, :] * L(mur, 3)
 
 
 def Pk2XiAsy(ar, mur, k, pk, kwargs):
@@ -115,9 +112,9 @@ def Pk2XiAsy(ar, mur, k, pk, kwargs):
     """
     ell_vals = [0, 2]
     xi = Pk2Mp(ar, k, pk, ell_vals, tform="asy")
-    return (kwargs["Aasy0"] * xi[0 // 2, :] - kwargs["Aasy2"] * xi[2 // 2, :]) * ar * L(
-        mur, 1
-    ) + kwargs["Aasy3"] * xi[2 // 2, :] * ar * L(mur, 3)
+    return (kwargs["Aasy0"] * xi[0 // 2, :] -
+            kwargs["Aasy2"] * xi[2 // 2, :]) * ar * L(
+                mur, 1) + kwargs["Aasy3"] * xi[2 // 2, :] * ar * L(mur, 3)
 
 
 ### Legendre Polynomial
@@ -162,7 +159,7 @@ def aiso_epsilon(kwargs):
 
 
 def convert_instance_to_dictionary(inst):
-    dic = dict(
-        (name, getattr(inst, name)) for name in dir(inst) if not name.startswith("__")
-    )
+    dic = dict((name, getattr(inst, name))
+               for name in dir(inst)
+               if not name.startswith("__"))
     return dic

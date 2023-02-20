@@ -28,19 +28,19 @@ def main(cmdargs):
         help="Correlation produced via picca_cf.py, picca_xcf.py, ...",
     )
 
-    parser.add_argument(
-        "--out", type=str, default=None, required=True, help="Output file name"
-    )
+    parser.add_argument("--out",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="Output file name")
 
     parser.add_argument(
         "--dmat",
         type=str,
         default=None,
         required=False,
-        help=(
-            "Distortion matrix produced via picca_dmat.py, picca_xdmat.py... "
-            "(if not provided will be identity)"
-        ),
+        help=("Distortion matrix produced via picca_dmat.py, picca_xdmat.py... "
+              "(if not provided will be identity)"),
     )
 
     parser.add_argument(
@@ -48,9 +48,8 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "Covariance matrix (if not provided will be calculated by " "subsampling)"
-        ),
+        help=("Covariance matrix (if not provided will be calculated by "
+              "subsampling)"),
     )
 
     parser.add_argument(
@@ -58,9 +57,8 @@ def main(cmdargs):
         type=str,
         default=None,
         required=False,
-        help=(
-            "Correlation matrix (if not provided will be calculated by " "subsampling)"
-        ),
+        help=("Correlation matrix (if not provided will be calculated by "
+              "subsampling)"),
     )
 
     parser.add_argument(
@@ -113,10 +111,8 @@ def main(cmdargs):
         blinding = head["BLINDING"]
         if blinding == "minimal":
             blinding = "corr_yshift"
-            userprint(
-                "The minimal strategy is no longer supported."
-                "Automatically switch to corr_yshift."
-            )
+            userprint("The minimal strategy is no longer supported."
+                      "Automatically switch to corr_yshift.")
     else:
         # if BLINDING keyword not present (old file), ignore blinding
         blinding = "none"
@@ -134,31 +130,22 @@ def main(cmdargs):
         xi -= xi_shuffled[:, None]
 
     if args.cov is not None:
-        userprint(
-            ("INFO: The covariance-matrix will be read from file: " "{}").format(
-                args.cov
-            )
-        )
+        userprint(("INFO: The covariance-matrix will be read from file: "
+                   "{}").format(args.cov))
         hdul = fitsio.FITS(args.cov)
         covariance = hdul[1]["CO"][:]
         hdul.close()
     elif args.cor is not None:
-        userprint(
-            ("INFO: The correlation-matrix will be read from file: " "{}").format(
-                args.cor
-            )
-        )
+        userprint(("INFO: The correlation-matrix will be read from file: "
+                   "{}").format(args.cor))
         hdul = fitsio.FITS(args.cor)
         correlation = hdul[1]["CO"][:]
         hdul.close()
-        if (
-            (correlation.min() < -1.0)
-            or (correlation.min() > 1.0)
-            or (correlation.max() < -1.0)
-            or (correlation.max() > 1.0)
-            or np.any(np.diag(correlation) != 1.0)
-        ):
-            userprint(("WARNING: The correlation-matrix has some incorrect " "values"))
+        if ((correlation.min() < -1.0) or (correlation.min() > 1.0) or
+            (correlation.max() < -1.0) or (correlation.max() > 1.0) or
+                np.any(np.diag(correlation) != 1.0)):
+            userprint(("WARNING: The correlation-matrix has some incorrect "
+                       "values"))
         var = np.diagonal(correlation)
         correlation = correlation / np.sqrt(var * var[:, None])
         covariance = compute_cov(xi, weights)
@@ -197,16 +184,13 @@ def main(cmdargs):
             dmat = np.array(hdul[1]["DM_BLIND"][:])
             dmat_name = "DM_BLIND"
         elif data_name == "DA_BlIND":
-            userprint(
-                "Blinded correlations were given but distortion matrix "
-                "is unblinded. These files should not mix. Exiting..."
-            )
+            userprint("Blinded correlations were given but distortion matrix "
+                      "is unblinded. These files should not mix. Exiting...")
             sys.exit(1)
         elif "DM_BLIND" in hdul[1].get_colnames():
             userprint(
                 "Non-blinded correlations were given but distortion matrix "
-                "is blinded. These files should not mix. Exiting..."
-            )
+                "is blinded. These files should not mix. Exiting...")
             sys.exit(1)
         else:
             dmat = hdul[1]["DM"][:]
@@ -239,9 +223,21 @@ def main(cmdargs):
             "value": blinding,
             "comment": "String specifying the blinding strategy",
         },
-        {"name": "RPMIN", "value": r_par_min, "comment": "Minimum r-parallel"},
-        {"name": "RPMAX", "value": r_par_max, "comment": "Maximum r-parallel"},
-        {"name": "RTMAX", "value": r_trans_max, "comment": "Maximum r-transverse"},
+        {
+            "name": "RPMIN",
+            "value": r_par_min,
+            "comment": "Minimum r-parallel"
+        },
+        {
+            "name": "RPMAX",
+            "value": r_par_max,
+            "comment": "Maximum r-parallel"
+        },
+        {
+            "name": "RTMAX",
+            "value": r_trans_max,
+            "comment": "Maximum r-transverse"
+        },
         {
             "name": "NP",
             "value": num_bins_r_par,
@@ -268,9 +264,12 @@ def main(cmdargs):
             "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            "name": "WL",
-            "value": head["WL"],
-            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+            "name":
+                "WL",
+            "value":
+                head["WL"],
+            "comment":
+                "Equation of state of dark energy of fiducial LambdaCDM cosmology",
         },
     ]
     comment = [
@@ -306,8 +305,7 @@ def main(cmdargs):
         else:
             raise ValueError(
                 f"Expected blinding to be one of {blinding_templates.keys()}."
-                f" Found {blinding}."
-            )
+                f" Found {blinding}.")
 
         if args.blind_corr_type is None:
             raise ValueError("Blinding requires argument --blind_corr_type.")
@@ -322,24 +320,25 @@ def main(cmdargs):
             rp_interp_grid = np.arange(-197.99, 202.01, 4)
             rt_interp_grid = np.arange(2.0, 202, 4)
         else:
-            raise ValueError(
-                "Unknown correlation type: {}".format(args.blind_corr_type)
-            )
+            raise ValueError("Unknown correlation type: {}".format(
+                args.blind_corr_type))
 
         if corr_size == len(xi):
             # Read the blinding file and get the right template
-            blinding_filename = blinding_dir + blinding_templates[blinding]["standard"]
+            blinding_filename = blinding_dir + blinding_templates[blinding][
+                "standard"]
         else:
             # Read the regular grid blinding file and get the right template
-            blinding_filename = blinding_dir + blinding_templates[blinding]["grid"]
+            blinding_filename = blinding_dir + blinding_templates[blinding][
+                "grid"]
 
         if not os.path.isfile(blinding_filename):
             raise RuntimeError(
                 "Missing blinding file. Make sure you are running at"
-                " NERSC or contact picca developers"
-            )
+                " NERSC or contact picca developers")
         blinding_file = h5py.File(blinding_filename, "r")
-        hex_diff = np.array(blinding_file["blinding"][args.blind_corr_type]).astype(str)
+        hex_diff = np.array(
+            blinding_file["blinding"][args.blind_corr_type]).astype(str)
         diff_grid = np.array([float.fromhex(x) for x in hex_diff])
 
         if corr_size == len(xi):
@@ -359,8 +358,7 @@ def main(cmdargs):
         if np.shape(xi) != np.shape(diff):
             raise RuntimeError(
                 "Unknown binning or wrong correlation type. Cannot blind."
-                " Please raise an issue or contact picca developers."
-            )
+                " Please raise an issue or contact picca developers.")
 
         # Add blinding
         xi = xi + diff

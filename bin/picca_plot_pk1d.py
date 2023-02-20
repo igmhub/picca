@@ -15,12 +15,13 @@ from picca.pk1d import Pk1D
 def main(cmdargs):
     """Plots the 1D Power Spectrum"""
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument(
-        "--in-dir", type=str, default=None, required=True, help="data directory"
-    )
+    parser.add_argument("--in-dir",
+                        type=str,
+                        default=None,
+                        required=True,
+                        help="data directory")
 
     parser.add_argument(
         "--SNR-min",
@@ -46,9 +47,11 @@ def main(cmdargs):
         help="maximal resolution in km/s ",
     )
 
-    parser.add_argument(
-        "--out-fig", type=str, default="Pk1D.png", required=False, help="data directory"
-    )
+    parser.add_argument("--out-fig",
+                        type=str,
+                        default="Pk1D.png",
+                        required=False,
+                        help="data directory")
 
     args = parser.parse_args(cmdargs)
 
@@ -74,7 +77,8 @@ def main(cmdargs):
     # loop over input files
     for index, file in enumerate(files):
         if index % 1 == 0:
-            sys.stderr.write("\rread {} of {} {}".format(index, len(files), num_data))
+            sys.stderr.write("\rread {} of {} {}".format(
+                index, len(files), num_data))
 
         # read fits files
         hdul = fitsio.FITS(file)
@@ -96,20 +100,20 @@ def main(cmdargs):
                 continue
 
             for index2 in range(len(pk.k)):
-                index_k = int((pk.k[index2] - k_min) / (k_max - k_min) * num_k_bins)
+                index_k = int(
+                    (pk.k[index2] - k_min) / (k_max - k_min) * num_k_bins)
                 if index_k >= num_k_bins or index_k < 0:
                     continue
                 sum_pk[index_z, index_k] += pk.pk[index2] * pk.k[index2] / np.pi
-                sum_pk_square[index_z, index_k] += (
-                    pk.pk[index2] * pk.k[index2] / np.pi
-                ) ** 2
+                sum_pk_square[index_z, index_k] += (pk.pk[index2] *
+                                                    pk.k[index2] / np.pi)**2
                 counts[index_z, index_k] += 1.0
 
     # compute mean and error on Pk
     mean_pk = np.where(counts != 0, sum_pk / counts, 0.0)
     error_pk = np.where(
-        counts != 0, np.sqrt(((sum_pk_square / counts) - mean_pk**2) / counts), 0.0
-    )
+        counts != 0, np.sqrt(((sum_pk_square / counts) - mean_pk**2) / counts),
+        0.0)
 
     # plot settings
     colors = [
@@ -174,9 +178,12 @@ def main(cmdargs):
         borderaxespad=0.0,
         fontsize=legendsize,
     )
-    fig.subplots_adjust(
-        top=0.98, bottom=0.114, left=0.078, right=0.758, hspace=0.2, wspace=0.2
-    )
+    fig.subplots_adjust(top=0.98,
+                        bottom=0.114,
+                        left=0.078,
+                        right=0.758,
+                        hspace=0.2,
+                        wspace=0.2)
 
     plt.show()
     fig.savefig(args.out_fig, transparent=False)

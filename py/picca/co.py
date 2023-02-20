@@ -43,41 +43,34 @@ def fill_neighs(healpixs):
     for healpix in healpixs:
         for obj1 in objs[healpix]:
             healpix_neighbours = query_disc(
-                nside, [obj1.x_cart, obj1.y_cart, obj1.z_cart], ang_max, inclusive=True
-            )
+                nside, [obj1.x_cart, obj1.y_cart, obj1.z_cart],
+                ang_max,
+                inclusive=True)
             if objs2 is not None:
                 healpix_neighbours = [
-                    healpix for healpix in healpix_neighbours if healpix in objs2
+                    healpix for healpix in healpix_neighbours
+                    if healpix in objs2
                 ]
                 neighbours = [
-                    obj2
-                    for healpix in healpix_neighbours
-                    for obj2 in objs2[healpix]
-                    if obj1.thingid != obj2.thingid
+                    obj2 for healpix in healpix_neighbours
+                    for obj2 in objs2[healpix] if obj1.thingid != obj2.thingid
                 ]
             else:
                 healpix_neighbours = [
                     healpix for healpix in healpix_neighbours if healpix in objs
                 ]
                 neighbours = [
-                    obj2
-                    for healpix in healpix_neighbours
-                    for obj2 in objs[healpix]
-                    if obj1.thingid != obj2.thingid
+                    obj2 for healpix in healpix_neighbours
+                    for obj2 in objs[healpix] if obj1.thingid != obj2.thingid
                 ]
             ang = obj1.get_angle_between(neighbours)
             w = ang < ang_max
             neighbours = np.array(neighbours)[w]
-            obj1.neighbours = np.array(
-                [
-                    obj2
-                    for obj2 in neighbours
-                    if (
-                        (obj2.z_qso + obj1.z_qso) / 2.0 >= z_cut_min
-                        and (obj2.z_qso + obj1.z_qso) / 2.0 < z_cut_max
-                    )
-                ]
-            )
+            obj1.neighbours = np.array([
+                obj2 for obj2 in neighbours
+                if ((obj2.z_qso + obj1.z_qso) / 2.0 >= z_cut_min and
+                    (obj2.z_qso + obj1.z_qso) / 2.0 < z_cut_max)
+            ])
 
 
 def compute_xi(healpixs):
@@ -136,11 +129,11 @@ def compute_xi(healpixs):
                 ang,
             )
 
-            weights[: len(rebin_weight)] += rebin_weight
-            r_par[: len(rebin_r_par)] += rebin_r_par
-            r_trans[: len(rebin_r_trans)] += rebin_r_trans
-            z[: len(rebin_z)] += rebin_z
-            num_pairs[: len(rebin_num_pairs)] += rebin_num_pairs
+            weights[:len(rebin_weight)] += rebin_weight
+            r_par[:len(rebin_r_par)] += rebin_r_par
+            r_trans[:len(rebin_r_trans)] += rebin_r_trans
+            z[:len(rebin_z)] += rebin_z
+            num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs
             setattr(obj1, "neighbours", None)
 
     w = weights > 0.0
@@ -151,9 +144,8 @@ def compute_xi(healpixs):
 
 
 @jit  # will be deprecated
-def compute_xi_forest_pairs_slow(
-    z1, r_comov1, dist_m1, weights1, z2, r_comov2, dist_m2, weights2, ang
-):
+def compute_xi_forest_pairs_slow(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
+                                 dist_m2, weights2, ang):
     """Computes the contribution of a given pair of forests to the correlation
     function.
 
@@ -204,9 +196,8 @@ def compute_xi_forest_pairs_slow(
     z = z[w]
     weights12 = weights12[w]
 
-    bins_r_par = np.floor(
-        (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
-    ).astype(int)
+    bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) *
+                          num_bins_r_par).astype(int)
     bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
     bins = bins_r_trans + num_bins_r_trans * bins_r_par
 
@@ -220,9 +211,8 @@ def compute_xi_forest_pairs_slow(
 
 
 @jit(nopython=True)
-def compute_xi_forest_pairs(
-    z1, r_comov1, dist_m1, weights1, z2, r_comov2, dist_m2, weights2, ang
-):
+def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
+                            dist_m2, weights2, ang):
     """Computes the contribution of a given pair of forests to the correlation
     function.
 
@@ -266,12 +256,8 @@ def compute_xi_forest_pairs(
     z = (z1 + z2) / 2.0
     weights12 = weights1 * weights2
 
-    w = (
-        (r_par >= r_par_min)
-        & (r_par < r_par_max)
-        & (r_trans < r_trans_max)
-        & (weights12 > 0.0)
-    )
+    w = ((r_par >= r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max) &
+         (weights12 > 0.0))
     r_par = r_par[w]
     r_trans = r_trans[w]
     z = z[w]
@@ -281,8 +267,7 @@ def compute_xi_forest_pairs(
     bins = np.zeros(num_bins, dtype=np.int64)
     for ind in range(num_bins):
         bin_r_par = int(
-            (r_par[ind] - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
-        )
+            (r_par[ind] - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
         bin_r_trans = int(r_trans[ind] / r_trans_max * num_bins_r_trans)
         bins[ind] = bin_r_trans + num_bins_r_trans * bin_r_par
 

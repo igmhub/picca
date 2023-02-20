@@ -165,8 +165,7 @@ def find_bins(original_array, grid_array, wave_solution):
     else:  # pragma: no cover
         raise DeltaExtractionError(
             "Error in function find_bins from py/picca/delta_extraction/utils.py"
-            "expected wavelength solution to be either 'log' or 'lin'. "
-        )
+            "expected wavelength solution to be either 'log' or 'lin'. ")
     original_array_size = original_array.size
     grid_array_size = grid_array.size
     found_bin = np.zeros(original_array_size, dtype=np.int64)
@@ -211,9 +210,9 @@ def ok_warning(self, message, *args, **kws):
 logging.Logger.ok_warning = ok_warning
 
 
-def setup_logger(
-    logging_level_console=logging.DEBUG, log_file=None, logging_level_file=logging.DEBUG
-):
+def setup_logger(logging_level_console=logging.DEBUG,
+                 log_file=None,
+                 logging_level_file=logging.DEBUG):
     """This function set up the logger for the package
     picca.delta_extraction
 
@@ -237,7 +236,8 @@ def setup_logger(
         if logging_level_console.upper() == "PROGRESS":
             logging_level_console = PROGRESS_LEVEL_NUM
         else:
-            logging_level_console = getattr(logging, logging_level_console.upper())
+            logging_level_console = getattr(logging,
+                                            logging_level_console.upper())
 
     if isinstance(logging_level_file, str):
         if logging_level_file.upper() == "PROGRESS":
@@ -327,14 +327,12 @@ def update_default_options(default_options, new_options):
                     f"Incompatible defaults are being added. Key {key} "
                     "found to have values with different type: "
                     f"{type(default_value)} and {type(value)}. "
-                    "Revise your recent changes or contact picca developpers."
-                )
+                    "Revise your recent changes or contact picca developpers.")
             if default_value != value:
                 raise DeltaExtractionError(
                     f"Incompatible defaults are being added. Key {key} "
                     f"found to have two default values: '{value}' and '{default_value}' "
-                    "Revise your recent changes or contact picca developpers."
-                )
+                    "Revise your recent changes or contact picca developpers.")
         else:
             default_options[key] = value
 

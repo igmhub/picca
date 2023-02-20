@@ -6,7 +6,15 @@ from scipy.interpolate import interp1d
 from ..utils import userprint
 
 
-def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
+def xi(r,
+       mu,
+       k,
+       pk_lin,
+       pk_func,
+       tracer1=None,
+       tracer2=None,
+       ell_max=None,
+       **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
 
     ap, at = utils.cosmo_fit_func(pars)
@@ -42,13 +50,13 @@ def cache_xi_drp(function):
         pair = (name, tracer1["name"], tracer2["name"], hash(t))
 
         recalc = True
-        if pair in cache and np.allclose(
-            cache[pair][0][2:], [beta1, beta2, ap, at, drp]
-        ):
+        if pair in cache and np.allclose(cache[pair][0][2:],
+                                         [beta1, beta2, ap, at, drp]):
             recalc = False
 
         if not recalc:
-            ret = cache[pair][1] * bias1 * bias2 / cache[pair][0][0] / cache[pair][0][1]
+            ret = cache[pair][1] * bias1 * bias2 / cache[pair][0][0] / cache[
+                pair][0][1]
         else:
             cache[pair] = [
                 [bias1, bias2, beta1, beta2, ap, at, drp],
@@ -61,7 +69,15 @@ def cache_xi_drp(function):
     return wrapper
 
 
-def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
+def xi_drp(r,
+           mu,
+           k,
+           pk_lin,
+           pk_func,
+           tracer1=None,
+           tracer2=None,
+           ell_max=None,
+           **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
 
     if tracer1["type"] == "discrete":
@@ -102,13 +118,16 @@ def cache_kaiser(function):
         pair = (name, tracer1["name"], tracer2["name"], hash(t))
 
         recalc = True
-        if pair in cache and np.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
+        if pair in cache and np.allclose(cache[pair][0][2:],
+                                         [beta1, beta2, ap, at]):
             recalc = False
 
         if not recalc:
-            ret = cache[pair][1] * bias1 * bias2 / cache[pair][0][0] / cache[pair][0][1]
+            ret = cache[pair][1] * bias1 * bias2 / cache[pair][0][0] / cache[
+                pair][0][1]
         else:
-            cache[pair] = [[bias1, bias2, beta1, beta2, ap, at], xi(*args, **kwargs)]
+            cache[pair] = [[bias1, bias2, beta1, beta2, ap, at],
+                           xi(*args, **kwargs)]
             ret = cache[pair][1]
 
         return ret * 1.0
@@ -123,9 +142,8 @@ def cached_xi_kaiser(*args, **kwargs):
 
 ### QSO radiation model
 def xi_qso_radiation(r, mu, tracer1, tracer2, **pars):
-    assert (tracer1["name"] == "QSO" or tracer2["name"] == "QSO") and (
-        tracer1["name"] != tracer2["name"]
-    )
+    assert (tracer1["name"] == "QSO" or
+            tracer2["name"] == "QSO") and (tracer1["name"] != tracer2["name"])
 
     if tracer1["type"] == "discrete":
         drp = pars["drp_" + tracer1["name"]]
@@ -138,10 +156,8 @@ def xi_qso_radiation(r, mu, tracer1, tracer2, **pars):
 
     xi_rad = pars["qso_rad_strength"] / (r_shift**2.0)
     xi_rad *= 1.0 - pars["qso_rad_asymmetry"] * (1.0 - mu_shift**2.0)
-    xi_rad *= np.exp(
-        -r_shift
-        * ((1.0 + mu_shift) / pars["qso_rad_lifetime"] + 1.0 / pars["qso_rad_decrease"])
-    )
+    xi_rad *= np.exp(-r_shift * ((1.0 + mu_shift) / pars["qso_rad_lifetime"] +
+                                 1.0 / pars["qso_rad_decrease"]))
 
     return xi_rad
 
@@ -162,9 +178,8 @@ def xi_relativistic(r, mu, k, pk_lin, tracer1, tracer2, **pars):
         sum of dipole and octupole correlation terms (float)
 
     """
-    assert (tracer1["type"] == "continuous" or tracer2["type"] == "continuous") and (
-        tracer1["type"] != tracer2["type"]
-    )
+    assert (tracer1["type"] == "continuous" or tracer2["type"]
+            == "continuous") and (tracer1["type"] != tracer2["type"])
 
     if tracer1["type"] == "discrete":
         drp = pars["drp_" + tracer1["name"]]
@@ -199,9 +214,8 @@ def xi_asymmetry(r, mu, k, pk_lin, tracer1, tracer2, **pars):
         sum of dipole and octupole correlation terms (float)
 
     """
-    assert (tracer1["type"] == "continuous" or tracer2["type"] == "continuous") and (
-        tracer1["type"] != tracer2["type"]
-    )
+    assert (tracer1["type"] == "continuous" or tracer2["type"]
+            == "continuous") and (tracer1["type"] != tracer2["type"])
 
     if tracer1["type"] == "discrete":
         drp = pars["drp_" + tracer1["name"]]
@@ -253,11 +267,11 @@ def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     userprint("Calculating growth factor")
 
     def hubble(z, Om, OL):
-        return np.sqrt(Om * (1 + z) ** 3 + OL + (1 - Om - OL) * (1 + z) ** 2)
+        return np.sqrt(Om * (1 + z)**3 + OL + (1 - Om - OL) * (1 + z)**2)
 
     def dD1(a, Om, OL):
         z = 1 / a - 1
-        return 1.0 / (a * hubble(z=z, Om=Om, OL=OL)) ** 3
+        return 1.0 / (a * hubble(z=z, Om=Om, OL=OL))**3
 
     ## Calculate D1 in 100 values of z between 0 and zmax, then interpolate
     nbins = 100
@@ -267,7 +281,8 @@ def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     pars = (Om, OL)
     for i in range(nbins):
         a = 1 / (1 + z[i])
-        D1[i] = 5 / 2.0 * Om * hubble(z[i], *pars) * quad(dD1, 0, a, args=pars)[0]
+        D1[i] = 5 / 2.0 * Om * hubble(z[i], *pars) * quad(dD1, 0, a,
+                                                          args=pars)[0]
 
     D1 = interp1d(z, D1)
     return D1
@@ -276,14 +291,14 @@ def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
 ### Lya bias evolution
 def bias_vs_z_std(z, tracer, zref=None, **kwargs):
     p0 = kwargs["alpha_{}".format(tracer["name"])]
-    return ((1.0 + z) / (1 + zref)) ** p0
+    return ((1.0 + z) / (1 + zref))**p0
 
 
 def qso_bias_vs_z_croom(z, tracer, zref=None, **kwargs):
     assert tracer["name"] == "QSO"
     p0 = kwargs["croom_par0"]
     p1 = kwargs["croom_par1"]
-    return (p0 + p1 * (1.0 + z) ** 2) / (p0 + p1 * (1 + zref) ** 2)
+    return (p0 + p1 * (1.0 + z)**2) / (p0 + p1 * (1 + zref)**2)
 
 
 def broadband_sky(r, mu, name=None, bin_size_rp=None, *pars, **kwargs):
@@ -305,33 +320,29 @@ def broadband_sky(r, mu, name=None, bin_size_rp=None, *pars, **kwargs):
 
     rp = r * mu
     rt = r * np.sqrt(1 - mu**2)
-    cor = (
-        kwargs[name + "-scale-sky"]
-        / (kwargs[name + "-sigma-sky"] * np.sqrt(2.0 * np.pi))
-        * np.exp(-0.5 * (rt / kwargs[name + "-sigma-sky"]) ** 2)
-    )
+    cor = (kwargs[name + "-scale-sky"] /
+           (kwargs[name + "-sigma-sky"] * np.sqrt(2.0 * np.pi)) *
+           np.exp(-0.5 * (rt / kwargs[name + "-sigma-sky"])**2))
     w = (rp >= 0.0) & (rp < bin_size_rp)
     cor[~w] = 0.0
 
     return cor
 
 
-def broadband(
-    r,
-    mu,
-    deg_r_min=None,
-    deg_r_max=None,
-    ddeg_r=None,
-    deg_mu_min=None,
-    deg_mu_max=None,
-    ddeg_mu=None,
-    deg_mu=None,
-    name=None,
-    rp_rt=False,
-    bin_size_rp=None,
-    *pars,
-    **kwargs
-):
+def broadband(r,
+              mu,
+              deg_r_min=None,
+              deg_r_max=None,
+              ddeg_r=None,
+              deg_mu_min=None,
+              deg_mu_max=None,
+              ddeg_mu=None,
+              deg_mu=None,
+              name=None,
+              rp_rt=False,
+              bin_size_rp=None,
+              *pars,
+              **kwargs):
     """
     Broadband function interface.
     Calculates a power-law broadband in r and mu or rp,rt
@@ -360,11 +371,12 @@ def broadband(
 
     r1_pows = np.arange(deg_r_min, deg_r_max + 1, ddeg_r)
     r2_pows = np.arange(deg_mu_min, deg_mu_max + 1, ddeg_mu)
-    BB = [kwargs["{} ({},{})".format(name, i, j)] for i in r1_pows for j in r2_pows]
+    BB = [
+        kwargs["{} ({},{})".format(name, i, j)]
+        for i in r1_pows
+        for j in r2_pows
+    ]
     BB = np.array(BB).reshape(-1, deg_r_max - deg_r_min + 1)
 
-    return (
-        BB[:, :, None, None]
-        * r1 ** r1_pows[:, None, None]
-        * r2 ** r2_pows[None, :, None]
-    ).sum(axis=(0, 1, 2))
+    return (BB[:, :, None, None] * r1**r1_pows[:, None, None] *
+            r2**r2_pows[None, :, None]).sum(axis=(0, 1, 2))

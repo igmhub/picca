@@ -91,7 +91,8 @@ class BalMask(Mask):
 
         los_id_name = config.get("los_id name")
         if los_id_name is None:
-            raise MaskError("Missing argument 'los_id name' required by BalMask")
+            raise MaskError(
+                "Missing argument 'los_id name' required by BalMask")
         if los_id_name == "THING_ID":
             ext_name = "BALCAT"
         elif los_id_name == "TARGETID":
@@ -103,20 +104,17 @@ class BalMask(Mask):
             else:
                 raise MaskError(
                     "Could not find valid quasar catalog extension in fits "
-                    f"file: {filename}"
-                )
+                    f"file: {filename}")
         else:
             raise MaskError(
                 "Unrecognized los_id name. Expected one of 'THING_ID' "
-                f" or 'TARGETID'. Found {los_id_name}"
-            )
+                f" or 'TARGETID'. Found {los_id_name}")
 
         # setup bal index limit
         self.bal_index_type = config.get("bal index type")
         if self.bal_index_type is None:
-            self.bal_index_type = MaskError(
-                "Missing argument 'bal index type' " "required by BalMask"
-            )
+            self.bal_index_type = MaskError("Missing argument 'bal index type' "
+                                            "required by BalMask")
         if self.bal_index_type == "ai":
             columns_list = [los_id_name, "VMIN_CIV_450", "VMAX_CIV_450"]
         elif self.bal_index_type == "bi":
@@ -126,8 +124,7 @@ class BalMask(Mask):
                 "In BalMask, unrecognized value "
                 "for 'bal_index_type'. Expected one "
                 "of 'ai' or 'bi'. Found "
-                f"{self.bal_index_type}"
-            )
+                f"{self.bal_index_type}")
 
         self.velocity_list = columns_list[1:]
 
@@ -137,16 +134,13 @@ class BalMask(Mask):
             hdul = fitsio.FITS(filename)
             self.cat = {col: hdul[ext_name][col][:] for col in columns_list}
         except OSError as error:
-            raise MaskError(
-                f"Error loading BalMask. File {filename} does "
-                f"not have extension '{ext_name}'"
-            ) from error
+            raise MaskError(f"Error loading BalMask. File {filename} does "
+                            f"not have extension '{ext_name}'") from error
         except ValueError as error:
             aux = "', '".join(columns_list)
             raise MaskError(
                 f"Error loading BalMask. File {filename} does "
-                f"not have fields '{aux}' in HDU '{ext_name}'"
-            ) from error
+                f"not have fields '{aux}' in HDU '{ext_name}'") from error
         finally:
             hdul.close()
 
@@ -155,9 +149,11 @@ class BalMask(Mask):
         for los_id in np.unique(self.cat[los_id_name]):
             self.los_ids[los_id] = self.add_bal_rest_frame(los_id, los_id_name)
 
-        num_bals = np.sum(
-            [len(los_id) for los_id in self.los_ids.values() if los_id is not None]
-        )
+        num_bals = np.sum([
+            len(los_id)
+            for los_id in self.los_ids.values()
+            if los_id is not None
+        ])
         self.logger.progress(f"In catalog: {num_bals} BAL quasars")
 
     def add_bal_rest_frame(self, los_id, los_id_name):
@@ -208,8 +204,10 @@ class BalMask(Mask):
         # corresponds to the red side of the BAL absorption (the larger
         # wavelength value), and the “maximum velocity” corresponds to
         # the blue side (the smaller wavelength value).
-        lambda_max = np.outer(lines["value"], 1 - min_velocities / SPEED_LIGHT).ravel()
-        lambda_min = np.outer(lines["value"], 1 - max_velocities / SPEED_LIGHT).ravel()
+        lambda_max = np.outer(lines["value"],
+                              1 - min_velocities / SPEED_LIGHT).ravel()
+        lambda_min = np.outer(lines["value"],
+                              1 - max_velocities / SPEED_LIGHT).ravel()
         mask_rest_frame_bal["lambda_min"] = lambda_min
         mask_rest_frame_bal["lambda_max"] = lambda_max
         mask_rest_frame_bal["log_lambda_min"] = np.log10(lambda_min)

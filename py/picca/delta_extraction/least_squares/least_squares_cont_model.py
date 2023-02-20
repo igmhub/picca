@@ -78,16 +78,14 @@ class LeastsSquaresContModel:
         chi2: float
         The chi2 for this run
         """
-        cont_model = self.get_continuum_model(
-            self.forest, zero_point, slope, **self.mean_cont_kwargs
-        )
+        cont_model = self.get_continuum_model(self.forest, zero_point, slope,
+                                              **self.mean_cont_kwargs)
 
-        weights = self.get_continuum_weights(
-            self.forest, cont_model, **self.weights_kwargs
-        )
+        weights = self.get_continuum_weights(self.forest, cont_model,
+                                             **self.weights_kwargs)
 
         w = weights > 0
-        chi2_contribution = (self.forest.flux - cont_model) ** 2 * weights
+        chi2_contribution = (self.forest.flux - cont_model)**2 * weights
 
         if self.ndata is None:
             self.ndata = self.forest.flux[w].size
@@ -127,26 +125,18 @@ class LeastsSquaresContModel:
         """
         # unpack kwargs
         if "mean_cont" not in kwargs:
-            raise LeastSquaresError(
-                "Function get_continuum_model requires "
-                "'mean_cont' in the **kwargs dictionary"
-            )
+            raise LeastSquaresError("Function get_continuum_model requires "
+                                    "'mean_cont' in the **kwargs dictionary")
         mean_cont = kwargs.get("mean_cont")
         for key in ["log_lambda_max", "log_lambda_min"]:
             if key not in kwargs:
-                raise LeastSquaresError(
-                    "Function get_continuum_model requires "
-                    f"'{key}' in the **kwargs dictionary"
-                )
+                raise LeastSquaresError("Function get_continuum_model requires "
+                                        f"'{key}' in the **kwargs dictionary")
         log_lambda_max = kwargs.get("log_lambda_max")
         log_lambda_min = kwargs.get("log_lambda_min")
         # compute continuum
-        line = (
-            slope
-            * (forest.log_lambda - log_lambda_min)
-            / (log_lambda_max - log_lambda_min)
-            + zero_point
-        )
+        line = (slope * (forest.log_lambda - log_lambda_min) /
+                (log_lambda_max - log_lambda_min) + zero_point)
 
         return line * mean_cont
 
@@ -182,8 +172,7 @@ class LeastsSquaresContModel:
         if "use_constant_weight" not in kwargs:
             raise LeastSquaresError(
                 "Function get_continuum_weights requires "
-                "'use_constant_weight' in the **kwargs dictionary"
-            )
+                "'use_constant_weight' in the **kwargs dictionary")
         # Assign 0 weight to pixels with ivar==0
         w = forest.ivar > 0
         weights = np.empty_like(forest.log_lambda)
@@ -196,14 +185,13 @@ class LeastsSquaresContModel:
                 if key not in kwargs:
                     raise LeastSquaresError(
                         "Function get_continuum_weights requires "
-                        f"'{key}' in the **kwargs dictionary"
-                    )
-            var_pipe = 1.0 / forest.ivar[w] / cont_model[w] ** 2
+                        f"'{key}' in the **kwargs dictionary")
+            var_pipe = 1.0 / forest.ivar[w] / cont_model[w]**2
             var_lss = kwargs["var_lss"]
             eta = kwargs["eta"]
             fudge = kwargs["fudge"]
             variance = eta[w] * var_pipe + var_lss[w] + fudge[w] / var_pipe
-            weights[w] = 1.0 / cont_model[w] ** 2 / variance
+            weights[w] = 1.0 / cont_model[w]**2 / variance
 
         return weights
 
