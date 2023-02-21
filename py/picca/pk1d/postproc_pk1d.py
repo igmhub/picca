@@ -318,8 +318,12 @@ def compute_mean_pk1d(
         nbins_k,
         kbin_edges,
     )
-    with ThreadPool(number_worker) as pool:
-        pool.map(func, params_pool)
+    if number_worker == 1:
+        for p in params_pool:
+            func(p)
+    else:
+        with ThreadPool(number_worker) as pool:
+            pool.map(func, params_pool)
 
     if compute_covariance:
         userprint("Computing covariance matrix")
@@ -340,8 +344,11 @@ def compute_mean_pk1d(
             k_index,
             nbins_k,
         )
-        with Pool(number_worker) as pool:
-            output_cov = pool.starmap(func, params_pool)
+        if number_worker == 1:
+            output_cov = [func(p) for p in params_pool]
+        else:
+            with Pool(number_worker) as pool:
+                output_cov = pool.starmap(func, params_pool)
 
         for izbin in range(nbins_z):  # Main loop 1) z bins
             zbin_array, index_zbin_array, n_array, covariance_array = (
@@ -381,8 +388,11 @@ def compute_mean_pk1d(
             k_index,
             nbins_k,
         )
-        with Pool(number_worker) as pool:
-            output_cov = pool.starmap(func, params_pool)
+        if number_worker == 1:
+            output_cov = [func(p) for p in params_pool]
+        else:
+            with Pool(number_worker) as pool:
+                output_cov = pool.starmap(func, params_pool)
 
         for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
             boot_cov = []
