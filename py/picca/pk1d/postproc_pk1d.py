@@ -237,57 +237,6 @@ def compute_mean_pk1d(
     metadata_table["k_min"] = kbin_edges[0] * np.ones(nbins_z)
     metadata_table["k_max"] = kbin_edges[-1] * np.ones(nbins_z)
 
-    # Initialize cov_table of len = (nzbins * nkbins * nkbins)
-    # corresponding to hdu[3] in final ouput
-    if compute_covariance:
-        cov_table = Table()
-        cov_table["zbin"] = np.zeros(nbins_z * nbins_k * nbins_k)
-        cov_table["index_zbin"] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
-        cov_table["N"] = np.zeros(nbins_z * nbins_k * nbins_k, dtype=int)
-        cov_table["covariance"] = np.zeros(nbins_z * nbins_k * nbins_k)
-        if compute_bootstrap:
-            cov_table["boot_covariance"] = np.zeros(nbins_z * nbins_k * nbins_k)
-            cov_table["error_boot_covariance"] = np.zeros(nbins_z * nbins_k * nbins_k)
-    else:
-        cov_table = None
-
-    # Number of chunks in each redshift bin
-    n_chunks, _, _ = binned_statistic(
-        z_array, z_array, statistic="count", bins=zbin_edges
-    )
-    metadata_table["N_chunks"] = n_chunks
-
-    zbin_centers = np.around((zbin_edges[1:] + zbin_edges[:-1]) / 2, 5)
-    if output_snrfit is not None:
-        snrfit_table = np.zeros(
-            (nbins_z * nbins_k, 13)
-        )  # 13 entries: z k a b + 9 SNR bins used for the fit
-    else:
-        snrfit_table = None
-
-    # Main loop 1) z bins
-    params_pool = [izbin for izbin, _ in enumerate(zbin_edges[:-1])]
-
-    func = partial(
-        fill_average_table,
-        p1d_table,
-        p1d_table_cols,
-        mean_p1d_table,
-        weight_method,
-        apply_z_weights,
-        snrfit_table,
-        output_snrfit,
-        nomedians,
-        nbins_z,
-        zbin_centers,
-        zbin_edges,
-        n_chunks,
-        nbins_k,
-        kbin_edges,
-    )
-    with ThreadPool(number_worker) as pool:
-        pool.map(func, params_pool)
-
     if (compute_covariance) | (compute_bootstrap):
         if "sub_forest_id" not in p1d_table.columns:
             userprint(
@@ -333,6 +282,44 @@ def compute_mean_pk1d(
                 k_index[select] = ikbin
     else:
         cov_table = None
+
+    # Number of chunks in each redshift bin
+    n_chunks, _, _ = binned_statistic(
+        z_array, z_array, statistic="count", bins=zbin_edges
+    )
+    metadata_table["N_chunks"] = n_chunks
+
+    zbin_centers = np.around((zbin_edges[1:] + zbin_edges[:-1]) / 2, 5)
+    if output_snrfit is not None:
+        snrfit_table = np.zeros(
+            (nbins_z * nbins_k, 13)
+        )  # 13 entries: z k a b + 9 SNR bins used for the fit
+    else:
+        snrfit_table = None
+
+    userprint("Computing average p1d")
+    # Main loop 1) z bins
+    params_pool = [izbin for izbin, _ in enumerate(zbin_edges[:-1])]
+
+    func = partial(
+        fill_average_table,
+        p1d_table,
+        p1d_table_cols,
+        mean_p1d_table,
+        weight_method,
+        apply_z_weights,
+        snrfit_table,
+        output_snrfit,
+        nomedians,
+        nbins_z,
+        zbin_centers,
+        zbin_edges,
+        n_chunks,
+        nbins_k,
+        kbin_edges,
+    )
+    with ThreadPool(number_worker) as pool:
+        pool.map(func, params_pool)
 
     if compute_covariance:
         userprint("Computing covariance matrix")
