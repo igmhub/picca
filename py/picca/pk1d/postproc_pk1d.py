@@ -143,7 +143,7 @@ def compute_mean_pk1d(
     zbin_edges,
     kbin_edges,
     weight_method,
-    apply_z_weights,
+    apply_z_weights=False,
     nomedians=False,
     velunits=False,
     output_snrfit=None,
