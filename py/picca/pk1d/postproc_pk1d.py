@@ -290,11 +290,26 @@ def compute_mean_pk1d(
 
     if (compute_covariance) | (compute_bootstrap):
         if "sub_forest_id" not in p1d_table.columns:
-            print(
+            userprint(
                 """sub_forest_id cannot be computed from individual pk files,
                 necessary to compute covariance. Skipping calculation"""
             )
             compute_covariance, compute_bootstrap = False, False
+
+        elif weight_method is not "no_weight":
+            userprint(
+                """Covariance calculations are not compatible with SNR weighting method yet.
+                Skipping calculation"""
+            )
+
+            compute_covariance, compute_bootstrap = False, False
+        elif apply_z_weights:
+            userprint(
+                """Covariance calculations are not compatible redshift weighting yes.
+                Skipping calculation"""
+            )
+            compute_covariance, compute_bootstrap = False, False
+
         else:
             # Initialize cov_table of len = (nzbins * nkbins * nkbins)
             # corresponding to hdu[3] in final ouput
@@ -320,7 +335,7 @@ def compute_mean_pk1d(
         cov_table = None
 
     if compute_covariance:
-        print("Computing covariance matrix")
+        userprint("Computing covariance matrix")
         params_pool = []
         for izbin in range(nbins_z):  # Main loop 1) z bins
             select_z = (p1d_table["forest_z"] < zbin_edges[izbin + 1]) & (
@@ -353,7 +368,7 @@ def compute_mean_pk1d(
             cov_table["covariance"][i_min:i_max] = covariance_array
 
     if compute_bootstrap:
-        print("Computing covariance matrix with bootstrap method")
+        userprint("Computing covariance matrix with bootstrap method")
 
         params_pool = []
         for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
