@@ -244,6 +244,7 @@ def compute_mean_pk1d(
                 necessary to compute covariance. Skipping calculation"""
             )
             compute_covariance, compute_bootstrap = False, False
+            cov_table = None
 
         elif weight_method != "no_weight":
             userprint(
@@ -252,12 +253,15 @@ def compute_mean_pk1d(
             )
 
             compute_covariance, compute_bootstrap = False, False
+            cov_table = None
+
         elif apply_z_weights:
             userprint(
                 """Covariance calculations are not compatible redshift weighting yes.
                 Skipping calculation"""
             )
             compute_covariance, compute_bootstrap = False, False
+            cov_table = None
 
         else:
             # Initialize cov_table of len = (nzbins * nkbins * nkbins)
