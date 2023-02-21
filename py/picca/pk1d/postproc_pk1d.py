@@ -90,7 +90,7 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
             chunk_table["forest_id"] = int(chunk_header["LOS_ID"])
             if "CHUNK_ID" in chunk_header:
                 chunk_table[
-                    "chunk_id"
+                    "sub_forest_id"
                 ] = f"{chunk_header['LOS_ID']}_{chunk_header['CHUNK_ID']}"
 
             if snrcut is not None:
@@ -207,8 +207,8 @@ def compute_mean_pk1d(
 
     p1d_table_cols = p1d_table.colnames
     p1d_table_cols.remove("forest_id")
-    if "chunk_id" in p1d_table_cols:
-        p1d_table_cols.remove("chunk_id")
+    if "sub_forest_id" in p1d_table_cols:
+        p1d_table_cols.remove("sub_forest_id")
 
     # Convert data into velocity units
     if velunits:
@@ -289,9 +289,9 @@ def compute_mean_pk1d(
         pool.map(func, params_pool)
 
     if (compute_covariance) | (compute_bootstrap):
-        if "chunk_id" not in p1d_table.columns:
+        if "sub_forest_id" not in p1d_table.columns:
             print(
-                """chunk_id not in individual pk files,
+                """sub_forest_id cannot be computed from individual pk files,
                 necessary to compute covariance. Skipping calculation"""
             )
             compute_covariance, compute_bootstrap = False, False
@@ -326,8 +326,8 @@ def compute_mean_pk1d(
             select_z = (p1d_table["forest_z"] < zbin_edges[izbin + 1]) & (
                 p1d_table["forest_z"] > zbin_edges[izbin]
             )
-            chunkids = np.unique(p1d_table["chunk_id"][select_z])
-            params_pool.append([izbin, select_z, chunkids])
+            sub_forest_ids = np.unique(p1d_table["sub_forest_id"][select_z])
+            params_pool.append([izbin, select_z, sub_forest_ids])
 
         func = partial(
             compute_cov,
@@ -361,14 +361,14 @@ def compute_mean_pk1d(
                 p1d_table["forest_z"] > zbin_edges[izbin]
             )
 
-            chunkids = np.unique(p1d_table["chunk_id"][select_z])
+            sub_forest_ids = np.unique(p1d_table["sub_forest_id"][select_z])
             bootid = np.array(
-                bootstrap(np.arange(chunkids.size), number_bootstrap)
+                bootstrap(np.arange(sub_forest_ids.size), number_bootstrap)
             ).astype(int)
             for iboot in range(
                 number_bootstrap
             ):  # Main loop 2) number of bootstrap samples - can be paralelized
-                params_pool.append([izbin, select_z, chunkids[bootid[iboot]]])
+                params_pool.append([izbin, select_z, sub_forest_ids[bootid[iboot]]])
 
         func = partial(
             compute_cov,
@@ -668,7 +668,7 @@ def compute_cov(
     nbins_k,
     izbin,
     select_z,
-    chunkids,
+    sub_forest_ids,
 ):
     """Computes the covariance of a set of 1D power spectra.
 
@@ -676,7 +676,7 @@ def compute_cov(
     Arguments
     ---------
     p1d_table (array-like):
-    Table of 1D power spectra, with columns 'Pk' and 'chunk_id'.
+    Table of 1D power spectra, with columns 'Pk' and 'sub_forest_id'.
 
     mean_p1d_table (array-like):
     Table of mean 1D power spectra, with column 'meanPk'.
@@ -699,7 +699,7 @@ def compute_cov(
     select_z (array-like):
     Boolean array for selecting data points based on redshift.
 
-    chunkids (array-like):
+    sub_forest_ids (array-like):
     Array of chunk ids.
 
     Return
@@ -729,8 +729,8 @@ def compute_cov(
         covariance_array[:] = np.nan
         return zbin_array, index_zbin_array, n_array, covariance_array
 
-    for chunkid in chunkids:  # First loop 1) id forest bins
-        select_id = select_z & (p1d_table["chunk_id"] == chunkid)
+    for sub_forest_id in sub_forest_ids:  # First loop 1) id sub-forest bins
+        select_id = select_z & (p1d_table["sub_forest_id"] == sub_forest_id)
         selected_pk = p1d_table["Pk"][select_id]
         selected_ikbin = k_index[select_id]
 
