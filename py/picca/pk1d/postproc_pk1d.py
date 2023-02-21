@@ -245,7 +245,7 @@ def compute_mean_pk1d(
             )
             compute_covariance, compute_bootstrap = False, False
 
-        elif weight_method is not "no_weight":
+        elif weight_method != "no_weight":
             userprint(
                 """Covariance calculations are not compatible with SNR weighting method yet.
                 Skipping calculation"""
