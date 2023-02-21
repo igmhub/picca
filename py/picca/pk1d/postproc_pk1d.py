@@ -302,7 +302,7 @@ def compute_mean_pk1d(
     params_pool = [izbin for izbin, _ in enumerate(zbin_edges[:-1])]
 
     func = partial(
-        fill_average_table,
+        fill_average_pk_redshift,
         p1d_table,
         p1d_table_cols,
         mean_p1d_table,
@@ -422,7 +422,7 @@ def compute_mean_pk1d(
     return mean_p1d_table, metadata_table, cov_table
 
 
-def fill_average_table(
+def fill_average_pk_redshift(
     p1d_table,
     p1d_table_cols,
     mean_p1d_table,
