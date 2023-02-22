@@ -86,6 +86,7 @@ def process_all_files(index_file_args):
     elif args.in_format == 'ascii':
         ascii_file = open(file, 'r')
         deltas = [Delta.from_ascii(line) for line in ascii_file]
+        running_on_raw_transmission = False
 
     #add the check for linear binning on first spectrum only (assuming homogeneity within the file)
     delta = deltas[0]

@@ -34,6 +34,7 @@ import picca.bin.picca_export_co
 from picca.tests.test_helpers import AbstractTest
 
 
+# TODO: add test for xcf1d
 class TestCor(AbstractTest):
     """
         Tests the Correlation Function Computations
@@ -418,6 +419,7 @@ class TestCor(AbstractTest):
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
         cmd += " --nproc 1"
+        cmd += " --z-evol-obj 1."
         print(repr(cmd))
         picca.bin.picca_xcf_angl.main(cmd.split()[1:])
 
@@ -446,6 +448,7 @@ class TestCor(AbstractTest):
         cmd += " --np 30"
         cmd += " --nt 15"
         cmd += " --nproc 1"
+        cmd += " --z-evol-obj 1."
         print(repr(cmd))
         picca.bin.picca_xcf.main(cmd.split()[1:])
 
@@ -477,6 +480,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
+        cmd += " --z-evol-obj 1."
         print(repr(cmd))
         picca.bin.picca_xdmat.main(cmd.split()[1:])
 
@@ -506,6 +510,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
+        cmd += " --z-evol-obj 1."
         print(repr(cmd))
         picca.bin.picca_metal_xdmat.main(cmd.split()[1:])
 
@@ -536,6 +541,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
+        cmd += " --z-evol-obj 1."
         print(repr(cmd))
         picca.bin.picca_xwick.main(cmd.split()[1:])
 
