@@ -375,12 +375,14 @@ def compute_mean_pk1d(
             )
 
             sub_forest_ids = np.unique(p1d_table["sub_forest_id"][select_z])
-            bootid = np.array(
-                bootstrap(np.arange(sub_forest_ids.size), number_bootstrap)
-            ).astype(int)
-            for iboot in range(
-                number_bootstrap
-            ):  # Main loop 2) number of bootstrap samples - can be paralelized
+            if sub_forest_ids.size > 0:
+                bootid = np.array(
+                    bootstrap(np.arange(sub_forest_ids.size), number_bootstrap)
+                ).astype(int)
+            else:
+                bootid = np.full(number_bootstrap, None)
+            for iboot in range(number_bootstrap):
+                # Main loop 2) number of bootstrap samples - can be paralelized
                 params_pool.append([izbin, select_z, sub_forest_ids[bootid[iboot]]])
 
         func = partial(
