@@ -15,7 +15,6 @@ See the respective documentation for details
 import os
 import glob
 from multiprocessing import Pool
-from multiprocessing.pool import ThreadPool
 
 from functools import partial
 import numpy as np
@@ -308,13 +307,11 @@ def compute_mean_pk1d(
     params_pool = [izbin for izbin, _ in enumerate(zbin_edges[:-1])]
 
     func = partial(
-        fill_average_pk_redshift,
+        compute_average_pk_redshift,
         p1d_table,
         p1d_table_cols,
-        mean_p1d_table,
         weight_method,
         apply_z_weights,
-        snrfit_table,
         output_snrfit,
         nomedians,
         nbins_z,
@@ -325,11 +322,38 @@ def compute_mean_pk1d(
         kbin_edges,
     )
     if number_worker == 1:
-        for p in params_pool:
-            func(p)
+        output_mean = [func(p) for p in params_pool]
     else:
-        with ThreadPool(number_worker) as pool:
-            pool.map(func, params_pool)
+        with Pool(number_worker) as pool:
+            output_mean = pool.starmap(func, params_pool)
+
+    for izbin in range(nbins_z):  # Main loop 1) z bins
+        (
+            zbin_array,
+            index_zbin_array,
+            n_array,
+            mean_array,
+            error_array,
+            min_array,
+            max_array,
+            median_array,
+            snrfit_array,
+        ) = (*output_mean[izbin],)
+        i_min = izbin * nbins_k
+        i_max = (izbin + 1) * nbins_k
+
+        mean_p1d_table["zbin"][i_min:i_max] = zbin_array
+        mean_p1d_table["index_zbin"][i_min:i_max] = index_zbin_array
+        mean_p1d_table["N"][i_min:i_max] = n_array
+        for icol, col in enumerate(p1d_table_cols):
+            mean_p1d_table["mean" + col][i_min:i_max] = mean_array[icol]
+            mean_p1d_table["error" + col][i_min:i_max] = error_array[icol]
+            mean_p1d_table["min" + col][i_min:i_max] = min_array[icol]
+            mean_p1d_table["max" + col][i_min:i_max] = max_array[icol]
+            if not nomedians:
+                mean_p1d_table["median" + col][i_min:i_max] = median_array[icol]
+        if output_snrfit is not None:
+            snrfit_table[i_min:i_max, :] = snrfit_array
 
     if compute_covariance:
         userprint("Computing covariance matrix")
@@ -444,13 +468,11 @@ def compute_mean_pk1d(
     return mean_p1d_table, metadata_table, cov_table
 
 
-def fill_average_pk_redshift(
+def compute_average_pk_redshift(
     p1d_table,
     p1d_table_cols,
-    mean_p1d_table,
     weight_method,
     apply_z_weights,
-    snrfit_table,
     output_snrfit,
     nomedians,
     nbins_z,
@@ -462,9 +484,9 @@ def fill_average_pk_redshift(
     izbin,
 ):
 
-    """Fill the average P1D table for the given redshift and k bins.
+    """Compute the average P1D table for the given redshift and k bins.
 
-    The function fills the mean P1D table for each redshift and k bin.
+    The function computes the mean P1D table for each redshift and k bin.
     If there are no chunks in a given bin, the rows in the
     table for that bin will be filled with NaNs.
     The mean value for each bin is calculated using a weighting method,
@@ -479,17 +501,11 @@ def fill_average_pk_redshift(
     p1d_table_cols: List of str,
     Column names in the input table to be averaged.
 
-    mean_p1d_table: astropy Table,
-    Output table to be filled with the mean values.
-
     weight_method: str,
     Method to weight the data.
 
     apply_z_weights: bool,
     If True, apply redshift weights.
-
-    snrfit_table: numpy ndarray,
-    Table containing the fit to the SNR.
 
     output_snrfit: bool,
     If not None, write the fit to the SNR to a file.
@@ -520,15 +536,67 @@ def fill_average_pk_redshift(
 
     Return
     ------
-    None
+    zbin_array
+    index_zbin_array
+    n_array
+    mean_array
+    error_array
+    min_array
+    max_array
+    median_array
+    snrfit_array
+
     """
 
+    n_array = np.zeros(nbins_k)
+    zbin_array = np.zeros(nbins_k)
+    index_zbin_array = np.zeros(nbins_k * nbins_k, dtype=int)
+    mean_array = []
+    error_array = []
+    min_array = []
+    max_array = []
+    if not nomedians:
+        median_array = []
+    else:
+        median_array = None
+    if output_snrfit is not None:
+        snrfit_array = np.zeros((nbins_k, 13))
+    else:
+        snrfit_array = None
+
+    for col in p1d_table_cols:
+        mean_array.append(np.zeros(nbins_k, dtype=int))
+        error_array.append(np.zeros(nbins_k, dtype=int))
+        min_array.append(np.zeros(nbins_k, dtype=int))
+        max_array.append(np.zeros(nbins_k, dtype=int))
+        if not nomedians:
+            median_array.append(np.zeros(nbins_k * nbins_k, dtype=int))
+
     if n_chunks[izbin] == 0:  # Fill rows with NaNs
-        i_min = izbin * nbins_k
-        i_max = (izbin + 1) * nbins_k
-        mean_p1d_table["zbin"][i_min:i_max] = zbin_centers[izbin]
-        mean_p1d_table["index_zbin"][i_min:i_max] = izbin
-        return
+        zbin_array[:] = zbin_centers[izbin]
+        index_zbin_array[:] = izbin
+        n_array[:] = np.nan
+        for icol, col in enumerate(p1d_table_cols):
+            mean_array[icol][:] = np.nan
+            error_array[icol][:] = np.nan
+            min_array[icol][:] = np.nan
+            max_array[icol][:] = np.nan
+            if not nomedians:
+                median_array[icol][:] = np.nan
+        if output_snrfit is not None:
+            snrfit_array[:] = np.nan
+
+        return (
+            zbin_array,
+            index_zbin_array,
+            n_array,
+            mean_array,
+            error_array,
+            min_array,
+            max_array,
+            median_array,
+            snrfit_array,
+        )
 
     for ikbin, kbin in enumerate(kbin_edges[:-1]):  # Main loop 2) k bins
 
@@ -571,16 +639,15 @@ def fill_average_pk_redshift(
                 & (p1d_table["k"] > kbin_edges[ikbin])
             )  # select a specific (z,k) bin
 
-        index = (nbins_k * izbin) + ikbin  # index to be filled in table
-        mean_p1d_table["zbin"][index] = zbin_centers[izbin]
-        mean_p1d_table["index_zbin"][index] = izbin
+        zbin_array[ikbin] = zbin_centers[izbin]
+        index_zbin_array[ikbin] = izbin
 
         # Counts the number of chunks in each (z,k) bin
         num_chunks = np.ma.count(p1d_table["k"][select])
 
-        mean_p1d_table["N"][index] = num_chunks
+        n_array[ikbin] = num_chunks
 
-        for col in p1d_table_cols:
+        for icol, col in enumerate(p1d_table_cols):
 
             if num_chunks == 0:
                 userprint(
@@ -639,13 +706,13 @@ def fill_average_pk_redshift(
                 else:
                     error = np.sqrt(1.0 / np.sum(weights))
                 if output_snrfit is not None and col == "Pk":
-                    snrfit_table[index, 0:4] = [
+                    snrfit_array[ikbin, 0:4] = [
                         zbin_centers[izbin],
                         (kbin + kbin_edges[ikbin + 1]) / 2.0,
                         coef[0],
                         coef[1],
                     ]
-                    snrfit_table[index, 4:] = standard_dev
+                    snrfit_array[ikbin, 4:] = standard_dev
 
             elif weight_method == "simple_snr":
                 # - We keep this for record, we do not recommand to use it
@@ -683,14 +750,24 @@ def fill_average_pk_redshift(
 
             minimum = np.min((p1d_table[col][select]))
             maximum = np.max((p1d_table[col][select]))
-
-            mean_p1d_table["mean" + col][index] = mean
-            mean_p1d_table["error" + col][index] = error
-            mean_p1d_table["min" + col][index] = minimum
-            mean_p1d_table["max" + col][index] = maximum
+            mean_array[icol][ikbin] = mean
+            error_array[icol][ikbin] = error
+            min_array[icol][ikbin] = minimum
+            max_array[icol][ikbin] = maximum
             if not nomedians:
                 median = np.median((p1d_table[col][select]))
-                mean_p1d_table["median" + col][index] = median
+                median_array[icol][ikbin] = median
+    return (
+        zbin_array,
+        index_zbin_array,
+        n_array,
+        mean_array,
+        error_array,
+        min_array,
+        max_array,
+        median_array,
+        snrfit_array,
+    )
 
 
 def compute_cov(
