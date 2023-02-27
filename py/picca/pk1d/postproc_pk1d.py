@@ -692,7 +692,7 @@ def compute_average_pk_redshift(
 
                 data_values = p1d_table[col][select]
                 data_snr = p1d_table["forest_snr"][select]
-                mask = np.isnan(data_values)
+                mask = np.isnan(data_values) | np.isnan(data_snr)
                 if len(mask[mask]) != 0:
                     userprint(
                         "Warning: A nan value was detected in the following table:\n",
@@ -704,6 +704,14 @@ def compute_average_pk_redshift(
                 standard_dev, _, _ = binned_statistic(
                     data_snr, data_values, statistic="std", bins=snr_bin_edges
                 )
+                mask = np.isnan(standard_dev)
+                if len(mask[mask]) != 0:
+                    userprint(
+                        "Warning: A nan value was detected for the SNR bins:\n",
+                        snr_bins[mask],
+                    )
+                    standard_dev = standard_dev[~mask]
+                    snr_bins = snr_bins[~mask]
                 # the *_ is to ignore the rest of the return arguments
                 coef, *_ = curve_fit(
                     fitfunc_variance_pk1d,
