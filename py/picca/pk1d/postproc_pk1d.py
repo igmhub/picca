@@ -743,10 +743,6 @@ def compute_average_pk_redshift(
                 )
                 mask = np.isnan(standard_dev)
                 if len(mask[mask]) != 0:
-                    userprint(
-                        "Warning: A nan value was detected for the SNR bins:\n",
-                        snr_bins[mask],
-                    )
                     standard_dev = standard_dev[~mask]
                     snr_bins = snr_bins[~mask]
                 # the *_ is to ignore the rest of the return arguments
