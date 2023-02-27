@@ -765,7 +765,16 @@ def compute_cov(
         index_zbin_array[:] = izbin
         n_array[:] = 0
         covariance_array[:] = np.nan
-        return zbin_array, index_zbin_array, n_array, covariance_array
+        k1_array[:] = np.nan
+        k2_array[:] = np.nan
+        return (
+            zbin_array,
+            index_zbin_array,
+            n_array,
+            covariance_array,
+            k1_array,
+            k2_array,
+        )
 
     for sub_forest_id in sub_forest_ids:  # First loop 1) id sub-forest bins
         select_id = select_z & (p1d_table["sub_forest_id"] == sub_forest_id)
