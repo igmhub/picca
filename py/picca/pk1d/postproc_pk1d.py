@@ -461,6 +461,43 @@ def fill_average_pk(
     snrfit_table,
     nomedians,
 ):
+
+    """Fill the average P1D table for all redshift and k bins.
+
+
+    Arguments
+    ---------
+
+    nbins_z: int,
+    Number of redshift bins.
+
+    nbins_k: int,
+    Number of k bins.
+
+    output_mean: tuple of numpy ndarray,
+    Result of the mean calculation
+
+    mean_p1d_table: numpy ndarray,
+    Table to fill.
+
+    p1d_table_cols: List of str,
+    Column names in the input table to be averaged.
+
+    output_snrfit: bool,
+    If not None, write the fit to the SNR to a file.
+
+    snrfit_table: numpy ndarray,
+    Table containing SNR fit infos
+
+    nomedians: bool,
+    If True, do not use median values in the fit to the SNR.
+
+    Return
+    ------
+    None
+
+    """
+
     for izbin in range(nbins_z):  # Main loop 1) z bins
         (
             zbin_array,
