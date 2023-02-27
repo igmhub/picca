@@ -304,7 +304,7 @@ def compute_mean_pk1d(
 
     userprint("Computing average p1d")
     # Main loop 1) z bins
-    params_pool = [izbin for izbin, _ in enumerate(zbin_edges[:-1])]
+    params_pool = [[izbin] for izbin, _ in enumerate(zbin_edges[:-1])]
 
     func = partial(
         compute_average_pk_redshift,
