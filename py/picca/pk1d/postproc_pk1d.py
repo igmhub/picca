@@ -548,9 +548,9 @@ def compute_average_pk_redshift(
 
     """
 
-    n_array = np.zeros(nbins_k)
+    n_array = np.zeros(nbins_k, dtype=int)
     zbin_array = np.zeros(nbins_k)
-    index_zbin_array = np.zeros(nbins_k * nbins_k, dtype=int)
+    index_zbin_array = np.zeros(nbins_k, dtype=int)
     mean_array = []
     error_array = []
     min_array = []
@@ -565,17 +565,17 @@ def compute_average_pk_redshift(
         snrfit_array = None
 
     for col in p1d_table_cols:
-        mean_array.append(np.zeros(nbins_k, dtype=int))
-        error_array.append(np.zeros(nbins_k, dtype=int))
-        min_array.append(np.zeros(nbins_k, dtype=int))
-        max_array.append(np.zeros(nbins_k, dtype=int))
+        mean_array.append(np.zeros(nbins_k))
+        error_array.append(np.zeros(nbins_k))
+        min_array.append(np.zeros(nbins_k))
+        max_array.append(np.zeros(nbins_k))
         if not nomedians:
-            median_array.append(np.zeros(nbins_k * nbins_k, dtype=int))
+            median_array.append(np.zeros(nbins_k))
 
     if n_chunks[izbin] == 0:  # Fill rows with NaNs
         zbin_array[:] = zbin_centers[izbin]
         index_zbin_array[:] = izbin
-        n_array[:] = np.nan
+        n_array[:] = 0
         for icol, col in enumerate(p1d_table_cols):
             mean_array[icol][:] = np.nan
             error_array[icol][:] = np.nan
