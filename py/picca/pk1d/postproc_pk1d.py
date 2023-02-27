@@ -327,33 +327,16 @@ def compute_mean_pk1d(
         with Pool(number_worker) as pool:
             output_mean = pool.starmap(func, params_pool)
 
-    for izbin in range(nbins_z):  # Main loop 1) z bins
-        (
-            zbin_array,
-            index_zbin_array,
-            n_array,
-            mean_array,
-            error_array,
-            min_array,
-            max_array,
-            median_array,
-            snrfit_array,
-        ) = (*output_mean[izbin],)
-        i_min = izbin * nbins_k
-        i_max = (izbin + 1) * nbins_k
-
-        mean_p1d_table["zbin"][i_min:i_max] = zbin_array
-        mean_p1d_table["index_zbin"][i_min:i_max] = index_zbin_array
-        mean_p1d_table["N"][i_min:i_max] = n_array
-        for icol, col in enumerate(p1d_table_cols):
-            mean_p1d_table["mean" + col][i_min:i_max] = mean_array[icol]
-            mean_p1d_table["error" + col][i_min:i_max] = error_array[icol]
-            mean_p1d_table["min" + col][i_min:i_max] = min_array[icol]
-            mean_p1d_table["max" + col][i_min:i_max] = max_array[icol]
-            if not nomedians:
-                mean_p1d_table["median" + col][i_min:i_max] = median_array[icol]
-        if output_snrfit is not None:
-            snrfit_table[i_min:i_max, :] = snrfit_array
+    fill_average_pk(
+        nbins_z,
+        nbins_k,
+        output_mean,
+        mean_p1d_table,
+        p1d_table_cols,
+        output_snrfit,
+        snrfit_table,
+        nomedians,
+    )
 
     if compute_covariance:
         userprint("Computing covariance matrix")
@@ -466,6 +449,45 @@ def compute_mean_pk1d(
         )
 
     return mean_p1d_table, metadata_table, cov_table
+
+
+def fill_average_pk(
+    nbins_z,
+    nbins_k,
+    output_mean,
+    mean_p1d_table,
+    p1d_table_cols,
+    output_snrfit,
+    snrfit_table,
+    nomedians,
+):
+    for izbin in range(nbins_z):  # Main loop 1) z bins
+        (
+            zbin_array,
+            index_zbin_array,
+            n_array,
+            mean_array,
+            error_array,
+            min_array,
+            max_array,
+            median_array,
+            snrfit_array,
+        ) = (*output_mean[izbin],)
+        i_min = izbin * nbins_k
+        i_max = (izbin + 1) * nbins_k
+
+        mean_p1d_table["zbin"][i_min:i_max] = zbin_array
+        mean_p1d_table["index_zbin"][i_min:i_max] = index_zbin_array
+        mean_p1d_table["N"][i_min:i_max] = n_array
+        for icol, col in enumerate(p1d_table_cols):
+            mean_p1d_table["mean" + col][i_min:i_max] = mean_array[icol]
+            mean_p1d_table["error" + col][i_min:i_max] = error_array[icol]
+            mean_p1d_table["min" + col][i_min:i_max] = min_array[icol]
+            mean_p1d_table["max" + col][i_min:i_max] = max_array[icol]
+            if not nomedians:
+                mean_p1d_table["median" + col][i_min:i_max] = median_array[icol]
+        if output_snrfit is not None:
+            snrfit_table[i_min:i_max, :] = snrfit_array
 
 
 def compute_average_pk_redshift(
