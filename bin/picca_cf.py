@@ -105,6 +105,20 @@ def main(cmdargs):
                               'of the last absorber redshift and the object '
                               'redshift smaller than z-cut-max'))
 
+    parser.add_argument('--z-min-sources',
+                        type=float,
+                        default=0.,
+                        required=False,
+                        help=('Limit the minimum redshift of the quasars '
+                              'used as sources for spectra'))
+
+    parser.add_argument('--z-max-sources',
+                        type=float,
+                        default=10.,
+                        required=False,
+                        help=('Limit the maximum redshift of the quasars '
+                              'used as sources for spectra'))
+
     parser.add_argument('--lambda-abs',
                         type=str,
                         default='LYA',
@@ -249,6 +263,7 @@ def main(cmdargs):
     t0 = time.time()
 
     ### Read data 1
+    print('z_min_sources', args.z_min_sources)
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
                                                   cf.nside,
                                                   cf.lambda_abs,
@@ -258,7 +273,9 @@ def main(cmdargs):
                                                   max_num_spec=args.nspec,
                                                   no_project=args.no_project,
                                                   nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor)
+                                                  rebin_factor=args.rebin_factor,
+                                                  z_min_qso=args.z_min_sources,
+                                                  z_max_qso=args.z_max_sources,)
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -288,7 +305,9 @@ def main(cmdargs):
             max_num_spec=args.nspec,
             no_project=args.no_project,
             nproc=args.nproc,
-            rebin_factor=args.rebin_factor)
+            rebin_factor=args.rebin_factor,
+            z_min_qso=args.z_min_sources,
+            z_max_qso=args.z_max_sources,)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
