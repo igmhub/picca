@@ -351,7 +351,10 @@ class ExpectedFlux:
             self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
         ],
                       names=['loglam_rest', 'mean_cont', 'weight'],
+                      units=['log(Angstrom)', '10**-17 erg/(s cm2 Angstrom)', ''],
                       extname='CONT')
+        results["CONT"].write_comment("Mean quasar continuum")
+        results["CONT"].write_checksum()
 
     def hdu_fit_metadata(self, results):
         """Add to the results file an HDU with the fits results
@@ -373,9 +376,10 @@ class ExpectedFlux:
         results: fitsio.FITS
         The open fits file
         """
-        header = {}
+        header = fitsio.FITSHDR()
         if hasattr(self, 'order'):
-            header["FITORDER"] = self.order
+            header.add_record(dict(name="FITORDER", value=self.order,
+                                comment=""))
 
         results.write([
             Forest.log_lambda_grid,
@@ -383,8 +387,11 @@ class ExpectedFlux:
             self.get_stack_delta_weights(Forest.log_lambda_grid)
         ],
                       names=['loglam', 'stack', 'weight'],
+                      units=['log(Angstrom)', '', ''],
                       header=header,
                       extname='STACK_DELTAS')
+        results['STACK_DELTAS'].write_comment("Delta mean properties")
+        results['STACK_DELTAS'].write_checksum()
 
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
