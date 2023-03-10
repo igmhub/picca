@@ -660,12 +660,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 np.array(accepted_fit),
             ]
             names = [
-                "los_id",
-                "zero_point",
-                "slope",
-                "chi2",
-                "num_datapoints",
-                "accepted_fit",
+                "LOS_ID",
+                "ZERO_POINT",
+                "SLOPE",
+                "CHI2",
+                "NUM_DATAPOINTS",
+                "ACCEPTED_FIT",
             ]
 
             results.write(values, names=names, extname='FIT_METADATA')
@@ -689,12 +689,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.get_valid_fit(self.log_lambda_var_func_grid).astype(np.bool)
         ]
         names = [
-            "loglam",
-            "eta",
-            "var_lss",
-            "fudge",
-            "num_pixels",
-            "valid_fit",
+            "LOGLAM",
+            "ETA",
+            "VAR_LSS",
+            "FUDGE",
+            "NUM_PIXELS",
+            "VALID_FIT",
         ]
         units = ["log(Angstrom)", "", "", "", "", ""]
 

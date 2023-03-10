@@ -91,7 +91,7 @@ class RejectionLogFromImage(RejectionLog):
                 dtype=self.dtypes,
             ),
             units=self.units,
-            extname="rejection_log",
+            extname="REJECTION_LOG",
         )
-        rejection_log["rejection_log"].write_comment("Rejected forest statistics")
-        rejection_log["rejection_log"].write_checksum()
+        rejection_log["REJECTION_LOG"].write_comment("Rejected forest statistics")
+        rejection_log["REJECTION_LOG"].write_checksum()

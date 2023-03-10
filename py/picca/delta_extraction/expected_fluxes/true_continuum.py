@@ -232,8 +232,8 @@ class TrueContinuum(ExpectedFlux):
             self.get_var_lss(self.log_lambda_var_func_grid),
         ]
         names = [
-            "loglam",
-            "var_lss",
+            "LOGLAM",
+            "VAR_LSS",
         ]
         units = ["log(Angstrom)", ""]
 

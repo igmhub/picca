@@ -350,7 +350,7 @@ class ExpectedFlux:
             self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
             self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
         ],
-                      names=['loglam_rest', 'mean_cont', 'weight'],
+                      names=['LOGLAM_REST', 'MEAN_CONT', 'WEIGHT'],
                       units=['log(Angstrom)', '10**-17 erg/(s cm2 Angstrom)', ''],
                       extname='CONT')
         results["CONT"].write_comment("Mean quasar continuum")
@@ -386,7 +386,7 @@ class ExpectedFlux:
             self.get_stack_delta(Forest.log_lambda_grid),
             self.get_stack_delta_weights(Forest.log_lambda_grid)
         ],
-                      names=['loglam', 'stack', 'weight'],
+                      names=['LOGLAM', 'STACK', 'WEIGHT'],
                       units=['log(Angstrom)', '', ''],
                       header=header,
                       extname='STACK_DELTAS')
