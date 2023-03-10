@@ -41,6 +41,7 @@ class RejectionLogFromImage(RejectionLog):
 
         self.dtypes = None
         self.data = []
+        self.units = None
 
     def initialize_rejection_log(self, forest):
         """Initialize rejection log
@@ -53,6 +54,7 @@ class RejectionLogFromImage(RejectionLog):
         self.dtypes = forest.get_metadata_dtype() + [('FOREST_SIZE', int),
                                                      ('REJECTION_STATUS', 'S12')
                                                     ]
+        self.units = forest.get_metadata_units() + ['', '']
         self.initialized = True
 
     def add_to_rejection_log(self, forest, rejection_status):
@@ -88,5 +90,8 @@ class RejectionLogFromImage(RejectionLog):
                 self.data,
                 dtype=self.dtypes,
             ),
+            units=self.units,
             extname="rejection_log",
         )
+        rejection_log["rejection_log"].write_comment("Rejected forest statistics")
+        rejection_log["rejection_log"].write_checksum()
