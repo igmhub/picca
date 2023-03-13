@@ -553,7 +553,7 @@ class TestCor(AbstractTest):
 
         return
 
-    def test_cf_angl_2(self):
+    def test_cf_angl_zcuts(self):
         """
             Test angular correlation function
         """
@@ -562,7 +562,7 @@ class TestCor(AbstractTest):
         ### Send
         cmd = "picca_cf_angl.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_angl.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_angl_zcuts.fits.gz"
         cmd += " --nproc 1"
         cmd += " --z-cut-min 2.25"
         cmd += " --z-cut-max 2.3"
@@ -573,13 +573,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/cf_angl_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/cf_angl.fits.gz"
+            path1 = self._masterFiles + "/test_cor/cf_angl_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/cf_angl_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_cf_angl.py")
 
         return
 
-    def test_cf_2(self):
+    def test_cf_zcuts(self):
         """
             Test correlation function
         """
@@ -589,7 +589,7 @@ class TestCor(AbstractTest):
         ### Send
         cmd = "picca_cf.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -606,13 +606,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/cf_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/cf.fits.gz"
+            path1 = self._masterFiles + "/test_cor/cf_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_cf.py")
 
         return
 
-    def test_cf_image_data_2(self):
+    def test_cf_image_data_zcuts(self):
         """
             Test correlation function reading image data
         """
@@ -622,7 +622,7 @@ class TestCor(AbstractTest):
         ### Send
         cmd = "picca_cf.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA_image/"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -638,13 +638,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/cf_image_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/cf.fits.gz"
+            path1 = self._masterFiles + "/test_cor/cf_image_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_cf.py")
 
         return
 
-    def test_dmat_2(self):
+    def test_dmat_zcuts(self):
         """
             Test distortion matrix
         """
@@ -654,7 +654,7 @@ class TestCor(AbstractTest):
         ### Send
         cmd = "picca_dmat.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/dmat.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/dmat_zcuts.fits.gz"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -672,13 +672,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/dmat_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/dmat.fits.gz"
+            path1 = self._masterFiles + "/test_cor/dmat_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/dmat_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_dmat.py")
 
         return
 
-    def test_metal_dmat_2(self):
+    def test_metal_dmat_zcuts(self):
         """
             Test metal distortion matrix
         """
@@ -688,7 +688,7 @@ class TestCor(AbstractTest):
         ### Send
         cmd = "picca_metal_dmat.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/metal_dmat.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/metal_dmat_zcuts.fits.gz"
         cmd += r" --abs-igm SiIII(1207)"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
@@ -707,13 +707,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/metal_dmat_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/metal_dmat.fits.gz"
+            path1 = self._masterFiles + "/test_cor/metal_dmat_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/metal_dmat_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
 
         return
 
-    def test_wick_2(self):
+    def test_wick_zcuts(self):
         """
             Test wick covariances
         """
@@ -723,7 +723,7 @@ class TestCor(AbstractTest):
         ### Send
         cmd = "picca_wick.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/wick.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/wick_zcuts.fits.gz"
         cmd += " --cf1d " + self._masterFiles + "/test_cor/cf1d.fits.gz"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
@@ -741,13 +741,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/wick_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/wick.fits.gz"
+            path1 = self._masterFiles + "/test_cor/wick_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/wick_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_wick.py")
 
         return
 
-    def test_cf_cross_2(self):
+    def test_cf_cross_zcuts(self):
         """
             Test export of cross correlation function
         """
@@ -758,7 +758,7 @@ class TestCor(AbstractTest):
         cmd = "picca_cf.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_cross.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_cross_zcuts.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -776,13 +776,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/cf_cross_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/cf_cross.fits.gz"
+            path1 = self._masterFiles + "/test_cor/cf_cross_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/cf_cross_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_cf.py")
 
         return
 
-    def test_dmat_cross_2(self):
+    def test_dmat_cross_zcuts(self):
         """
             Test cross distortion matrix
         """
@@ -794,7 +794,7 @@ class TestCor(AbstractTest):
         cmd = "picca_dmat.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/dmat_cross.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/dmat_cross_zcuts.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -813,13 +813,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/dmat_cross_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/dmat_cross.fits.gz"
+            path1 = self._masterFiles + "/test_cor/dmat_cross_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/dmat_cross_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_dmat.py")
 
         return
 
-    def test_metal_dmat_cross_2(self):
+    def test_metal_dmat_cross_zcuts(self):
         """
             Test metal cross distortion matrix
         """
@@ -831,7 +831,7 @@ class TestCor(AbstractTest):
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + \
-            "/Products/Correlations/metal_dmat_cross.fits.gz"
+            "/Products/Correlations/metal_dmat_cross_zcuts.fits.gz"
         cmd += r" --abs-igm SiIII(1207)"
         cmd += r" --abs-igm2 SiIII(1207)"
         cmd += " --rp-min -60.0"
@@ -852,13 +852,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/metal_dmat_cross_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross.fits.gz"
+            path1 = self._masterFiles + "/test_cor/metal_dmat_cross_zcuts_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
 
         return
 
-    def test_xcf_angl_2(self):
+    def test_xcf_angl_zcuts(self):
         """
             Test angular cross correlation function
         """
@@ -868,7 +868,7 @@ class TestCor(AbstractTest):
         cmd = "picca_xcf_angl.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf_angl_zcuts.fits.gz"
         cmd += " --nproc 1"
         cmd += " --z-evol-obj 1."
         cmd += " --z-cut-min 2.25"
@@ -880,13 +880,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/xcf_angl_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
+            path1 = self._masterFiles + "/test_cor/xcf_angl_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/xcf_angl_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_xcf_angl.py")
 
         return
 
-    def test_xcf_2(self):
+    def test_xcf_zcuts(self):
         """
             Test cross correlation function
         """
@@ -896,7 +896,7 @@ class TestCor(AbstractTest):
         cmd = "picca_xcf.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf_zcuts.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -913,13 +913,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/xcf_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/xcf.fits.gz"
+            path1 = self._masterFiles + "/test_cor/xcf_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/xcf_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_xcf.py")
 
         return
 
-    def test_xdmat_2(self):
+    def test_xdmat_zcuts(self):
         """
             Test cross distortion matrix
         """
@@ -931,7 +931,7 @@ class TestCor(AbstractTest):
         cmd = "picca_xdmat.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/xdmat.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/xdmat_zcuts.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -949,13 +949,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/xdmat_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/xdmat.fits.gz"
+            path1 = self._masterFiles + "/test_cor/xdmat_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/xdmat_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_xdmat.py")
 
         return
 
-    def test_metal_xdmat_2(self):
+    def test_metal_xdmat_zcuts(self):
         """
             Test metal cross distortion matrix
         """
@@ -964,7 +964,7 @@ class TestCor(AbstractTest):
         cmd = "picca_metal_xdmat.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/metal_xdmat.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/metal_xdmat_zcuts.fits.gz"
         cmd += r" --abs-igm SiIII(1207)"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
@@ -983,13 +983,13 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/metal_xdmat_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/metal_xdmat.fits.gz"
+            path1 = self._masterFiles + "/test_cor/metal_xdmat_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/metal_xdmat_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_xdmat.py")
 
         return
 
-    def test_xwick_2(self):
+    def test_xwick_zcuts(self):
         """
             Test wick covariances for cross
         """
@@ -999,7 +999,7 @@ class TestCor(AbstractTest):
         cmd = "picca_xwick.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
-        cmd += " --out " + self._branchFiles + "/Products/Correlations/xwick.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/xwick_zcuts.fits.gz"
         cmd += " --cf1d " + self._masterFiles + "/test_cor/cf1d.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
@@ -1018,8 +1018,8 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/xwick_2.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/xwick.fits.gz"
+            path1 = self._masterFiles + "/test_cor/xwick_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/xwick_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_xwick.py")
 
         return
