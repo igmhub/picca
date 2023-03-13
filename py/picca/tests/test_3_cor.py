@@ -872,7 +872,7 @@ class TestCor(AbstractTest):
         cmd += " --nproc 1"
         cmd += " --z-evol-obj 1."
         cmd += " --z-cut-min 2.25"
-        cmd += " --z-cut-max 2.3"
+        # cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
         print(repr(cmd))
