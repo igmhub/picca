@@ -852,7 +852,7 @@ class TestCor(AbstractTest):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_cor/metal_dmat_cross_zcuts_zcuts.fits.gz"
+            path1 = self._masterFiles + "/test_cor/metal_dmat_cross_zcuts.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
 
