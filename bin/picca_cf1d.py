@@ -71,6 +71,20 @@ def main(cmdargs):
                         required=False,
                         help='Upper limit on observed wavelength [Angstrom]')
 
+    parser.add_argument('--z-min-sources',
+                        type=float,
+                        default=0.,
+                        required=False,
+                        help=('Limit the minimum redshift of the quasars '
+                              'used as sources for spectra'))
+
+    parser.add_argument('--z-max-sources',
+                        type=float,
+                        default=10.,
+                        required=False,
+                        help=('Limit the maximum redshift of the quasars '
+                              'used as sources for spectra'))
+
     parser.add_argument('--dll',
                         type=float,
                         default=3.e-4,
@@ -164,7 +178,9 @@ def main(cmdargs):
                                                   args.z_ref,
                                                   cosmo=None,
                                                   max_num_spec=args.nspec,
-                                                  no_project=args.no_project)
+                                                  no_project=args.no_project,
+                                                  z_min_qso=args.z_min_sources,
+                                                  z_max_qso=args.z_max_sources)
     cf.data = data
     cf.num_data = num_data
     del z_min, z_max
@@ -182,7 +198,9 @@ def main(cmdargs):
             args.z_ref,
             cosmo=None,
             max_num_spec=args.nspec,
-            no_project=args.no_project)
+            no_project=args.no_project,
+            z_min_qso=args.z_min_sources,
+            z_max_qso=args.z_max_sources)
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2
