@@ -33,12 +33,104 @@ import picca.bin.picca_export_co
 
 from picca.tests.test_helpers import AbstractTest
 
+def reset_cf():
+    """Resets the parameters of picca_cf"""
+    picca.cf.num_bins_r_par = None
+    picca.cf.num_bins_r_trans = None
+    picca.cf.num_model_bins_r_trans = None
+    picca.cf.num_model_bins_r_par = None
+    picca.cf.r_par_max = None
+    picca.cf.r_par_min = None
+    picca.cf.z_cut_max = None
+    picca.cf.z_cut_min = None
+    picca.cf.r_trans_max = None
+    picca.cf.ang_max = None
+    picca.cf.nside = None
+
+    picca.cf.counter = None
+    picca.cf.num_data = None
+    picca.cf.num_data2 = None
+
+    picca.cf.z_ref = None
+    picca.cf.alpha = None
+    picca.cf.alpha2 = None
+    picca.cf.alpha_abs = None
+    picca.cf.lambda_abs = None
+    picca.cf.lambda_abs2 = None
+
+    picca.cf.data = None
+    picca.cf.data2 = None
+
+    picca.cf.cosmo = None
+
+    picca.cf.reject = None
+    picca.cf.lock = None
+    picca.cf.x_correlation = False
+    picca.cf.ang_correlation = False
+    picca.cf.remove_same_half_plate_close_pairs = False
+
+    # variables used in the 1D correlation function analysis
+    picca.cf.num_pixels = None
+    picca.cf.log_lambda_min = None
+    picca.cf.log_lambda_max = None
+    picca.cf.delta_log_lambda = None
+
+    # variables used in the wick covariance matrix computation
+    picca.cf.et_variance_1d = {}
+    picca.cf.xi_1d = {}
+    picca.cf.max_diagram = None
+    picca.cf.xi_wick = {}
+
+def reset_xcf():
+    """Resets the parameters of picca_xcf"""
+    picca.xcf.num_bins_r_par = None
+    picca.xcf.num_bins_r_trans = None
+    picca.xcf.num_model_bins_r_par = None
+    picca.xcf.num_model_bins_r_trans = None
+    picca.xcf.r_par_max = None
+    picca.xcf.r_par_min = None
+    picca.xcf.r_trans_max = None
+    picca.xcf.z_cut_max = None
+    picca.xcf.z_cut_min = None
+    picca.xcf.ang_max = None
+    picca.xcf.nside = None
+
+    picca.xcf.counter = None
+    picca.xcf.num_data = None
+
+    picca.xcf.z_ref = None
+    picca.xcf.alpha = None
+    picca.xcf.alpha_obj = None
+    picca.xcf.lambda_abs = None
+    picca.xcf.alpha_abs = None
+
+    picca.xcf.data = None
+    picca.xcf.objs = None
+
+    picca.xcf.reject = None
+    picca.xcf.lock = None
+
+    picca.xcf.cosmo = None
+    picca.xcf.ang_correlation = False
+
+    # variables used in the wick covariance matrix computation
+    picca.xcf.get_variance_1d = {}
+    picca.xcf.xi_1d = {}
+    picca.xcf.max_diagram = None
+    picca.xcf.xi_wick = None
 
 # TODO: add test for xcf1d
 class TestCor(AbstractTest):
     """
         Tests the Correlation Function Computations
     """
+
+    def tearDown(self):
+        """ Actions done at test end
+        Make sure that Forest and Pk1dForest class variables are reset
+        """
+        reset_cf()
+        reset_xcf()
 
 
     def produce_folder(self):
@@ -886,7 +978,7 @@ class TestCor(AbstractTest):
 
         return
 
-    def test_xcf_2(self):
+    def test_xcf_zcuts(self):
         """
             Test cross correlation function
         """
