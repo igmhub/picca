@@ -8,6 +8,7 @@ class SdssForest(Forest):
     Class Methods
     -------------
     (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
+    get_cont_units
     get_metadata_dtype
     get_metadata_units
 
@@ -103,6 +104,16 @@ class SdssForest(Forest):
         self.mjd += other.mjd
         self.plate += other.plate
         super().coadd(other)
+
+    @classmethod
+    def get_cont_units(cls):
+        """Return the units of the continuum as a string
+        
+        Return
+        ------
+        cont_units: str
+        """
+        return "10**-19 W/(m2 nm)"
 
     def get_header(self):
         """Return line-of-sight data to be saved as a fits file header

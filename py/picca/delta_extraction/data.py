@@ -81,6 +81,9 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
 
     results.write(None) # This works as Primary
 
+    
+    cont_units = Forest.get_cont_units()
+
     hdr = fitsio.FITSHDR()
     hdr.add_record(dict(name="BUNIT", value="Angstrom", 
                         comment="wavelength units"))
@@ -161,7 +164,7 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
         continuum[i][forest.log_lambda_index] = forest.continuum
 
     hdr = fitsio.FITSHDR()
-    hdr.add_record(dict(name="BUNIT", value="10**-17 erg/(s cm2 Angstrom)", 
+    hdr.add_record(dict(name="BUNIT", value=cont_units, 
                         comment="flux units"))
     results.write(
         continuum,
