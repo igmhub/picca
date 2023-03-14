@@ -1434,7 +1434,6 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
 
     hdul = fitsio.FITS(filename)
     # If there is an extension called lambda format is image
-    print('first zminqso', z_min_qso)
     if 'LAMBDA' in hdul:
         deltas = Delta.from_image(hdul, z_min_qso=z_min_qso, z_max_qso=z_max_qso)
     else:
@@ -1534,7 +1533,6 @@ def read_deltas(in_dir,
     if rebin_factor is not None:
         userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
 
-    print('io z_min_qso', z_min_qso)
     arguments = [(f, z_min_qso, z_max_qso, rebin_factor) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
