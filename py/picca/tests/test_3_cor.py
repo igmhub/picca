@@ -886,7 +886,7 @@ class TestCor(AbstractTest):
 
         return
 
-    def test_xcf_zcuts(self):
+    def test_xcf_2(self):
         """
             Test cross correlation function
         """
