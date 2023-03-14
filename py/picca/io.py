@@ -1415,11 +1415,15 @@ def read_blinding(in_dir):
     return blinding
 
 
-def read_delta_file(filename, rebin_factor=None):
+def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
     """Extracts deltas from a single file.
     Args:
         filename: str
             Path to the file to read
+        z_min_qso: float - default: 0
+            Specifies the minimum redshift for QSOs
+        z_max_qso: float - default: 10
+            Specifies the maximum redshift for QSOs
         rebin_factor: int - default: None
             Factor to rebin the lambda grid by. If None, no rebinning is done.
     Returns:
@@ -1431,9 +1435,9 @@ def read_delta_file(filename, rebin_factor=None):
     hdul = fitsio.FITS(filename)
     # If there is an extension called lambda format is image
     if 'LAMBDA' in hdul:
-        deltas = Delta.from_image(hdul)
+        deltas = Delta.from_image(hdul, z_min_qso=z_min_qso, z_max_qso=z_max_qso)
     else:
-        deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
+        deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:] if z_min_qso<hdu.read_header()['Z']<z_max_qso]
 
 # Rebin
     if rebin_factor is not None:
@@ -1465,7 +1469,9 @@ def read_deltas(in_dir,
                 max_num_spec=None,
                 no_project=False,
                 nproc=None,
-                rebin_factor=None):
+                rebin_factor=None,
+                z_min_qso=0,
+                z_max_qso=10):
     """Reads deltas and computes their redshifts.
 
     Fills the fields delta.z and multiplies the weights by
@@ -1496,6 +1502,10 @@ def read_deltas(in_dir,
             Number of cpus for parallelization. If None, uses all available.
         rebin_factor: int - default: None
             Factor to rebin the lambda grid by. If None, no rebinning is done.
+        z_min_qso: float - default: 0
+            Specifies the minimum redshift for QSOs
+        z_max_qso: float - default: 10
+            Specifies the maximum redshift for QSOs
 
     Returns:
         The following variables:
@@ -1523,7 +1533,7 @@ def read_deltas(in_dir,
     if rebin_factor is not None:
         userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
 
-    arguments = [(f, rebin_factor) for f in files]
+    arguments = [(f, z_min_qso, z_max_qso, rebin_factor) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
     pool.close()

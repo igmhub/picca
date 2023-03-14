@@ -108,6 +108,22 @@ def main(cmdargs):
               'z-cut-max'))
 
     parser.add_argument(
+        '--z-min-sources',
+        type=float,
+        default=0.,
+        required=False,
+        help=('Limit the minimum redshift of the quasars '
+                'used as sources for spectra'))
+
+    parser.add_argument(
+        '--z-max-sources',
+        type=float,
+        default=10.,
+        required=False,
+        help=('Limit the maximum redshift of the quasars '
+                'used as sources for spectra'))
+
+    parser.add_argument(
         '--lambda-abs',
         type=str,
         default='LYA',
@@ -202,7 +218,9 @@ def main(cmdargs):
                                                   cf.z_ref,
                                                   cosmo=None,
                                                   max_num_spec=args.nspec,
-                                                  no_project=args.no_project)
+                                                  no_project=args.no_project,
+                                                  z_min_qso=args.z_min_sources,
+                                                  z_max_qso=args.z_max_sources)
     cf.data = data
     cf.num_data = num_data
     del z_min, z_max
@@ -228,7 +246,9 @@ def main(cmdargs):
             cf.z_ref,
             cosmo=None,
             max_num_spec=args.nspec,
-            no_project=args.no_project)
+            no_project=args.no_project,
+            z_min_qso=args.z_min_sources,
+            z_max_qso=args.z_max_sources)
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2

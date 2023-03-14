@@ -1190,7 +1190,7 @@ class Delta(QSO):
                    mean_reso, mean_z, delta_log_lambda)
 
     @classmethod
-    def from_image(cls, hdul, pk1d_type=False):
+    def from_image(cls, hdul, pk1d_type=False, z_min_qso=0, z_max_qso=10):
         """Initialize instance from an ascii file.
 
         Args:
@@ -1199,6 +1199,10 @@ class Delta(QSO):
             pk1d_type: bool - default: False
                 Specifies if the fits file is formatted for the 1D Power
                 Spectrum analysis
+            z_min_qso: float - default: 0
+                Specifies the minimum redshift for QSOs
+            z_max_qso: float - default: 10
+                Specifies the maximum redshift for QSOs
         Returns:
             a Delta instance
         """
@@ -1271,19 +1275,20 @@ class Delta(QSO):
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
                    mean_reso, mean_z, resolution_matrix,
                    mean_resolution_matrix, mean_reso_pix, w):
-            deltas.append(cls(
-                los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i, log_lambda[w_i],
-                weights_i[w_i] if weights_i is not None else None, 
-                cont_i[w_i], 
-                delta_i[w_i],
-                order_i, 
-                ivar_i[w_i] if ivar_i is not None else None,
-                exposures_diff_i[w_i] if exposures_diff_i is not None else None, 
-                mean_snr_i, mean_reso_i, mean_z_i,
-                resolution_matrix_i if resolution_matrix_i is not None else None,
-                mean_resolution_matrix_i if mean_resolution_matrix_i is not None else None,
-                mean_reso_pix_i,
-            ))
+            if z_qso_i >= z_min_qso and z_qso_i <= z_max_qso:        
+                deltas.append(cls(
+                    los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i, log_lambda[w_i],
+                    weights_i[w_i] if weights_i is not None else None, 
+                    cont_i[w_i], 
+                    delta_i[w_i],
+                    order_i, 
+                    ivar_i[w_i] if ivar_i is not None else None,
+                    exposures_diff_i[w_i] if exposures_diff_i is not None else None, 
+                    mean_snr_i, mean_reso_i, mean_z_i,
+                    resolution_matrix_i if resolution_matrix_i is not None else None,
+                    mean_resolution_matrix_i if mean_resolution_matrix_i is not None else None,
+                    mean_reso_pix_i,
+                ))
 
         return deltas
 
