@@ -1404,15 +1404,15 @@ def read_blinding(in_dir):
                                                            + '/*.fits.gz')
     filename = files[0]
     hdul = fitsio.FITS(filename)
-    header = hdul[1].read_header()
-    # new runs of picca_deltas should have a blinding keyword
-    if "BLINDING" in header:
-        blinding = header["BLINDING"]
-    # older runs are not from DESI main survey and should not be blinded
-    else:
-        blinding = "none"
-
-    return blinding
+    if 'LAMBDA' not in hdul: # This is for BinTable format
+        header = hdul[1].read_header()
+        # older runs not from DESI main survey and should not be blinded
+        if "BLINDING" not in header: 
+            return "none"
+    else: # This is for ImageHDU format
+        header = hdul["METADATA"].read_header()
+    
+    return header["BLINDING"]
 
 
 def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
