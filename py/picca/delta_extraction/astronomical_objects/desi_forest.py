@@ -101,16 +101,6 @@ class DesiForest(Forest):
         self.tile += other.tile
         super().coadd(other)
 
-    @classmethod
-    def get_cont_units(cls):
-        """Return the units of the continuum as a string
-        
-        Return
-        ------
-        cont_units: str
-        """
-        return "10**-17 erg/(s cm2 Angstrom)"
-
     def get_header(self):
         """Return line-of-sight data to be saved as a fits file header
 

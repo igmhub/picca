@@ -321,6 +321,7 @@ class Forest(AstronomicalObject):
     Weights associated to the delta field. None for no information
     """
     blinding = "none"
+    flux_units = None
     log_lambda_grid = np.array([])  #None
     log_lambda_rest_frame_grid = np.array([])  #None
     log_lambda_index = np.array([]) #None
@@ -541,18 +542,6 @@ class Forest(AstronomicalObject):
 
         return cols, names, units, comments
 
-    @classmethod
-    def get_cont_units(cls):
-        """Return the units of the continuum as a string
-
-        This function is a placeholder here and should be overloaded by child
-        classes if they require it
-        
-        Return
-        ------
-        cont_units: str
-        """
-
     def get_header(self):
         """Return line-of-sight data to be saved as a fits file header
 
@@ -697,7 +686,7 @@ class Forest(AstronomicalObject):
     @classmethod
     def set_class_variables(cls, lambda_min, lambda_max, lambda_min_rest_frame,
                             lambda_max_rest_frame, pixel_step,
-                            pixel_step_rest_frame, wave_solution):
+                            pixel_step_rest_frame, wave_solution, flux_units):
         """Set class variables
 
         Arguments
@@ -722,6 +711,9 @@ class Forest(AstronomicalObject):
         wave_solution: "log" or "lin"
         Specifies whether we want to construct a wavelength grid that is evenly
         spaced on wavelength (lin) or on the logarithm of the wavelength (log)
+
+        flux_units: str
+        Flux units
         """
         if wave_solution == "log":
             cls.log_lambda_grid = np.arange(
@@ -745,3 +737,5 @@ class Forest(AstronomicalObject):
         cls.wave_solution = wave_solution
 
         cls.mask_fields = defaults.get("mask fields").copy()
+
+        cls.flux_units = flux_units

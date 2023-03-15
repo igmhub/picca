@@ -105,16 +105,6 @@ class SdssForest(Forest):
         self.plate += other.plate
         super().coadd(other)
 
-    @classmethod
-    def get_cont_units(cls):
-        """Return the units of the continuum as a string
-        
-        Return
-        ------
-        cont_units: str
-        """
-        return "10**-19 W/(m2 nm)"
-
     def get_header(self):
         """Return line-of-sight data to be saved as a fits file header
 

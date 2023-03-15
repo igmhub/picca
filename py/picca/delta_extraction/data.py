@@ -81,17 +81,17 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
 
     results.write(None) # This works as Primary
 
-    
+
     cont_units = Forest.get_cont_units()
 
     hdr = fitsio.FITSHDR()
-    hdr.add_record(dict(name="BUNIT", value="Angstrom", 
+    hdr.add_record(dict(name="BUNIT", value="Angstrom",
                         comment="wavelength units"))
-    hdr.add_record(dict(name="WAVE_SOLUTION", value=Forest.wave_solution, 
+    hdr.add_record(dict(name="WAVE_SOLUTION", value=Forest.wave_solution,
                         comment="chosen wavelength solution"))
     if Forest.wave_solution == "log":
         hdr.add_record(dict(name="DELTA_LOG_LAMBDA",
-                            value=round(Forest.log_lambda_grid[1] - 
+                            value=round(Forest.log_lambda_grid[1] -
                                         Forest.log_lambda_grid[0],2),
                             comment="pixel step"))
     elif Forest.wave_solution == "lin":
@@ -111,9 +111,9 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
     )
     results["LAMBDA"].write_comment("Wavelength grid")
     results["LAMBDA"].write_checksum()
-    
+
     hdr = fitsio.FITSHDR()
-    hdr.add_record(dict(name="BLINDING", value=Forest.blinding, 
+    hdr.add_record(dict(name="BLINDING", value=Forest.blinding,
                         comment="blinding scheme used"))
     results.write(
         np.array(
@@ -134,11 +134,11 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
         delta[i][forest.log_lambda_index] = forest.deltas
 
     hdr = fitsio.FITSHDR()
-    hdr.add_record(dict(name="BUNIT", value="", 
+    hdr.add_record(dict(name="BUNIT", value="",
                         comment="delta units (unitless)"))
     delta_label = "DELTA" if Forest.blinding == "none" else "DELTA_BLIND"
     results.write(
-        delta, 
+        delta,
         header=hdr,
         extname=delta_label)
     results[delta_label].write_comment("Flux transmission field in " +
@@ -150,7 +150,7 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
         weight[i][forest.log_lambda_index] = forest.weights
 
     hdr = fitsio.FITSHDR()
-    hdr.add_record(dict(name="BUNIT", value="", 
+    hdr.add_record(dict(name="BUNIT", value="",
                         comment="weight units (unitless)"))
     results.write(
         weight,
@@ -164,7 +164,7 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
         continuum[i][forest.log_lambda_index] = forest.continuum
 
     hdr = fitsio.FITSHDR()
-    hdr.add_record(dict(name="BUNIT", value=cont_units, 
+    hdr.add_record(dict(name="BUNIT", value=cont_units,
                         comment="flux units"))
     results.write(
         continuum,
@@ -357,6 +357,10 @@ class Data:
                 "Unrecognised value for 'wave solution'. Expected either "
                 f"'lin' or 'log'. Found '{wave_solution}'.")
 
+        flux_units = config.get("flux units")
+        if flux_units is None:
+            raise DataError("Missing argument 'flux units' required by Data")
+
         lambda_max = config.getfloat("lambda max")
         if lambda_max is None:
             raise DataError("Missing argument 'lambda max' required by Data")
@@ -375,7 +379,7 @@ class Data:
         Forest.set_class_variables(lambda_min, lambda_max,
                                    lambda_min_rest_frame, lambda_max_rest_frame,
                                    pixel_step, pixel_step_rest_frame,
-                                   wave_solution)
+                                   wave_solution, flux_units)
 
         # instance variables
         self.analysis_type = config.get("analysis type")

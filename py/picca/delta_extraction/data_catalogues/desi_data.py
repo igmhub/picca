@@ -102,6 +102,7 @@ class DesiData(Data):
         """
         self.logger = logging.getLogger(__name__)
 
+        config["flux units"] = "10**-17 erg/(s cm2 Angstrom)"
         super().__init__(config)
 
         # load variables from config

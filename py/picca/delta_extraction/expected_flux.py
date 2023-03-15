@@ -345,14 +345,13 @@ class ExpectedFlux:
         results: fitsio.FITS
         The open fits file
         """
-        cont_units = Forest.get_cont_units()
         results.write([
             Forest.log_lambda_rest_frame_grid,
             self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
             self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
         ],
                       names=['LOGLAM_REST', 'MEAN_CONT', 'WEIGHT'],
-                      units=['log(Angstrom)', cont_units, ''],
+                      units=['log(Angstrom)', Forest.flux_units, ''],
                       extname='CONT')
         results["CONT"].write_comment("Mean quasar continuum")
         results["CONT"].write_checksum()
