@@ -1648,7 +1648,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test class method set_class_variables from Forest"""
         # logarithmic binning
         Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 50e-4, 50e-4,
-                                   "log")
+                                   "log", "test")
 
         log_lambda_grid = np.array([
             3.5563025, 3.5613025, 3.5663025, 3.5713025, 3.5763025, 3.5813025,
@@ -1671,10 +1671,11 @@ class AstronomicalObjectTest(AbstractTest):
 
         self.assertTrue(Forest.mask_fields, defaults_forest.get("mask fields"))
         self.assertTrue(Forest.wave_solution == "log")
+        self.assertTrue(Forest.flux_units == "test")
 
         # linear binning
         Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 100, 100,
-                                   "lin")
+                                   "lin", "test")
 
         log_lambda_grid = np.array([
             3.5563025 , 3.56820172, 3.5797836 , 3.59106461, 3.60205999,
@@ -1692,6 +1693,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         self.assertTrue(Forest.mask_fields, defaults_forest.get("mask fields"))
         self.assertTrue(Forest.wave_solution == "lin")
+        self.assertTrue(Forest.flux_units == "test")
 
         # specifying wrong bining should raise and error
         expected_message = (
@@ -1700,7 +1702,7 @@ class AstronomicalObjectTest(AbstractTest):
         )
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 100, 100,
-                                       "wrong")
+                                       "wrong", "")
         self.compare_error_message(context_manager, expected_message)
 
     def test_pk1d_forest(self):
