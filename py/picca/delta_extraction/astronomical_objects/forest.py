@@ -498,7 +498,7 @@ class Forest(AstronomicalObject):
             cols += [self.log_lambda]
             names += ["LOGLAM"]
             comments += ["Log lambda"]
-            units += ["log Angstrom"]
+            units += ["log(Angstrom)"]
             array_size = self.log_lambda.size
         elif Forest.wave_solution == "lin":
             cols += [10**self.log_lambda]
@@ -538,7 +538,7 @@ class Forest(AstronomicalObject):
         names += ["CONT"]
         comments += ["Quasar continuum. Check input "
                      "spectra for units"]
-        units += ["Flux units"]
+        units += [Forest.flux_units]
 
         return cols, names, units, comments
 
