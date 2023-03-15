@@ -79,65 +79,118 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
                           'rw',
                           clobber=True)
 
-    # Saving metadata card
-    metadata_header = {
-        "WAVE_SOLUTION": Forest.wave_solution,
-        "BLINDING": Forest.blinding,
-    }
+    results.write(None) # This works as Primary
 
+    hdr = fitsio.FITSHDR()
+    hdr.add_record({
+        "name": "BUNIT",
+        "value": "Angstrom",
+        "comment": "wavelength units",
+    })
+    hdr.add_record({
+        "name": "WAVE_SOLUTION",
+        "value": Forest.wave_solution,
+        "comment": "chosen wavelength solution",
+    })
     if Forest.wave_solution == "log":
-        metadata_header["DELTA_LOG_LAMBDA"] = Forest.log_lambda_grid[
-            1] - Forest.log_lambda_grid[0]
+        hdr.add_record({
+            "name": "DELTA_LOG_LAMBDA",
+            "value": round(Forest.log_lambda_grid[1] -
+                           Forest.log_lambda_grid[0],2),
+            "comment": "pixel step",
+        })
     elif Forest.wave_solution == "lin":
-        metadata_header["DELTA_LAMBDA"] = 10**Forest.log_lambda_grid[
-            1] - 10**Forest.log_lambda_grid[0]
+        hdr.add_record({
+            "name": "DELTA_LAMBDA",
+            "value": round(10**Forest.log_lambda_grid[1] -
+                        10**Forest.log_lambda_grid[0], 2),
+            "comment": "pixel step",
+        })
     else:
         raise DataError("Error in _save_deltas_one_healpix_image"
                         "Class variable 'wave_solution' "
                         "must be either 'lin' or 'log'. "
                         f"Found: '{Forest.wave_solution}'")
-
     results.write(
         10**Forest.log_lambda_grid,
         extname="LAMBDA",
+        header=hdr
     )
+    results["LAMBDA"].write_comment("Wavelength grid")
+    results["LAMBDA"].write_checksum()
 
+    hdr = fitsio.FITSHDR()
+    hdr.add_record({
+        "name": "BLINDING",
+        "value": Forest.blinding,
+        "comment": "blinding scheme used",
+    })
     results.write(
         np.array(
             [tuple(forest.get_metadata()) for forest in forests
             ],  # Structured arrays need to take tuples as input.
             dtype=forests[0].get_metadata_dtype(),
         ),
-        header=metadata_header,
+        header=hdr,
         #TODO: Figure out how to add comments.
         units=forests[0].get_metadata_units(),
         extname="METADATA")
+    results["METADATA"].write_comment("Per-forest metadata")
+    results["METADATA"].write_checksum()
 
     # Filling image information
     delta = np.full((len(forests), len(Forest.log_lambda_grid)), np.nan)
     for i, forest in enumerate(forests):
         delta[i][forest.log_lambda_index] = forest.deltas
 
+    hdr = fitsio.FITSHDR()
+    hdr.add_record({
+        "name": "BUNIT",
+        "value": "",
+        "comment": "delta units (unitless)",
+    })
+    delta_label = "DELTA" if Forest.blinding == "none" else "DELTA_BLIND"
     results.write(
-        delta, extname="DELTA" if Forest.blinding == "none" else "DELTA_BLIND")
+        delta,
+        header=hdr,
+        extname=delta_label)
+    results[delta_label].write_comment("Flux transmission field in " +
+                                       "wavelength bins")
+    results[delta_label].write_checksum()
 
     weight = np.full((len(forests), len(Forest.log_lambda_grid)), np.nan)
     for i, forest in enumerate(forests):
         weight[i][forest.log_lambda_index] = forest.weights
 
+    hdr = fitsio.FITSHDR()
+    hdr.add_record({
+        "name": "BUNIT",
+        "value": "",
+        "comment": "weight units (unitless)",
+    })
     results.write(
         weight,
         extname="WEIGHT",
     )
+    results["WEIGHT"].write_comment("Weights in wavelength bins")
+    results["WEIGHT"].write_checksum()
 
     continuum = np.full((len(forests), len(Forest.log_lambda_grid)), np.nan)
     for i, forest in enumerate(forests):
         continuum[i][forest.log_lambda_index] = forest.continuum
 
+    hdr = fitsio.FITSHDR()
+    hdr.add_record({
+        "name": "BUNIT",
+        "value": Forest.flux_units,
+        "comment": "flux units",
+    })
     results.write(
         continuum,
         extname="CONT",
     )
+    results["CONT"].write_comment("Quasar continuum in wavelength bins")
+    results["CONT"].write_checksum()
 
     return forests
 
@@ -323,6 +376,10 @@ class Data:
                 "Unrecognised value for 'wave solution'. Expected either "
                 f"'lin' or 'log'. Found '{wave_solution}'.")
 
+        flux_units = config.get("flux units")
+        if flux_units is None:
+            raise DataError("Missing argument 'flux units' required by Data")
+
         lambda_max = config.getfloat("lambda max")
         if lambda_max is None:
             raise DataError("Missing argument 'lambda max' required by Data")
@@ -341,7 +398,7 @@ class Data:
         Forest.set_class_variables(lambda_min, lambda_max,
                                    lambda_min_rest_frame, lambda_max_rest_frame,
                                    pixel_step, pixel_step_rest_frame,
-                                   wave_solution)
+                                   wave_solution, flux_units)
 
         # instance variables
         self.analysis_type = config.get("analysis type")

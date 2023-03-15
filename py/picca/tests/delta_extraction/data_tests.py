@@ -100,6 +100,7 @@ class DataTest(AbstractTest):
                             "delta log lambda": 3e-4,
                             "input directory": f"{THIS_DIR}/data/",
                             "num processors": 1,
+                            "flux units": "Flux units",
                          }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -118,6 +119,7 @@ class DataTest(AbstractTest):
                                    "delta log lambda": 3e-4,
                                    "input directory": f"{THIS_DIR}/data/",
                                    "num processors": 1,
+                                   "flux units": "Flux units",
                          }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -180,11 +182,25 @@ class DataTest(AbstractTest):
             Data(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
+        # create a Data instance with missing flux units
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+        }})
+        expected_message = (
+            "Missing argument 'flux units' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
         # create a Data instance with missing lambda_max
         config = ConfigParser()
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
         }})
         expected_message = (
             "Missing argument 'lambda max' required by Data"
@@ -198,6 +214,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
         }})
         expected_message = (
@@ -212,6 +229,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
         }})
@@ -227,6 +245,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -243,6 +262,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -260,6 +280,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -280,6 +301,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -299,6 +321,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -320,6 +343,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -338,6 +362,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -357,6 +382,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -377,6 +403,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -398,6 +425,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -420,6 +448,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -444,6 +473,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -470,6 +500,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -493,6 +524,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -517,6 +549,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -543,6 +576,7 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
             "wave solution": "lin",
             "delta lambda": 0.8,
+            "flux units": "Flux units",
             "lambda max": 5500.0,
             "lambda max rest frame": 1200.0,
             "lambda min": 3600.0,
@@ -574,10 +608,12 @@ class DataTest(AbstractTest):
                             "rejection log file": "rejection_log.fits.gz",
                             "save format": "BinTableHDU",
                             "wave solution": "log",
+                            "flux units": "Flux units",
                             "delta log lambda": 3e-4,
                             "delta log lambda rest frame": 3e-4,
                             "input directory": f"{THIS_DIR}/data/",
                             "num processors": 1,
+                            "flux units": "Flux units",
                         }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -619,6 +655,7 @@ class DataTest(AbstractTest):
                                    "delta log lambda rest frame": 3e-4,
                                    "input directory": f"{THIS_DIR}/data/",
                                    "num processors": 1,
+                                   "flux units": "Flux units",
                          }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -647,6 +684,7 @@ class DataTest(AbstractTest):
                                    "input directory": f"{THIS_DIR}/data/",
                                    "minimal snr bao3d": 100000000,
                                    "num processors": 1,
+                                   "flux units": "Flux units",
                          }})
         for key, value in defaults_data.items():
             if key not in config["data"]:

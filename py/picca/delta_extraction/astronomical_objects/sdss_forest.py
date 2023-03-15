@@ -8,6 +8,7 @@ class SdssForest(Forest):
     Class Methods
     -------------
     (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
+    get_cont_units
     get_metadata_dtype
     get_metadata_units
 

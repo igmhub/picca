@@ -72,6 +72,7 @@ class SdssData(Data):
         self.mode = None
         self.__parse_config(config)
 
+        config["flux units"] = "10**-19 W/(m2 nm)"
         super().__init__(config)
 
         # load DRQ Catalogue

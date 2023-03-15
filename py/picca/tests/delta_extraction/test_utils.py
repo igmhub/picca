@@ -16,6 +16,7 @@ def reset_forest():
     Forest.log_lambda_grid = np.array([])
     Forest.log_lambda_rest_frame_grid = np.array([])
     Forest.mask_fields = []
+    Forest.flux_units = None
     Pk1dForest.lambda_abs_igm = None
 
 # setup Forest class variables
@@ -47,7 +48,7 @@ def setup_forest(wave_solution, rebin=1, pixel_step=None):
     pixel_step_rf = pixel_step
 
     Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step, pixel_step_rf,
-                               wave_solution)
+                               wave_solution, "")
 
 setup_forest("log", rebin=3)
 

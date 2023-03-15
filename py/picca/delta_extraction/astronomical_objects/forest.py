@@ -242,6 +242,7 @@ class Forest(AstronomicalObject):
     -------------
     (see AstronomicalObject in py/picca/delta_extraction/astronomical_objects/forest.py)
     class_variable_check
+    get_cont_units
     get_metadata_dtype
     get_metadata_units
     set_class_variables
@@ -320,6 +321,7 @@ class Forest(AstronomicalObject):
     Weights associated to the delta field. None for no information
     """
     blinding = "none"
+    flux_units = None
     log_lambda_grid = np.array([])  #None
     log_lambda_rest_frame_grid = np.array([])  #None
     log_lambda_index = np.array([]) #None
@@ -496,7 +498,7 @@ class Forest(AstronomicalObject):
             cols += [self.log_lambda]
             names += ["LOGLAM"]
             comments += ["Log lambda"]
-            units += ["log Angstrom"]
+            units += ["log(Angstrom)"]
             array_size = self.log_lambda.size
         elif Forest.wave_solution == "lin":
             cols += [10**self.log_lambda]
@@ -536,7 +538,7 @@ class Forest(AstronomicalObject):
         names += ["CONT"]
         comments += ["Quasar continuum. Check input "
                      "spectra for units"]
-        units += ["Flux units"]
+        units += [Forest.flux_units]
 
         return cols, names, units, comments
 
@@ -684,7 +686,7 @@ class Forest(AstronomicalObject):
     @classmethod
     def set_class_variables(cls, lambda_min, lambda_max, lambda_min_rest_frame,
                             lambda_max_rest_frame, pixel_step,
-                            pixel_step_rest_frame, wave_solution):
+                            pixel_step_rest_frame, wave_solution, flux_units):
         """Set class variables
 
         Arguments
@@ -709,6 +711,9 @@ class Forest(AstronomicalObject):
         wave_solution: "log" or "lin"
         Specifies whether we want to construct a wavelength grid that is evenly
         spaced on wavelength (lin) or on the logarithm of the wavelength (log)
+
+        flux_units: str
+        Flux units
         """
         if wave_solution == "log":
             cls.log_lambda_grid = np.arange(
@@ -732,3 +737,5 @@ class Forest(AstronomicalObject):
         cls.wave_solution = wave_solution
 
         cls.mask_fields = defaults.get("mask fields").copy()
+
+        cls.flux_units = flux_units

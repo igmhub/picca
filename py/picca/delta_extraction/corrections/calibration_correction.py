@@ -48,19 +48,19 @@ class CalibrationCorrection(Correction):
             )
         try:
             hdu = fitsio.read(filename, ext="STACK_DELTAS")
-            if "loglam" in hdu.dtype.names:
-                stack_log_lambda = hdu['loglam']
+            if "LOGLAM" in hdu.dtype.names:
+                stack_log_lambda = hdu['LOGLAM']
                 self.wave_solution = "log"
-            elif "lambda" in hdu.dtype.names:
-                stack_lambda = hdu['lambda']
+            elif "LAMBDA" in hdu.dtype.names:
+                stack_lambda = hdu['LAMBDA']
                 self.wave_solution = "lin"
             else:
                 raise CorrectionError("Error loading CalibrationCorrection. In "
                                       "extension 'STACK_DELTAS' in file "
-                                      f"{filename} one of the fields 'loglam' "
-                                      "or 'lambda' should be present. I did not"
+                                      f"{filename} one of the fields 'LOGLAM' "
+                                      "or 'LAMBDA' should be present. I did not "
                                       "find them.")
-            stack_delta = hdu['stack']
+            stack_delta = hdu['STACK']
         except OSError as error:
             raise CorrectionError(
                 "Error loading CalibrationCorrection. "

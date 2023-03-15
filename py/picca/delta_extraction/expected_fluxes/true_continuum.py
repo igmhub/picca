@@ -232,11 +232,14 @@ class TrueContinuum(ExpectedFlux):
             self.get_var_lss(self.log_lambda_var_func_grid),
         ]
         names = [
-            "loglam",
-            "var_lss",
+            "LOGLAM",
+            "VAR_LSS",
         ]
+        units = ["log(Angstrom)", ""]
 
-        results.write(values, names=names, extname='VAR_FUNC')
+        results.write(values, names=names, units=units, extname='VAR_FUNC')
+        results["VAR_FUNC"].write_comment("Variance fitted functions")
+        results["VAR_FUNC"].write_checksum()
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,

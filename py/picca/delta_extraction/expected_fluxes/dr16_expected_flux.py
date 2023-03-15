@@ -648,9 +648,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 chi2_list.append(cont_fit[2])
                 ndata_list.append(cont_fit[3])
                 if any(np.isnan(cont_fit)):
-                    accepted_fit.append("no")
+                    accepted_fit.append(False)
                 else:
-                    accepted_fit.append("yes")
+                    accepted_fit.append(True)
             values = [
                 np.array(los_id_list),
                 np.array(zero_point_list),
@@ -660,15 +660,17 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 np.array(accepted_fit),
             ]
             names = [
-                "los_id",
-                "zero_point",
-                "slope",
-                "chi2",
-                "num_datapoints",
-                "accepted_fit",
+                "LOS_ID",
+                "ZERO_POINT",
+                "SLOPE",
+                "CHI2",
+                "NUM_DATAPOINTS",
+                "ACCEPTED_FIT",
             ]
 
             results.write(values, names=names, extname='FIT_METADATA')
+            results["FIT_METADATA"].write_comment("Quasar continuum in wavelength bins")
+            results["FIT_METADATA"].write_checksum()
 
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
@@ -683,19 +685,22 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.get_eta(self.log_lambda_var_func_grid),
             self.get_var_lss(self.log_lambda_var_func_grid),
             self.get_fudge(self.log_lambda_var_func_grid),
-            self.get_num_pixels(self.log_lambda_var_func_grid),
-            self.get_valid_fit(self.log_lambda_var_func_grid)
+            self.get_num_pixels(self.log_lambda_var_func_grid).astype(np.int32),
+            self.get_valid_fit(self.log_lambda_var_func_grid).astype(bool)
         ]
         names = [
-            "loglam",
-            "eta",
-            "var_lss",
-            "fudge",
-            "num_pixels",
-            "valid_fit",
+            "LOGLAM",
+            "ETA",
+            "VAR_LSS",
+            "FUDGE",
+            "NUM_PIXELS",
+            "VALID_FIT",
         ]
+        units = ["log(Angstrom)", "", "", "", "", ""]
 
-        results.write(values, names=names, extname='VAR_FUNC')
+        results.write(values, names=names, units=units, extname='VAR_FUNC')
+        results["VAR_FUNC"].write_comment("Variance fitted functions")
+        results["VAR_FUNC"].write_checksum()
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
