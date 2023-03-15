@@ -378,8 +378,11 @@ class ExpectedFlux:
         """
         header = fitsio.FITSHDR()
         if hasattr(self, 'order'):
-            header.add_record(dict(name="FITORDER", value=self.order,
-                                comment=""))
+            header.add_record({
+                "name": "FITORDER",
+                "value": self.order,
+                "comment": "",
+            })
 
         results.write([
             Forest.log_lambda_grid,
