@@ -686,7 +686,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.get_var_lss(self.log_lambda_var_func_grid),
             self.get_fudge(self.log_lambda_var_func_grid),
             self.get_num_pixels(self.log_lambda_var_func_grid).astype(np.int32),
-            self.get_valid_fit(self.log_lambda_var_func_grid).astype(np.bool)
+            self.get_valid_fit(self.log_lambda_var_func_grid).astype(bool)
         ]
         names = [
             "LOGLAM",
