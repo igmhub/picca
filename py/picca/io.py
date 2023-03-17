@@ -1443,7 +1443,7 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
 # Rebin
     if rebin_factor is not None:
         if 'LAMBDA' in hdul:
-            card = 'METADATA'
+            card = 'LAMBDA'
         else:
             card = 1
 
