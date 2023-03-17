@@ -47,11 +47,11 @@ class CalibrationCorrection(Correction):
                 "Missing argument 'filename' required by SdssCalibrationCorrection"
             )
         try:
-            hdu = fitsio.read(filename, ext="STACK_DELTAS")
-            if "LOGLAM" in hdu.dtype.names:
+            hdu = fitsio.FITS(filename)["STACK_DELTAS"]
+            if "LOGLAM" in [name.upper() for name in hdu.get_colnames()]:
                 stack_log_lambda = hdu['LOGLAM']
                 self.wave_solution = "log"
-            elif "LAMBDA" in hdu.dtype.names:
+            elif "LAMBDA" in [name.upper() for name in hdu.get_colnames()]:
                 stack_lambda = hdu['LAMBDA']
                 self.wave_solution = "lin"
             else:
