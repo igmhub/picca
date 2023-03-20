@@ -4,6 +4,7 @@ import logging
 
 import fitsio
 import numpy as np
+from numba import njit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
@@ -18,7 +19,7 @@ defaults = {
 accepted_options = ["bal index type", "filename", "los_id name", "keep pixels"]
 
 # Wavelengths in Angstroms
-lines = np.array([
+LINES = np.array([
     ("lCIV", 1549),
     ("lSiIV1", 1394),
     ("lSiIV2", 1403),
@@ -35,6 +36,53 @@ lines = np.array([
     ("lOI", 1039),
     ], dtype=[("name", "U10"), ("value", float)])
 
+@njit
+def add_bal_rest_frame(los_id, los_id_array, min_velocities_array, max_velocities_array):
+    """Creates a list of wavelengths to be masked out by forest.mask
+
+    Arguments
+    ---------
+    los_id: str
+    Line-of-sight id
+
+    los_id_name: str
+    Name of the line-of-sight id
+    """
+    # Match thing_id of object to BAL catalog index
+    # Will there be duplicates or only one index?
+    match_index = np.where(los_id_array == los_id)[0]
+
+    # Store the min/max velocity pairs from the BAL catalog
+    min_velocities = min_velocities_array[match_index]
+    max_velocities = max_velocities_array[match_index]
+
+    # Remove non-positive velocity rows
+    w = (min_velocities>0) & (max_velocities>0)
+    min_velocities = min_velocities[w]
+    max_velocities = max_velocities[w]
+
+    num_velocities = min_velocities.size
+    if num_velocities == 0:
+        return None
+
+    mask_rest_frame_bal = np.empty(num_velocities * LINES.size,
+        dtype=[('log_lambda_min', 'f8'), ('log_lambda_max', 'f8'),
+        ('lambda_min', 'f8'), ('lambda_max', 'f8')])
+
+    # Calculate mask width for each velocity pair, for each emission line
+    # This might be  bit confusing, since BAL absorption is
+    # blueshifted from the emission lines. The “minimum velocity”
+    # corresponds to the red side of the BAL absorption (the larger
+    # wavelength value), and the “maximum velocity” corresponds to
+    # the blue side (the smaller wavelength value).
+    lambda_max = np.outer(LINES['value'], 1 - min_velocities / SPEED_LIGHT).ravel()
+    lambda_min = np.outer(LINES['value'], 1 - max_velocities / SPEED_LIGHT).ravel()
+    mask_rest_frame_bal['lambda_min'] = lambda_min
+    mask_rest_frame_bal['lambda_max'] = lambda_max
+    mask_rest_frame_bal['log_lambda_min'] = np.log10(lambda_min)
+    mask_rest_frame_bal['log_lambda_max'] = np.log10(lambda_max)
+
+    return mask_rest_frame_bal
 
 class BalMask(Mask):
     """Class to mask BALs
@@ -145,12 +193,16 @@ class BalMask(Mask):
             hdul.close()
 
         # compute info for each line of sight
-        self.los_ids = {}
-        for los_id in np.unique(self.cat[los_id_name]):
-            self.los_ids[los_id] = self.add_bal_rest_frame(los_id, los_id_name)
+        self.los_ids = {
+            los_id: add_bal_rest_frame(
+                los_id,
+                self.cat[los_id_name],
+                self.cat[self.velocity_list[0]],
+                self.cat[self.velocity_list[1]])
+            for los_id in np.unique(self.cat[los_id_name])
+        }
 
-        num_bals = np.sum([len(los_id) for los_id in self.los_ids.values()
-                          if los_id is not None])
+        num_bals = len(self.los_ids)
         self.logger.progress(f'In catalog: {num_bals} BAL quasars')
 
     def add_bal_rest_frame(self, los_id, los_id_name):
@@ -184,7 +236,7 @@ class BalMask(Mask):
         if num_velocities == 0:
             return None
 
-        num_lines = lines.size
+        num_lines = LINES.size
         mask_rest_frame_bal = np.empty(num_velocities * num_lines,
             dtype=[('log_lambda_min', 'f8'), ('log_lambda_max', 'f8'),
             ('lambda_min', 'f8'), ('lambda_max', 'f8')])
@@ -195,8 +247,8 @@ class BalMask(Mask):
         # corresponds to the red side of the BAL absorption (the larger
         # wavelength value), and the “maximum velocity” corresponds to
         # the blue side (the smaller wavelength value).
-        lambda_max = np.outer(lines['value'], 1 - min_velocities / SPEED_LIGHT).ravel()
-        lambda_min = np.outer(lines['value'], 1 - max_velocities / SPEED_LIGHT).ravel()
+        lambda_max = np.outer(LINES['value'], 1 - min_velocities / SPEED_LIGHT).ravel()
+        lambda_min = np.outer(LINES['value'], 1 - max_velocities / SPEED_LIGHT).ravel()
         mask_rest_frame_bal['lambda_min'] = lambda_min
         mask_rest_frame_bal['lambda_max'] = lambda_max
         mask_rest_frame_bal['log_lambda_min'] = np.log10(lambda_min)

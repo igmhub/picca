@@ -5,6 +5,7 @@ import logging
 from astropy.table import Table
 import fitsio
 import numpy as np
+from numba import njit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
@@ -22,6 +23,133 @@ np.random.seed(0)
 NUM_POINTS = 10000
 GAUSSIAN_DIST = np.random.normal(size=NUM_POINTS) * np.sqrt(2)
 
+
+@njit
+def dla_profile(lambda_, z_abs, nhi):
+    """Compute DLA profile
+
+    Arguments
+    ---------
+    lambda_: array of floats
+    Wavelength (in Angs)
+
+    z_abs: float
+    Redshift of the absorption
+
+    nhi: float
+    DLA column density in log10(cm^-2)
+    """
+    transmission = np.exp(
+        -tau_lya(lambda_, z_abs, nhi)
+        -tau_lyb(lambda_, z_abs, nhi))
+    return
+
+### Implementation of Pasquier code,
+###     also in Rutten 2003 at 3.3.3
+@njit
+def tau_lya(lambda_, z_abs, nhi):
+    """Compute the optical depth for Lyman-alpha absorption.
+
+    Arguments
+    ---------
+    lambda_: array of floats
+    Wavelength (in Angs)
+
+    z_abs: float
+    Redshift of the absorption
+
+    nhi: float
+    DLA column density in log10(cm^-2)
+
+    Return
+    ------
+    tau: array of float
+    The optical depth.
+    """
+    lambda_lya = ABSORBER_IGM["LYA"]  ## Lya wavelength [A]
+    gamma = 6.625e8  ## damping constant of the transition [s^-1]
+    osc_strength = 0.4164  ## oscillator strength of the atomic transition
+    speed_light = 3e8  ## speed of light [m/s]
+    thermal_velocity = 30000.  ## sqrt(2*k*T/m_proton) with
+    ## T = 5*10^4 ## [m.s^-1]
+    nhi_cm2 = 10**nhi  ## column density [cm^-2]
+    lambda_rest_frame = lambda_ / (1 + z_abs)
+    ## wavelength at DLA restframe [A]
+
+    u_voight = ((speed_light / thermal_velocity) *
+                (lambda_lya / lambda_rest_frame - 1))
+    ## dimensionless frequency offset in Doppler widths.
+    a_voight = lambda_lya * 1e-10 * gamma / (4 * np.pi * thermal_velocity)
+    ## Voigt damping parameter
+    voigt = voigt(a_voight, u_voight)
+    thermal_velocity /= 1000.
+    ## 1.497e-16 = e**2/(4*sqrt(pi)*epsilon0*m_electron*c)*1e-10
+    ## [m^2.s^-1.m/]
+    ## we have b/1000 & 1.497e-15 to convert
+    ## 1.497e-15*osc_strength*lambda_rest_frame*h/n to cm^2
+    tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt /
+           thermal_velocity)
+    return tau
+
+@njit
+def tau_lyb(lambda_, z_abs, nhi):
+    """Compute the optical depth for Lyman-beta absorption.
+
+    Arguments
+    ---------
+    lambda_: array of floats
+    Wavelength (in Angs)
+
+    z_abs: float
+    Redshift of the absorption
+
+    nhi: float
+    DLA column density in log10(cm^-2)
+
+    Return
+    ------
+    tau: array of float
+    The optical depth.
+    """
+    lam_lyb = ABSORBER_IGM["LYB"]
+    gamma = 0.079120
+    osc_strength = 1.897e8
+    speed_light = 3e8  ## speed of light m/s
+    thermal_velocity = 30000.
+    nhi_cm2 = 10**nhi
+    lambda_rest_frame = lambda_ / (1 + z_abs)
+
+    u_voight = ((speed_light / thermal_velocity) *
+                (lam_lyb / lambda_rest_frame - 1))
+    a_voight = lam_lyb * 1e-10 * gamma / (4 * np.pi * thermal_velocity)
+    voigt = voigt(a_voight, u_voight)
+    thermal_velocity /= 1000.
+    tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt /
+           thermal_velocity)
+    return tau
+
+# maybe we should replace this by scipy.special.voigt_profile?
+# if it is in numba
+@njit
+def voigt(a_voight, u_voight):
+    """Compute the classical Voigt function
+
+    Arguments
+    ---------
+    a_voight: array of floats
+    Voigt damping parameter.
+
+    u_voight: array of floats
+    Dimensionless frequency offset in Doppler widths.
+
+    Return
+    ------
+    voigt: array of float
+    The Voigt function for each element in a, u
+    """
+    unnormalized_voigt = np.mean(
+        1 / (a_voight**2 + (GAUSSIAN_DIST[:, None] - u_voight)**2), axis=0)
+    return unnormalized_voigt * a_voight / np.sqrt(np.pi)
 
 class DlaMask(Mask):
     """Class to mask DLAs
@@ -152,8 +280,8 @@ class DlaMask(Mask):
         if self.los_ids.get(forest.los_id) is not None:
             dla_transmission = np.ones(len(lambda_))
             for (z_abs, nhi) in self.los_ids.get(forest.los_id):
-                dla_transmission *= DlaProfile(lambda_, z_abs,
-                                               nhi).transmission
+                dla_transmission *= dla_profile(lambda_, z_abs,
+                                                nhi)
 
             # find out which pixels to mask
             w = dla_transmission > self.dla_mask_limit
@@ -212,8 +340,8 @@ class DlaProfile:
         self.z_abs = z_abs
         self.nhi = nhi
 
-        self.transmission = self.profile_lya_absorption(lambda_, z_abs, nhi)
-        self.transmission *= self.profile_lyb_absorption(lambda_, z_abs, nhi)
+        self.transmission = profile_lya_absorption(lambda_, z_abs, nhi)
+        self.transmission *= profile_lyb_absorption(lambda_, z_abs, nhi)
 
     @staticmethod
     def profile_lya_absorption(lambda_, z_abs, nhi):
