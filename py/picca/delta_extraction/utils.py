@@ -299,7 +299,7 @@ def update_accepted_options(accepted_options, new_options, remove=False):
 
     return accepted_options
 
-def update_default_options(default_options, new_options):
+def update_default_options(default_options, new_options, force_overwrite=True):
     """Update the content of the list of accepted options
 
     Arguments
@@ -309,6 +309,12 @@ def update_default_options(default_options, new_options):
 
     new_options: dict
     The new options
+
+    force_overwrite: bool - default: False
+    If different values for a specific key are given the code raises an error
+    complaining about conflicting default values. If `force_overwrite` is True,
+    keep the value from new_options instead. This should be used with caution
+    and only to overwrite default values from parent classes.
 
     Return
     ------
@@ -325,11 +331,14 @@ def update_default_options(default_options, new_options):
                     "found to have values with different type: "
                     f"{type(default_value)} and {type(value)}. "
                     "Revise your recent changes or contact picca developpers.")
-            if default_value != value:
+            if default_value != value and not force_overwrite:
                 raise DeltaExtractionError(
                     f"Incompatible defaults are being added. Key {key} "
                     f"found to have two default values: '{value}' and '{default_value}' "
-                    "Revise your recent changes or contact picca developpers.")
+                    "Please revise your recent changes. If you really want to "
+                    "overwrite the default values of a parent class, then pass "
+                    "`force_overload=True`. If you are unsure what this message "
+                    "means contact picca developpers.")
         else:
             default_options[key] = value
 
