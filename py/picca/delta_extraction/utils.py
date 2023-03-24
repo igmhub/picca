@@ -299,7 +299,7 @@ def update_accepted_options(accepted_options, new_options, remove=False):
 
     return accepted_options
 
-def update_default_options(default_options, new_options, force_overwrite=True):
+def update_default_options(default_options, new_options, force_overwrite=False):
     """Update the content of the list of accepted options
 
     Arguments
