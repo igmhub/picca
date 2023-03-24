@@ -62,9 +62,9 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
         # initialize fudge factor
         if self.fudge_value.endswith(".fits") or self.fudge_value.endswith(
                 ".fits.gz"):
-            hdu = fitsio.read(self.fudge_value, ext="VAR_FUNC")
-            self.get_fudge = interp1d(hdu["loglam"],
-                                      hdu["fudge"],
+            hdu = fitsio.FITS(self.fudge_value)["VAR_FUNC"]
+            self.get_fudge = interp1d(hdu["LOGLAM"].read(),
+                                      hdu["FUDGE"].read(),
                                       fill_value='extrapolate',
                                       kind='nearest')
         else:
