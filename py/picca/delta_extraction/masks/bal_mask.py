@@ -194,7 +194,7 @@ class BalMask(Mask):
 
         # compute info for each line of sight
         self.los_ids = {
-            los_id: add_bal_rest_frame(
+            los_id: (
                 los_id,
                 self.cat[los_id_name],
                 self.cat[self.velocity_list[0]],
@@ -269,7 +269,7 @@ class BalMask(Mask):
         -----
         MaskError if Forest.wave_solution is not 'log'
         """
-        mask_table = self.los_ids.get(forest.los_id)
+        mask_table = add_bal_rest_frame(*self.los_ids.get(forest.los_id))
 
         if (mask_table is None) or len(mask_table) == 0:
             return
