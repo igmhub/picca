@@ -414,7 +414,7 @@ def compute_correction_reso(delta_pixel, mean_reso, k):
     return correction
 
 
-def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel):
+def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel, pixelization_correction = False):
     """Computes the resolution correction based on the resolution matrix using linear binning
 
     Arguments
@@ -455,12 +455,13 @@ def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel):
         w2_arr.append(w2)
 
     w_res2 = np.mean(w2_arr, axis=0)
-    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))**2
 
     # the following assumes that the resolution matrix is storing the actual
     # resolution convolved with the pixelization kernel along each matrix axis
     correction = w_res2
-    correction /= pixelization_factor
+    if pixelization_correction :
+        pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))**2
+        correction /= pixelization_factor
 
     return correction
 
