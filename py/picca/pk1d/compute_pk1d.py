@@ -414,7 +414,8 @@ def compute_correction_reso(delta_pixel, mean_reso, k):
     return correction
 
 
-def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel, pixelization_correction = False):
+def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel, 
+                                   pixelization_correction = False):
     """Computes the resolution correction based on the resolution matrix using linear binning
 
     Arguments
