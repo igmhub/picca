@@ -42,7 +42,7 @@ def dla_profile(lambda_, z_abs, nhi):
     transmission = np.exp(
         -tau_lya(lambda_, z_abs, nhi)
         -tau_lyb(lambda_, z_abs, nhi))
-    return
+    return transmission
 
 ### Implementation of Pasquier code,
 ###     also in Rutten 2003 at 3.3.3
@@ -81,13 +81,13 @@ def tau_lya(lambda_, z_abs, nhi):
     ## dimensionless frequency offset in Doppler widths.
     a_voight = lambda_lya * 1e-10 * gamma / (4 * np.pi * thermal_velocity)
     ## Voigt damping parameter
-    voigt = voigt(a_voight, u_voight)
+    voigt_profile = voigt(a_voight, u_voight)
     thermal_velocity /= 1000.
     ## 1.497e-16 = e**2/(4*sqrt(pi)*epsilon0*m_electron*c)*1e-10
     ## [m^2.s^-1.m/]
     ## we have b/1000 & 1.497e-15 to convert
     ## 1.497e-15*osc_strength*lambda_rest_frame*h/n to cm^2
-    tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt /
+    tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt_profile /
            thermal_velocity)
     return tau
 
@@ -122,9 +122,9 @@ def tau_lyb(lambda_, z_abs, nhi):
     u_voight = ((speed_light / thermal_velocity) *
                 (lam_lyb / lambda_rest_frame - 1))
     a_voight = lam_lyb * 1e-10 * gamma / (4 * np.pi * thermal_velocity)
-    voigt = voigt(a_voight, u_voight)
+    voigt_profile = voigt(a_voight, u_voight)
     thermal_velocity /= 1000.
-    tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt /
+    tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt_profile /
            thermal_velocity)
     return tau
 
