@@ -5,7 +5,7 @@ import logging
 from astropy.table import Table
 import fitsio
 import numpy as np
-from numba import njit, prange
+from numba import njit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
