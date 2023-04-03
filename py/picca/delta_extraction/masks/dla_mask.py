@@ -148,6 +148,9 @@ def voigt(a_voight, u_voight):
     The Voigt function for each element in a, u
     """
     unnormalized_voigt = np.zeros_like(u_voight)
+    # prange is a numba function equivalent to range but flagging as
+    # adept for parallelisation
+    # pylint: disable=not-an-iterable
     for index in prange(unnormalized_voigt.shape[0]):
         unnormalized_voigt[index] = np.mean(
             1.0 / (a_voight**2 + (GAUSSIAN_DIST - u_voight[index])**2)
