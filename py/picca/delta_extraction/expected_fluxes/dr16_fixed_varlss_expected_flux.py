@@ -62,9 +62,9 @@ class Dr16FixedVarlssExpectedFlux(Dr16ExpectedFlux):
         # initialize fudge factor
         if self.var_lss_value.endswith(".fits") or self.var_lss_value.endswith(
                 ".fits.gz"):
-            hdu = fitsio.read(self.var_lss_value, ext="VAR_FUNC")
-            self.get_var_lss = interp1d(hdu["loglam"],
-                                        hdu["var_lss"],
+            hdu = fitsio.FITS(self.var_lss_value)["VAR_FUNC"]
+            self.get_var_lss = interp1d(hdu["LOGLAM"].read(),
+                                        hdu["VAR_LSS"].read(),
                                         fill_value='extrapolate',
                                         kind='nearest')
         else:

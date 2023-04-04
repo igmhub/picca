@@ -62,9 +62,9 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
         # initialize eta factor
         if self.eta_value.endswith(".fits") or self.eta_value.endswith(
                 ".fits.gz"):
-            hdu = fitsio.read(self.eta_value, ext="VAR_FUNC")
-            self.get_eta = interp1d(hdu["loglam"],
-                                    hdu["eta"],
+            hdu = fitsio.FITS(self.eta_value)["VAR_FUNC"]
+            self.get_eta = interp1d(hdu["LOGLAM"].read(),
+                                    hdu["ETA"].read(),
                                     fill_value='extrapolate',
                                     kind='nearest')
         else:

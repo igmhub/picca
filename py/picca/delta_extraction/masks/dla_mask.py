@@ -9,15 +9,19 @@ from numba import njit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
-from picca.delta_extraction.mask import Mask
-from picca.delta_extraction.utils import ABSORBER_IGM
+from picca.delta_extraction.mask import Mask, accepted_options, defaults
+from picca.delta_extraction.utils import (
+    ABSORBER_IGM, update_accepted_options, update_default_options)
 
-defaults = {
-    "dla mask limit": 0.8,
-    "los_id name": "THING_ID",
-}
+accepted_options = update_accepted_options(accepted_options, [
+    "dla mask limit", "los_id name", "mask file", "filename"
+])
 
-accepted_options = ["dla mask limit", "los_id name", "mask file", "filename", "keep pixels"]
+defaults = update_default_options(
+    defaults, {
+        "dla mask limit": 0.8,
+        "los_id name": "THING_ID",
+    })
 
 np.random.seed(0)
 NUM_POINTS = 10000

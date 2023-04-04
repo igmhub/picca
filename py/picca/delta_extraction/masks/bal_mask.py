@@ -8,15 +8,19 @@ from numba import njit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
-from picca.delta_extraction.mask import Mask
-from picca.delta_extraction.utils import SPEED_LIGHT
+from picca.delta_extraction.mask import Mask, accepted_options, defaults
+from picca.delta_extraction.utils import (
+    SPEED_LIGHT, update_accepted_options, update_default_options)
 
-defaults = {
-    "bal index type": "ai",
-    "los_id name": "THING_ID",
-}
+accepted_options = update_accepted_options(accepted_options, [
+    "bal index type", "filename", "los_id name", "keep pixels"
+])
 
-accepted_options = ["bal index type", "filename", "los_id name", "keep pixels"]
+defaults = update_default_options(
+    defaults, {
+        "bal index type": "ai",
+        "los_id name": "THING_ID",
+    })
 
 # Wavelengths in Angstroms
 LINES = np.array([
@@ -157,9 +161,10 @@ class BalMask(Mask):
         # setup bal index limit
         self.bal_index_type = config.get("bal index type")
         if self.bal_index_type is None:
-            self.bal_index_type = MaskError(
+            raise MaskError(
                 "Missing argument 'bal index type' "
                 "required by BalMask")
+        columns_list = None
         if self.bal_index_type == "ai":
             columns_list = [los_id_name, 'VMIN_CIV_450', 'VMAX_CIV_450']
         elif self.bal_index_type == "bi":
