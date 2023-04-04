@@ -1,4 +1,4 @@
-"""This module defines a set of functions to postprocess files produced by compute_pk1d.py.
+"""Module defining a set of functions to postprocess files produced by compute_pk1d.py.
 
 This module provides 3 main functions:
     - read_pk1d:
@@ -31,7 +31,7 @@ from picca.pk1d.utils import MEANPK_FITRANGE_SNR, fitfunc_variance_pk1d
 
 
 def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
-    """Read Pk1D data from a single file
+    """Read Pk1D data from a single file.
 
     Arguments
     ---------
@@ -151,11 +151,11 @@ def compute_mean_pk1d(
     number_bootstrap=50,
     number_worker=8,
 ):
-    """Compute mean P1D in a set of given (z,k) bins, from individual chunks P1Ds
+    """Compute mean P1D in a set of given (z,k) bins, from individual chunks P1Ds.
 
     Arguments
     ---------
-    p1d_table: Table
+    p1d_table: astropy.table.Table
     Individual Pk1Ds of the contributing forest chunks, stacked in one table using "read_pk1d",
     Contains 'k', 'Pk_raw', 'Pk_noise', 'Pk_diff', 'cor_reso', 'Pk', 'forest_z', 'forest_snr',
             'Delta2', 'Pk_norescor', 'Pk_nonoise', 'Pk_noraw'
@@ -191,12 +191,12 @@ def compute_mean_pk1d(
 
     Return
     ------
-    meanP1d_table: Table
+    meanP1d_table: astropy.table.Table
     One row per (z,k) bin; one column per statistics (eg. meanPk, errorPk_noise...)
     Other columns: 'N' (nb of chunks used), 'index_zbin' (index of associated
     row in metadata_table), 'zbin'
 
-    metadata_table: Table
+    metadata_table: astropy.table.Table
     One row per z bin; column values z_min/max, k_min/max, N_chunks
     """
     # Initializing stats we want to compute on data
@@ -461,13 +461,10 @@ def fill_average_pk(
     snrfit_table,
     nomedians,
 ):
-
     """Fill the average P1D table for all redshift and k bins.
-
 
     Arguments
     ---------
-
     nbins_z: int,
     Number of redshift bins.
 
@@ -497,7 +494,6 @@ def fill_average_pk(
     None
 
     """
-
     for izbin in range(nbins_z):  # Main loop 1) z bins
         (
             zbin_array,
@@ -542,7 +538,6 @@ def compute_average_pk_redshift(
     kbin_edges,
     izbin,
 ):
-
     """Compute the average P1D table for the given redshift and k bins.
 
     The function computes the mean P1D table for each redshift and k bin.
@@ -550,7 +545,6 @@ def compute_average_pk_redshift(
     table for that bin will be filled with NaNs.
     The mean value for each bin is calculated using a weighting method,
     either a fit to the SNR or using weights based on the redshift.
-
 
     Arguments
     ---------
@@ -604,9 +598,7 @@ def compute_average_pk_redshift(
     max_array
     median_array
     snrfit_array
-
     """
-
     n_array = np.zeros(nbins_k, dtype=int)
     zbin_array = np.zeros(nbins_k)
     index_zbin_array = np.zeros(nbins_k, dtype=int)
@@ -845,8 +837,7 @@ def compute_cov(
     select_z,
     sub_forest_ids,
 ):
-    """Computes the covariance of a set of 1D power spectra.
-
+    """Compute the covariance of a set of 1D power spectra.
 
     Arguments
     ---------
@@ -891,7 +882,6 @@ def compute_cov(
     covariance_array (array-like):
     Array of covariance coefficients.
     """
-
     zbin_array = np.zeros(nbins_k * nbins_k)
     index_zbin_array = np.zeros(nbins_k * nbins_k, dtype=int)
     n_array = np.zeros(nbins_k * nbins_k, dtype=int)
@@ -985,8 +975,8 @@ def run_postproc_pk1d(
     compute_bootstrap=False,
     number_bootstrap=50,
 ):
-    """Read individual Pk1D data from a set of files and compute P1D statistics,
-    stored in a summary FITS file.
+    """
+    Read individual Pk1D data from a set of files and compute P1D statistics, stored in a summary FITS file.
 
     Arguments
     ---------
@@ -1005,7 +995,6 @@ def run_postproc_pk1d(
     Other arguments are as defined
     in compute_mean_pk1d() or read_pk1d()
     """
-
     if os.path.exists(output_file) and not overwrite:
         raise RuntimeError("Output file already exists: " + output_file)
 
