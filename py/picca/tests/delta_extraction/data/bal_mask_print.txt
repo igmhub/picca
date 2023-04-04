@@ -1,0 +1,14 @@
+[PROGRESS]: Reading BAL catalog from: /Users/iprafols/Documents/GitHub/picca/py/picca/tests/delta_extraction/data/baltestcat.fits.gz
+[PROGRESS]: In catalog: 2 BAL quasars
+[PROGRESS]: Reading DLA catalog from: /Users/iprafols/Documents/GitHub/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]: In catalog: 3 DLAs
+[PROGRESS]: In catalog: 2 forests have a DLA
+
+[PROGRESS]: Reading DLA catalog from: /Users/iprafols/Documents/GitHub/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]: In catalog: 3 DLAs
+[PROGRESS]: In catalog: 2 forests have a DLA
+
+[PROGRESS]: Reading DLA catalog from: /Users/iprafols/Documents/GitHub/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]: In catalog: 3 DLAs
+[PROGRESS]: In catalog: 2 forests have a DLA
+

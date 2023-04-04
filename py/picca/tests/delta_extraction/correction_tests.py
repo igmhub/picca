@@ -50,11 +50,9 @@ class CorrectionTest(AbstractTest):
 
         # run apply_correction, this should raise CorrectionError
         forest = copy.deepcopy(forest1)
-
         expected_message = ("Function 'apply_correction' was not overloaded by "
                             "child class")
         with self.assertRaises(CorrectionError) as context_manager:
-
             correction.apply_correction(forest)
         self.compare_error_message(context_manager, expected_message)
 
