@@ -5,7 +5,6 @@ import logging
 import fitsio
 import numpy as np
 from numba import njit
-from numba.types import bool_
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
