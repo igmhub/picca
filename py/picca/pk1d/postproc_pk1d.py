@@ -236,7 +236,7 @@ def compute_mean_pk1d(
     metadata_table["k_min"] = kbin_edges[0] * np.ones(nbins_z)
     metadata_table["k_max"] = kbin_edges[-1] * np.ones(nbins_z)
 
-    if (compute_covariance) | (compute_bootstrap):
+    if compute_covariance or compute_bootstrap:
         if "sub_forest_id" not in p1d_table.columns:
             userprint(
                 """sub_forest_id cannot be computed from individual pk files,
