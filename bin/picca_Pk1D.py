@@ -242,7 +242,8 @@ def process_all_files(index_file_args):
                                             axis=1),
                         k=k,
                         delta_pixel=pixel_step,
-                        num_pixel=len(lambda_new))
+                        num_pixel=len(lambda_new),
+                        pixelization_correction = args.add_pixelization_correction)
                 elif reso_correction == 'Gaussian':
                     #this is roughly converting the mean resolution estimate back to pixels
                     #and then multiplying with pixel size
@@ -503,6 +504,15 @@ def main(cmdargs):
                         required=False,
                         help=('do not use the resolution matrix even '
                               'if it exists and we are on linear binning'))
+
+    parser.add_argument('--add-pixelization-correction',
+                        default=False,
+                        action='store_true',
+                        required=False,
+                        help=('Add a pixelization correction, as if the resolution  '
+                              'matrix was doubly pixelized. Only use this option in '
+                              'quickquasars mocks'))
+
 
     parser.add_argument(
         '--force-output-in-velocity',
