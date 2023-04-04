@@ -976,7 +976,7 @@ def run_postproc_pk1d(
     number_bootstrap=50,
 ):
     """
-    Read individual Pk1D data from a set of files and compute P1D statistics, stored in a summary FITS file.
+    Read individual Pk1D data from a set of files and compute P1D statistics.
 
     Arguments
     ---------
