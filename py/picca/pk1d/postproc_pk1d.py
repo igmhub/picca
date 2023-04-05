@@ -189,6 +189,20 @@ def compute_mean_pk1d(
     If weight_method='fit_snr', the results of the fit can be saved to an ASCII file.
     The file contains (z k a b standard_dev_points) for the "Pk" variable, for each (z,k) point
 
+    compute_covariance: Bool
+    If True, compute statistical covariance matrix of the mean P1D.
+    Requires  p1d_table to contain 'sub_forest_id', since correlations are computed
+    within individual forests.
+
+    compute_bootstrap: Bool
+    If True, compute statistical covariance using a simple bootstrap method.
+
+    number_bootstrap: int
+    Number of bootstrap samples used if compute_bootstrap is True.
+
+    number_worker: int
+    Calculations of mean P1Ds and covariances are run parallel over redshift bins.
+
     Return
     ------
     meanP1d_table: astropy.table.Table
