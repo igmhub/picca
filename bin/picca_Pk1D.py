@@ -338,6 +338,10 @@ def process_all_files(index_file_args):
                     'name': 'LOS_ID',
                     'value': delta.los_id,
                     'comment': "line of sight identifier, e.g. THING_ID or TARGETID"
+                }, {
+                    'name': 'CHUNK_ID',
+                    'value': part_index,
+                    'comment': "Chunk (sub-forest) identifier"
                 },
                 ]
 
