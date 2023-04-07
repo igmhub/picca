@@ -232,10 +232,6 @@ class BalMask(Mask):
         if self.los_ids.get(forest.los_id) is None:
             return
 
-        for item in self.los_ids.get(forest.los_id):
-            print(item, type(item))
-            if isinstance(item, np.ndarray):
-                print(item.dtype)
         log_lambda_min, log_lambda_max = add_bal_rest_frame(
             *self.los_ids.get(forest.los_id))
 
