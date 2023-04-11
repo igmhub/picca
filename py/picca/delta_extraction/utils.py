@@ -159,11 +159,11 @@ def find_bins(original_array, grid_array, wave_solution):
     """
     if wave_solution == "log":
         step = grid_array[1] - grid_array[0]
-        found_bin_new = np.floor((original_array - grid_array[0]) / step + 0.5).astype(np.int64)
+        found_bin = np.floor((original_array - grid_array[0]) / step + 0.5).astype(np.int64)
     elif wave_solution == "lin":
         aux = 10**grid_array[0]
         step = 10**grid_array[1] - aux
-        found_bin_new = np.floor((10**original_array - aux) / step + 0.5).astype(np.int64)
+        found_bin = np.floor((10**original_array - aux) / step + 0.5).astype(np.int64)
     else:  # pragma: no cover
         raise DeltaExtractionError(
             "Error in function find_bins from py/picca/delta_extraction/utils.py"
@@ -173,12 +173,12 @@ def find_bins(original_array, grid_array, wave_solution):
     # this occurs as the limits on maximum rest-frame or observed wavelengths
     # are not properly introduced somewhere
     # TODO: fix this elsewhere and then remove the following lines
-    pos = np.where((found_bin_new >= grid_array.size))
-    found_bin_new[pos] -= 1
-    pos = np.where((found_bin_new < 0))
-    found_bin_new[pos] = 0
+    pos = np.where((found_bin >= grid_array.size))
+    found_bin[pos] -= 1
+    pos = np.where((found_bin < 0))
+    found_bin[pos] = 0
 
-    return found_bin_new
+    return found_bin
 
 PROGRESS_LEVEL_NUM = 15
 logging.addLevelName(PROGRESS_LEVEL_NUM, "PROGRESS")
