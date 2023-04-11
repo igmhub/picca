@@ -159,11 +159,11 @@ def find_bins(original_array, grid_array, wave_solution):
     """
     if wave_solution == "log":
         step = grid_array[1] - grid_array[0]
-        found_bin = np.floor((original_array - grid_array[0]) / step + 0.5).astype(np.int64)
+        found_bin = ((original_array - grid_array[0]) / step + 0.5).astype(np.int64)
     elif wave_solution == "lin":
         aux = 10**grid_array[0]
         step = 10**grid_array[1] - aux
-        found_bin = np.floor((10**original_array - aux) / step + 0.5).astype(np.int64)
+        found_bin = ((10**original_array - aux) / step + 0.5).astype(np.int64)
     else:  # pragma: no cover
         raise DeltaExtractionError(
             "Error in function find_bins from py/picca/delta_extraction/utils.py"
