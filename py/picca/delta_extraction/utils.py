@@ -173,10 +173,7 @@ def find_bins(original_array, grid_array, wave_solution):
     # this occurs as the limits on maximum rest-frame or observed wavelengths
     # are not properly introduced somewhere
     # TODO: fix this elsewhere and then remove the following lines
-    pos = np.where((found_bin >= grid_array.size))
-    found_bin[pos] -= 1
-    pos = np.where((found_bin < 0))
-    found_bin[pos] = 0
+    found_bin = np.clip(found_bin, 0, grid_array.size - 1)
 
     return found_bin
 
