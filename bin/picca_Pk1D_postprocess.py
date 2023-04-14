@@ -189,7 +189,7 @@ def main(cmdargs):
                         help='Number of bootstrap iteration used')
 
 
-    args = parser.parse_args(sys.argv[1:])
+    args = parser.parse_args(cmdargs)
 
     if (args.weight_method != 'no_weights') and (args.snr_cut_scheme is not None):
         raise ValueError("""You are using a weighting method with a
