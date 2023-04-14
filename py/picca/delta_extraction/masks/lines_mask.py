@@ -5,9 +5,13 @@ import numpy as np
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.mask import Mask
+from picca.delta_extraction.mask import ( # pylint: disable=unused-import
+    accepted_options, defaults)
+from picca.delta_extraction.utils import update_accepted_options
 
-accepted_options = ["filename", "keep pixels"]
-
+accepted_options = update_accepted_options(accepted_options, [
+    "filename"
+])
 
 class LinesMask(Mask):
     """Class to mask (sky) lines
