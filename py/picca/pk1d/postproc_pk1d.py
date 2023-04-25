@@ -173,8 +173,6 @@ def compute_mean_pk1d(
     3 possible options:
         'fit_snr': Compute mean P1D with weights estimated by fitting dispersion vs SNR
         'no_weights': Compute mean P1D without weights
-        'simple_snr' (obsolete): Compute mean P1D with weights computed directly from SNR values
-                    (SNR as given in compute_Pk1D outputs)
 
     apply_z_weights: Bool
     If True, each chunk contributes to two nearest redshift bins with a linear weighting scheme.
@@ -779,23 +777,6 @@ def compute_average_pk_redshift(
                     ]
                     snrfit_array[ikbin, 4:] = standard_dev
 
-            elif weight_method == "simple_snr":
-                # - We keep this for record, we do not recommand to use it
-                # for forests with snr>snr_limit,
-                # the weight is fixed to (snr_limit - 1)**2 = 9
-                snr_limit = 4
-                forest_snr = p1d_table["forest_snr"][select]
-                # w, = np.where(forest_snr <= 1)
-                # if len(w)>0: raise RuntimeError('Cannot add weights with SNR<=1.')
-                if (forest_snr <= 1).sum() > 0:
-                    raise RuntimeError("Cannot add weights with SNR<=1.")
-                weights = (forest_snr - 1) ** 2
-                weights[forest_snr > snr_limit] = (snr_limit - 1) ** 2
-                mean = np.average(p1d_table[col][select], weights=weights)
-                # Need to rescale the weights to find the error:
-                #   weights_true = weights * (num_chunks - 1) / alpha
-                alpha = np.sum(weights * ((p1d_table[col][select] - mean) ** 2))
-                error = np.sqrt(alpha / (np.sum(weights) * (num_chunks - 1)))
 
             elif weight_method == "no_weights":
                 if apply_z_weights:
