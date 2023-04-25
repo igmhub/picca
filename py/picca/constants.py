@@ -160,7 +160,7 @@ class Cosmo(object):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,H0=100.,blinding=False):
+    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,blinding=False):
         """Initializes the methods for this instance
 
         Args:
@@ -176,6 +176,12 @@ class Cosmo(object):
                 Hubble constant at redshift 0 (in km/s/Mpc)
         """
 
+        # WARNING: This is introduced due to historical issues in how this class
+        # is coded. Using H0=100 implies that we are returning the distances
+        # in Mpc/h instead of Mpc. This class should be fixed at some point to
+        # make what we are doing more clear.
+        H0 = 100.0
+
         # Blind data
         if blinding == "none":
             userprint("ATTENTION: Analysis is not blinded!")
@@ -183,10 +189,10 @@ class Cosmo(object):
             userprint(f"ATTENTION: Analysis is blinded with strategy {blinding}")
 
         if blinding not in  ["strategyB", "strategyBC"]:
-            userprint(f"Om={Om}, Or={Or}, wl={wl}, H0={H0}")
+            userprint(f"Om={Om}, Or={Or}, wl={wl}")
         else:
             userprint("The specified cosmology is "
-                      f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
+                      f"not used: Om={Om}, Or={Or}, wl={wl}")
             # blind test small
             filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
             # blind test large
