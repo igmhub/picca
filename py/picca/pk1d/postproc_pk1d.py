@@ -737,10 +737,6 @@ def compute_average_pk_redshift(
                 data_snr = p1d_table["forest_snr"][select]
                 mask = np.isnan(data_values) | np.isnan(data_snr)
                 if len(mask[mask]) != 0:
-                    userprint(
-                        "Warning: A nan value was detected in the following table:\n",
-                        data_values[mask],
-                    )
                     data_snr = data_snr[~mask]
                     data_values = data_values[~mask]
                 # Fit function to observed dispersion:
