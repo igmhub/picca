@@ -170,7 +170,7 @@ def compute_mean_pk1d(
     Edges of the wavenumber bins we want to use, either in (Angstrom)-1 or s/km
 
     weight_method: string
-    3 possible options:
+    2 possible options:
         'fit_snr': Compute mean P1D with weights estimated by fitting dispersion vs SNR
         'no_weights': Compute mean P1D without weights
 
@@ -307,7 +307,7 @@ def compute_mean_pk1d(
     metadata_table["N_chunks"] = n_chunks
 
     zbin_centers = np.around((zbin_edges[1:] + zbin_edges[:-1]) / 2, 5)
-    if output_snrfit is not None:
+    if weight_method == "fit_snr":
         snrfit_table = np.zeros(
             (nbins_z * nbins_k, 13)
         )  # 13 entries: z k a b + 9 SNR bins used for the fit
@@ -324,7 +324,6 @@ def compute_mean_pk1d(
         p1d_table_cols,
         weight_method,
         apply_z_weights,
-        output_snrfit,
         nomedians,
         nbins_z,
         zbin_centers,
@@ -345,7 +344,7 @@ def compute_mean_pk1d(
         output_mean,
         mean_p1d_table,
         p1d_table_cols,
-        output_snrfit,
+        weight_method,
         snrfit_table,
         nomedians,
     )
@@ -369,6 +368,7 @@ def compute_mean_pk1d(
             kbin_edges,
             k_index,
             nbins_k,
+            snrfit_table,
         )
         if number_worker == 1:
             output_cov = [func(p) for p in params_pool]
@@ -423,6 +423,7 @@ def compute_mean_pk1d(
             kbin_edges,
             k_index,
             nbins_k,
+            snrfit_table,
         )
         if number_worker == 1:
             output_cov = [func(p) for p in params_pool]
@@ -469,7 +470,7 @@ def fill_average_pk(
     output_mean,
     mean_p1d_table,
     p1d_table_cols,
-    output_snrfit,
+    weight_method,
     snrfit_table,
     nomedians,
 ):
@@ -492,8 +493,10 @@ def fill_average_pk(
     p1d_table_cols: List of str,
     Column names in the input table to be averaged.
 
-    output_snrfit: bool,
-    If not None, write the fit to the SNR to a file.
+    weight_method: string
+    2 possible options:
+        'fit_snr': Compute mean P1D with weights estimated by fitting dispersion vs SNR
+        'no_weights': Compute mean P1D without weights
 
     snrfit_table: numpy ndarray,
     Table containing SNR fit infos
@@ -531,7 +534,7 @@ def fill_average_pk(
             mean_p1d_table["max" + col][i_min:i_max] = max_array[icol]
             if not nomedians:
                 mean_p1d_table["median" + col][i_min:i_max] = median_array[icol]
-        if output_snrfit is not None:
+        if weight_method == "fit_snr":
             snrfit_table[i_min:i_max, :] = snrfit_array
 
 
@@ -540,7 +543,6 @@ def compute_average_pk_redshift(
     p1d_table_cols,
     weight_method,
     apply_z_weights,
-    output_snrfit,
     nomedians,
     nbins_z,
     zbin_centers,
@@ -571,9 +573,6 @@ def compute_average_pk_redshift(
 
     apply_z_weights: bool,
     If True, apply redshift weights.
-
-    output_snrfit: bool,
-    If not None, write the fit to the SNR to a file.
 
     nomedians: bool,
     If True, do not use median values in the fit to the SNR.
@@ -622,7 +621,7 @@ def compute_average_pk_redshift(
         median_array = []
     else:
         median_array = None
-    if output_snrfit is not None:
+    if weight_method == "fit_snr":
         snrfit_array = np.zeros((nbins_k, 13))
     else:
         snrfit_array = None
@@ -646,7 +645,7 @@ def compute_average_pk_redshift(
             max_array[icol][:] = np.nan
             if not nomedians:
                 median_array[icol][:] = np.nan
-        if output_snrfit is not None:
+        if weight_method == "fit_snr":
             snrfit_array[:] = np.nan
 
         return (
@@ -768,7 +767,7 @@ def compute_average_pk_redshift(
                     )
                 else:
                     error = np.sqrt(1.0 / np.sum(weights))
-                if output_snrfit is not None and col == "Pk":
+                if col == "Pk":
                     snrfit_array[ikbin, 0:4] = [
                         zbin_centers[izbin],
                         (kbin + kbin_edges[ikbin + 1]) / 2.0,
@@ -824,6 +823,7 @@ def compute_cov(
     kbin_edges,
     k_index,
     nbins_k,
+    snrfit_table,
     izbin,
     select_z,
     sub_forest_ids,
