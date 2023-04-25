@@ -333,7 +333,7 @@ def compute_mean_pk1d(
         kbin_edges,
     )
     if number_worker == 1:
-        output_mean = [func(p) for p in params_pool]
+        output_mean = [func(p[0]) for p in params_pool]
     else:
         with Pool(number_worker) as pool:
             output_mean = pool.starmap(func, params_pool)
@@ -371,7 +371,7 @@ def compute_mean_pk1d(
             snrfit_table,
         )
         if number_worker == 1:
-            output_cov = [func(p) for p in params_pool]
+            output_cov = [func(*p) for p in params_pool]
         else:
             with Pool(number_worker) as pool:
                 output_cov = pool.starmap(func, params_pool)
