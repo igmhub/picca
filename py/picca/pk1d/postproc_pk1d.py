@@ -257,14 +257,14 @@ def compute_mean_pk1d(
             compute_covariance, compute_bootstrap = False, False
             cov_table = None
 
-        elif weight_method != "no_weights":
-            userprint(
-                """Covariance calculations are not compatible with SNR weighting method yet.
-                Skipping calculation"""
-            )
+        # elif weight_method != "no_weights":
+        #     userprint(
+        #         """Covariance calculations are not compatible with SNR weighting method yet.
+        #         Skipping calculation"""
+        #     )
 
-            compute_covariance, compute_bootstrap = False, False
-            cov_table = None
+        #     compute_covariance, compute_bootstrap = False, False
+        #     cov_table = None
 
         elif apply_z_weights:
             userprint(
@@ -368,6 +368,7 @@ def compute_mean_pk1d(
             kbin_edges,
             k_index,
             nbins_k,
+            weight_method,
             snrfit_table,
         )
         if number_worker == 1:
@@ -423,6 +424,7 @@ def compute_mean_pk1d(
             kbin_edges,
             k_index,
             nbins_k,
+            weight_method,
             snrfit_table,
         )
         if number_worker == 1:
@@ -768,6 +770,10 @@ def compute_average_pk_redshift(
                 else:
                     error = np.sqrt(1.0 / np.sum(weights))
                 if col == "Pk":
+                    if len(mask[mask]) != 0:
+                        standard_dev = np.concatenate(
+                            [standard_dev, np.full(len(mask[mask]), np.nan)]
+                        )
                     snrfit_array[ikbin, 0:4] = [
                         zbin_centers[izbin],
                         (kbin + kbin_edges[ikbin + 1]) / 2.0,
@@ -775,7 +781,6 @@ def compute_average_pk_redshift(
                         coef[1],
                     ]
                     snrfit_array[ikbin, 4:] = standard_dev
-
 
             elif weight_method == "no_weights":
                 if apply_z_weights:
@@ -823,6 +828,7 @@ def compute_cov(
     kbin_edges,
     k_index,
     nbins_k,
+    weight_method,
     snrfit_table,
     izbin,
     select_z,
@@ -849,6 +855,12 @@ def compute_cov(
 
     nbins_k (int):
     Number of k bins.
+
+    weight_method: str,
+    Method to weight the data.
+
+    snrfit_table: numpy ndarray,
+    Table containing SNR fit infos
 
     izbin (int):
     Current redshift bin being considered.
@@ -896,26 +908,53 @@ def compute_cov(
             k1_array,
             k2_array,
         )
-
     for sub_forest_id in sub_forest_ids:  # First loop 1) id sub-forest bins
         select_id = select_z & (p1d_table["sub_forest_id"] == sub_forest_id)
         selected_pk = p1d_table["Pk"][select_id]
         selected_ikbin = k_index[select_id]
 
-        for ipk, _ in enumerate(selected_pk):  # First loop 2) selected pk
-            ikbin = selected_ikbin[ipk]
-            if ikbin != -1:
-                for ipk2 in range(ipk, len(selected_pk)):  # First loop 3) selected pk
-                    ikbin2 = selected_ikbin[ipk2]
+        if weight_method == "fit_snr":
+            selected_snr = p1d_table["forest_snr"][select_id]
+            snrfit_z = snrfit_table[izbin * nbins_k : (izbin + 1) * nbins_k, :]
+            selected_variance_estimated = fitfunc_variance_pk1d(
+                selected_snr, snrfit_z[selected_ikbin, 2], snrfit_z[selected_ikbin, 3]
+            )
 
-                    if ikbin2 != -1:
-                        # index of the (ikbin,ikbin2) coefficient on the top of the matrix
-                        index = (nbins_k * ikbin) + ikbin2
-                        covariance_array[index] = (
-                            covariance_array[index]
-                            + selected_pk[ipk] * selected_pk[ipk2]
-                        )
-                        n_array[index] = n_array[index] + 1
+            for ipk, _ in enumerate(selected_pk):  # First loop 2) selected pk
+                ikbin = selected_ikbin[ipk]
+                if ikbin != -1:
+                    for ipk2 in range(
+                        ipk, len(selected_pk)
+                    ):  # First loop 3) selected pk
+                        ikbin2 = selected_ikbin[ipk2]
+                        if ikbin2 != -1:
+                            # index of the (ikbin,ikbin2) coefficient on the top of the matrix
+                            index = (nbins_k * ikbin) + ikbin2
+                            weight = 1 / (
+                                selected_variance_estimated[ipk]
+                                * selected_variance_estimated[ipk2]
+                            )
+                            covariance_array[index] = (
+                                covariance_array[index]
+                                + selected_pk[ipk] * selected_pk[ipk2] * weight
+                            )
+                            n_array[index] = n_array[index] + weight
+        else:
+            for ipk, _ in enumerate(selected_pk):  # First loop 2) selected pk
+                ikbin = selected_ikbin[ipk]
+                if ikbin != -1:
+                    for ipk2 in range(
+                        ipk, len(selected_pk)
+                    ):  # First loop 3) selected pk
+                        ikbin2 = selected_ikbin[ipk2]
+                        if ikbin2 != -1:
+                            # index of the (ikbin,ikbin2) coefficient on the top of the matrix
+                            index = (nbins_k * ikbin) + ikbin2
+                            covariance_array[index] = (
+                                covariance_array[index]
+                                + selected_pk[ipk] * selected_pk[ipk2]
+                            )
+                            n_array[index] = n_array[index] + 1
 
     for ikbin in range(nbins_k):  # Second loop 1) k bins
         mean_ikbin = mean_p1d_table["meanPk"][(nbins_k * izbin) + ikbin]
@@ -927,7 +966,7 @@ def compute_cov(
             index = (nbins_k * ikbin) + ikbin2
             covariance_array[index] = (
                 (covariance_array[index] / n_array[index]) - mean_ikbin * mean_ikbin2
-            ) / n_array[index]
+            ) / (2 * n_array[index])
 
             zbin_array[index] = zbin_centers[izbin]
             index_zbin_array[index] = izbin
