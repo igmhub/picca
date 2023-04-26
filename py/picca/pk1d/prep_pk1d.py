@@ -83,7 +83,12 @@ def exp_diff(hdul, log_lambda):
     return exposures_diff
 
 
-def exp_diff_desi(hdul, mask_targetid):
+def exp_diff_desi(
+    file,
+    mask_targetid,
+    method_alpha="desi_array",
+    use_only_even=False,
+):
     """Compute the difference between exposures.
 
     More precisely compute de semidifference between two customized coadded
@@ -104,53 +109,86 @@ def exp_diff_desi(hdul, mask_targetid):
     diff: array of float
     The difference between exposures
     """
-    argsort = np.flip(np.argsort(hdul["TEFF_LYA"][mask_targetid][:]))
-    flux = hdul["FL"][mask_targetid][argsort, :]
-    ivar = hdul["IV"][mask_targetid][argsort, :]
-    teff_lya = hdul["TEFF_LYA"][mask_targetid][argsort]
+    argsort = np.flip(np.argsort(np.mean(file["IV"][mask_targetid], axis=1)))
 
-    num_exp = len(flux)
-    if num_exp < 2:
-        userprint("DBG : not enough exposures for diff, spectra rejected")
+    ivar_mean = np.mean(file["IV"][mask_targetid][:, :], axis=1)
+    argmin_ivar = np.argmin(ivar_mean)
+    argsort = np.arange(ivar_mean.size)
+    argsort[-1], argsort[argmin_ivar] = argsort[argmin_ivar], argsort[-1]
+
+    teff_lya = file["TEFF_LYA"][mask_targetid][argsort]
+    flux = file["FL"][mask_targetid][argsort, :]
+    ivar = file["IV"][mask_targetid][argsort, :]
+
+    n_exp = len(flux)
+    if n_exp < 2:
+        print("Not enough exposures for diff, spectra rejected")
         return None
-    flux_total_odd = np.zeros(flux.shape[1])
-    ivar_total_odd = np.zeros(flux.shape[1])
-    flux_total_even = np.zeros(flux.shape[1])
-    ivar_total_even = np.zeros(flux.shape[1])
-    teff_even = 0
-    teff_odd = 0
-    teff_total = np.sum(teff_lya)
-    teff_last = teff_lya[-1]
-    for index_exp in range(2 * (num_exp // 2)):
-        flexp = flux[index_exp]
-        ivexp = ivar[index_exp]
-        teff_lya_exp = teff_lya[index_exp]
-        if index_exp % 2 == 1:
-            flux_total_odd += flexp * ivexp
-            ivar_total_odd += ivexp
-            teff_odd += teff_lya_exp
+    if use_only_even:
+        if n_exp % 2 == 1:
+            print("Odd number of exposures discarded")
+            return None
+
+    ivtot = np.zeros(flux.shape[1])
+    fltotodd = np.zeros(flux.shape[1])
+    ivtotodd = np.zeros(flux.shape[1])
+    fltoteven = np.zeros(flux.shape[1])
+    ivtoteven = np.zeros(flux.shape[1])
+    t_even = 0
+    t_odd = 0
+    t_exp = np.sum(teff_lya)
+    for iexp in range(2 * (n_exp // 2)):
+        flexp = flux[iexp]
+        ivexp = ivar[iexp]
+        teff_lya_exp = teff_lya[iexp]
+        if iexp % 2 == 1:
+            fltotodd += flexp * ivexp
+            ivtotodd += ivexp
+            t_odd += teff_lya_exp
         else:
-            flux_total_even += flexp * ivexp
-            ivar_total_even += ivexp
-            teff_even += teff_lya_exp
+            fltoteven += flexp * ivexp
+            ivtoteven += ivexp
+            t_even += teff_lya_exp
+    for iexp in range(n_exp):
+        ivtot += ivar[iexp]
+    w_odd = ivtotodd > 0
+    fltotodd[w_odd] /= ivtotodd[w_odd]
+    w_even = ivtoteven > 0
+    fltoteven[w_even] /= ivtoteven[w_even]
 
-    w = ivar_total_odd > 0
-    flux_total_odd[w] /= ivar_total_odd[w]
-    w = ivar_total_even > 0
-    flux_total_even[w] /= ivar_total_even[w]
+    if method_alpha == "eboss":
+        alpha = 1
+        if n_exp % 2 == 1:
+            n_even = n_exp // 2
+            alpha = np.sqrt(4.0 * n_even * (n_even + 1)) / n_exp
 
-    alpha = 1
-    if num_exp % 2 == 1:
-        # Ignasi: these variables were unsused so I commented them out
-        # n_even = (num_exp - 1) // 2
-        # alpha_n_old = np.sqrt(4. * n_even * (num_exp - n_even)) / num_exp
-        # alpha_N = np.sqrt(4.*t_even*(t_exp-t_even))/t_exp
-        # alpha_c_new = np.sqrt((teff_total - teff_last) / teff_total)
-        alpha_n_new = np.sqrt(
-            (teff_total - teff_last) * (teff_total + teff_last)) / teff_total
-        alpha = alpha_n_new
-    diff = 0.5 * (flux_total_even - flux_total_odd) * alpha
+    elif method_alpha == "eboss_corr":
+        alpha = 1
+        if n_exp % 2 == 1:
+            n_even = n_exp // 2
+            alpha = np.sqrt((2 * n_even) / (n_exp))
 
+    elif method_alpha == "desi_array":
+        w = w_odd & w_even & (ivtot > 0)
+        alpha_array = np.ones(flux.shape[1])
+        alpha_array[w] = (1 / np.sqrt(ivtot[w])) / (
+            0.5 * np.sqrt((1 / ivtoteven[w]) + (1 / ivtotodd[w]))
+        )
+        alpha = alpha_array
+
+    elif method_alpha == "desi_mean_array":
+        alpha_array = np.ones(flux.shape[1])
+        alpha_array[w] = (1 / np.sqrt(ivtot[w])) / (
+            0.5 * np.sqrt((1 / ivtoteven[w]) + (1 / ivtotodd[w]))
+        )
+        alpha = np.nanmean((1 / np.sqrt(ivtot[w]))) / np.nanmean(
+            (0.5 * np.sqrt((1 / ivtoteven[w]) + (1 / ivtotodd[w])))
+        )
+
+    elif method_alpha == "desi_time":
+        alpha = 2 * np.sqrt((t_odd * t_even) / (t_exp * (t_odd + t_even)))
+
+    diff = 0.5 * (fltoteven - fltotodd) * alpha
     return diff
 
 
