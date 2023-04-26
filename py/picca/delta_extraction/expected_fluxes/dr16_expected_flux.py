@@ -56,7 +56,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
     _initialize_variance_functions
     __parse_config
     compute_delta_stack
-    compute_forest_variance
+    compute_forest_weights
     compute_mean_cont
     compute_expected_flux
     compute_var_stats
@@ -462,7 +462,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
 
-    def compute_forest_variance(self, forest, continuum):
+    def compute_forest_weights(self, forest, continuum):
         """Compute the forest variance following du Mas des Bourboux 2020
 
         Arguments
@@ -474,16 +474,17 @@ class Dr16ExpectedFlux(ExpectedFlux):
         Quasar continuum associated with the forest
         """
         w = forest.ivar > 0
-        variance = np.empty_like(forest.log_lambda)
-        variance[~w] = np.inf
+        weights = np.empty_like(forest.log_lambda)
+        weights[~w] = 0.0
 
         var_pipe = 1. / forest.ivar[w] / continuum[w]**2
         var_lss = self.get_var_lss(forest.log_lambda[w])
         eta = self.get_eta(forest.log_lambda[w])
         fudge = self.get_fudge(forest.log_lambda[w])
-        variance[w] = eta * var_pipe + var_lss + fudge / var_pipe
+        weights[w] = 1.0/(
+            eta * var_pipe + self.var_lss_mod*var_lss + fudge / var_pipe)
 
-        return variance
+        return weights
 
     # TODO: We should check if we can directly compute the mean continuum
     # in particular this means:
@@ -723,7 +724,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 stack_delta = self.get_stack_delta(forest.log_lambda)
                 mean_expected_flux *= stack_delta
 
-            weights = 1. / self.compute_forest_variance(forest, mean_expected_flux)
+            weights = self.compute_forest_weights(forest, mean_expected_flux)
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,
