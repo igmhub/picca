@@ -352,7 +352,8 @@ def compute_mean_pk1d(
     if compute_covariance:
         userprint("Computing covariance matrix")
         params_pool = []
-        for izbin in range(nbins_z):  # Main loop 1) z bins
+        # Main loop 1) z bins
+        for izbin in range(nbins_z):
             select_z = (p1d_table["forest_z"] < zbin_edges[izbin + 1]) & (
                 p1d_table["forest_z"] > zbin_edges[izbin]
             )
@@ -376,8 +377,8 @@ def compute_mean_pk1d(
         else:
             with Pool(number_worker) as pool:
                 output_cov = pool.starmap(func, params_pool)
-
-        for izbin in range(nbins_z):  # Main loop 1) z bins
+        # Main loop 1) z bins
+        for izbin in range(nbins_z):
             (
                 zbin_array,
                 index_zbin_array,
@@ -399,7 +400,8 @@ def compute_mean_pk1d(
         userprint("Computing covariance matrix with bootstrap method")
 
         params_pool = []
-        for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
+        # Main loop 1) z bins
+        for izbin in range(nbins_z):
             select_z = (p1d_table["forest_z"] < zbin_edges[izbin + 1]) & (
                 p1d_table["forest_z"] > zbin_edges[izbin]
             )
@@ -411,8 +413,9 @@ def compute_mean_pk1d(
                 ).astype(int)
             else:
                 bootid = np.full(number_bootstrap, None)
+
+            # Main loop 2) number of bootstrap samples
             for iboot in range(number_bootstrap):
-                # Main loop 2) number of bootstrap samples - can be paralelized
                 params_pool.append([izbin, select_z, sub_forest_ids[bootid[iboot]]])
 
         func = partial(
@@ -432,12 +435,11 @@ def compute_mean_pk1d(
         else:
             with Pool(number_worker) as pool:
                 output_cov = pool.starmap(func, params_pool)
-
-        for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
+        # Main loop 1) z bins
+        for izbin in range(nbins_z):
             boot_cov = []
-            for iboot in range(
-                number_bootstrap
-            ):  # Main loop 2) number of bootstrap samples - can be paralelized
+            # Main loop 2) number of bootstrap samples
+            for iboot in range(number_bootstrap):
                 (
                     zbin_array,
                     index_zbin_array,
@@ -887,7 +889,7 @@ def compute_cov(
     """
     zbin_array = np.zeros(nbins_k * nbins_k)
     index_zbin_array = np.zeros(nbins_k * nbins_k, dtype=int)
-    n_array = np.zeros(nbins_k * nbins_k, dtype=int)
+    n_array = np.zeros(nbins_k * nbins_k)
     covariance_array = np.zeros(nbins_k * nbins_k)
     k1_array = np.zeros(nbins_k * nbins_k)
     k2_array = np.zeros(nbins_k * nbins_k)
@@ -908,7 +910,8 @@ def compute_cov(
             k1_array,
             k2_array,
         )
-    for sub_forest_id in sub_forest_ids:  # First loop 1) id sub-forest bins
+    # First loop 1) id sub-forest bins
+    for sub_forest_id in sub_forest_ids:
         select_id = select_z & (p1d_table["sub_forest_id"] == sub_forest_id)
         selected_pk = p1d_table["Pk"][select_id]
         selected_ikbin = k_index[select_id]
@@ -919,13 +922,12 @@ def compute_cov(
             selected_variance_estimated = fitfunc_variance_pk1d(
                 selected_snr, snrfit_z[selected_ikbin, 2], snrfit_z[selected_ikbin, 3]
             )
-
-            for ipk, _ in enumerate(selected_pk):  # First loop 2) selected pk
+            # First loop 2) selected pk
+            for ipk, _ in enumerate(selected_pk):
                 ikbin = selected_ikbin[ipk]
                 if ikbin != -1:
-                    for ipk2 in range(
-                        ipk, len(selected_pk)
-                    ):  # First loop 3) selected pk
+                    # First loop 3) selected pk
+                    for ipk2 in range(ipk, len(selected_pk)):
                         ikbin2 = selected_ikbin[ipk2]
                         if ikbin2 != -1:
                             # index of the (ikbin,ikbin2) coefficient on the top of the matrix
@@ -940,12 +942,12 @@ def compute_cov(
                             )
                             n_array[index] = n_array[index] + weight
         else:
-            for ipk, _ in enumerate(selected_pk):  # First loop 2) selected pk
+            # First loop 2) selected pk
+            for ipk, _ in enumerate(selected_pk):
                 ikbin = selected_ikbin[ipk]
                 if ikbin != -1:
-                    for ipk2 in range(
-                        ipk, len(selected_pk)
-                    ):  # First loop 3) selected pk
+                    # First loop 3) selected pk
+                    for ipk2 in range(ipk, len(selected_pk)):
                         ikbin2 = selected_ikbin[ipk2]
                         if ikbin2 != -1:
                             # index of the (ikbin,ikbin2) coefficient on the top of the matrix
@@ -955,11 +957,12 @@ def compute_cov(
                                 + selected_pk[ipk] * selected_pk[ipk2]
                             )
                             n_array[index] = n_array[index] + 1
-
-    for ikbin in range(nbins_k):  # Second loop 1) k bins
+    # Second loop 1) k bins
+    for ikbin in range(nbins_k):
         mean_ikbin = mean_p1d_table["meanPk"][(nbins_k * izbin) + ikbin]
 
-        for ikbin2 in range(ikbin, nbins_k):  # Second loop 2) k bins
+        # Second loop 2) k bins
+        for ikbin2 in range(ikbin, nbins_k):
             mean_ikbin2 = mean_p1d_table["meanPk"][(nbins_k * izbin) + ikbin2]
 
             # index of the (ikbin,ikbin2) coefficient on the top of the matrix
