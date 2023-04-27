@@ -112,8 +112,8 @@ class ExpectedFlux:
         The initialized arrays are:
         - self.log_lambda_var_func_grid
         """
-        resize = len(Forest.log_lambda_grid)/self.num_bins_variance
-        self.log_lambda_var_func_grid = Forest.log_lambda_grid[::int(resize)]
+        resize = len(Forest.log_lambda_grid)//self.num_bins_variance
+        self.log_lambda_var_func_grid = Forest.log_lambda_grid[::resize]
         self.num_bins_variance = self.log_lambda_var_func_grid.size
 
     def __parse_config(self, config):
