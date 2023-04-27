@@ -965,9 +965,9 @@ def compute_cov(
             # index of the (ikbin,ikbin2) coefficient on the top of the matrix
             index = (nbins_k * ikbin) + ikbin2
             covariance_array[index] = (
-                (covariance_array[index] / n_array[index]) - mean_ikbin * mean_ikbin2
-            ) / (2 * n_array[index])
-
+                covariance_array[index] / n_array[index]
+            ) - mean_ikbin * mean_ikbin2
+            covariance_array[index] = covariance_array[index] / n_array[index]
             zbin_array[index] = zbin_centers[izbin]
             index_zbin_array[index] = izbin
             k1_array[index] = kbin_centers[ikbin]
