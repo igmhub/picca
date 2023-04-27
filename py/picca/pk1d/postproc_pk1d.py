@@ -893,6 +893,8 @@ def compute_cov(
     covariance_array = np.zeros(nbins_k * nbins_k)
     k1_array = np.zeros(nbins_k * nbins_k)
     k2_array = np.zeros(nbins_k * nbins_k)
+    if weight_method == "fit_snr":
+        weight_array = np.zeros(nbins_k * nbins_k)
 
     kbin_centers = (kbin_edges[1:] + kbin_edges[:-1]) / 2
     if n_chunks[izbin] == 0:  # Fill rows with NaNs
@@ -932,15 +934,17 @@ def compute_cov(
                         if ikbin2 != -1:
                             # index of the (ikbin,ikbin2) coefficient on the top of the matrix
                             index = (nbins_k * ikbin) + ikbin2
-                            weight = 1 / (
-                                selected_variance_estimated[ipk]
-                                * selected_variance_estimated[ipk2]
+                            weight = 1 / selected_variance_estimated[ipk]
+                            weight2 = 1 / selected_variance_estimated[ipk2]
+                            covariance_array[index] = covariance_array[
+                                index
+                            ] + selected_pk[ipk] * selected_pk[ipk2] * np.sqrt(
+                                weight * weight2
                             )
-                            covariance_array[index] = (
-                                covariance_array[index]
-                                + selected_pk[ipk] * selected_pk[ipk2] * weight
+                            n_array[index] = n_array[index] + 1
+                            weight_array[index] = weight_array[index] + np.sqrt(
+                                weight * weight2
                             )
-                            n_array[index] = n_array[index] + weight
         else:
             # First loop 2) selected pk
             for ipk, _ in enumerate(selected_pk):
@@ -967,10 +971,16 @@ def compute_cov(
 
             # index of the (ikbin,ikbin2) coefficient on the top of the matrix
             index = (nbins_k * ikbin) + ikbin2
-            covariance_array[index] = (
-                covariance_array[index] / n_array[index]
-            ) - mean_ikbin * mean_ikbin2
-            covariance_array[index] = covariance_array[index] / n_array[index]
+            if weight_method == "fit_snr":
+                covariance_array[index] = (
+                    covariance_array[index] / weight_array[index]
+                ) - mean_ikbin * mean_ikbin2
+                covariance_array[index] = covariance_array[index] / weight_array[index]
+            else:
+                covariance_array[index] = (
+                    covariance_array[index] / n_array[index]
+                ) - mean_ikbin * mean_ikbin2
+                covariance_array[index] = covariance_array[index] / n_array[index]
             zbin_array[index] = zbin_centers[izbin]
             index_zbin_array[index] = izbin
             k1_array[index] = kbin_centers[ikbin]
