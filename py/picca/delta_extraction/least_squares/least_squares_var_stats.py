@@ -2,7 +2,6 @@
 import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.utils import find_bins
 
 VAR_PIPE_MIN = np.log10(1e-5)
 VAR_PIPE_MAX = np.log10(2.)
@@ -161,14 +160,14 @@ class LeastsSquaresVarStats:
                  (np.log10(var_pipe) < VAR_PIPE_MAX))
 
             # select the pipeline variance bins
-            var_pipe_bins = np.floor(
+            var_pipe_bins = (
                 (np.log10(var_pipe[w]) - VAR_PIPE_MIN) /
                 (VAR_PIPE_MAX - VAR_PIPE_MIN) * NUM_VAR_BINS).astype(int)
 
             # select the wavelength bins
-            log_lambda_bins = find_bins(forest.log_lambda[w],
-                                        self.log_lambda_var_func_grid,
-                                        Forest.wave_solution)
+            log_lambda_bins = Forest.find_bins(
+                forest.log_lambda[w],
+                self.log_lambda_var_func_grid)
 
             # compute overall bin
             bins = var_pipe_bins + NUM_VAR_BINS * log_lambda_bins
