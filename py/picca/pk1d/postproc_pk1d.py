@@ -918,40 +918,36 @@ def compute_cov(
             # First loop 2) selected pk
             for ipk, _ in enumerate(selected_pk):
                 ikbin = selected_ikbin[ipk]
-                if ikbin != -1:
-                    # First loop 3) selected pk
-                    for ipk2 in range(ipk, len(selected_pk)):
-                        ikbin2 = selected_ikbin[ipk2]
-                        if ikbin2 != -1:
-                            # index of the (ikbin,ikbin2) coefficient on the top of the matrix
-                            index = (nbins_k * ikbin) + ikbin2
-                            weight = 1 / selected_variance_estimated[ipk]
-                            weight2 = 1 / selected_variance_estimated[ipk2]
-                            covariance_array[index] = covariance_array[
-                                index
-                            ] + selected_pk[ipk] * selected_pk[ipk2] * np.sqrt(
-                                weight * weight2
-                            )
-                            n_array[index] = n_array[index] + 1
-                            weight_array[index] = weight_array[index] + np.sqrt(
-                                weight * weight2
-                            )
+                # First loop 3) selected pk
+                for ipk2 in range(ipk, len(selected_pk)):
+                    ikbin2 = selected_ikbin[ipk2]
+                    if (ikbin2 != -1) & (ikbin != -1):
+                        # index of the (ikbin,ikbin2) coefficient on the top of the matrix
+                        index = (nbins_k * ikbin) + ikbin2
+                        weight = 1 / selected_variance_estimated[ipk]
+                        weight2 = 1 / selected_variance_estimated[ipk2]
+                        covariance_array[index] = covariance_array[index] + selected_pk[
+                            ipk
+                        ] * selected_pk[ipk2] * np.sqrt(weight * weight2)
+                        n_array[index] = n_array[index] + 1
+                        weight_array[index] = weight_array[index] + np.sqrt(
+                            weight * weight2
+                        )
         else:
             # First loop 2) selected pk
             for ipk, _ in enumerate(selected_pk):
                 ikbin = selected_ikbin[ipk]
-                if ikbin != -1:
-                    # First loop 3) selected pk
-                    for ipk2 in range(ipk, len(selected_pk)):
-                        ikbin2 = selected_ikbin[ipk2]
-                        if ikbin2 != -1:
-                            # index of the (ikbin,ikbin2) coefficient on the top of the matrix
-                            index = (nbins_k * ikbin) + ikbin2
-                            covariance_array[index] = (
-                                covariance_array[index]
-                                + selected_pk[ipk] * selected_pk[ipk2]
-                            )
-                            n_array[index] = n_array[index] + 1
+                # First loop 3) selected pk
+                for ipk2 in range(ipk, len(selected_pk)):
+                    ikbin2 = selected_ikbin[ipk2]
+                    if (ikbin2 != -1) & (ikbin != -1):
+                        # index of the (ikbin,ikbin2) coefficient on the top of the matrix
+                        index = (nbins_k * ikbin) + ikbin2
+                        covariance_array[index] = (
+                            covariance_array[index]
+                            + selected_pk[ipk] * selected_pk[ipk2]
+                        )
+                        n_array[index] = n_array[index] + 1
     # Second loop 1) k bins
     for ikbin in range(nbins_k):
         mean_ikbin = mean_p1d_table["meanPk"][(nbins_k * izbin) + ikbin]
