@@ -997,6 +997,42 @@ def compute_cov(
                 k1_array[index_2] = kbin_centers[ikbin]
                 k2_array[index_2] = kbin_centers[ikbin2]
 
+    # Renormalization of the covariance matrix for the fit_snr method.
+    if weight_method == "fit_snr":
+        # Second loop 1) k bins
+        for ikbin in range(nbins_k):
+            std_ikbin = mean_p1d_table["errorPk"][(nbins_k * izbin) + ikbin]
+            # Second loop 2) k bins
+            for ikbin2 in range(ikbin, nbins_k):
+                std_ikbin2 = mean_p1d_table["errorPk"][(nbins_k * izbin) + ikbin2]
+                covariance_array[(nbins_k * ikbin) + ikbin2] = (
+                    std_ikbin
+                    * std_ikbin2
+                    * covariance_array[(nbins_k * ikbin) + ikbin2]
+                    / np.sqrt(
+                        covariance_array[(nbins_k * ikbin) + ikbin]
+                        * covariance_array[(nbins_k * ikbin2) + ikbin2]
+                    )
+                )
+                if ikbin2 != ikbin:
+                    covariance_array[(nbins_k * ikbin2) + ikbin] = (
+                        std_ikbin
+                        * std_ikbin2
+                        * covariance_array[(nbins_k * ikbin2) + ikbin]
+                        / np.sqrt(
+                            covariance_array[(nbins_k * ikbin) + ikbin]
+                            * covariance_array[(nbins_k * ikbin2) + ikbin2]
+                        )
+                    )
+
+    # # Diagonal renormalization of the covariance matrix for the fit_snr method.
+    # if weight_method == "fit_snr":
+    #     # Second loop 1) k bins
+    #     for ikbin in range(nbins_k):
+    #         std_ikbin = mean_p1d_table["errorPk"][(nbins_k * izbin) + ikbin]
+    #         # Second loop 2) k bins
+    #         covariance_array[(nbins_k * ikbin) + ikbin] = std_ikbin**2
+
     return zbin_array, index_zbin_array, n_array, covariance_array, k1_array, k2_array
 
 
