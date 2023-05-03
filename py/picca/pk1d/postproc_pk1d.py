@@ -257,15 +257,6 @@ def compute_mean_pk1d(
             compute_covariance, compute_bootstrap = False, False
             cov_table = None
 
-        # elif weight_method != "no_weights":
-        #     userprint(
-        #         """Covariance calculations are not compatible with SNR weighting method yet.
-        #         Skipping calculation"""
-        #     )
-
-        #     compute_covariance, compute_bootstrap = False, False
-        #     cov_table = None
-
         elif apply_z_weights:
             userprint(
                 """Covariance calculations are not compatible redshift weighting yes.
@@ -1024,14 +1015,6 @@ def compute_cov(
                             * covariance_array[(nbins_k * ikbin2) + ikbin2]
                         )
                     )
-
-    # # Diagonal renormalization of the covariance matrix for the fit_snr method.
-    # if weight_method == "fit_snr":
-    #     # Second loop 1) k bins
-    #     for ikbin in range(nbins_k):
-    #         std_ikbin = mean_p1d_table["errorPk"][(nbins_k * izbin) + ikbin]
-    #         # Second loop 2) k bins
-    #         covariance_array[(nbins_k * ikbin) + ikbin] = std_ikbin**2
 
     return zbin_array, index_zbin_array, n_array, covariance_array, k1_array, k2_array
 
