@@ -177,10 +177,10 @@ def main(cmdargs):
                         help=('Reject pairs in the first bin in r-parallel '
                               'from same half plate'))
 
-    parser.add_argument('--remove-same-petal-close-pairs',
+    parser.add_argument('--remove-same-petal',
                         action='store_true',
                         required=False,
-                        help=('Reject pairs in the first bin in r-parallel from the same exposure/petal'))
+                        help=('Reject pairs from the same exposure/petal'))
 
     parser.add_argument('--nside',
                         type=int,
@@ -240,9 +240,9 @@ def main(cmdargs):
     cf.alpha = args.z_evol
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
-    cf.remove_same_petal_close_pairs = args.remove_same_petal_close_pairs
-    if cf.remove_same_petal_close_pairs :
-        print("remove_same_petal_close_pairs = True")
+    cf.remove_same_petal = args.remove_same_petal
+    if cf.remove_same_petal :
+        print("remove_same_petal = True")
 
 
     # read blinding keyword

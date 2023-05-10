@@ -55,7 +55,7 @@ lock = None
 x_correlation = False
 ang_correlation = False
 remove_same_half_plate_close_pairs = False
-remove_same_petal_close_pairs = False
+remove_same_petal = False
 
 # variables used in the 1D correlation function analysis
 num_pixels = None
@@ -164,7 +164,7 @@ def compute_xi(healpixs):
                     same_half_plate = ((delta1.plate == delta2.plate) and (
                         (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
                         (delta1.fiberid > 500 and delta2.fiberid > 500)))
-                elif remove_same_petal_close_pairs :
+                elif remove_same_petal :
                     same_half_plate = ((delta1.plate == delta2.plate) and (delta1.fiberid//500 == delta2.fiberid//500))
                 else :
                     same_half_plate = False
@@ -278,10 +278,14 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
     bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
     bins = bins_r_trans + num_bins_r_trans * bins_r_par
 
-    if ( remove_same_half_plate_close_pairs or remove_same_petal_close_pairs ) and same_half_plate:
+    if remove_same_half_plate_close_pairs and same_half_plate:
         w = abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par
         delta_times_weight12[w] = 0.
         weights12[w] = 0.
+    if remove_same_petal and same_half_plate:
+        delta_times_weight12 = 0.
+        weights12 = 0.
+
 
     rebin_xi = np.bincount(bins, weights=delta_times_weight12)
     rebin_weight = np.bincount(bins, weights=weights12)
@@ -374,9 +378,11 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
             bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
             bins = np.int(bins_r_trans + num_bins_r_trans * bins_r_par)
 
-            if ( remove_same_half_plate_close_pairs  or remove_same_petal_close_pairs ) and same_half_plate:
+            if remove_same_half_plate_close_pairs and same_half_plate:
                 if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
                     continue
+            if  remove_same_petal and same_half_plate:
+                continue
 
             rebin_xi[bins] += delta_times_weight12
             rebin_weight[bins] += weights12
@@ -576,8 +582,10 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
     weights12 = weights1[:, None] * weights2
     weights12 = weights12[w]
 
-    if ( remove_same_half_plate_close_pairs or remove_same_petal_close_pairs ) and same_half_plate:
+    if remove_same_half_plate_close_pairs  and same_half_plate:
         weights12[abs(r_par[w]) < (r_par_max - r_par_min) / num_bins_r_par] = 0.
+    if remove_same_petal and same_half_plate:
+        weights12 = 0.
 
     rebin = np.bincount(model_bins, weights=weights12 * r_par[w])
     r_par_eff[:rebin.size] += rebin
@@ -737,9 +745,11 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             if (r_par >= r_par_max or r_trans >= r_trans_max or
                     r_par < r_par_min):
                 continue
-            if ( remove_same_half_plate_close_pairs or remove_same_petal_close_pairs ) and same_half_plate:
+            if remove_same_half_plate_close_pairs and same_half_plate:
                 if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
                     continue
+            if remove_same_petal and same_half_plate:
+                continue
             num_pairs += 1
 
     if num_pairs == 0:
@@ -798,9 +808,11 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             if (r_par >= r_par_max or r_trans >= r_trans_max or
                     r_par < r_par_min):
                 continue
-            if ( remove_same_half_plate_close_pairs or remove_same_petal_close_pairs ) and same_half_plate:
+            if remove_same_half_plate_close_pairs and same_half_plate:
                 if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
                     continue
+            if  remove_same_petal and same_half_plate:
+                continue
 
             weights12 = weights1[i] * weights2[j]
             z = (z1[i] + z2[j]) / 2
@@ -1035,9 +1047,11 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 bins_r_trans = (r_trans / r_trans_max *
                                 num_bins_r_trans).astype(int)
 
-                if ( remove_same_half_plate_close_pairs or remove_same_petal_close_pairs ) and same_half_plate:
+                if remove_same_half_plate_close_pairs  and same_half_plate:
                     weights12[abs(r_par) < (r_par_max - r_par_min) /
                               num_bins_r_par] = 0.
+                if remove_same_petal and same_half_plate:
+                    weights12 = 0.
 
                 bins = bins_r_trans + num_bins_r_trans * bins_r_par
                 w = ((bins_r_par < num_bins_r_par) &
@@ -1136,9 +1150,11 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                         num_bins_r_par).astype(int)
                     bins_r_trans = (r_trans / r_trans_max *
                                     num_bins_r_trans).astype(int)
-                    if ( remove_same_half_plate_close_pairs or remove_same_petal_close_pairs )  and same_half_plate:
+                    if remove_same_half_plate_close_pairs  and same_half_plate:
                         weights12[abs(r_par) < (r_par_max - r_par_min) /
                                   num_bins_r_par] = 0.
+                    if remove_same_petal  and same_half_plate:
+                        weights12 = 0.
                     bins = bins_r_trans + num_bins_r_trans * bins_r_par
                     w = ((bins_r_par < num_bins_r_par) &
                          (bins_r_trans < num_bins_r_trans) & (bins_r_par >= 0))
