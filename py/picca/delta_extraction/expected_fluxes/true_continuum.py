@@ -514,7 +514,7 @@ class TrueContinuum(ExpectedFlux):
 
         for forest in forests:
             w = forest.ivar > 0
-            log_lambda_bins = Forest.find_bins(
+            log_lambda_bins = Forest.find_bins( # pylint: disable=not-callable
                 forest.log_lambda,
                 Forest.log_lambda_grid)[w]
             var_pipe = 1. / forest.ivar[w] / forest.continuum[w]**2

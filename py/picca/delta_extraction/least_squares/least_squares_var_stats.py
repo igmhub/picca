@@ -165,7 +165,7 @@ class LeastsSquaresVarStats:
                 (VAR_PIPE_MAX - VAR_PIPE_MIN) * NUM_VAR_BINS).astype(int)
 
             # select the wavelength bins
-            log_lambda_bins = Forest.find_bins(
+            log_lambda_bins = Forest.find_bins( # pylint: disable=not-callable
                 forest.log_lambda[w],
                 self.log_lambda_var_func_grid)
 

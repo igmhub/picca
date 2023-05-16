@@ -134,7 +134,6 @@ def class_from_string(class_name, module_name):
         accepted_options = []
     return class_object, default_args, accepted_options
 
-
 @njit()
 def find_bins_lin(original_array, grid_array):
     """For each element in original_array, find the corresponding bin in grid_array

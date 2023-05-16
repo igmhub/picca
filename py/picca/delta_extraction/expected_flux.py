@@ -125,23 +125,7 @@ class ExpectedFlux:
             raise ExpectedFluxError("Error in setting Forest class "
                                           "variables. 'wave_solution' "
                                           "must be either 'lin' or 'log'. "
-                                          f"Found: {wave_solution}")
-        try:
-            assert self.log_lambda_var_func_grid[0] == Forest.log_lambda_grid[0]
-            assert self.log_lambda_var_func_grid[-1] == Forest.log_lambda_grid[-1]
-        except:
-            #resize = len(Forest.log_lambda_grid)//self.num_bins_variance
-            #self.log_lambda_var_func_grid = Forest.log_lambda_grid[::resize]
-            #self.num_bins_variance = self.log_lambda_var_func_grid.size
-            #print(f"num bins variance: {self.num_bins_variance}")
-            #print(f"len(Forest.log_lambda_grid): {len(Forest.log_lambda_grid)}")
-            #print(f"resize: {resize}")
-            print(f"wave solution: {Forest.wave_solution}")
-            print(f"self.log_lambda_var_func_grid[0]: {self.log_lambda_var_func_grid[0]}")
-            print(f"self.log_lambda_var_func_grid[-1]: {self.log_lambda_var_func_grid[-1]}")
-            print(f"Forest.log_lambda_grid[0]: {Forest.log_lambda_grid[0]}")
-            print(f"Forest.log_lambda_grid[-1]: {Forest.log_lambda_grid[-1]}")
-            print("\n")
+                                          f"Found: {Forest.wave_solution}")
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -212,7 +196,8 @@ class ExpectedFlux:
                 delta[w] = forest.flux[w] / forest.continuum[w]
                 weights = 1. / self.compute_forest_variance(forest, forest.continuum)
 
-            bins = Forest.find_bins(forest.log_lambda, Forest.log_lambda_grid)
+            bins = Forest.find_bins( # pylint: disable=not-callable
+                forest.log_lambda, Forest.log_lambda_grid)
             stack_delta += np.bincount(bins, weights=delta * weights, minlength=stack_delta.size)
             stack_weight += np.bincount(bins, weights=weights, minlength=stack_delta.size)
 
@@ -272,7 +257,7 @@ class ExpectedFlux:
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
-            bins = Forest.find_bins(
+            bins = Forest.find_bins( # pylint: disable=not-callable
                 forest.log_lambda - np.log10(1 + forest.z),
                 Forest.log_lambda_rest_frame_grid)
 

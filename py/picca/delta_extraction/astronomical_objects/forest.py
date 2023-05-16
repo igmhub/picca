@@ -741,5 +741,3 @@ class Forest(AstronomicalObject):
         cls.mask_fields = defaults.get("mask fields").copy()
 
         cls.flux_units = flux_units
-
-        find_bins = Forest.find_bins
