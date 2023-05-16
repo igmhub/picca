@@ -13,13 +13,15 @@ from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
 
 accepted_options = [
-    "iter out prefix", "num bins variance", "num processors", "out dir"
+    "iter out prefix", "num bins variance", "num processors", "out dir",
+    "var lss mod"
 ]
 
 defaults = {
     "iter out prefix": "delta_attributes",
     "num bins variance": 20,
     "num processors": 0,
+    "var lss mod": 1.0,
 }
 
 
@@ -31,8 +33,19 @@ class ExpectedFlux:
     Methods
     -------
     __init__
+    _initialize_mean_continuum_arrays
+    _initialize_variance_wavelength_array
+    __parse_config
+    compute_delta_stack
     compute_expected_flux
+    compute_forest_weights
+    _compute_mean_cont
+    compute_forest_weights
     extract_deltas
+    hdu_cont
+    hdu_fit_metadata
+    hdu_var_func
+    save_iteration_step
 
     Attributes
     ----------
@@ -62,6 +75,7 @@ class ExpectedFlux:
         self.out_dir = None
         self.num_bins_variance = None
         self.num_processors = None
+        self.var_lss_mod = None
         self.__parse_config(config)
 
         # check that Forest class variables are set
@@ -168,6 +182,11 @@ class ExpectedFlux:
                 "Missing argument 'out dir' required by ExpectedFlux")
         self.out_dir += "Log/"
 
+        self.var_lss_mod = config.getfloat("var lss mod")
+        if self.var_lss_mod is None:
+            raise ExpectedFluxError(
+                "Missing argument 'var lss mod' required by ExpectedFlux")
+
     def compute_delta_stack(self, forests, stack_from_deltas=False):
         """Compute a stack of the delta field as a function of wavelength
 
@@ -194,7 +213,7 @@ class ExpectedFlux:
                 delta = np.zeros_like(forest.log_lambda)
                 w = forest.ivar > 0
                 delta[w] = forest.flux[w] / forest.continuum[w]
-                weights = 1. / self.compute_forest_variance(forest, forest.continuum)
+                weights = self.compute_forest_weights(forest, forest.continuum)
 
             bins = Forest.find_bins( # pylint: disable=not-callable
                 forest.log_lambda, Forest.log_lambda_grid)
@@ -261,7 +280,7 @@ class ExpectedFlux:
                 forest.log_lambda - np.log10(1 + forest.z),
                 Forest.log_lambda_rest_frame_grid)
 
-            weights = 1. / self.compute_forest_variance(forest, forest.continuum)
+            weights = self.compute_forest_weights(forest, forest.continuum)
             forest_continuum = which_cont(forest)
             mean_cont += np.bincount(
                 bins,
@@ -288,8 +307,8 @@ class ExpectedFlux:
                                              fill_value=0.0,
                                              bounds_error=False)
 
-    def compute_forest_variance(self, forest, continuum):
-        """Compute the forest variance
+    def compute_forest_weights(self, forest, continuum):
+        """Compute the forest weights
 
         Arguments
         ---------
@@ -303,7 +322,7 @@ class ExpectedFlux:
         -----
         MeanExpectedFluxError if function was not overloaded by child class
         """
-        raise ExpectedFluxError("Function 'compute_forest_variance' was not "
+        raise ExpectedFluxError("Function 'compute_forest_weights' was not "
                                 "overloaded by child class")
 
     def extract_deltas(self, forest):
