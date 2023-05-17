@@ -20,6 +20,7 @@ from numba import jit, int32
 
 from . import constants
 from .utils import userprint
+import warnings
 
 num_bins_r_par = None
 num_bins_r_trans = None
@@ -173,7 +174,7 @@ def compute_xi(healpixs):
 
 #-- This has been superseeded by compute_xi_forest_pairs_fast
 #-- and will be deprecated
-@jit
+@jit(nopython=False)
 def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
                             r_comov2, dist_m2, weights2, ang):
     """Computes the contribution of a given pair of forests to the correlation
@@ -215,6 +216,8 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
             rebin_num_pairs: The number of pairs of the correlation function
                 pixels properly rebinned
     """
+    warnings.warn("Currently using a slow non-jit compiled function compute_xi_forest_pairs, this will be deprecated as a faster one exists!")
+
     if ang_correlation:
         r_par = r_comov1[:, None] / r_comov2
         r_trans = ang * np.ones_like(r_par)
@@ -316,7 +319,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
             bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
-            bins = np.int(bins_r_trans + num_bins_r_trans * bins_r_par)
+            bins = int(bins_r_trans + num_bins_r_trans * bins_r_par)
 
             rebin_xi[bins] += delta_times_weight
             rebin_weight[bins] += weights12
@@ -397,7 +400,7 @@ def compute_dmat(healpixs):
 
 #-- This has been superseeded by compute_dmat_forest_pairs_fast
 #-- and will be deprecated
-@jit
+@jit(nopython=False)
 def compute_dmat_forest_pairs(log_lambda1, r_comov1, dist_m1, z1, weights1,
                               r_comov2, dist_m2, z2, weights2, ang,
                               weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff,
@@ -439,6 +442,8 @@ def compute_dmat_forest_pairs(log_lambda1, r_comov1, dist_m1, z1, weights1,
         weight_eff: array of floats
             Effective weight of the distortion matrix pixels
     """
+    warnings.warn("Currently using a slow non-jit compiled function compute_dmat_forest_pairs, this will be deprecated as a faster one exists!")
+
     # find distances between pixels
     r_par = (r_comov1[:, None] - r_comov2) * np.cos(ang / 2)
     r_trans = (dist_m1[:, None] + dist_m2) * np.sin(ang / 2)
@@ -971,6 +976,8 @@ def compute_wickT1234_pairs_slow(ang, r_comov1, r_comov2, z1, z2, weights1,
         t4: array of floats
             Wick expansion, term 4
     """
+    warnings.warn("Currently using a slow non-jit compiled function compute_wickT1234_pairs_slow, this will be deprecated as a faster one exists!")
+
     r_par = (r_comov1[:, None] - r_comov2) * np.cos(ang / 2.)
     r_trans = (r_comov1[:, None] + r_comov2) * np.sin(ang / 2.)
     z_weight_evol1 = ((1. + z1) / (1. + z_ref))**(alpha - 1.)
@@ -1028,7 +1035,7 @@ def compute_wickT1234_pairs_slow(ang, r_comov1, r_comov2, z1, z2, weights1,
     return
 
 
-@jit
+@jit(nopython=False)
 def compute_wickT56_pairs(ang12, ang34, ang13, r_comov1, r_comov2, r_comov3,
                           r_comov4, weights1, weights2, weights3, weights4,
                           thingid2, thingid4, t5, t6):
@@ -1072,6 +1079,8 @@ def compute_wickT56_pairs(ang12, ang34, ang13, r_comov1, r_comov2, r_comov3,
         t5: array of floats
             Wick expansion, term 5
     """
+    warnings.warn("Currently using a slow non-jit compiled function compute_wickT56_pairs, this will be deprecated as a faster one exists!")
+
     ### Pair forest_1 - forest_3
     r_par = np.absolute(r_comov1 - r_comov3[:, None]) * np.cos(ang13 / 2.)
     r_trans = (r_comov1 + r_comov3[:, None]) * np.sin(ang13 / 2.)

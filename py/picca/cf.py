@@ -21,6 +21,7 @@ from numba import jit, int32
 
 from . import constants
 from .utils import userprint
+import warnings
 
 num_bins_r_par = None
 num_bins_r_trans = None
@@ -199,7 +200,7 @@ def compute_xi(healpixs):
 
 #-- This has been superseeded by compute_xi_forest_pairs_fast
 #-- and will be deprecated
-@jit
+@jit(nopython=False)
 def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
                             r_comov2, dist_m2, weights2, delta2, ang,
                             same_half_plate):
@@ -246,6 +247,7 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
             rebin_num_pairs: The number of pairs of the correlation function
                 pixels properly rebinned
     """
+    warnings.warn("Currently using a slow non-jit compiled function compute_xi_forest_pairs, this will be deprecated as a faster one exists!")
     delta_times_weight1 = delta1 * weights1
     delta_times_weight2 = delta2 * weights2
     if ang_correlation:
@@ -368,7 +370,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
             bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
-            bins = np.int(bins_r_trans + num_bins_r_trans * bins_r_par)
+            bins = int(bins_r_trans + num_bins_r_trans * bins_r_par)
 
             if remove_same_half_plate_close_pairs and same_half_plate:
                 if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
@@ -463,7 +465,7 @@ def compute_dmat(healpixs):
 
 #-- This has been superseeded by compute_dmat_forest_pairs_fast
 #-- and will be deprecated
-@jit
+@jit(nopython=False)
 def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
                               dist_m1, dist_m2, z1, z2, weights1, weights2, ang,
                               weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff,
@@ -515,6 +517,7 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
             Order of the log10(lambda) polynomial for the continuum fit in
             forest 2
     """
+    warnings.warn("Currently using a slow non-jit compiled function compute_xi_forest_pairs, this will be deprecated as a faster one exists!")
     # find distances between pixels
     r_par = (r_comov1[:, None] - r_comov2) * np.cos(ang / 2)
     if not x_correlation:
@@ -1394,7 +1397,7 @@ def compute_wick_terms(healpixs):
             t4, t5, t6)
 
 
-#@jit    #this is the old routine and might be removed anytime
+#@jit(nopython=False)    #this is the old routine and might be removed anytime
 def compute_wickT123_pairs_slow(r_comov1, r_comov2, ang, weights1, weights2, z1,
                                 z2, weighted_xi_1d_1, weighted_xi_1d_2,
                                 weights_wick, num_pairs_wick, t1, t2, t3):
@@ -1434,6 +1437,8 @@ def compute_wickT123_pairs_slow(r_comov1, r_comov2, ang, weights1, weights2, z1,
         t3: array of floats
             Wick expansion, term 3
     """
+    warnings.warn("Currently using a slow non-jit compiled function compute_wickT123_pairs_slow, this will be deprecated as a faster one exists!")
+
     num_pixels1 = len(r_comov1)
     num_pixels2 = len(r_comov2)
     i1 = np.arange(num_pixels1)
@@ -1616,7 +1621,7 @@ def compute_wickT123_pairs(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
     return
 
 
-@jit
+@jit(nopython=False)
 def compute_wickT45_pairs(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23,
                           weights1, weights2, weights3, z1, z2, z3,
                           weighted_xi_1d_1, weighted_xi_1d_2, weighted_xi_1d_3,
@@ -1663,6 +1668,8 @@ def compute_wickT45_pairs(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23,
         t5: array of floats
             Wick expansion, term 5
     """
+    warnings.warn("Currently using a slow non-jit compiled function compute_wickT45_pairs, this will be deprecated as a faster one exists!")
+
     ### forest-1 x forest-2
     r_par = (r_comov1[:, None] - r_comov2) * np.cos(ang12 / 2.)
     if not x_correlation:

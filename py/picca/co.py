@@ -12,6 +12,7 @@ from healpy import query_disc
 from numba import jit
 
 from .utils import userprint
+import warnings
 
 num_bins_r_par = None
 num_bins_r_trans = None
@@ -131,7 +132,7 @@ def compute_xi(healpixs):
     return weights, r_par, r_trans, z, num_pairs
 
 
-@jit  #will be deprecated
+@jit(nopython=False)  #will be deprecated
 def compute_xi_forest_pairs_slow(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
                                  dist_m2, weights2, ang):
     """Computes the contribution of a given pair of forests to the correlation
@@ -170,6 +171,8 @@ def compute_xi_forest_pairs_slow(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
             rebin_num_pairs: The number of pairs of the correlation function
                 pixels properly rebinned
     """
+    warnings.warn("Currently using a slow non-jit compiled function compute_xi_forest_pairs_slow, this will be deprecated as a faster one exists!")
+
     r_par = (r_comov1 - r_comov2) * np.cos(ang / 2.)
     if not x_correlation or type_corr in ['DR', 'RD']:
         r_par = np.absolute(r_par)
