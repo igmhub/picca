@@ -460,7 +460,7 @@ def main(cmdargs):
     wick_data = list(wick_data)
     weights_wick = np.array([item[0] for item in wick_data]).sum(axis=0)
     num_pairs_wick = np.array([item[1] for item in wick_data]).sum(axis=0)
-    num_pairs = np.array([item[1] for item in wick_data]).sum(axis=0)
+    num_pairs = np.array([item[2] for item in wick_data]).sum(axis=0)
     num_pairs_used = np.array([item[3] for item in wick_data]).sum(axis=0)
     t1 = np.array([item[4] for item in wick_data]).sum(axis=0)
     t2 = np.array([item[5] for item in wick_data]).sum(axis=0)
