@@ -9,7 +9,7 @@ See the respective docstrings for more details
 """
 import numpy as np
 from healpy import query_disc
-from numba import jit
+from numba import njit
 
 from .utils import userprint
 import warnings
@@ -132,7 +132,7 @@ def compute_xi(healpixs):
     return weights, r_par, r_trans, z, num_pairs
 
 
-@jit(nopython=False)  #will be deprecated
+@njit
 def compute_xi_forest_pairs_slow(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
                                  dist_m2, weights2, ang):
     """Computes the contribution of a given pair of forests to the correlation
@@ -201,7 +201,7 @@ def compute_xi_forest_pairs_slow(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
     return rebin_weight, rebin_r_par, rebin_r_trans, rebin_z, rebin_num_pairs
 
 
-@jit(nopython=True)
+@njit
 def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
                             dist_m2, weights2, ang):
     """Computes the contribution of a given pair of forests to the correlation
@@ -271,7 +271,7 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
     return rebin_weight, rebin_r_par, rebin_r_trans, rebin_z, rebin_num_pairs
 
 
-@jit(nopython=True)
+@njit
 def numba_bincount_noweights(bins):
     if len(bins) == 0:
         return np.zeros(0, dtype=np.int64)
@@ -283,7 +283,7 @@ def numba_bincount_noweights(bins):
     return out
 
 
-@jit(nopython=True)
+@njit
 def numba_bincount(bins, weights):
     if len(bins) == 0:
         return np.zeros(0, dtype=weights.dtype)

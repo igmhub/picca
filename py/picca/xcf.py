@@ -16,7 +16,7 @@ See the respective docstrings for more details
 """
 import numpy as np
 from healpy import query_disc
-from numba import jit, int32
+from numba import njit, int32
 
 from . import constants
 from .utils import userprint
@@ -174,7 +174,7 @@ def compute_xi(healpixs):
 
 #-- This has been superseeded by compute_xi_forest_pairs_fast
 #-- and will be deprecated
-@jit(nopython=False)
+@njit
 def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
                             r_comov2, dist_m2, weights2, ang):
     """Computes the contribution of a given pair of forests to the correlation
@@ -252,7 +252,7 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
             rebin_num_pairs)
 
 
-@jit(nopython=True)
+@njit
 def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
                                  r_comov2, dist_m2, weights2, ang, rebin_weight,
                                  rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
@@ -400,7 +400,7 @@ def compute_dmat(healpixs):
 
 #-- This has been superseeded by compute_dmat_forest_pairs_fast
 #-- and will be deprecated
-@jit(nopython=False)
+@njit
 def compute_dmat_forest_pairs(log_lambda1, r_comov1, dist_m1, z1, weights1,
                               r_comov2, dist_m2, z2, weights2, ang,
                               weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff,
@@ -542,7 +542,7 @@ def compute_dmat_forest_pairs(log_lambda1, r_comov1, dist_m1, z1, weights1,
                      log_lambda_minus_mean1[i])
 
 
-@jit(nopython=True)
+@njit
 def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
                                    r_comov2, dist_m2, z2, weights2, ang,
                                    weights_dmat, dmat, r_par_eff, r_trans_eff,
@@ -1035,7 +1035,7 @@ def compute_wickT1234_pairs_slow(ang, r_comov1, r_comov2, z1, z2, weights1,
     return
 
 
-@jit(nopython=False)
+@njit
 def compute_wickT56_pairs(ang12, ang34, ang13, r_comov1, r_comov2, r_comov3,
                           r_comov4, weights1, weights2, weights3, weights4,
                           thingid2, thingid4, t5, t6):
@@ -1223,7 +1223,7 @@ def compute_xi_1d(healpixs):
     return weights1d, xi_1d, r_par1d, z, num_pairs1d
 
 
-@jit(nopython=True)
+@njit
 def compute_wickT1234_pairs(ang, r_comov1, r_comov2, z1, z2, weights1, weights2,
                             weighted_xi_1d_1, weights_wick, num_pairs_wick, t1,
                             t2, t3, t4):
