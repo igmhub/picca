@@ -457,17 +457,17 @@ def main(cmdargs):
     pool.close()
 
     # merge the results from the different CPUs
-    wick_data = np.array(wick_data)
-    weights_wick = wick_data[:, 0].sum(axis=0)
-    num_pairs_wick = wick_data[:, 1].sum(axis=0)
-    num_pairs = wick_data[:, 2].sum(axis=0)
-    num_pairs_used = wick_data[:, 3].sum(axis=0)
-    t1 = wick_data[:, 4].sum(axis=0)
-    t2 = wick_data[:, 5].sum(axis=0)
-    t3 = wick_data[:, 6].sum(axis=0)
-    t4 = wick_data[:, 7].sum(axis=0)
-    t5 = wick_data[:, 8].sum(axis=0)
-    t6 = wick_data[:, 9].sum(axis=0)
+    wick_data = list(wick_data)
+    weights_wick = np.array([item[0] for item in wick_data]).sum(axis=0)
+    num_pairs_wick = np.array([item[1] for item in wick_data]).sum(axis=0)
+    num_pairs = np.array([item[1] for item in wick_data]).sum(axis=0)
+    num_pairs_used = np.array([item[3] for item in wick_data]).sum(axis=0)
+    t1 = np.array([item[4] for item in wick_data]).sum(axis=0)
+    t2 = np.array([item[5] for item in wick_data]).sum(axis=0)
+    t3 = np.array([item[6] for item in wick_data]).sum(axis=0)
+    t4 = np.array([item[7] for item in wick_data]).sum(axis=0)
+    t5 = np.array([item[8] for item in wick_data]).sum(axis=0)
+    t6 = np.array([item[9] for item in wick_data]).sum(axis=0)
     weights = weights_wick * weights_wick[:, None]
     w = weights > 0.
     t1[w] /= weights[w]
