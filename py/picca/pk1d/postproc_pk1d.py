@@ -910,6 +910,11 @@ def compute_cov(
         selected_ikbin = k_index[select_id]
 
         if weight_method == "fit_snr":
+            # Definition of weighted unbiased sample covariance taken from 
+            # "George R. Price, Ann. Hum. Genet., Lond, pp485-490, 
+            # Extension of covariance selection mathematics, 1972"
+            # adapted with weights w_i = np.sqrt(w_ipk * w_ipk2) for covariance
+            # to obtain the right definition of variance on the diagonal
             selected_snr = p1d_table["forest_snr"][select_id]
             snrfit_z = snrfit_table[izbin * nbins_k : (izbin + 1) * nbins_k, :]
             selected_variance_estimated = fitfunc_variance_pk1d(
@@ -962,12 +967,15 @@ def compute_cov(
                 covariance_array[index] = (
                     covariance_array[index] / weight_array[index]
                 ) - mean_ikbin * mean_ikbin2
-                covariance_array[index] = covariance_array[index] / weight_array[index]
             else:
                 covariance_array[index] = (
                     covariance_array[index] / n_array[index]
                 ) - mean_ikbin * mean_ikbin2
-                covariance_array[index] = covariance_array[index] / n_array[index]
+            
+            # Same normalization for fit_snr, equivalent to dividing to
+            # weight_array[index] if weights are normalized to give 
+            # sum(weight_array[index]) = n_array[index]
+            covariance_array[index] = covariance_array[index] / n_array[index]
             zbin_array[index] = zbin_centers[izbin]
             index_zbin_array[index] = izbin
             k1_array[index] = kbin_centers[ikbin]
@@ -984,33 +992,18 @@ def compute_cov(
                 k1_array[index_2] = kbin_centers[ikbin]
                 k2_array[index_2] = kbin_centers[ikbin2]
 
-    # Renormalization of the covariance matrix for the fit_snr method.
+
+    # For fit_snr method, due to the SNR fitting scheme used for weighting,
+    # the diagonal of the weigthed sample covariance matrix is not equal 
+    # to the error in mean P1D. This is tested on Ohio mocks.
+    # We choose to renormalize only the diagonal of the covariance matrix.
     if weight_method == "fit_snr":
         # Second loop 1) k bins
         for ikbin in range(nbins_k):
             std_ikbin = mean_p1d_table["errorPk"][(nbins_k * izbin) + ikbin]
             # Second loop 2) k bins
-            for ikbin2 in range(ikbin, nbins_k):
-                std_ikbin2 = mean_p1d_table["errorPk"][(nbins_k * izbin) + ikbin2]
-                covariance_array[(nbins_k * ikbin) + ikbin2] = (
-                    std_ikbin
-                    * std_ikbin2
-                    * covariance_array[(nbins_k * ikbin) + ikbin2]
-                    / np.sqrt(
-                        covariance_array[(nbins_k * ikbin) + ikbin]
-                        * covariance_array[(nbins_k * ikbin2) + ikbin2]
-                    )
-                )
-                if ikbin2 != ikbin:
-                    covariance_array[(nbins_k * ikbin2) + ikbin] = (
-                        std_ikbin
-                        * std_ikbin2
-                        * covariance_array[(nbins_k * ikbin2) + ikbin]
-                        / np.sqrt(
-                            covariance_array[(nbins_k * ikbin) + ikbin]
-                            * covariance_array[(nbins_k * ikbin2) + ikbin2]
-                        )
-                    )
+            covariance_array[(nbins_k * ikbin) + ikbin] = std_ikbin**2
+
 
     return zbin_array, index_zbin_array, n_array, covariance_array, k1_array, k2_array
 
