@@ -954,10 +954,10 @@ class AstronomicalObjectTest(AbstractTest):
         # set class variables
         setup_forest(wave_solution="lin")
         kwargs_desi_forest  = get_desi_kwargs_input("lin", "1")
-        
+
         Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 0.8, 0.8,
                                    "lin", "Flux units")
-        
+
         # create a DesiForest
         test_obj = DesiForest(**kwargs_desi_forest)
         test_obj.rebin()
@@ -1668,14 +1668,14 @@ class AstronomicalObjectTest(AbstractTest):
             3.6463025, 3.6513025, 3.6563025, 3.6613025, 3.6663025, 3.6713025,
             3.6763025, 3.6813025, 3.6863025, 3.6913025, 3.6963025, 3.7013025,
             3.7063025, 3.7113025, 3.7163025, 3.7213025, 3.7263025, 3.7313025,
-            3.7363025, 3.7413025
+            3.7363025, 3.7413025,
         ])
         self.assertTrue(np.allclose(Forest.log_lambda_grid, log_lambda_grid))
 
         log_lambda_rest_frame_grid = np.array([
-            3.01953334, 3.02453334, 3.02953334, 3.03453334, 3.03953334,
-            3.04453334, 3.04953334, 3.05453334, 3.05953334, 3.06453334,
-            3.06953334, 3.07453334
+            3.01703334, 3.02203334, 3.02703334, 3.03203334, 3.03703334,
+            3.04203334, 3.04703334, 3.05203334, 3.05703334, 3.06203334,
+            3.06703334, 3.07203334, 3.07703334,
         ])
         self.assertTrue(np.allclose(Forest.log_lambda_rest_frame_grid,
                                     log_lambda_rest_frame_grid))
@@ -1692,13 +1692,14 @@ class AstronomicalObjectTest(AbstractTest):
             3.5563025 , 3.56820172, 3.5797836 , 3.59106461, 3.60205999,
             3.61278386, 3.62324929, 3.63346846, 3.64345268, 3.65321251,
             3.66275783, 3.67209786, 3.68124124, 3.69019608, 3.69897   ,
-            3.70757018, 3.71600334, 3.72427587, 3.73239376, 3.74036269
+            3.70757018, 3.71600334, 3.72427587, 3.73239376, 3.74036269,
         ])
         self.assertTrue(np.allclose(Forest.log_lambda_grid, log_lambda_grid))
 
         log_lambda_rest_frame_grid = np.array([
-            3.0374265 , 3.07554696
+            3.01703334, 3.05690485, 3.09342169,
         ])
+        print(Forest.log_lambda_rest_frame_grid)
         self.assertTrue(np.allclose(Forest.log_lambda_rest_frame_grid,
                                     log_lambda_rest_frame_grid))
 
@@ -1927,7 +1928,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 50e-4, 50e-4,
                                    "log", "Flux units")
-        
+
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
         test_obj.rebin()
@@ -2153,7 +2154,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 50e-4, 50e-4,
                                    "log", "Flux units")
-        
+
         # create an SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
         test_obj.rebin()
@@ -2340,7 +2341,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 50e-4, 50e-4,
                                    "log", "Flux units")
-        
+
         # create an SdssPk1dForest
         test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
         self.assert_get_data(test_obj)

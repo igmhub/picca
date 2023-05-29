@@ -11,7 +11,6 @@ from scipy.interpolate import interp1d
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
-from picca.delta_extraction.utils import find_bins
 
 accepted_options = [
     "iter out prefix", "num bins variance", "num processors", "out dir",
@@ -126,33 +125,21 @@ class ExpectedFlux:
         The initialized arrays are:
         - self.log_lambda_var_func_grid
         """
-        # initialize the variance-related variables (see equation 4 of
-        # du Mas des Bourboux et al. 2020 for details on these variables)
         if Forest.wave_solution == "log":
-            self.log_lambda_var_func_grid = (
-                Forest.log_lambda_grid[0] +
-                (np.arange(self.num_bins_variance) + .5) *
-                (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
+            self.log_lambda_var_func_grid = np.linspace(
+                Forest.log_lambda_grid[0],
+                Forest.log_lambda_grid[-1],
                 self.num_bins_variance)
-        # TODO: this is related with the todo in check the effect of finding
-        # the nearest bin in log_lambda space versus lambda space infunction
-        # find_bins in utils.py. Once we understand that we can remove
-        # the dependence from Forest from here too.
         elif Forest.wave_solution == "lin":
-            self.log_lambda_var_func_grid = np.log10(
-                10**Forest.log_lambda_grid[0] +
-                (np.arange(self.num_bins_variance) + .5) *
-                (10**Forest.log_lambda_grid[-1] -
-                 10**Forest.log_lambda_grid[0]) / self.num_bins_variance)
-
-        # TODO: Replace the if/else block above by something like the commented
-        # block below. We need to check the impact of doing this on the final
-        # deltas first (eta, var_lss and fudge will be differently sampled).
-        #start of commented block
-        #resize = len(Forest.log_lambda_grid)/self.num_bins_variance
-        #print(resize)
-        #self.log_lambda_var_func_grid = Forest.log_lambda_grid[::int(resize)]
-        #end of commented block
+            self.log_lambda_var_func_grid = np.log10(np.linspace(
+                10**Forest.log_lambda_grid[0],
+                10**Forest.log_lambda_grid[-1],
+                self.num_bins_variance))
+        else:
+            raise ExpectedFluxError("Error in setting Forest class "
+                                          "variables. 'wave_solution' "
+                                          "must be either 'lin' or 'log'. "
+                                          f"Found: {Forest.wave_solution}")
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -228,8 +215,8 @@ class ExpectedFlux:
                 delta[w] = forest.flux[w] / forest.continuum[w]
                 weights = self.compute_forest_weights(forest, forest.continuum)
 
-            bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
-                             Forest.wave_solution)
+            bins = Forest.find_bins( # pylint: disable=not-callable
+                forest.log_lambda, Forest.log_lambda_grid)
             stack_delta += np.bincount(bins, weights=delta * weights, minlength=stack_delta.size)
             stack_weight += np.bincount(bins, weights=weights, minlength=stack_delta.size)
 
@@ -289,15 +276,20 @@ class ExpectedFlux:
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
-            bins = find_bins(forest.log_lambda - np.log10(1 + forest.z),
-                             Forest.log_lambda_rest_frame_grid,
-                             Forest.wave_solution)
+            bins = Forest.find_bins( # pylint: disable=not-callable
+                forest.log_lambda - np.log10(1 + forest.z),
+                Forest.log_lambda_rest_frame_grid)
 
             weights = self.compute_forest_weights(forest, forest.continuum)
             forest_continuum = which_cont(forest)
-            mean_cont += np.bincount(bins, weights=forest_continuum * weights,
+            mean_cont += np.bincount(
+                bins,
+                weights=forest_continuum * weights,
                 minlength=mean_cont.size)
-            mean_cont_weight += np.bincount(bins, weights=weights, minlength=mean_cont.size)
+            mean_cont_weight += np.bincount(
+                bins,
+                weights=weights,
+                minlength=mean_cont.size)
 
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
