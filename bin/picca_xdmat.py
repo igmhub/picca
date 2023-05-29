@@ -341,15 +341,15 @@ def main(cmdargs):
     userprint(f'picca_xdmat.py - Time computing distortion matrix: {(t2-t1)/60:.3f} minutes')
 
     # merge the results from different CPUs
-    dmat_data = np.array(dmat_data)
-    weights_dmat = dmat_data[:, 0].sum(axis=0)
-    dmat = dmat_data[:, 1].sum(axis=0)
-    r_par = dmat_data[:, 2].sum(axis=0)
-    r_trans = dmat_data[:, 3].sum(axis=0)
-    z = dmat_data[:, 4].sum(axis=0)
-    weights = dmat_data[:, 5].sum(axis=0)
-    num_pairs = dmat_data[:, 6].sum(axis=0)
-    num_pairs_used = dmat_data[:, 7].sum(axis=0)
+    dmat_data = list(dmat_data)
+    weights_dmat = np.array([item[0] for item in dmat_data]).sum(axis=0)
+    dmat = np.array([item[1] for item in dmat_data]).sum(axis=0)
+    r_par = np.array([item[2] for item in dmat_data]).sum(axis=0)
+    r_trans = np.array([item[3] for item in dmat_data]).sum(axis=0)
+    z = np.array([item[4] for item in dmat_data]).sum(axis=0)
+    weights = np.array([item[5] for item in dmat_data]).sum(axis=0)
+    num_pairs = np.array([item[6] for item in dmat_data]).sum(axis=0)
+    num_pairs_used = np.array([item[7] for item in dmat_data]).sum(axis=0)
 
     # normalize values
     w = weights > 0.
