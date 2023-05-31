@@ -749,6 +749,7 @@ def compute_average_pk_redshift(
                 standard_dev, _, _ = binned_statistic(
                     data_snr, p1d_values, statistic="std", bins=snr_bin_edges
                 )
+                standard_dev_full = np.copy(standard_dev)
                 mask = np.isnan(standard_dev)
                 if len(mask[mask]) != 0:
                     standard_dev = standard_dev[~mask]
@@ -783,7 +784,7 @@ def compute_average_pk_redshift(
                         coef[0],
                         coef[1],
                     ]
-                    snrfit_array[ikbin, 4:] = standard_dev
+                    snrfit_array[ikbin, 4:] = standard_dev_full  # also save nan values
 
             elif weight_method == "simple_snr":
                 # - We keep this for record, we do not recommand to use it
