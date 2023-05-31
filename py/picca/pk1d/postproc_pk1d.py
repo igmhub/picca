@@ -735,6 +735,7 @@ def compute_average_pk_redshift(
 
                 data_values = p1d_table[col][select]
                 data_snr = p1d_table["forest_snr"][select]
+                p1d_values = p1d_table['Pk'][select]
                 mask = np.isnan(data_values) | np.isnan(data_snr)
                 if len(mask[mask]) != 0:
                     userprint(
@@ -743,9 +744,10 @@ def compute_average_pk_redshift(
                     )
                     data_snr = data_snr[~mask]
                     data_values = data_values[~mask]
-                # Fit function to observed dispersion:
+                    p1d_values = p1d_values[~mask]
+                # Fit function to observed dispersion in P1D:
                 standard_dev, _, _ = binned_statistic(
-                    data_snr, data_values, statistic="std", bins=snr_bin_edges
+                    data_snr, p1d_values, statistic="std", bins=snr_bin_edges
                 )
                 mask = np.isnan(standard_dev)
                 if len(mask[mask]) != 0:
