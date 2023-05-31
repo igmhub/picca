@@ -277,6 +277,7 @@ class ExpectedFluxTest(AbstractTest):
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
                 "num processors": 1,
+                "var lss mod": 1.0,
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -757,7 +758,8 @@ class ExpectedFluxTest(AbstractTest):
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
-            "num processors": 1
+            "num processors": 1,
+            "var lss mod": 1.0,
         }})
         expected_message = (
             "Missing argument 'force stack delta to zero' required by Dr16ExpectedFlux"
@@ -773,6 +775,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
         }})
         expected_message = (
@@ -789,6 +792,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
         }})
@@ -806,6 +810,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -824,6 +829,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -843,6 +849,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -863,6 +870,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -884,6 +892,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -906,6 +915,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "(0.0, 1.90)",
             "limit var lss": "(0.5, 1.40)",
@@ -926,6 +936,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "[0.0, 1.90]",
             "limit var lss": "[0.5, 1.40]",
@@ -947,6 +958,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.5, 1.40",
@@ -1125,6 +1137,7 @@ class ExpectedFluxTest(AbstractTest):
                 "out dir": f"{THIS_DIR}/results/",
                 "num bins variance": 20,
                 "num processors": 1,
+                "var lss mod": 1.0,
             },
         })
         # this should raise an error as Forest variables are not defined
