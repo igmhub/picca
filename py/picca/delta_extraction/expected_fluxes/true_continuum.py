@@ -12,7 +12,7 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
-from picca.delta_extraction.utils import (find_bins, update_accepted_options,
+from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, [
@@ -195,7 +195,7 @@ class TrueContinuum(ExpectedFlux):
 
         return super()._compute_mean_cont(forests)
 
-    def compute_forest_variance(self, forest, continuum):
+    def compute_forest_weights(self, forest, continuum):
         """Compute the forest variance
 
         Arguments
@@ -207,17 +207,17 @@ class TrueContinuum(ExpectedFlux):
         Quasar continuum associated with the forest
         """
         w = forest.ivar > 0
-        variance = np.empty_like(forest.log_lambda)
-        variance[~w] = np.inf
+        weights = np.empty_like(forest.log_lambda)
+        weights[~w] = 0.0
 
         if self.use_constant_weight:
-            variance[w] = 1
+            weights[w] = 1
         else:
             var_lss = self.get_var_lss(forest.log_lambda[w])
             ivar_pipe = forest.ivar * forest.continuum**2
-            variance[w] = var_lss + 1/ivar_pipe[w]
+            weights[w] = 1.0/(self.var_lss_mod * var_lss + 1/ivar_pipe[w])
 
-        return variance
+        return weights
 
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
@@ -261,7 +261,7 @@ class TrueContinuum(ExpectedFlux):
                 weights[w] = 1
                 weights[~w] = 0
             else:
-                weights = 1. / self.compute_forest_variance(
+                weights = self.compute_forest_weights(
                     forest, forest.continuum)
 
             mean_expected_flux = np.copy(forest.continuum)
@@ -514,9 +514,9 @@ class TrueContinuum(ExpectedFlux):
 
         for forest in forests:
             w = forest.ivar > 0
-            log_lambda_bins = find_bins(forest.log_lambda,
-                                        Forest.log_lambda_grid,
-                                        Forest.wave_solution)[w]
+            log_lambda_bins = Forest.find_bins( # pylint: disable=not-callable
+                forest.log_lambda,
+                Forest.log_lambda_grid)[w]
             var_pipe = 1. / forest.ivar[w] / forest.continuum[w]**2
             deltas = forest.flux[w] / forest.continuum[w] - 1
             var_lss[log_lambda_bins] += deltas**2 - var_pipe

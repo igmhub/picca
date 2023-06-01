@@ -134,10 +134,11 @@ def class_from_string(class_name, module_name):
         accepted_options = []
     return class_object, default_args, accepted_options
 
-
 @njit()
-def find_bins(original_array, grid_array, wave_solution):
+def find_bins_lin(original_array, grid_array):
     """For each element in original_array, find the corresponding bin in grid_array
+
+    This function assumes that wavelength grid that is evenly spaced on wavelength
 
     Arguments
     ---------
@@ -147,9 +148,31 @@ def find_bins(original_array, grid_array, wave_solution):
     grid_array: array of float
     Common array, e.g. Forest.log_lambda_grid
 
-    wave_solution: "log" or "lin"
-    Specifies whether we want to construct a wavelength grid that is evenly
-    spaced on wavelength (lin) or on the logarithm of the wavelength (log)
+    Return
+    ------
+    found_bin: array of int
+    An array of size original_array.size filled with values smaller than
+    grid_array.size with the bins correspondance
+    """
+    aux = 10**grid_array[0]
+    step = 10**grid_array[1] - aux
+    found_bin = ((10**original_array - aux) / step + 0.5).astype(np.int64)
+    return found_bin
+
+@njit()
+def find_bins_log(original_array, grid_array):
+    """For each element in original_array, find the corresponding bin in grid_array
+
+    This function assumes that wavelength grid that is evenly spaced on the
+    logarithm of the wavelength
+
+    Arguments
+    ---------
+    original_array: array of float
+    Read array, e.g. forest.log_lambda
+
+    grid_array: array of float
+    Common array, e.g. Forest.log_lambda_grid
 
     Return
     ------
@@ -157,27 +180,8 @@ def find_bins(original_array, grid_array, wave_solution):
     An array of size original_array.size filled with values smaller than
     grid_array.size with the bins correspondance
     """
-    if wave_solution == "log":
-        pass
-    elif wave_solution == "lin":
-        original_array = 10**original_array
-        grid_array = 10**grid_array
-    else:  # pragma: no cover
-        raise DeltaExtractionError(
-            "Error in function find_bins from py/picca/delta_extraction/utils.py"
-            "expected wavelength solution to be either 'log' or 'lin'. ")
-    original_array_size = original_array.size
-    grid_array_size = grid_array.size
-    found_bin = np.zeros(original_array_size, dtype=np.int64)
-    for index1 in range(original_array_size):
-        min_dist = np.finfo(np.float64).max
-        for index2 in range(grid_array_size):
-            dist = np.abs(grid_array[index2] - original_array[index1])
-            if dist < min_dist:
-                min_dist = dist
-                found_bin[index1] = index2
-            else:
-                break
+    step = grid_array[1] - grid_array[0]
+    found_bin = ((original_array - grid_array[0]) / step + 0.5).astype(np.int64)
     return found_bin
 
 PROGRESS_LEVEL_NUM = 15
