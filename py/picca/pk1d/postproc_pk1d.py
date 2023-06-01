@@ -727,7 +727,7 @@ def compute_average_pk_redshift(
 
                 data_values = p1d_table[col][select]
                 data_snr = p1d_table["forest_snr"][select]
-                p1d_values = p1d_table['Pk'][select]
+                p1d_values = p1d_table["Pk"][select]
                 mask = np.isnan(data_values) | np.isnan(data_snr)
                 if len(mask[mask]) != 0:
                     data_snr = data_snr[~mask]
@@ -998,13 +998,37 @@ def compute_cov(
     # For fit_snr method, due to the SNR fitting scheme used for weighting,
     # the diagonal of the weigthed sample covariance matrix is not equal
     # to the error in mean P1D. This is tested on Ohio mocks.
-    # We choose to renormalize only the diagonal of the covariance matrix.
+    # We choose to renormalize the covariance matrix.
     if weight_method == "fit_snr":
-        # Second loop 1) k bins
+        # Third loop 1) k bins
         for ikbin in range(nbins_k):
             std_ikbin = mean_p1d_table["errorPk"][(nbins_k * izbin) + ikbin]
-            # Second loop 2) k bins
-            covariance_array[(nbins_k * ikbin) + ikbin] = std_ikbin**2
+            # Third loop 2) k bins
+            for ikbin2 in range(ikbin, nbins_k):
+                std_ikbin2 = mean_p1d_table["errorPk"][(nbins_k * izbin) + ikbin2]
+
+                # index of the (ikbin,ikbin2) coefficient on the top of the matrix
+                index = (nbins_k * ikbin) + ikbin2
+                covariance_array[index] = (
+                    covariance_array[index]
+                    * (std_ikbin * std_ikbin2)
+                    / np.sqrt(
+                        covariance_array[(nbins_k * ikbin) + ikbin]
+                        * covariance_array[(nbins_k * ikbin2) + ikbin2]
+                    )
+                )
+
+                if ikbin2 != ikbin:
+                    # index of the (ikbin,ikbin2) coefficient on the bottom of the matrix
+                    index_2 = (nbins_k * ikbin2) + ikbin
+                    covariance_array[index_2] = (
+                        covariance_array[index_2]
+                        * (std_ikbin * std_ikbin2)
+                        / np.sqrt(
+                            covariance_array[(nbins_k * ikbin) + ikbin]
+                            * covariance_array[(nbins_k * ikbin2) + ikbin2]
+                        )
+                    )
 
     return zbin_array, index_zbin_array, n_array, covariance_array, k1_array, k2_array
 
