@@ -75,8 +75,8 @@ def exp_diff(hdul, log_lambda):
 
     alpha = 1
     if num_exp_per_col % 2 == 1:
-        num_even_exp = (num_exp_per_col - 1) // 2
-        alpha = np.sqrt(4.0 * num_even_exp * (num_even_exp + 1)) / num_exp_per_col
+        num_exp_even = (num_exp_per_col - 1) // 2
+        alpha = np.sqrt(4.0 * num_exp_even * (num_exp_even + 1)) / num_exp_per_col
     # TODO: CHECK THE * alpha (Nathalie)
     exposures_diff = 0.5 * (flux_total_even - flux_total_odd) * alpha
 
@@ -98,11 +98,17 @@ def exp_diff_desi(
 
     Arguments
     ---------
-    hdul: fitsio.fitslib.FITS
-    Header Data Unit List opened by fitsio
+    file: fitsio.fitslib.FITS
+    Header Data Unit List opened by fitsio.
 
-    mask targetid: array of int
-    Targetids to select for calculating the exp differences
+    mask_targetid: array of int
+    Targetids to select for calculating the exposure differences.
+    
+    method_alpha: str
+    Method to compute alpha. Defaults to "desi_array".
+
+    use_only_even: bool 
+    Flag to indicate whether to use only even-number exposures. Defaults to False.
 
     Return
     ------
@@ -111,88 +117,76 @@ def exp_diff_desi(
     """
     argsort = np.flip(np.argsort(np.mean(file["IV"][mask_targetid], axis=1)))
 
-    ivar_mean = np.mean(file["IV"][mask_targetid][:, :], axis=1)
-    argmin_ivar = np.argmin(ivar_mean)
-    argsort = np.arange(ivar_mean.size)
-    argsort[-1], argsort[argmin_ivar] = argsort[argmin_ivar], argsort[-1]
-
     teff_lya = file["TEFF_LYA"][mask_targetid][argsort]
     flux = file["FL"][mask_targetid][argsort, :]
     ivar = file["IV"][mask_targetid][argsort, :]
 
-    n_exp = len(flux)
-    if n_exp < 2:
+    num_exp = len(flux)
+    if num_exp < 2:
         print("Not enough exposures for diff, spectra rejected")
         return None
     if use_only_even:
-        if n_exp % 2 == 1:
+        if num_exp % 2 == 1:
             print("Odd number of exposures discarded")
             return None
 
-    ivtot = np.zeros(flux.shape[1])
-    fltotodd = np.zeros(flux.shape[1])
-    ivtotodd = np.zeros(flux.shape[1])
-    fltoteven = np.zeros(flux.shape[1])
-    ivtoteven = np.zeros(flux.shape[1])
-    t_even = 0
-    t_odd = 0
-    t_exp = np.sum(teff_lya)
-    for iexp in range(2 * (n_exp // 2)):
-        flexp = flux[iexp]
-        ivexp = ivar[iexp]
-        teff_lya_exp = teff_lya[iexp]
-        if iexp % 2 == 1:
-            fltotodd += flexp * ivexp
-            ivtotodd += ivexp
-            t_odd += teff_lya_exp
-        else:
-            fltoteven += flexp * ivexp
-            ivtoteven += ivexp
-            t_even += teff_lya_exp
-    for iexp in range(n_exp):
-        ivtot += ivar[iexp]
-    w_odd = ivtotodd > 0
-    fltotodd[w_odd] /= ivtotodd[w_odd]
-    w_even = ivtoteven > 0
-    fltoteven[w_even] /= ivtoteven[w_even]
+    time_even = 0
+    time_odd = 0
+    time_exp = np.sum(teff_lya)
+
+    even_inds=slice(0,2 * (num_exp // 2),2)
+    odd_inds=slice(1,2 * (num_exp // 2),2)
+    flux_tot_odd=(flux[odd_inds]*ivar[odd_inds]).sum(axis=0)
+    ivar_tot_odd=(ivar[odd_inds]).sum(axis=0)
+    flux_tot_even=(flux[even_inds]*ivar[even_inds]).sum(axis=0)
+    ivar_tot_even=(ivar[even_inds]).sum(axis=0)
+    ivar_tot=ivar[:num_exp].sum(axis=0)
+
+    mask_odd = ivar_tot_odd > 0
+    flux_tot_odd [mask_odd] /= ivar_tot_odd[mask_odd]
+    mask_even = ivar_tot_even > 0
+    flux_tot_even[mask_even] /= ivar_tot_even[mask_even]
 
     if method_alpha == "eboss":
         alpha = 1
-        if n_exp % 2 == 1:
-            n_even = n_exp // 2
-            alpha = np.sqrt(4.0 * n_even * (n_even + 1)) / n_exp
+        if num_exp % 2 == 1:
+            n_even = num_exp // 2
+            alpha = np.sqrt(4.0 * n_even * (n_even + 1)) / num_exp
 
     elif method_alpha == "eboss_corr":
         alpha = 1
-        if n_exp % 2 == 1:
-            n_even = n_exp // 2
-            alpha = np.sqrt((2 * n_even) / (n_exp))
+        if num_exp % 2 == 1:
+            n_even = num_exp // 2
+            alpha = np.sqrt((2 * n_even) / (num_exp))
 
     elif method_alpha == "desi_array":
-        w = w_odd & w_even & (ivtot > 0)
+        mask = mask_odd & mask_even & (ivar_tot > 0)
         alpha_array = np.ones(flux.shape[1])
-        alpha_array[w] = (1 / np.sqrt(ivtot[w])) / (
-            0.5 * np.sqrt((1 / ivtoteven[w]) + (1 / ivtotodd[w]))
+        alpha_array[mask] = (1 / np.sqrt(ivar_tot[mask])) / (
+            0.5 * np.sqrt((1 / ivar_tot_even[mask]) + (1 / ivar_tot_odd[mask]))
         )
         alpha = alpha_array
 
     elif method_alpha == "desi_mean_array":
         alpha_array = np.ones(flux.shape[1])
-        alpha_array[w] = (1 / np.sqrt(ivtot[w])) / (
-            0.5 * np.sqrt((1 / ivtoteven[w]) + (1 / ivtotodd[w]))
+        alpha_array[mask] = (1 / np.sqrt(ivar_tot[mask])) / (
+            0.5 * np.sqrt((1 / ivar_tot_even[mask]) + (1 / ivar_tot_odd[mask]))
         )
-        alpha = np.nanmean((1 / np.sqrt(ivtot[w]))) / np.nanmean(
-            (0.5 * np.sqrt((1 / ivtoteven[w]) + (1 / ivtotodd[w])))
+        alpha = np.nanmean((1 / np.sqrt(ivar_tot[mask]))) / np.nanmean(
+            (0.5 * np.sqrt((1 / ivar_tot_even[mask]) + (1 / ivar_tot_odd[mask])))
         )
 
     elif method_alpha == "desi_time":
-        alpha = 2 * np.sqrt((t_odd * t_even) / (t_exp * (t_odd + t_even)))
+        alpha = 2 * np.sqrt((time_odd * time_even) / (time_exp * (time_odd + time_even)))
 
-    diff = 0.5 * (fltoteven - fltotodd) * alpha
+    diff = 0.5 * (flux_tot_even - flux_tot_odd ) * alpha
     return diff
 
 
-def spectral_resolution(wdisp, with_correction=False, fiberid=None, log_lambda=None):
+def spectral_resolution(wdisp, 
+                        with_correction=False, 
+                        fiberid=None, 
+                        log_lambda=None):
     # TODO: fix docstring
     """Compute the spectral resolution
 
