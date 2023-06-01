@@ -12,7 +12,7 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
-from picca.delta_extraction.utils import (find_bins, update_accepted_options,
+from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, [
@@ -514,9 +514,9 @@ class TrueContinuum(ExpectedFlux):
 
         for forest in forests:
             w = forest.ivar > 0
-            log_lambda_bins = find_bins(forest.log_lambda,
-                                        Forest.log_lambda_grid,
-                                        Forest.wave_solution)[w]
+            log_lambda_bins = Forest.find_bins( # pylint: disable=not-callable
+                forest.log_lambda,
+                Forest.log_lambda_grid)[w]
             var_pipe = 1. / forest.ivar[w] / forest.continuum[w]**2
             deltas = forest.flux[w] / forest.continuum[w] - 1
             var_lss[log_lambda_bins] += deltas**2 - var_pipe
