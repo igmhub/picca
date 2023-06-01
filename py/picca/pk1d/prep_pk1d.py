@@ -103,11 +103,11 @@ def exp_diff_desi(
 
     mask_targetid: array of int
     Targetids to select for calculating the exposure differences.
-    
+
     method_alpha: str
     Method to compute alpha. Defaults to "desi_array".
 
-    use_only_even: bool 
+    use_only_even: bool
     Flag to indicate whether to use only even-number exposures. Defaults to False.
 
     Return
@@ -134,16 +134,16 @@ def exp_diff_desi(
     time_odd = 0
     time_exp = np.sum(teff_lya)
 
-    even_inds=slice(0,2 * (num_exp // 2),2)
-    odd_inds=slice(1,2 * (num_exp // 2),2)
-    flux_tot_odd=(flux[odd_inds]*ivar[odd_inds]).sum(axis=0)
-    ivar_tot_odd=(ivar[odd_inds]).sum(axis=0)
-    flux_tot_even=(flux[even_inds]*ivar[even_inds]).sum(axis=0)
-    ivar_tot_even=(ivar[even_inds]).sum(axis=0)
-    ivar_tot=ivar[:num_exp].sum(axis=0)
+    even_inds = slice(0, 2 * (num_exp // 2), 2)
+    odd_inds = slice(1, 2 * (num_exp // 2), 2)
+    flux_tot_odd = (flux[odd_inds] * ivar[odd_inds]).sum(axis=0)
+    ivar_tot_odd = (ivar[odd_inds]).sum(axis=0)
+    flux_tot_even = (flux[even_inds] * ivar[even_inds]).sum(axis=0)
+    ivar_tot_even = (ivar[even_inds]).sum(axis=0)
+    ivar_tot = ivar[:num_exp].sum(axis=0)
 
     mask_odd = ivar_tot_odd > 0
-    flux_tot_odd [mask_odd] /= ivar_tot_odd[mask_odd]
+    flux_tot_odd[mask_odd] /= ivar_tot_odd[mask_odd]
     mask_even = ivar_tot_even > 0
     flux_tot_even[mask_even] /= ivar_tot_even[mask_even]
 
@@ -177,16 +177,20 @@ def exp_diff_desi(
         )
 
     elif method_alpha == "desi_time":
-        alpha = 2 * np.sqrt((time_odd * time_even) / (time_exp * (time_odd + time_even)))
+        alpha = 2 * np.sqrt(
+            (time_odd * time_even) / (time_exp * (time_odd + time_even))
+        )
 
-    diff = 0.5 * (flux_tot_even - flux_tot_odd ) * alpha
+    diff = 0.5 * (flux_tot_even - flux_tot_odd) * alpha
     return diff
 
 
-def spectral_resolution(wdisp, 
-                        with_correction=False, 
-                        fiberid=None, 
-                        log_lambda=None):
+def spectral_resolution(
+    wdisp,
+    with_correction=False,
+    fiberid=None,
+    log_lambda=None,
+):
     # TODO: fix docstring
     """Compute the spectral resolution
 
