@@ -1,6 +1,9 @@
 name: Publish Picca 📦 to PyPI and TestPyPI
 
-on: push
+on: 
+  push:
+    tags:
+      - '*'           # Push events to every tag not containing /
 
 jobs:
   build-n-publish:
