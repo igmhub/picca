@@ -1605,7 +1605,7 @@ class ExpectedFluxTest(AbstractTest):
             print(f"New file: {out_file}")
             print("Difference found in var_lss")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont, expectations["var_lss"]):
+            for i1, i2 in zip(var_lss, expectations["var_lss"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
 
@@ -1616,7 +1616,7 @@ class ExpectedFluxTest(AbstractTest):
             print(f"New file: {out_file}")
             print("Difference found in mean_flux")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont, expectations["mean_flux"]):
+            for i1, i2 in zip(mean_flux, expectations["mean_flux"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(mean_flux, expectations["mean_flux"]))
 
