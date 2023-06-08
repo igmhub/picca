@@ -494,12 +494,12 @@ class TrueContinuum(ExpectedFlux):
         self.get_var_lss = interp1d(log_lambda,
                                     var_lss,
                                     fill_value='extrapolate',
-                                    kind='nearest')
+                                    kind='cubic')
 
         self.get_mean_flux = interp1d(log_lambda,
                                       mean_flux,
                                       fill_value='extrapolate',
-                                      kind='nearest')
+                                      kind='cubic')
 
     def compute_var_lss(self, forests):
         """Compute var lss from delta variance by substracting
@@ -527,4 +527,4 @@ class TrueContinuum(ExpectedFlux):
         self.get_var_lss = interp1d(Forest.log_lambda_grid[w],
                                     var_lss[w],
                                     fill_value='extrapolate',
-                                    kind='nearest')
+                                    kind='cubic')
