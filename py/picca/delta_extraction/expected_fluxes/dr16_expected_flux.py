@@ -211,7 +211,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_eta = interp1d(self.log_lambda_var_func_grid,
                                 eta,
                                 fill_value='extrapolate',
-                                kind='cubic')
+                                kind='nearest')
 
     def _initialize_get_fudge(self):
         """Initialiaze function get_fudge"""
@@ -225,7 +225,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_fudge = interp1d(self.log_lambda_var_func_grid,
                                   fudge,
                                   fill_value='extrapolate',
-                                  kind='cubic')
+                                  kind='nearest')
 
     def _initialize_get_var_lss(self):
         """Initialiaze function get_var_lss"""
@@ -243,7 +243,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_var_lss = interp1d(self.log_lambda_var_func_grid,
                                     var_lss,
                                     fill_value='extrapolate',
-                                    kind='cubic')
+                                    kind='nearest')
 
     def _initialize_variance_functions(self):
         """Initialize variance functions
@@ -605,15 +605,15 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_eta = interp1d(self.log_lambda_var_func_grid[w],
                                 eta[w],
                                 fill_value="extrapolate",
-                                kind="cubic")
+                                kind="nearest")
         self.get_var_lss = interp1d(self.log_lambda_var_func_grid[w],
                                     var_lss[w],
                                     fill_value="extrapolate",
-                                    kind="cubic")
+                                    kind="nearest")
         self.get_fudge = interp1d(self.log_lambda_var_func_grid[w],
                                   fudge[w],
                                   fill_value="extrapolate",
-                                  kind="cubic")
+                                  kind="nearest")
         self.get_num_pixels = interp1d(self.log_lambda_var_func_grid[w],
                                        num_pixels[w],
                                        fill_value="extrapolate",
