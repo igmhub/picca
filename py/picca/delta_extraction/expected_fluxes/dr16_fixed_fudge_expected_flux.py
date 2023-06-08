@@ -66,13 +66,13 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
             self.get_fudge = interp1d(hdu["LOGLAM"].read(),
                                       hdu["FUDGE"].read(),
                                       fill_value='extrapolate',
-                                      kind='nearest')
+                                      kind='cubic')
         else:
             fudge = np.ones(self.num_bins_variance) * float(self.fudge_value)
             self.get_fudge = interp1d(self.log_lambda_var_func_grid,
                                       fudge,
                                       fill_value='extrapolate',
-                                      kind='nearest')
+                                      kind='cubic')
         # note that for fudge to be fitted, we need to include it to
         # self.fit_variance_functions:
         # self.fit_variance_functions.append("fudge")
