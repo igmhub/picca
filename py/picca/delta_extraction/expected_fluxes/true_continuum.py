@@ -395,6 +395,12 @@ class TrueContinuum(ExpectedFlux):
             elif Forest.wave_solution == "lin" and np.isclose(
                     10**Forest.log_lambda_grid[1] -
                     10**Forest.log_lambda_grid[0],
+                    0.8,
+                    rtol=0.1):
+                filename += 'colore_v9_lya_lin_0.8.fits.gz'
+            elif Forest.wave_solution == "lin" and np.isclose(
+                    10**Forest.log_lambda_grid[1] -
+                    10**Forest.log_lambda_grid[0],
                     2.4,
                     rtol=0.1):
                 filename += 'colore_v9_lya_lin_2.4.fits.gz'
