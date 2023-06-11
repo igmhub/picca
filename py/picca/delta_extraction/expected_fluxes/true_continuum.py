@@ -26,7 +26,7 @@ defaults = update_default_options(defaults, {
     "use constant weight": False,
     "force stack delta to zero": False,
     "use splines": True,
-    "recompute var lss": True
+    "recompute var lss": False
 })
 
 IN_NSIDE = 16
@@ -78,7 +78,6 @@ class TrueContinuum(ExpectedFlux):
     Number of bins to be used to compute variance functions and statistics as
     a function of wavelength.
     """
-
 
     def __init__(self, config):
         """Initialize class instance.
