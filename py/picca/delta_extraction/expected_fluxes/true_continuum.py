@@ -25,7 +25,7 @@ defaults = update_default_options(defaults, {
     "raw statistics file": "",
     "use constant weight": False,
     "force stack delta to zero": False,
-    "use splines": False,
+    "use splines": True,
     "recompute var lss": True
 })
 
@@ -476,12 +476,12 @@ class TrueContinuum(ExpectedFlux):
             'L_MAX', lambda_max, atol, is_rawfile_consistent, err_msg)
         # Check minimum rest-frame lambda
         atol = (10**Forest.log_lambda_rest_frame_grid[1]
-              - 10**Forest.log_lambda_rest_frame_grid[0])/2
+                - 10**Forest.log_lambda_rest_frame_grid[0])/2
         is_rawfile_consistent, err_msg = _check_header_consistency(
             'LR_MIN', lambda_rest_min, atol, is_rawfile_consistent, err_msg)
         # Check maximum rest-frame lambda
         atol = (10**Forest.log_lambda_rest_frame_grid[-1]
-              - 10**Forest.log_lambda_rest_frame_grid[-2])/2
+                - 10**Forest.log_lambda_rest_frame_grid[-2])/2
         is_rawfile_consistent, err_msg = _check_header_consistency(
             'LR_MAX', lambda_rest_max, atol, is_rawfile_consistent, err_msg)
 
