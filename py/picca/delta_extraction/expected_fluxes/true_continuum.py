@@ -169,6 +169,10 @@ class TrueContinuum(ExpectedFlux):
         # values due to some smoothing of the forests
         # thus, we recompute it from the actual deltas
         if self.recompute_varlss:
+            self.logger.warning(
+                'Asked for var lss recomputation, which can lead to unwanted '
+                'effects, and biased correlations. For more details see '
+                'https://github.com/igmhub/picca/issues/1009.')
             self.compute_var_lss(forests)
             # note that this does not change the output deltas but might slightly
             # affect the mean continuum so we have to compute it after updating
