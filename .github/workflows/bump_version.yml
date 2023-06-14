@@ -34,7 +34,8 @@ jobs:
       
     - name: No version bump
       if: ${{ always() && contains(github.event.head_commit.message, '[no bump]') }}
-    
+      run: echo "No version bump requested"
+      
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
