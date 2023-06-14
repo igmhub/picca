@@ -1,5 +1,8 @@
 # Release Notes
 
+## Versions 5.0 and higher 
+see [Releases](https://github.com/igmhub/picca/releases)
+
 ## Version 4.2.0 - 2021/12/01
 * Fix DESI modes to also work with Everest data
 * Fix DLA and BAL masking to also work with Everest data
