@@ -15,17 +15,22 @@ jobs:
     - name: Install bump2version
       run:  pip install bump2version
       
+    - name: Setup git
+      run: |
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+      
     - name: increase patch
       if: ${{ always() && (!contains(github.event.head_commit.message, '[bump major]')) && (!contains(github.event.head_commit.message, '[bump minor]')) && (!contains(github.event.head_commit.message, '[no bump]')) }}
-      run: bump2version patch py/picca/_version.py
+      run: bump2version patch py/picca/_version.py --verbose
       
     - name: Bump major version
       if: ${{ always() && contains(github.event.head_commit.message, '[bump major]') }}
-      run: bump2version patch py/picca/_version.py --tag
+      run: bump2version patch py/picca/_version.py --tag --verbose
       
     - name: Bump minor version
       if: ${{ always() && contains(github.event.head_commit.message, '[bump minor]') }}
-      run: bump2version patch py/picca/_version.py --tag
+      run: bump2version patch py/picca/_version.py --tag --verbose
       
     - name: No version bump
       if: ${{ always() && contains(github.event.head_commit.message, '[no bump]') }}
