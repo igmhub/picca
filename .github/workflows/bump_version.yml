@@ -1,4 +1,4 @@
-name: Pytest
+name: Bump version
 on:
   push:
     branches:
@@ -8,12 +8,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    
     - name: Set up Python
       uses: actions/setup-python@v2
+      
     - name: Install bump2version
       run:  pip install bump2version
-    - name: increase version
-      run: bump2version patch py/picca/_version.py --no-tag
+      
+    - name: increase patch
+      if: ${{ always() && (!contains(github.event.head_commit.message, '[bump major]')) && (!contains(github.event.head_commit.message, '[bump minor]')) && (!contains(github.event.head_commit.message, '[no bump]')) }}
+      run: bump2version patch py/picca/_version.py
+      
+    - name: Bump major version
+      if: ${{ always() && contains(github.event.head_commit.message, '[bump major]') }}
+      run: bump2version patch py/picca/_version.py --tag
+      
+    - name: Bump minor version
+      if: ${{ always() && contains(github.event.head_commit.message, '[bump minor]') }}
+      run: bump2version patch py/picca/_version.py --tag
+      
+    - name: No version bump
+      if: ${{ always() && contains(github.event.head_commit.message, '[no bump]') }}
+    
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
