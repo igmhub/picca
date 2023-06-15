@@ -1,8 +1,6 @@
 name: Bump version
 on:
   merge_group:
-    branches:
-      - master
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,11 +24,11 @@ jobs:
       
     - name: Bump major version
       if: ${{ always() && contains(github.event.head_commit.message, '[bump major]') }}
-      run: bump2version major py/picca/_version.py --tag --verbose
+      run: bump2version major py/picca/_version.py --verbose
       
     - name: Bump minor version
       if: ${{ always() && contains(github.event.head_commit.message, '[bump minor]') }}
-      run: bump2version minor py/picca/_version.py --tag --verbose
+      run: bump2version minor py/picca/_version.py --verbose
       
     - name: No version bump
       if: ${{ always() && contains(github.event.head_commit.message, '[no bump]') }}
