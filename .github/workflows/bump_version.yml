@@ -1,6 +1,6 @@
 name: Bump version
 on:
-  push:
+  merge_group:
     branches:
       - master
 jobs:
