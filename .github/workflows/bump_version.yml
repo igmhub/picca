@@ -1,8 +1,7 @@
 name: Bump version
-on:
-  merge_group:
+on: merge_group
 jobs:
-  build:
+  bump_version:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -38,4 +37,3 @@ jobs:
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ github.ref }}
