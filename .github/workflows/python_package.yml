@@ -14,7 +14,7 @@ env:
   SETUP_XVFB: True  # avoid issues if mpl tries to open a GUI window
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     # the whole CI pipeline will be skipped if [ci skip] is in the commit msg
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
