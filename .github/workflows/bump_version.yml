@@ -1,5 +1,7 @@
 name: Bump version
-on: merge_group
+on: 
+  merge_group:
+        types: [checks_requested]
 jobs:
   bump_version:
     runs-on: ubuntu-latest
