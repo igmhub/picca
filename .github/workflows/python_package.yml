@@ -3,7 +3,13 @@
 
 name: Pytest
 on: 
-  [push, pull_request, merge_group]
+  push:
+    paths-ignore:
+      - '**/*.md'
+  pull_request:  
+    paths-ignore:
+      - '**/*.md'
+  merge_group:
 env:
   SETUP_XVFB: True  # avoid issues if mpl tries to open a GUI window
 
