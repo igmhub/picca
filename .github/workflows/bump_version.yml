@@ -1,14 +1,15 @@
 name: Bump version
-on:
+on: 
   merge_group:
+        types: [checks_requested]
 jobs:
-  build:
+  bump_version:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       
     - name: Install bump2version
       run:  pip install bump2version
@@ -38,4 +39,3 @@ jobs:
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ github.ref }}
