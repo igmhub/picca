@@ -10,7 +10,7 @@ on:
   merge_group:
 
 jobs:
-  build:
+  lint:
 
     runs-on: ubuntu-latest
 
