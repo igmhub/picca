@@ -1,7 +1,13 @@
 name: Pylint
 
 on: 
-  [push, pull_request, merge_group]
+  push:
+    paths-ignore:
+      - '**/*.md'
+  pull_request:  
+    paths-ignore:
+      - '**/*.md'
+  merge_group:
 
 jobs:
   build:
