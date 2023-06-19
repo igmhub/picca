@@ -1,5 +1,6 @@
 name: Bump version
 on: 
+  pull_request:
   merge_group:
         types: [checks_requested]
 jobs:
@@ -36,6 +37,7 @@ jobs:
       run: echo "No version bump requested"
       
     - name: Push changes
+      if: contains(github.ref_name, 'gh-readonly-queue') }
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
