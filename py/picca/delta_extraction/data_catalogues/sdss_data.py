@@ -144,8 +144,8 @@ class SdssData(Data):
                 flux = np.array(hdul[1]["flux"][:], dtype=np.float64)
                 ivar = (np.array(hdul[1]["ivar"][:], dtype=np.float64) *
                         hdul[1]["and_mask"][:] == 0)
-            except:
-                self.logger.warning(f"Error with HDUs in {filename}. Ignoring file")
+            except OSError:
+                self.logger.warning(f"Error reading HDU for {filename}. Ignoring file")
                 continue
 
             if self.analysis_type == "BAO 3D":
