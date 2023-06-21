@@ -881,20 +881,11 @@ def compute_xi_1d(healpixs):
             lambda_qso = [10.**obj.log_lambda for obj in neighbours]
             ang = np.zeros(len(lambda_qso))
 
-            (rebin_weight, rebin_xi, rebin_r_par, _, rebin_z,
-             rebin_num_pairs) = compute_xi_forest_pairs_fast(
+            compute_xi_forest_pairs_fast(
                  delta.z, 10.**delta.log_lambda, 10.**delta.log_lambda,
                  delta.weights, delta.delta, z_qso, lambda_qso, lambda_qso,
                  weights_qso, ang, weights1d, xi_1d, r_par1d, r_trans1d, z1d,
                  num_pairs1d)
-
-
-
-            xi_1d[:rebin_xi.size] += rebin_xi
-            weights1d[:rebin_weight.size] += rebin_weight
-            r_par1d[:rebin_r_par.size] += rebin_r_par
-            z1d[:rebin_z.size] += rebin_z
-            num_pairs1d[:rebin_num_pairs.size] += rebin_num_pairs.astype(int)
 
     w = weights1d > 0.
     xi_1d[w] /= weights1d[w]
