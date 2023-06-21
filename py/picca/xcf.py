@@ -890,9 +890,9 @@ def compute_xi_1d(healpixs):
     w = weights1d > 0.
     xi_1d[w] /= weights1d[w]
     r_par1d[w] /= weights1d[w]
-    z[w] /= weights1d[w]
+    z1d[w] /= weights1d[w]
 
-    return weights1d, xi_1d, r_par1d, z, num_pairs1d
+    return weights1d, xi_1d, r_par1d, z1d, num_pairs1d
 
 
 @njit
