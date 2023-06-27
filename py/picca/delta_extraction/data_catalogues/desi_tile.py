@@ -202,7 +202,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
                 night_spec = int(filename.split('thru')[-1].split('.')[0])
             else:
                 night_spec = int(filename.split('-')[-1].split('.')[0])
-        except ValueError as error:
+        except ValueError:
             self.logger.warning(f"In file {filename}, error reading night. Ignoring file")
             return {}, 0
 
