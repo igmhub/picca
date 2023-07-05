@@ -4,6 +4,7 @@ on:
     branches:
       - master
     paths-ignore:
+      - '.github/**'
       - 'README.md'
       - 'CHANGELOG.md'
       - 'py/picca/_version.py'
