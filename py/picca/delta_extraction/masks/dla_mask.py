@@ -7,6 +7,8 @@ import fitsio
 import numpy as np
 from numba import njit
 
+from scipy.special import voigt_profile
+
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.mask import Mask, accepted_options, defaults
@@ -28,7 +30,6 @@ NUM_POINTS = 10000
 GAUSSIAN_DIST = np.random.normal(size=NUM_POINTS) * np.sqrt(2)
 
 
-@njit
 def dla_profile(lambda_, z_abs, nhi):
     """Compute DLA profile
 
@@ -48,10 +49,8 @@ def dla_profile(lambda_, z_abs, nhi):
         -tau_lyb(lambda_, z_abs, nhi))
     return transmission
 
-### Implementation of Pasquier code,
-###     also in Rutten 2003 at 3.3.3
+### Implementation based on Garnett2018
 LAMBDA_LYA = float(ABSORBER_IGM["LYA"]) ## Lya wavelength [A]
-@njit
 def tau_lya(lambda_, z_abs, nhi):
     """Compute the optical depth for Lyman-alpha absorption.
 
@@ -71,32 +70,31 @@ def tau_lya(lambda_, z_abs, nhi):
     tau: array of float
     The optical depth.
     """
-    gamma = 6.625e8  ## damping constant of the transition [s^-1]
-    osc_strength = 0.4164  ## oscillator strength of the atomic transition
-    speed_light = 3e8  ## speed of light [m/s]
-    thermal_velocity = 30000.  ## sqrt(2*k*T/m_proton) with
-    ## T = 5*10^4 ## [m.s^-1]
-    nhi_cm2 = 10**nhi  ## column density [cm^-2]
-    lambda_rest_frame = lambda_ / (1 + z_abs)
-    ## wavelength at DLA restframe [A]
+    e = 1.6021e-19 #C
+    epsilon0 = 8.8541e-12 #C^2.s^2.kg^-1.m^-3
+    f = 0.4164
+    mp = 1.6726e-27 #kg
+    me = 9.109e-31 #kg
+    c = 2.9979e8 #m.s^-1
+    k = 1.3806e-23 #m^2.kg.s^-2.K-1
+    T = 5*1e4 #K
+    gamma = 6.2648e+08 #s^-1
 
-    u_voight = ((speed_light / thermal_velocity) *
-                (LAMBDA_LYA / lambda_rest_frame - 1))
-    ## dimensionless frequency offset in Doppler widths.
-    a_voight = LAMBDA_LYA * 1e-10 * gamma / (4 * np.pi * thermal_velocity)
-    ## Voigt damping parameter
-    voigt_profile = voigt(a_voight, u_voight)
-    thermal_velocity /= 1000.
-    ## 1.497e-16 = e**2/(4*sqrt(pi)*epsilon0*m_electron*c)*1e-10
-    ## [m^2.s^-1.m/]
-    ## we have b/1000 & 1.497e-15 to convert
-    ## 1.497e-15*osc_strength*lambda_rest_frame*h/n to cm^2
-    tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt_profile /
-           thermal_velocity)
+    lambda_rest_frame = lambda_/(1+z_abs)
+    
+    v = c *(lambda_rest_frame/LAMBDA_LYA-1)
+    b = np.sqrt(2*k*T/mp)
+    small_gamma = gamma*LAMBDA_LYA/(4*np.pi)*1e-10
+    
+    nhi_m2 = 10**nhi*1e4
+    
+    tau = nhi_m2*np.pi*e**2*f*LAMBDA_LYA*1e-10
+    tau /= 4*np.pi*epsilon0*me*c
+    tau *= voigt_profile(v, b/np.sqrt(2), small_gamma)
+        
     return tau
 
 LAMBDA_LYB = float(ABSORBER_IGM["LYB"])
-@njit
 def tau_lyb(lambda_, z_abs, nhi):
     """Compute the optical depth for Lyman-beta absorption.
 
@@ -116,47 +114,30 @@ def tau_lyb(lambda_, z_abs, nhi):
     tau: array of float
     The optical depth.
     """
-    gamma = 0.079120
-    osc_strength = 1.897e8
-    speed_light = 3e8  ## speed of light m/s
-    thermal_velocity = 30000.
-    nhi_cm2 = 10**nhi
-    lambda_rest_frame = lambda_ / (1 + z_abs)
+    e = 1.6021e-19 #C
+    epsilon0 = 8.8541e-12 #C^2.s^2.kg^-1.m^-3
+    f = 0.07912 
+    mp = 1.6726e-27 #kg
+    me = 9.109e-31 #kg
+    c = 2.9979e8 #m.s^-1
+    k = 1.3806e-23 #m^2.kg.s^-2.K-1
+    T = 5*1e4 #K
+    gamma = 4.1641e-01 #s^-1
 
-    u_voight = ((speed_light / thermal_velocity) *
-                (LAMBDA_LYB / lambda_rest_frame - 1))
-    a_voight = LAMBDA_LYB * 1e-10 * gamma / (4 * np.pi * thermal_velocity)
-    voigt_profile = voigt(a_voight, u_voight)
-    thermal_velocity /= 1000.
-    tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt_profile /
-           thermal_velocity)
+    lambda_rest_frame = lambda_/(1+z_abs)
+    
+    v = c *(lambda_rest_frame/LAMBDA_LYB-1)
+    b = np.sqrt(2*k*T/mp)
+    small_gamma = gamma*LAMBDA_LYB/(4*np.pi)*1e-10
+    
+    nhi_m2 = 10**nhi*1e4
+    
+    tau = nhi_m2*np.pi*e**2*f*LAMBDA_LYB*1e-10
+    tau /= 4*np.pi*epsilon0*me*c
+    tau *= voigt_profile(v, b/np.sqrt(2), small_gamma)
+    
     return tau
 
-# maybe we should replace this by scipy.special.voigt_profile?
-# if it is in numba
-@njit
-def voigt(a_voight, u_voight):
-    """Compute the classical Voigt function
-
-    Arguments
-    ---------
-    a_voight: float
-    Voigt damping parameter.
-
-    u_voight: array of floats
-    Dimensionless frequency offset in Doppler widths.
-
-    Return
-    ------
-    voigt: array of float
-    The Voigt function for each element in a, u
-    """
-    unnormalized_voigt = np.zeros_like(u_voight)
-    for index in range(unnormalized_voigt.shape[0]):
-        unnormalized_voigt[index] = np.mean(
-            1.0 / (a_voight**2 + (GAUSSIAN_DIST - u_voight[index])**2)
-        )
-    return unnormalized_voigt * a_voight / np.sqrt(np.pi)
 
 class DlaMask(Mask):
     """Class to mask DLAs
