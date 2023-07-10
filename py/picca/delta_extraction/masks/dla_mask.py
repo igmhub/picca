@@ -5,8 +5,6 @@ import logging
 from astropy.table import Table
 import fitsio
 import numpy as np
-from numba import njit
-
 from scipy.special import voigt_profile
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -70,27 +68,27 @@ def tau_lya(lambda_, z_abs, nhi):
     tau: array of float
     The optical depth.
     """
-    e = 1.6021e-19  # C
+    e_charge = 1.6021e-19  # C
     epsilon0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
     f = 0.41641
-    mp = 1.6726e-27  # kg
-    me = 9.109e-31  # kg
-    c = 2.9979e8  # m.s^-1
+    p_mass = 1.6726e-27  # kg
+    e_mass = 9.109e-31  # kg
+    speed_light = 2.9979e8  # m.s^-1
     k = 1.3806e-23  # m^2.kg.s^-2.K-1
-    T = 5 * 1e4  # K
+    gas_temp = 5 * 1e4  # K
     gamma = 6.2648e08  # s^-1
 
     lambda_rest_frame = lambda_ / (1 + z_abs)
 
-    v = c * (lambda_rest_frame / LAMBDA_LYA - 1)
-    b = np.sqrt(2 * k * T / mp)
+    v_voigt = speed_light * (lambda_rest_frame / LAMBDA_LYA - 1)
+    b_voigt = np.sqrt(2 * k * gas_temp / p_mass)
     small_gamma = gamma * LAMBDA_LYA / (4 * np.pi) * 1e-10
 
     nhi_m2 = 10**nhi * 1e4
 
-    tau = nhi_m2 * np.pi * e**2 * f * LAMBDA_LYA * 1e-10
-    tau /= 4 * np.pi * epsilon0 * me * c
-    tau *= voigt_profile(v, b / np.sqrt(2), small_gamma)
+    tau = nhi_m2 * np.pi * e_charge**2 * f * LAMBDA_LYA * 1e-10
+    tau /= 4 * np.pi * epsilon0 * e_mass * speed_light
+    tau *= voigt_profile(v_voigt, b_voigt / np.sqrt(2), small_gamma)
 
     return tau
 
@@ -114,27 +112,27 @@ def tau_lyb(lambda_, z_abs, nhi):
     tau: array of float
     The optical depth.
     """
-    e = 1.6021e-19  # C
+    e_charge = 1.6021e-19  # C
     epsilon0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
     f = 0.079142
-    mp = 1.6726e-27  # kg
-    me = 9.109e-31  # kg
-    c = 2.9979e8  # m.s^-1
+    p_mass = 1.6726e-27  # kg
+    e_mass = 9.109e-31  # kg
+    speed_light = 2.9979e8  # m.s^-1
     k = 1.3806e-23  # m^2.kg.s^-2.K-1
-    T = 5 * 1e4  # K
+    gas_temp = 5 * 1e4  # K
     gamma = 1.6725e8  # s^-1
 
     lambda_rest_frame = lambda_ / (1 + z_abs)
 
-    v = c * (lambda_rest_frame / LAMBDA_LYB - 1)
-    b = np.sqrt(2 * k * T / mp)
+    v_voigt = speed_light * (lambda_rest_frame / LAMBDA_LYB - 1)
+    b_voigt = np.sqrt(2 * k * gas_temp / p_mass)
     small_gamma = gamma * LAMBDA_LYB / (4 * np.pi) * 1e-10
 
     nhi_m2 = 10**nhi * 1e4
 
-    tau = nhi_m2 * np.pi * e**2 * f * LAMBDA_LYB * 1e-10
-    tau /= 4 * np.pi * epsilon0 * me * c
-    tau *= voigt_profile(v, b / np.sqrt(2), small_gamma)
+    tau = nhi_m2 * np.pi * e_charge**2 * f * LAMBDA_LYB * 1e-10
+    tau /= 4 * np.pi * epsilon0 * e_mass * speed_light
+    tau *= voigt_profile(v_voigt, b_voigt / np.sqrt(2), small_gamma)
 
     return tau
 
