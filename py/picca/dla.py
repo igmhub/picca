@@ -138,15 +138,15 @@ class DLA:
         Returns:
             The optical depth.
         """
-        e = 1.6021e-19 #C
-        epsilon0 = 8.8541e-12 #C^2.s^2.kg^-1.m^-3
-        f = 0.07912 
-        mp = 1.6726e-27 #kg
-        me = 9.109e-31 #kg
-        c = 2.9979e8 #m.s^-1
-        k = 1.3806e-23 #m^2.kg.s^-2.K-1
-        T = 5*1e4 #K
-        gamma = 4.1641e-01 #s^-1
+        e = 1.6021e-19  # C
+        epsilon0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
+        f = 0.079142
+        mp = 1.6726e-27  # kg
+        me = 9.109e-31  # kg
+        c = 2.9979e8  # m.s^-1
+        k = 1.3806e-23  # m^2.kg.s^-2.K-1
+        T = 5 * 1e4  # K
+        gamma = 1.6725e8  # s^-1
         lam_lyb = constants.ABSORBER_IGM["LYB"] #A
 
         lambda_rest_frame = lambda_/(1+z_abs)

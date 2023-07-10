@@ -70,28 +70,28 @@ def tau_lya(lambda_, z_abs, nhi):
     tau: array of float
     The optical depth.
     """
-    e = 1.6021e-19 #C
-    epsilon0 = 8.8541e-12 #C^2.s^2.kg^-1.m^-3
-    f = 0.4164
-    mp = 1.6726e-27 #kg
-    me = 9.109e-31 #kg
-    c = 2.9979e8 #m.s^-1
-    k = 1.3806e-23 #m^2.kg.s^-2.K-1
-    T = 5*1e4 #K
-    gamma = 6.2648e+08 #s^-1
+    e = 1.6021e-19  # C
+    epsilon0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
+    f = 0.41641
+    mp = 1.6726e-27  # kg
+    me = 9.109e-31  # kg
+    c = 2.9979e8  # m.s^-1
+    k = 1.3806e-23  # m^2.kg.s^-2.K-1
+    T = 5 * 1e4  # K
+    gamma = 6.2648e08  # s^-1
 
-    lambda_rest_frame = lambda_/(1+z_abs)
-    
-    v = c *(lambda_rest_frame/LAMBDA_LYA-1)
-    b = np.sqrt(2*k*T/mp)
-    small_gamma = gamma*LAMBDA_LYA/(4*np.pi)*1e-10
-    
-    nhi_m2 = 10**nhi*1e4
-    
-    tau = nhi_m2*np.pi*e**2*f*LAMBDA_LYA*1e-10
-    tau /= 4*np.pi*epsilon0*me*c
-    tau *= voigt_profile(v, b/np.sqrt(2), small_gamma)
-        
+    lambda_rest_frame = lambda_ / (1 + z_abs)
+
+    v = c * (lambda_rest_frame / LAMBDA_LYA - 1)
+    b = np.sqrt(2 * k * T / mp)
+    small_gamma = gamma * LAMBDA_LYA / (4 * np.pi) * 1e-10
+
+    nhi_m2 = 10**nhi * 1e4
+
+    tau = nhi_m2 * np.pi * e**2 * f * LAMBDA_LYA * 1e-10
+    tau /= 4 * np.pi * epsilon0 * me * c
+    tau *= voigt_profile(v, b / np.sqrt(2), small_gamma)
+
     return tau
 
 LAMBDA_LYB = float(ABSORBER_IGM["LYB"])
@@ -114,28 +114,28 @@ def tau_lyb(lambda_, z_abs, nhi):
     tau: array of float
     The optical depth.
     """
-    e = 1.6021e-19 #C
-    epsilon0 = 8.8541e-12 #C^2.s^2.kg^-1.m^-3
-    f = 0.07912 
-    mp = 1.6726e-27 #kg
-    me = 9.109e-31 #kg
-    c = 2.9979e8 #m.s^-1
-    k = 1.3806e-23 #m^2.kg.s^-2.K-1
-    T = 5*1e4 #K
-    gamma = 4.1641e-01 #s^-1
+    e = 1.6021e-19  # C
+    epsilon0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
+    f = 0.079142
+    mp = 1.6726e-27  # kg
+    me = 9.109e-31  # kg
+    c = 2.9979e8  # m.s^-1
+    k = 1.3806e-23  # m^2.kg.s^-2.K-1
+    T = 5 * 1e4  # K
+    gamma = 1.6725e8  # s^-1
 
-    lambda_rest_frame = lambda_/(1+z_abs)
-    
-    v = c *(lambda_rest_frame/LAMBDA_LYB-1)
-    b = np.sqrt(2*k*T/mp)
-    small_gamma = gamma*LAMBDA_LYB/(4*np.pi)*1e-10
-    
-    nhi_m2 = 10**nhi*1e4
-    
-    tau = nhi_m2*np.pi*e**2*f*LAMBDA_LYB*1e-10
-    tau /= 4*np.pi*epsilon0*me*c
-    tau *= voigt_profile(v, b/np.sqrt(2), small_gamma)
-    
+    lambda_rest_frame = lambda_ / (1 + z_abs)
+
+    v = c * (lambda_rest_frame / LAMBDA_LYB - 1)
+    b = np.sqrt(2 * k * T / mp)
+    small_gamma = gamma * LAMBDA_LYB / (4 * np.pi) * 1e-10
+
+    nhi_m2 = 10**nhi * 1e4
+
+    tau = nhi_m2 * np.pi * e**2 * f * LAMBDA_LYB * 1e-10
+    tau /= 4 * np.pi * epsilon0 * me * c
+    tau *= voigt_profile(v, b / np.sqrt(2), small_gamma)
+
     return tau
 
 
