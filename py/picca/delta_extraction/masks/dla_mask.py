@@ -70,7 +70,7 @@ TAU_PREFACTOR = (
     ELEMENTARY_CHARGE**2 * 1e-10 / ELECTRON_MASS / SPEED_LIGHT / 4 / EPSILON_0)
 
 def compute_tau(lambda_, z_abs, log_nhi, lambda_t, oscillator_strength_f, gamma):
-    r"""Compute the optical depth for Lyman-alpha absorption.
+    r"""Compute the optical depth for DLA absorption.
 
     Tau is computed using equations 34 to 36 of Garnett et al. 2017. We add
     a factor 4pi\epsion_0 in the denominator of their equation 34 so that
