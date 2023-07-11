@@ -1,25 +1,28 @@
 name: Bump version
 on: 
-  pull_request:
-  merge_group:
-        types: [checks_requested]
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '.github/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'py/picca/_version.py'
+      - '.bumpversion.cfg'
 jobs:
   bump_version:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        github_token: ${{ secrets.PAT_MW_TOKEN_ACTION }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
       
     - name: Install bump2version
       run:  pip install bump2version
-      
-    - name: Setup git
-      run: |
-        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-      
+            
     - name: increase patch
       if: ${{ always() && (!contains(github.event.head_commit.message, '[bump major]')) && (!contains(github.event.head_commit.message, '[bump minor]')) && (!contains(github.event.head_commit.message, '[no bump]')) }}
       run: bump2version patch --verbose
@@ -37,7 +40,6 @@ jobs:
       run: echo "No version bump requested"
       
     - name: Push changes
-      if: ${{contains(github.ref_name, 'gh-readonly-queue') }}
       uses: ad-m/github-push-action@master
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.PAT_MW_TOKEN_ACTION }}
