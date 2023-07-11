@@ -7,8 +7,11 @@ import sys
 
 from numba import njit
 import numpy as np
+from scipy.constants import speed_of_light as speed_light
 
 from picca.delta_extraction.errors import DeltaExtractionError
+
+SPEED_LIGHT = speed_light / 1000.  # [km/s]
 
 module_logger = logging.getLogger(__name__)
 
