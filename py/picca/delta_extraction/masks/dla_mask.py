@@ -46,8 +46,8 @@ def dla_profile(lambda_, z_abs, nhi):
     DLA column density in log10(cm^-2)
     """
     transmission = np.exp(
-        -tau(lambda_, z_abs, nhi, LAMBDA_LYA, OSCILLATOR_STRENGTH_LYA, GAMMA_LYA)
-        -tau(lambda_, z_abs, nhi, LAMBDA_LYB, OSCILLATOR_STRENGTH_LYB, GAMMA_LYB)
+        -compute_tau(lambda_, z_abs, nhi, LAMBDA_LYA, OSCILLATOR_STRENGTH_LYA, GAMMA_LYA)
+        -compute_tau(lambda_, z_abs, nhi, LAMBDA_LYB, OSCILLATOR_STRENGTH_LYB, GAMMA_LYB)
     )
     return transmission
 
@@ -69,7 +69,7 @@ LORENTZIAN_BROADENING_GAMMA_PREFACTOR = 1e-10 / (4 * np.pi)
 TAU_PREFACTOR = (
     ELEMENTARY_CHARGE**2 * 1e-10 / ELECTRON_MASS / SPEED_LIGHT / 4 / EPSILON_0)
 
-def tau(lambda_, z_abs, log_nhi, lambda_t, oscillator_strength_f, gamma):
+def compute_tau(lambda_, z_abs, log_nhi, lambda_t, oscillator_strength_f, gamma):
     r"""Compute the optical depth for Lyman-alpha absorption.
 
     Tau is computed using equations 34 to 36 of Garnett et al. 2017. We add
