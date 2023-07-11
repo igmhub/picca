@@ -5,6 +5,7 @@ import logging
 from astropy.table import Table
 import fitsio
 import numpy as np
+from scipy.constants import speed_of_light as SPEED_LIGHT
 from scipy.special import voigt_profile
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -23,10 +24,12 @@ defaults = update_default_options(
         "los_id name": "THING_ID",
     })
 
-np.random.seed(0)
-NUM_POINTS = 10000
-GAUSSIAN_DIST = np.random.normal(size=NUM_POINTS) * np.sqrt(2)
-
+LAMBDA_LYA = float(ABSORBER_IGM["LYA"]) ## Lya wavelength [A]
+LAMBDA_LYB = float(ABSORBER_IGM["LYB"]) ## Lyb wavelength [A]
+OSCILLATOR_STRENGTH_LYA = 0.41641
+OSCILLATOR_STRENGTH_LYB = 0.079142
+GAMMA_LYA = 6.2648e08  # s^-1 damping constant
+GAMMA_LYB = 1.6725e8  # s^-1 damping constant
 
 def dla_profile(lambda_, z_abs, nhi):
     """Compute DLA profile
@@ -43,58 +46,55 @@ def dla_profile(lambda_, z_abs, nhi):
     DLA column density in log10(cm^-2)
     """
     transmission = np.exp(
-        -tau_lya(lambda_, z_abs, nhi)
-        -tau_lyb(lambda_, z_abs, nhi))
+        -tau(lambda_, z_abs, nhi, LAMBDA_LYA, OSCILLATOR_STRENGTH_LYA, GAMMA_LYA)
+        -tau(lambda_, z_abs, nhi, LAMBDA_LYB, OSCILLATOR_STRENGTH_LYB, GAMMA_LYB)
+    )
     return transmission
 
-### Implementation based on Garnett2018
-LAMBDA_LYA = float(ABSORBER_IGM["LYA"]) ## Lya wavelength [A]
-def tau_lya(lambda_, z_abs, nhi):
+# constants to compute the optical depth of the DLA absoprtion
+ELEMENTARY_CHARGE = 1.6021e-19  # C
+EPSILON_0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
+PROTON_MASS = 1.6726e-27  # kg
+ELECTRON_MASS = 9.109e-31  # kg
+BOLTZMAN_CONSTANT_K = 1.3806e-23  # m^2.kg.s^-2.K-1
+GAS_TEMP = 5 * 1e4  # K
+
+# precomputed factors to save time
+# compared to equation 36 of Garnett et al 2017 there is a sqrt(2) missing
+# this is because otherwise we need to divide this quantity by sqrt(2)
+# when calling scipy.special.voigt
+GAUSSIAN_BROADENING_B = np.sqrt(BOLTZMAN_CONSTANT_K * GAS_TEMP / PROTON_MASS)
+# the 1e-10 appears as the wavelengths are given in Angstroms
+LORENTZIAN_BROADENING_GAMMA_PREFACTOR = 1e-10 / (4 * np.pi)
+TAU_PREFACTOR = (
+    ELEMENTARY_CHARGE**2 * 1e-10 / ELECTRON_MASS / SPEED_LIGHT / 4 / EPSILON_0)
+
+def tau(lambda_, z_abs, log_nhi, lambda_t, oscillator_strength_f, gamma):
     """Compute the optical depth for Lyman-alpha absorption.
 
-    Arguments
-    ---------
-    lambda_: array of floats
-    Wavelength (in Angs)
+    Tau is computed using equations 34 to 36 of Garnett et al. 2017. We add
+    a factor 4pi\epsion_0 in the denominator of their equation 34 so that
+    dimensions match. The equations we use are:
 
-    z_abs: float
-    Redshift of the absorption
+    \tau(\lambda, z_{abs}, N_{HI}) = N_{HI} \frac {e^{2} f\lambda_{t} }
+        {4 \epsion_0 m_{e} c } \phi{\nu, b, \gamma}
 
-    nhi: float
-    DLA column density in log10(cm^-2)
+    where e is the elementary charge, \lambda_{t} is the transition wavelength
+    and f is the oscillator strength of the transition. The line profile
+    function \phi is a Voigt profile, where \nu is ther elative velocity
 
-    Return
-    ------
-    tau: array of float
-    The optical depth.
-    """
-    e_charge = 1.6021e-19  # C
-    epsilon0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
-    f = 0.41641
-    p_mass = 1.6726e-27  # kg
-    e_mass = 9.109e-31  # kg
-    speed_light = 2.9979e8  # m.s^-1
-    k = 1.3806e-23  # m^2.kg.s^-2.K-1
-    gas_temp = 5 * 1e4  # K
-    gamma = 6.2648e08  # s^-1
+    \nu = c ( \frac{ \lambda } { \lambda_{t}* (1+z_{DLA}) }  ) ,
 
-    lambda_rest_frame = lambda_ / (1 + z_abs)
+    b / \sqrt{2} is the standard deviation of the Gaussian (Maxwellian)
+    broadening contribution:
 
-    v_voigt = speed_light * (lambda_rest_frame / LAMBDA_LYA - 1)
-    b_voigt = np.sqrt(2 * k * gas_temp / p_mass)
-    small_gamma = gamma * LAMBDA_LYA / (4 * np.pi) * 1e-10
+    b = \sqrt{ \frac{ 2kT }{ m_{p} } }
 
-    nhi_m2 = 10**nhi * 1e4
+    and \gamma is the width of the Lorenztian broadening contribution:
 
-    tau = nhi_m2 * np.pi * e_charge**2 * f * LAMBDA_LYA * 1e-10
-    tau /= 4 * np.pi * epsilon0 * e_mass * speed_light
-    tau *= voigt_profile(v_voigt, b_voigt / np.sqrt(2), small_gamma)
+    \gamma = \frac { \Gamma \lambda_{t} } { 4\pi }
 
-    return tau
-
-LAMBDA_LYB = float(ABSORBER_IGM["LYB"])
-def tau_lyb(lambda_, z_abs, nhi):
-    """Compute the optical depth for Lyman-beta absorption.
+    where \Gamma is a damping constant
 
     Arguments
     ---------
@@ -104,38 +104,36 @@ def tau_lyb(lambda_, z_abs, nhi):
     z_abs: float
     Redshift of the absorption
 
-    nhi: float
+    log_nhi: float
     DLA column density in log10(cm^-2)
+
+    lambda_t: float
+    Transition wavelength, in Angstroms, e.g. for Lya 1215.67
+
+    oscillator_strength_f: float
+    Oscillator strength, e.g. f = 0.41611 for Lya
+
+    gamma: float
+    Damping constant (in s^-1)
 
     Return
     ------
     tau: array of float
     The optical depth.
     """
-    e_charge = 1.6021e-19  # C
-    epsilon0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
-    f = 0.079142
-    p_mass = 1.6726e-27  # kg
-    e_mass = 9.109e-31  # kg
-    speed_light = 2.9979e8  # m.s^-1
-    k = 1.3806e-23  # m^2.kg.s^-2.K-1
-    gas_temp = 5 * 1e4  # K
-    gamma = 1.6725e8  # s^-1
+    # compute broadenings for the voight profile
+    relative_velocity_nu = SPEED_LIGHT * (lambda_ / (1 + z_abs) / lambda_t - 1)
+    lorentzian_broadening_gamma = (
+        LORENTZIAN_BROADENING_GAMMA_PREFACTOR * gamma * lambda_t)
 
-    lambda_rest_frame = lambda_ / (1 + z_abs)
+    # convert column density to m^2
+    nhi = 10**log_nhi * 1e4
 
-    v_voigt = speed_light * (lambda_rest_frame / LAMBDA_LYB - 1)
-    b_voigt = np.sqrt(2 * k * gas_temp / p_mass)
-    small_gamma = gamma * LAMBDA_LYB / (4 * np.pi) * 1e-10
-
-    nhi_m2 = 10**nhi * 1e4
-
-    tau = nhi_m2 * np.pi * e_charge**2 * f * LAMBDA_LYB * 1e-10
-    tau /= 4 * np.pi * epsilon0 * e_mass * speed_light
-    tau *= voigt_profile(v_voigt, b_voigt / np.sqrt(2), small_gamma)
+    # the 1e-10 converts the wavelength from Angstroms to meters
+    tau = TAU_PREFACTOR * nhi * oscillator_strength_f * lambda_t * voigt_profile(
+        relative_velocity_nu, GAUSSIAN_BROADENING_B, lorentzian_broadening_gamma)
 
     return tau
-
 
 class DlaMask(Mask):
     """Class to mask DLAs
