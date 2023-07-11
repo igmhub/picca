@@ -5,7 +5,6 @@ import logging
 from astropy.table import Table
 import fitsio
 import numpy as np
-from scipy.constants import speed_of_light as SPEED_LIGHT
 from scipy.special import voigt_profile
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -56,6 +55,7 @@ ELEMENTARY_CHARGE = 1.6021e-19  # C
 EPSILON_0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
 PROTON_MASS = 1.6726e-27  # kg
 ELECTRON_MASS = 9.109e-31  # kg
+SPEED_LIGHT = 2.9979e8 # m.s^-1
 BOLTZMAN_CONSTANT_K = 1.3806e-23  # m^2.kg.s^-2.K-1
 GAS_TEMP = 5 * 1e4  # K
 
