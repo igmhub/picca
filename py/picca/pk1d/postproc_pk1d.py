@@ -170,11 +170,9 @@ def compute_mean_pk1d(
     Edges of the wavenumber bins we want to use, either in (Angstrom)-1 or s/km
 
     weight_method: string
-    3 possible options:
+    2 possible options:
         'fit_snr': Compute mean P1D with weights estimated by fitting dispersion vs SNR
         'no_weights': Compute mean P1D without weights
-        'simple_snr' (obsolete): Compute mean P1D with weights computed directly from SNR values
-                    (SNR as given in compute_Pk1D outputs)
 
     apply_z_weights: Bool
     If True, each chunk contributes to two nearest redshift bins with a linear weighting scheme.
@@ -259,15 +257,6 @@ def compute_mean_pk1d(
             compute_covariance, compute_bootstrap = False, False
             cov_table = None
 
-        elif weight_method != "no_weights":
-            userprint(
-                """Covariance calculations are not compatible with SNR weighting method yet.
-                Skipping calculation"""
-            )
-
-            compute_covariance, compute_bootstrap = False, False
-            cov_table = None
-
         elif apply_z_weights:
             userprint(
                 """Covariance calculations are not compatible redshift weighting yes.
@@ -309,7 +298,7 @@ def compute_mean_pk1d(
     metadata_table["N_chunks"] = n_chunks
 
     zbin_centers = np.around((zbin_edges[1:] + zbin_edges[:-1]) / 2, 5)
-    if output_snrfit is not None:
+    if weight_method == "fit_snr":
         snrfit_table = np.zeros(
             (nbins_z * nbins_k, 13)
         )  # 13 entries: z k a b + 9 SNR bins used for the fit
@@ -326,7 +315,6 @@ def compute_mean_pk1d(
         p1d_table_cols,
         weight_method,
         apply_z_weights,
-        output_snrfit,
         nomedians,
         nbins_z,
         zbin_centers,
@@ -336,7 +324,7 @@ def compute_mean_pk1d(
         kbin_edges,
     )
     if number_worker == 1:
-        output_mean = [func(p) for p in params_pool]
+        output_mean = [func(p[0]) for p in params_pool]
     else:
         with Pool(number_worker) as pool:
             output_mean = pool.starmap(func, params_pool)
@@ -347,7 +335,7 @@ def compute_mean_pk1d(
         output_mean,
         mean_p1d_table,
         p1d_table_cols,
-        output_snrfit,
+        weight_method,
         snrfit_table,
         nomedians,
     )
@@ -355,7 +343,8 @@ def compute_mean_pk1d(
     if compute_covariance:
         userprint("Computing covariance matrix")
         params_pool = []
-        for izbin in range(nbins_z):  # Main loop 1) z bins
+        # Main loop 1) z bins
+        for izbin in range(nbins_z):
             select_z = (p1d_table["forest_z"] < zbin_edges[izbin + 1]) & (
                 p1d_table["forest_z"] > zbin_edges[izbin]
             )
@@ -371,14 +360,16 @@ def compute_mean_pk1d(
             kbin_edges,
             k_index,
             nbins_k,
+            weight_method,
+            snrfit_table,
         )
         if number_worker == 1:
-            output_cov = [func(p) for p in params_pool]
+            output_cov = [func(*p) for p in params_pool]
         else:
             with Pool(number_worker) as pool:
                 output_cov = pool.starmap(func, params_pool)
-
-        for izbin in range(nbins_z):  # Main loop 1) z bins
+        # Main loop 1) z bins
+        for izbin in range(nbins_z):
             (
                 zbin_array,
                 index_zbin_array,
@@ -400,7 +391,8 @@ def compute_mean_pk1d(
         userprint("Computing covariance matrix with bootstrap method")
 
         params_pool = []
-        for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
+        # Main loop 1) z bins
+        for izbin in range(nbins_z):
             select_z = (p1d_table["forest_z"] < zbin_edges[izbin + 1]) & (
                 p1d_table["forest_z"] > zbin_edges[izbin]
             )
@@ -412,8 +404,9 @@ def compute_mean_pk1d(
                 ).astype(int)
             else:
                 bootid = np.full(number_bootstrap, None)
+
+            # Main loop 2) number of bootstrap samples
             for iboot in range(number_bootstrap):
-                # Main loop 2) number of bootstrap samples - can be paralelized
                 params_pool.append([izbin, select_z, sub_forest_ids[bootid[iboot]]])
 
         func = partial(
@@ -425,18 +418,19 @@ def compute_mean_pk1d(
             kbin_edges,
             k_index,
             nbins_k,
+            weight_method,
+            snrfit_table,
         )
         if number_worker == 1:
-            output_cov = [func(p) for p in params_pool]
+            output_cov = [func(*p) for p in params_pool]
         else:
             with Pool(number_worker) as pool:
                 output_cov = pool.starmap(func, params_pool)
-
-        for izbin in range(nbins_z):  # Main loop 1) z bins - can be paralelized
+        # Main loop 1) z bins
+        for izbin in range(nbins_z):
             boot_cov = []
-            for iboot in range(
-                number_bootstrap
-            ):  # Main loop 2) number of bootstrap samples - can be paralelized
+            # Main loop 2) number of bootstrap samples
+            for iboot in range(number_bootstrap):
                 (
                     zbin_array,
                     index_zbin_array,
@@ -471,7 +465,7 @@ def fill_average_pk(
     output_mean,
     mean_p1d_table,
     p1d_table_cols,
-    output_snrfit,
+    weight_method,
     snrfit_table,
     nomedians,
 ):
@@ -494,8 +488,10 @@ def fill_average_pk(
     p1d_table_cols: List of str,
     Column names in the input table to be averaged.
 
-    output_snrfit: bool,
-    If not None, write the fit to the SNR to a file.
+    weight_method: string
+    2 possible options:
+        'fit_snr': Compute mean P1D with weights estimated by fitting dispersion vs SNR
+        'no_weights': Compute mean P1D without weights
 
     snrfit_table: numpy ndarray,
     Table containing SNR fit infos
@@ -533,7 +529,7 @@ def fill_average_pk(
             mean_p1d_table["max" + col][i_min:i_max] = max_array[icol]
             if not nomedians:
                 mean_p1d_table["median" + col][i_min:i_max] = median_array[icol]
-        if output_snrfit is not None:
+        if weight_method == "fit_snr":
             snrfit_table[i_min:i_max, :] = snrfit_array
 
 
@@ -542,7 +538,6 @@ def compute_average_pk_redshift(
     p1d_table_cols,
     weight_method,
     apply_z_weights,
-    output_snrfit,
     nomedians,
     nbins_z,
     zbin_centers,
@@ -573,9 +568,6 @@ def compute_average_pk_redshift(
 
     apply_z_weights: bool,
     If True, apply redshift weights.
-
-    output_snrfit: bool,
-    If not None, write the fit to the SNR to a file.
 
     nomedians: bool,
     If True, do not use median values in the fit to the SNR.
@@ -624,7 +616,7 @@ def compute_average_pk_redshift(
         median_array = []
     else:
         median_array = None
-    if output_snrfit is not None:
+    if weight_method == "fit_snr":
         snrfit_array = np.zeros((nbins_k, 13))
     else:
         snrfit_array = None
@@ -648,7 +640,7 @@ def compute_average_pk_redshift(
             max_array[icol][:] = np.nan
             if not nomedians:
                 median_array[icol][:] = np.nan
-        if output_snrfit is not None:
+        if weight_method == "fit_snr":
             snrfit_array[:] = np.nan
 
         return (
@@ -735,18 +727,17 @@ def compute_average_pk_redshift(
 
                 data_values = p1d_table[col][select]
                 data_snr = p1d_table["forest_snr"][select]
+                p1d_values = p1d_table["Pk"][select]
                 mask = np.isnan(data_values) | np.isnan(data_snr)
                 if len(mask[mask]) != 0:
-                    userprint(
-                        "Warning: A nan value was detected in the following table:\n",
-                        data_values[mask],
-                    )
                     data_snr = data_snr[~mask]
                     data_values = data_values[~mask]
-                # Fit function to observed dispersion:
+                    p1d_values = p1d_values[~mask]
+                # Fit function to observed dispersion in P1D:
                 standard_dev, _, _ = binned_statistic(
-                    data_snr, data_values, statistic="std", bins=snr_bin_edges
+                    data_snr, p1d_values, statistic="std", bins=snr_bin_edges
                 )
+                standard_dev_full = np.copy(standard_dev)
                 mask = np.isnan(standard_dev)
                 if len(mask[mask]) != 0:
                     standard_dev = standard_dev[~mask]
@@ -774,32 +765,18 @@ def compute_average_pk_redshift(
                     )
                 else:
                     error = np.sqrt(1.0 / np.sum(weights))
-                if output_snrfit is not None and col == "Pk":
+                if col == "Pk":
+                    if len(mask[mask]) != 0:
+                        standard_dev = np.concatenate(
+                            [standard_dev, np.full(len(mask[mask]), np.nan)]
+                        )
                     snrfit_array[ikbin, 0:4] = [
                         zbin_centers[izbin],
                         (kbin + kbin_edges[ikbin + 1]) / 2.0,
                         coef[0],
                         coef[1],
                     ]
-                    snrfit_array[ikbin, 4:] = standard_dev
-
-            elif weight_method == "simple_snr":
-                # - We keep this for record, we do not recommand to use it
-                # for forests with snr>snr_limit,
-                # the weight is fixed to (snr_limit - 1)**2 = 9
-                snr_limit = 4
-                forest_snr = p1d_table["forest_snr"][select]
-                # w, = np.where(forest_snr <= 1)
-                # if len(w)>0: raise RuntimeError('Cannot add weights with SNR<=1.')
-                if (forest_snr <= 1).sum() > 0:
-                    raise RuntimeError("Cannot add weights with SNR<=1.")
-                weights = (forest_snr - 1) ** 2
-                weights[forest_snr > snr_limit] = (snr_limit - 1) ** 2
-                mean = np.average(p1d_table[col][select], weights=weights)
-                # Need to rescale the weights to find the error:
-                #   weights_true = weights * (num_chunks - 1) / alpha
-                alpha = np.sum(weights * ((p1d_table[col][select] - mean) ** 2))
-                error = np.sqrt(alpha / (np.sum(weights) * (num_chunks - 1)))
+                    snrfit_array[ikbin, 4:] = standard_dev_full  # also save nan values
 
             elif weight_method == "no_weights":
                 if apply_z_weights:
@@ -847,6 +824,8 @@ def compute_cov(
     kbin_edges,
     k_index,
     nbins_k,
+    weight_method,
+    snrfit_table,
     izbin,
     select_z,
     sub_forest_ids,
@@ -873,6 +852,12 @@ def compute_cov(
     nbins_k (int):
     Number of k bins.
 
+    weight_method: str,
+    Method to weight the data.
+
+    snrfit_table: numpy ndarray,
+    Table containing SNR fit infos
+
     izbin (int):
     Current redshift bin being considered.
 
@@ -898,10 +883,12 @@ def compute_cov(
     """
     zbin_array = np.zeros(nbins_k * nbins_k)
     index_zbin_array = np.zeros(nbins_k * nbins_k, dtype=int)
-    n_array = np.zeros(nbins_k * nbins_k, dtype=int)
+    n_array = np.zeros(nbins_k * nbins_k)
     covariance_array = np.zeros(nbins_k * nbins_k)
     k1_array = np.zeros(nbins_k * nbins_k)
     k2_array = np.zeros(nbins_k * nbins_k)
+    if weight_method == "fit_snr":
+        weight_array = np.zeros(nbins_k * nbins_k)
 
     kbin_centers = (kbin_edges[1:] + kbin_edges[:-1]) / 2
     if n_chunks[izbin] == 0:  # Fill rows with NaNs
@@ -919,19 +906,49 @@ def compute_cov(
             k1_array,
             k2_array,
         )
-
-    for sub_forest_id in sub_forest_ids:  # First loop 1) id sub-forest bins
+    # First loop 1) id sub-forest bins
+    for sub_forest_id in sub_forest_ids:
         select_id = select_z & (p1d_table["sub_forest_id"] == sub_forest_id)
         selected_pk = p1d_table["Pk"][select_id]
         selected_ikbin = k_index[select_id]
 
-        for ipk, _ in enumerate(selected_pk):  # First loop 2) selected pk
-            ikbin = selected_ikbin[ipk]
-            if ikbin != -1:
-                for ipk2 in range(ipk, len(selected_pk)):  # First loop 3) selected pk
+        if weight_method == "fit_snr":
+            # Definition of weighted unbiased sample covariance taken from
+            # "George R. Price, Ann. Hum. Genet., Lond, pp485-490,
+            # Extension of covariance selection mathematics, 1972"
+            # adapted with weights w_i = np.sqrt(w_ipk * w_ipk2) for covariance
+            # to obtain the right definition of variance on the diagonal
+            selected_snr = p1d_table["forest_snr"][select_id]
+            snrfit_z = snrfit_table[izbin * nbins_k : (izbin + 1) * nbins_k, :]
+            selected_variance_estimated = fitfunc_variance_pk1d(
+                selected_snr, snrfit_z[selected_ikbin, 2], snrfit_z[selected_ikbin, 3]
+            )
+            # First loop 2) selected pk
+            for ipk, _ in enumerate(selected_pk):
+                ikbin = selected_ikbin[ipk]
+                # First loop 3) selected pk
+                for ipk2 in range(ipk, len(selected_pk)):
                     ikbin2 = selected_ikbin[ipk2]
-
-                    if ikbin2 != -1:
+                    if (ikbin2 != -1) & (ikbin != -1):
+                        # index of the (ikbin,ikbin2) coefficient on the top of the matrix
+                        index = (nbins_k * ikbin) + ikbin2
+                        weight = 1 / selected_variance_estimated[ipk]
+                        weight2 = 1 / selected_variance_estimated[ipk2]
+                        covariance_array[index] = covariance_array[index] + selected_pk[
+                            ipk
+                        ] * selected_pk[ipk2] * np.sqrt(weight * weight2)
+                        n_array[index] = n_array[index] + 1
+                        weight_array[index] = weight_array[index] + np.sqrt(
+                            weight * weight2
+                        )
+        else:
+            # First loop 2) selected pk
+            for ipk, _ in enumerate(selected_pk):
+                ikbin = selected_ikbin[ipk]
+                # First loop 3) selected pk
+                for ipk2 in range(ipk, len(selected_pk)):
+                    ikbin2 = selected_ikbin[ipk2]
+                    if (ikbin2 != -1) & (ikbin != -1):
                         # index of the (ikbin,ikbin2) coefficient on the top of the matrix
                         index = (nbins_k * ikbin) + ikbin2
                         covariance_array[index] = (
@@ -939,19 +956,29 @@ def compute_cov(
                             + selected_pk[ipk] * selected_pk[ipk2]
                         )
                         n_array[index] = n_array[index] + 1
-
-    for ikbin in range(nbins_k):  # Second loop 1) k bins
+    # Second loop 1) k bins
+    for ikbin in range(nbins_k):
         mean_ikbin = mean_p1d_table["meanPk"][(nbins_k * izbin) + ikbin]
 
-        for ikbin2 in range(ikbin, nbins_k):  # Second loop 2) k bins
+        # Second loop 2) k bins
+        for ikbin2 in range(ikbin, nbins_k):
             mean_ikbin2 = mean_p1d_table["meanPk"][(nbins_k * izbin) + ikbin2]
 
             # index of the (ikbin,ikbin2) coefficient on the top of the matrix
             index = (nbins_k * ikbin) + ikbin2
-            covariance_array[index] = (
-                (covariance_array[index] / n_array[index]) - mean_ikbin * mean_ikbin2
-            ) / n_array[index]
+            if weight_method == "fit_snr":
+                covariance_array[index] = (
+                    covariance_array[index] / weight_array[index]
+                ) - mean_ikbin * mean_ikbin2
+            else:
+                covariance_array[index] = (
+                    covariance_array[index] / n_array[index]
+                ) - mean_ikbin * mean_ikbin2
 
+            # Same normalization for fit_snr, equivalent to dividing to
+            # weight_array[index] if weights are normalized to give
+            # sum(weight_array[index]) = n_array[index]
+            covariance_array[index] = covariance_array[index] / n_array[index]
             zbin_array[index] = zbin_centers[izbin]
             index_zbin_array[index] = izbin
             k1_array[index] = kbin_centers[ikbin]
@@ -967,6 +994,41 @@ def compute_cov(
                 index_zbin_array[index_2] = izbin
                 k1_array[index_2] = kbin_centers[ikbin]
                 k2_array[index_2] = kbin_centers[ikbin2]
+
+    # For fit_snr method, due to the SNR fitting scheme used for weighting,
+    # the diagonal of the weigthed sample covariance matrix is not equal
+    # to the error in mean P1D. This is tested on Ohio mocks.
+    # We choose to renormalize the covariance matrix.
+    if weight_method == "fit_snr":
+        # Third loop 1) k bins
+        for ikbin in range(nbins_k):
+            std_ikbin = mean_p1d_table["errorPk"][(nbins_k * izbin) + ikbin]
+            # Third loop 2) k bins
+            for ikbin2 in range(ikbin, nbins_k):
+                std_ikbin2 = mean_p1d_table["errorPk"][(nbins_k * izbin) + ikbin2]
+
+                # index of the (ikbin,ikbin2) coefficient on the top of the matrix
+                index = (nbins_k * ikbin) + ikbin2
+                covariance_array[index] = (
+                    covariance_array[index]
+                    * (std_ikbin * std_ikbin2)
+                    / np.sqrt(
+                        covariance_array[(nbins_k * ikbin) + ikbin]
+                        * covariance_array[(nbins_k * ikbin2) + ikbin2]
+                    )
+                )
+
+                if ikbin2 != ikbin:
+                    # index of the (ikbin,ikbin2) coefficient on the bottom of the matrix
+                    index_2 = (nbins_k * ikbin2) + ikbin
+                    covariance_array[index_2] = (
+                        covariance_array[index_2]
+                        * (std_ikbin * std_ikbin2)
+                        / np.sqrt(
+                            covariance_array[(nbins_k * ikbin) + ikbin]
+                            * covariance_array[(nbins_k * ikbin2) + ikbin2]
+                        )
+                    )
 
     return zbin_array, index_zbin_array, n_array, covariance_array, k1_array, k2_array
 

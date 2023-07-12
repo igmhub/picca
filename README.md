@@ -163,3 +163,9 @@ Before submitting a PR please make sure to:
    pylint py/picca/pk1d/
    ```
    depending on the module you are working on.
+   
+When merging PRs (or committing to master directly):
+- by default the patch version is increased via a github action, so every change of master will generate a new version
+This behaviour can be changed by adding one of the following to the commit-msg of the merge commit:
+- by specifying [bump minor] or [bump major] a new minor or major version will be generated instead, but tags and releases need to be created manually (and are auto-pushed to pypi when they are created)
+- by specifying [no bump] the version bump can be circumvented altogether when some other behaviour is wanted, in that case bump2version should be run manually

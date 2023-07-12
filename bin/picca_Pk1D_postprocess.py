@@ -118,7 +118,7 @@ def main(cmdargs):
                         type=str,
                         default='no_weights',
                         help='SNR weighting scheme for the mean P1D computation,'
-                             'Possible options: no_weights, simple_snr, fit_snr')
+                             'Possible options: no_weights, fit_snr')
 
     parser.add_argument('--apply_z_weights',
                         action='store_true',

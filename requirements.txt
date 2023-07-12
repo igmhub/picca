@@ -4,7 +4,7 @@ iminuit==2.6.1
 healpy>=1.14.0
 fitsio>=1.1.4
 llvmlite>=0.36.0
-numba>=0.53.1
+numba>=0.55.1
 h5py>=3.2.1
 future>=0.18.2
 setuptools>=56.2.0
