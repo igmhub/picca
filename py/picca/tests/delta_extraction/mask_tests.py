@@ -468,6 +468,8 @@ class MaskTest(AbstractTest):
         """
         in_file = f"{THIS_DIR}/data/dummy_absorbers_cat.fits.gz"
         out_file = f"{THIS_DIR}/results/dla_mask_print.txt"
+        out_file_forest1 = f"{THIS_DIR}/results/dla_mask_forest1_remove.txt"
+        out_file_forest2 = f"{THIS_DIR}/results/dla_mask_forest2_remove.txt"
         test_file = f"{THIS_DIR}/data/dla_mask_print.txt"
         test_file_forest1 = f"{THIS_DIR}/data/dla_mask_forest1_remove.txt"
         test_file_forest2 = f"{THIS_DIR}/data/dla_mask_forest2_remove.txt"
@@ -490,6 +492,16 @@ class MaskTest(AbstractTest):
         # apply mask to forest with 1 DLA
         forest = copy.deepcopy(forest1)
         mask.apply_mask(forest)
+
+        # save the results
+        f = open(out_file_forest1, "w")
+        f.write("# log_lambda flux ivar transmission_correction\n")
+        for log_lambda, flux, ivar, transmission_correction in zip(
+            forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
+                f.write(f"{log_lambda} {flux} {ivar} {transmission_correction}\n")
+        f.close()
+
+        # load expected values and compare
         forest_masked = np.genfromtxt(test_file_forest1, names=True)
         self.assertEqual(forest.flux.size, forest_masked["flux"].size)
         self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
@@ -501,23 +513,17 @@ class MaskTest(AbstractTest):
 
         # apply mask to forest with 2 DLAs
         forest = copy.deepcopy(forest2)
-        """
-        print("Forest2, remove, before masking ")
-        print("------------------------")
-        print(forest.flux.size)
-        for log_lambda, flux, ivar, transmission_correction in zip(forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
-            print(f"{log_lambda} {flux} {ivar} {transmission_correction}")
-        print("------------------------")
-        """
         mask.apply_mask(forest)
-        """
-        print("Forest2, remove, after masking ")
-        print("------------------------")
-        print(forest.flux.size)
-        for log_lambda, flux, ivar, transmission_correction in zip(forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
-            print(f"{log_lambda} {flux} {ivar} {transmission_correction}")
-        print("------------------------")
-        """
+
+        # save the results
+        f = open(out_file_forest2, "w")
+        f.write("# log_lambda flux ivar transmission_correction\n")
+        for log_lambda, flux, ivar, transmission_correction in zip(
+            forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
+                f.write(f"{log_lambda} {flux} {ivar} {transmission_correction}\n")
+        f.close()
+
+        # load expected values and compare
         forest_masked = np.genfromtxt(test_file_forest2, names=True)
         self.assertEqual(forest.flux.size, forest_masked["flux"].size)
         self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
@@ -547,6 +553,8 @@ class MaskTest(AbstractTest):
         """
         in_file = f"{THIS_DIR}/data/dummy_absorbers_cat.fits.gz"
         out_file = f"{THIS_DIR}/results/dla_mask_print.txt"
+        out_file_forest1 = f"{THIS_DIR}/results/dla_mask_forest1_set_ivar.txt"
+        out_file_forest2 = f"{THIS_DIR}/results/dla_mask_forest2_set_ivar.txt"
         test_file = f"{THIS_DIR}/data/dla_mask_print.txt"
         test_file_forest1 = f"{THIS_DIR}/data/dla_mask_forest1_set_ivar.txt"
         test_file_forest2 = f"{THIS_DIR}/data/dla_mask_forest2_set_ivar.txt"
@@ -568,23 +576,17 @@ class MaskTest(AbstractTest):
 
         # apply mask to forest with 1 DLA
         forest = copy.deepcopy(forest1)
-        """
-        print("Forest1, set ivar, before masking ")
-        print("------------------------")
-        print(forest1.flux.size)
-        for log_lambda, flux, ivar, transmission_correction in zip(forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
-            print(f"{log_lambda} {flux} {ivar} {transmission_correction}")
-        print("------------------------")
-        """
         mask.apply_mask(forest)
-        """
-        print("Forest1, set ivar, after masking ")
-        print("------------------------")
-        print(forest.flux.size)
-        for log_lambda, flux, ivar, transmission_correction in zip(forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
-            print(f"{log_lambda} {flux} {ivar} {transmission_correction}")
-        print("------------------------")
-        """
+
+        # save the results
+        f = open(out_file_forest1, "w")
+        f.write("# log_lambda flux ivar transmission_correction\n")
+        for log_lambda, flux, ivar, transmission_correction in zip(
+            forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
+                f.write(f"{log_lambda} {flux} {ivar} {transmission_correction}\n")
+        f.close()
+
+        # load expected values and compare
         forest_masked = np.genfromtxt(test_file_forest1, names=True)
         self.assertEqual(forest.flux.size, forest_masked["flux"].size)
         self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
@@ -596,23 +598,18 @@ class MaskTest(AbstractTest):
 
         # apply mask to forest with 2 DLAs
         forest = copy.deepcopy(forest2)
-        """
-        print("Forest2, set ivar, before masking ")
-        print("------------------------")
-        print(forest.flux.size)
-        for log_lambda, flux, ivar, transmission_correction in zip(forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
-            print(f"{log_lambda} {flux} {ivar} {transmission_correction}")
-        print("------------------------")
-        """
         mask.apply_mask(forest)
-        """
-        print("Forest2, set ivar, after masking ")
-        print("------------------------")
-        print(forest.flux.size)
-        for log_lambda, flux, ivar, transmission_correction in zip(forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
-            print(f"{log_lambda} {flux} {ivar} {transmission_correction}")
-        print("------------------------")
-        """
+
+        # save the results
+        f = open(out_file_forest2, "w")
+        f.write("# log_lambda flux ivar transmission_correction\n")
+        for log_lambda, flux, ivar, transmission_correction in zip(
+            forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
+                f.write(f"{log_lambda} {flux} {ivar} {transmission_correction}\n")
+        f.close()
+
+        # load expected values and compare
+
         forest_masked = np.genfromtxt(test_file_forest2, names=True)
         self.assertEqual(forest.flux.size, forest_masked["flux"].size)
         self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
