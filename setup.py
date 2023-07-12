@@ -30,6 +30,5 @@ setup(name="picca",
     install_requires = ['numpy', 'scipy', 'iminuit', 'healpy', 'fitsio',
                         'llvmlite', 'numba', 'h5py', 'future', 'setuptools',
                         'gitpython'],
-    #test_suite = 'picca.test',
     scripts = scripts
     )
