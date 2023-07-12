@@ -225,7 +225,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                     else:
                         raise DataError(
-                            "Error while reading {color} band from "
+                            f"Error while reading {color} band from "
                             "{filename}. Analysis type is  'PK 1D', "
                             "but file does not contain HDU "
                             f"'{color}_RESOLUTION' ")
