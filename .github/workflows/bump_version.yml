@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        github_token: ${{ secrets.PAT_MW_TOKEN_ACTION }}
+        token: ${{ secrets.PAT_MW_TOKEN_ACTION }}
         
     - name: setup git
       run: |
@@ -47,4 +47,4 @@ jobs:
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
-        github_token: ${{ secrets.PAT_MW_TOKEN_ACTION }}
+        token: ${{ secrets.PAT_MW_TOKEN_ACTION }}
