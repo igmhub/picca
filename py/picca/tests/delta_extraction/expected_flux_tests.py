@@ -1821,10 +1821,17 @@ class ExpectedFluxTest(AbstractTest):
         # run populate_los_ids
         expected_flux.populate_los_ids(data.forests)
 
+        
+
         for i, key in enumerate(("mean expected flux", "weights", "continuum")):
+            out_file = f"{THIS_DIR}/results/los_ids_{i}.txt"
+            np.savetxt(out_file,expected_flux.los_ids[59152][key])
+
+        for i, key in enumerate(("mean expected flux", "weights", "continuum")):
+            test_file = f"{test_folder}/los_ids_{i}.txt"
             self.assertTrue(np.allclose(
                 expected_flux.los_ids[59152][key],
-                np.loadtxt(f"{test_folder}/los_ids_{i}.txt")
+                np.loadtxt(test_file)
             ))
 
 if __name__ == '__main__':
