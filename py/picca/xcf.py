@@ -864,6 +864,9 @@ def compute_xi_1d(healpixs):
     z1d = np.zeros(num_bins_r_par)
     num_pairs1d = np.zeros(num_bins_r_par, dtype=np.int64)
 
+    # not used only defined so that we can run compute_xi_forest_pairs_fast
+    r_trans1d = np.zeros(num_bins_r_par)
+
     for healpix in healpixs:
         for delta in data[healpix]:
 
@@ -878,24 +881,18 @@ def compute_xi_1d(healpixs):
             lambda_qso = [10.**obj.log_lambda for obj in neighbours]
             ang = np.zeros(len(lambda_qso))
 
-            (rebin_weight, rebin_xi, rebin_r_par, _, rebin_z,
-             rebin_num_pairs) = compute_xi_forest_pairs_fast(
+            compute_xi_forest_pairs_fast(
                  delta.z, 10.**delta.log_lambda, 10.**delta.log_lambda,
                  delta.weights, delta.delta, z_qso, lambda_qso, lambda_qso,
-                 weights_qso, ang)
-
-            xi_1d[:rebin_xi.size] += rebin_xi
-            weights1d[:rebin_weight.size] += rebin_weight
-            r_par1d[:rebin_r_par.size] += rebin_r_par
-            z1d[:rebin_z.size] += rebin_z
-            num_pairs1d[:rebin_num_pairs.size] += rebin_num_pairs.astype(int)
+                 weights_qso, ang, weights1d, xi_1d, r_par1d, r_trans1d, z1d,
+                 num_pairs1d)
 
     w = weights1d > 0.
     xi_1d[w] /= weights1d[w]
     r_par1d[w] /= weights1d[w]
-    z[w] /= weights1d[w]
+    z1d[w] /= weights1d[w]
 
-    return weights1d, xi_1d, r_par1d, z, num_pairs1d
+    return weights1d, xi_1d, r_par1d, z1d, num_pairs1d
 
 
 @njit

@@ -201,7 +201,7 @@ def main(cmdargs):
     xcf.z_cut_min = args.z_cut_min
     xcf.z_cut_max = args.z_cut_max
     xcf.num_bins_r_par = args.np
-    xcf.nt = 1
+    xcf.num_bins_r_trans = 1
     xcf.nside = args.nside
     xcf.ang_correlation = True
 

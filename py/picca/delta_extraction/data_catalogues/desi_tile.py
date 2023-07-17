@@ -197,10 +197,14 @@ class DesiTileFileHandler(DesiDataFileHandler):
         ra = fibermap['TARGET_RA']
         dec = fibermap['TARGET_DEC']
         tile_spec = fibermap['TILEID'][0]
-        if "cumulative" in self.input_directory:
-            night_spec = int(filename.split('thru')[-1].split('.')[0])
-        else:
-            night_spec = int(filename.split('-')[-1].split('.')[0])
+        try:
+            if "cumulative" in self.input_directory:
+                night_spec = int(filename.split('thru')[-1].split('.')[0])
+            else:
+                night_spec = int(filename.split('-')[-1].split('.')[0])
+        except ValueError:
+            self.logger.warning(f"In file {filename}, error reading night. Ignoring file")
+            return {}, 0
 
         colors = ['B', 'R', 'Z']
         ra = np.radians(ra)
@@ -221,7 +225,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                     else:
                         raise DataError(
-                            "Error while reading {color} band from "
+                            f"Error while reading {color} band from "
                             "{filename}. Analysis type is  'PK 1D', "
                             "but file does not contain HDU "
                             f"'{color}_RESOLUTION' ")

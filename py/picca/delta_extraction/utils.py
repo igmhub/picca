@@ -11,9 +11,9 @@ from scipy.constants import speed_of_light as speed_light
 
 from picca.delta_extraction.errors import DeltaExtractionError
 
-module_logger = logging.getLogger(__name__)
-
 SPEED_LIGHT = speed_light / 1000.  # [km/s]
+
+module_logger = logging.getLogger(__name__)
 
 ABSORBER_IGM = {
     "Halpha": 6562.8,
@@ -21,12 +21,14 @@ ABSORBER_IGM = {
     "MgI(2853)": 2852.96,
     "MgII(2804)": 2803.5324,
     "MgII(2796)": 2796.3511,
+    "MgII(eff)" : 2798.75,
     "FeII(2600)": 2600.1724835,
     "FeII(2587)": 2586.6495659,
     "MnII(2577)": 2576.877,
     "FeII(2383)": 2382.7641781,
     "FeII(2374)": 2374.4603294,
     "FeII(2344)": 2344.2129601,
+    "CIII(1908)"  : 1908.73,
     "AlIII(1863)": 1862.79113,
     "AlIII(1855)": 1854.71829,
     "AlII(1671)": 1670.7886,
@@ -37,6 +39,7 @@ ABSORBER_IGM = {
     "SiII(1527)": 1526.70698,
     "NiII(1455)": 1454.842,
     "SiIV(1403)": 1402.77291,
+    "SiIV(eff)" : 1396.76,
     "SiIV(1394)": 1393.76018,
     "NiII(1370)": 1370.132,
     "CII(1335)": 1334.5323,
