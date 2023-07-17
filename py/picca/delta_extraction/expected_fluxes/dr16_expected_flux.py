@@ -34,9 +34,9 @@ defaults = update_default_options(
         "use ivar as weight": False,
     })
 
-FUDGE_FIT_START = FUDGE_REF
-ETA_FIT_START = 1.
-VAR_LSS_FIT_START = 0.1
+FUDGE_DEFAULT = 0
+ETA_DEFAULT = 1.
+VAR_LSS_DEFAULT = 0.1
 
 
 class Dr16ExpectedFlux(ExpectedFlux):
@@ -204,7 +204,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             eta = np.zeros(self.num_bins_variance)
         # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
         else:
-            eta = np.ones(self.num_bins_variance)
+            eta = np.zeros(self.num_bins_variance) + ETA_DEFAULT
             # this bit is what is actually freeing eta for the fit
             self.fit_variance_functions.append("eta")
 
@@ -221,7 +221,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if not self.use_ivar_as_weight and not self.use_constant_weight:
             # this bit is what is actually freeing fudge for the fit
             self.fit_variance_functions.append("fudge")
-        fudge = np.zeros(self.num_bins_variance)
+        fudge = np.zeros(self.num_bins_variance) + FUDGE_DEFAULT
         self.get_fudge = interp1d(self.log_lambda_var_func_grid,
                                   fudge,
                                   fill_value='extrapolate',
@@ -237,7 +237,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             var_lss = np.ones(self.num_bins_variance)
         # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
         else:
-            var_lss = np.zeros(self.num_bins_variance) + 0.2
+            var_lss = np.zeros(self.num_bins_variance) + VAR_LSS_DEFAULT
             # this bit is what is actually freeing var_lss for the fit
             self.fit_variance_functions.append("var_lss")
         self.get_var_lss = interp1d(self.log_lambda_var_func_grid,
@@ -529,18 +529,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ExpectedFluxError if wavelength solution is not valid
         """
         # initialize arrays
-        if "eta" in self.fit_variance_functions:
-            eta = np.zeros(self.num_bins_variance) + ETA_FIT_START
-        else:
-            eta = self.get_eta(self.log_lambda_var_func_grid)
-        if "var_lss" in self.fit_variance_functions:
-            var_lss = np.zeros(self.num_bins_variance) + VAR_LSS_FIT_START
-        else:
-            var_lss = self.get_var_lss(self.log_lambda_var_func_grid)
-        if "fudge" in self.fit_variance_functions:
-            fudge = np.zeros(self.num_bins_variance) + FUDGE_FIT_START
-        else:
-            fudge = self.get_fudge(self.log_lambda_var_func_grid)
+        eta = self.get_eta(self.log_lambda_var_func_grid)
+        var_lss = self.get_var_lss(self.log_lambda_var_func_grid)
+        fudge = self.get_fudge(self.log_lambda_var_func_grid)
         num_pixels = np.zeros(self.num_bins_variance)
         valid_fit = np.zeros(self.num_bins_variance)
 
@@ -587,9 +578,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 fudge[index] = minimizer.values["fudge"] * FUDGE_REF
                 valid_fit[index] = True
             else:
-                eta[index] = 1.
-                var_lss[index] = 0.1
-                fudge[index] = 1. * FUDGE_REF
+                eta[index] = ETA_DEFAULT
+                var_lss[index] = VAR_LSS_DEFAULT
+                fudge[index] = FUDGE_DEFAULT
                 valid_fit[index] = False
             num_pixels[index] = leasts_squares.get_num_pixels()
             chi2_in_bin[index] = minimizer.fval
