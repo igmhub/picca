@@ -1,3 +1,10 @@
-[PROGRESS]: Reading DLA catalog from: /Users/iperezra/software/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]: Reading DLA catalog from: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
 [PROGRESS]: In catalog: 3 DLAs
 [PROGRESS]: In catalog: 2 forests have a DLA
+
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/dummy_desi_quasar_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 3
+[PROGRESS]: and z >= 2.15        : nb object in cat = 3
+[PROGRESS]: and z < 3.2         : nb object in cat = 3
+[PROGRESS]: and in selected surveys ['all', 'special', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 3

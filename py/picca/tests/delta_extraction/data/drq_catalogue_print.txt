@@ -2,7 +2,7 @@
 [ERROR]: 'spAll' file not found. If you didn't want to load the spAll file you should pass the option 'best obs = True'. Quiting...
 [WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
 [WARNING OK]: 'spAll' file found. Contining with normal execution
-[PROGRESS]: Reading DRQ catalogue from /Users/iperezra/software/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
 [PROGRESS]: start                 : nb object in cat = 79
 [PROGRESS]: and THING_ID > 0      : nb object in cat = 79
 [PROGRESS]: and ra != dec         : nb object in cat = 79
@@ -10,9 +10,9 @@
 [PROGRESS]: and dec != 0.         : nb object in cat = 79
 [PROGRESS]: and z >= 2.1        : nb object in cat = 45
 [PROGRESS]: and z < 3.5         : nb object in cat = 43
-[WARNING]: BAL_FLAG_VI not found in /Users/iperezra/software/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
 [WARNING OK]: Ignoring
-[PROGRESS]: reading spAll from /Users/iperezra/software/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
 [PROGRESS]: Found 55 spectra with required THING_ID
 [PROGRESS]: Found 55 spectra with 'good' plate
 [PROGRESS]: Found 55 spectra without 0 bit set: SKY
@@ -22,7 +22,7 @@
 [PROGRESS]: Found 55 spectra without 9 bit set: NODATA
 [PROGRESS]: # unique objs: 43
 [PROGRESS]: # spectra: 55
-[PROGRESS]: Reading DRQ catalogue from /Users/iperezra/software/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
 [PROGRESS]: start                 : nb object in cat = 79
 [PROGRESS]: and THING_ID > 0      : nb object in cat = 79
 [PROGRESS]: and ra != dec         : nb object in cat = 79
@@ -30,9 +30,9 @@
 [PROGRESS]: and dec != 0.         : nb object in cat = 79
 [PROGRESS]: and z >= 2.1        : nb object in cat = 45
 [PROGRESS]: and z < 3.5         : nb object in cat = 43
-[WARNING]: BAL_FLAG_VI not found in /Users/iperezra/software/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
 [WARNING OK]: Ignoring
-[PROGRESS]: reading spAll from /Users/iperezra/software/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
 [PROGRESS]: Found 55 spectra with required THING_ID
 [PROGRESS]: Found 55 spectra with 'good' plate
 [PROGRESS]: Found 55 spectra without 0 bit set: SKY

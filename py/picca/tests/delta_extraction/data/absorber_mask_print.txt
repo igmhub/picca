@@ -1,7 +1,14 @@
-[PROGRESS]: Reading absorbers from: /Users/iperezra/software/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]: Reading absorbers from: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
 [PROGRESS]:  In catalog: 3 absorbers
 [PROGRESS]:  In catalog: 2 forests have absorbers
 
-[PROGRESS]: Reading absorbers from: /Users/iperezra/software/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]: Reading absorbers from: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
 [PROGRESS]:  In catalog: 3 absorbers
 [PROGRESS]:  In catalog: 2 forests have absorbers
+
+[PROGRESS]: Reading BAL catalog from: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/baltestcat.fits.gz
+[PROGRESS]: In catalog: 2 BAL quasars
+[PROGRESS]: Reading BAL catalog from: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/baltestcat.fits.gz
+[PROGRESS]: In catalog: 2 BAL quasars
+[PROGRESS]: Reading BAL catalog from: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/baltestcat.fits.gz
+[PROGRESS]: In catalog: 2 BAL quasars
