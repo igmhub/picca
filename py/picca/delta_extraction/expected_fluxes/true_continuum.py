@@ -25,8 +25,8 @@ defaults = update_default_options(defaults, {
     "raw statistics file": "",
     "use constant weight": False,
     "force stack delta to zero": False,
-    "use splines": False,
-    "recompute var lss": True
+    "use splines": True,
+    "recompute var lss": False
 })
 
 IN_NSIDE = 16
@@ -78,7 +78,6 @@ class TrueContinuum(ExpectedFlux):
     Number of bins to be used to compute variance functions and statistics as
     a function of wavelength.
     """
-
 
     def __init__(self, config):
         """Initialize class instance.
@@ -170,6 +169,10 @@ class TrueContinuum(ExpectedFlux):
         # values due to some smoothing of the forests
         # thus, we recompute it from the actual deltas
         if self.recompute_varlss:
+            self.logger.warning(
+                'Asked for var lss recomputation, which can lead to unwanted '
+                'effects, and biased correlations. For more details see '
+                'https://github.com/igmhub/picca/issues/1009.')
             self.compute_var_lss(forests)
             # note that this does not change the output deltas but might slightly
             # affect the mean continuum so we have to compute it after updating
@@ -395,6 +398,12 @@ class TrueContinuum(ExpectedFlux):
             elif Forest.wave_solution == "lin" and np.isclose(
                     10**Forest.log_lambda_grid[1] -
                     10**Forest.log_lambda_grid[0],
+                    0.8,
+                    rtol=0.1):
+                filename += 'colore_v9_lya_lin_0.8.fits.gz'
+            elif Forest.wave_solution == "lin" and np.isclose(
+                    10**Forest.log_lambda_grid[1] -
+                    10**Forest.log_lambda_grid[0],
                     2.4,
                     rtol=0.1):
                 filename += 'colore_v9_lya_lin_2.4.fits.gz'
@@ -470,12 +479,12 @@ class TrueContinuum(ExpectedFlux):
             'L_MAX', lambda_max, atol, is_rawfile_consistent, err_msg)
         # Check minimum rest-frame lambda
         atol = (10**Forest.log_lambda_rest_frame_grid[1]
-              - 10**Forest.log_lambda_rest_frame_grid[0])/2
+                - 10**Forest.log_lambda_rest_frame_grid[0])/2
         is_rawfile_consistent, err_msg = _check_header_consistency(
             'LR_MIN', lambda_rest_min, atol, is_rawfile_consistent, err_msg)
         # Check maximum rest-frame lambda
         atol = (10**Forest.log_lambda_rest_frame_grid[-1]
-              - 10**Forest.log_lambda_rest_frame_grid[-2])/2
+                - 10**Forest.log_lambda_rest_frame_grid[-2])/2
         is_rawfile_consistent, err_msg = _check_header_consistency(
             'LR_MAX', lambda_rest_max, atol, is_rawfile_consistent, err_msg)
 
@@ -494,12 +503,12 @@ class TrueContinuum(ExpectedFlux):
         self.get_var_lss = interp1d(log_lambda,
                                     var_lss,
                                     fill_value='extrapolate',
-                                    kind='nearest')
+                                    kind='cubic')
 
         self.get_mean_flux = interp1d(log_lambda,
                                       mean_flux,
                                       fill_value='extrapolate',
-                                      kind='nearest')
+                                      kind='cubic')
 
     def compute_var_lss(self, forests):
         """Compute var lss from delta variance by substracting
@@ -527,4 +536,4 @@ class TrueContinuum(ExpectedFlux):
         self.get_var_lss = interp1d(Forest.log_lambda_grid[w],
                                     var_lss[w],
                                     fill_value='extrapolate',
-                                    kind='nearest')
+                                    kind='cubic')

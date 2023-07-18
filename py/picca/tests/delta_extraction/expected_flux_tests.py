@@ -1542,7 +1542,7 @@ class ExpectedFluxTest(AbstractTest):
             print(f"New file: {out_file}")
             print("Difference found in var_lss")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont, expectations["var_lss"]):
+            for i1, i2 in zip(var_lss, expectations["var_lss"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
 
@@ -1605,7 +1605,7 @@ class ExpectedFluxTest(AbstractTest):
             print(f"New file: {out_file}")
             print("Difference found in var_lss")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont, expectations["var_lss"]):
+            for i1, i2 in zip(var_lss, expectations["var_lss"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
 
@@ -1616,7 +1616,7 @@ class ExpectedFluxTest(AbstractTest):
             print(f"New file: {out_file}")
             print("Difference found in mean_flux")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont, expectations["mean_flux"]):
+            for i1, i2 in zip(mean_flux, expectations["mean_flux"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(mean_flux, expectations["mean_flux"]))
 
@@ -1821,10 +1821,17 @@ class ExpectedFluxTest(AbstractTest):
         # run populate_los_ids
         expected_flux.populate_los_ids(data.forests)
 
+        
+
         for i, key in enumerate(("mean expected flux", "weights", "continuum")):
+            out_file = f"{THIS_DIR}/results/los_ids_{i}.txt"
+            np.savetxt(out_file,expected_flux.los_ids[59152][key])
+
+        for i, key in enumerate(("mean expected flux", "weights", "continuum")):
+            test_file = f"{test_folder}/los_ids_{i}.txt"
             self.assertTrue(np.allclose(
                 expected_flux.los_ids[59152][key],
-                np.loadtxt(f"{test_folder}/los_ids_{i}.txt")
+                np.loadtxt(test_file)
             ))
 
 if __name__ == '__main__':
