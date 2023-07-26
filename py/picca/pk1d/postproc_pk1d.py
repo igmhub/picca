@@ -990,8 +990,8 @@ def compute_cov(
 
                 zbin_array[index_2] = zbin_centers[izbin]
                 index_zbin_array[index_2] = izbin
-                k1_array[index_2] = kbin_centers[ikbin]
-                k2_array[index_2] = kbin_centers[ikbin2]
+                k1_array[index_2] = kbin_centers[ikbin2]
+                k2_array[index_2] = kbin_centers[ikbin]
 
     # For fit_snr method, due to the SNR fitting scheme used for weighting,
     # the diagonal of the weigthed sample covariance matrix is not equal
