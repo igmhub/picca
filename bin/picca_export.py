@@ -69,6 +69,11 @@ def main(cmdargs):
         action='store_true',
         default=False,
         help='Do not smooth the covariance matrix')
+    parser.add_argument(
+        '--smooth-per-r-par',
+        action='store_true',
+        default=False,
+        help='Consider different correlation coefficients per r_par')
 
     parser.add_argument(
         '--blind-corr-type',
@@ -149,12 +154,15 @@ def main(cmdargs):
         delta_r_trans = (r_trans_max - 0.) / num_bins_r_trans
         if not args.do_not_smooth_cov:
             userprint("INFO: The covariance will be smoothed")
+            if args.smooth_per_r_par :
+                userprint("INFO: with different correlation coefficients per r_par")
             covariance = smooth_cov(xi,
                                     weights,
                                     r_par,
                                     r_trans,
                                     delta_r_trans=delta_r_trans,
-                                    delta_r_par=delta_r_par)
+                                    delta_r_par=delta_r_par,
+                                    per_r_par=args.smooth_per_r_par)
         else:
             userprint("INFO: The covariance will not be smoothed")
             covariance = compute_cov(xi, weights)

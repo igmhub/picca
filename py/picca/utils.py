@@ -64,7 +64,8 @@ def smooth_cov(xi,
                r_trans,
                delta_r_trans=4.0,
                delta_r_par=4.0,
-               covariance=None):
+               covariance=None,
+               per_r_par=False):
     """Smoothes the covariance matrix
 
     Args:
@@ -83,6 +84,8 @@ def smooth_cov(xi,
         covariance: array of floats or None - defautl: None
             Covariance matrix. If None, it will be computed using the
             subsampling technique
+        per_r_par: if true, average the correlation coef per
+                  (r_par,delta_r_par,delta_r_trans)
 
     Returns:
         The smooth covariance matrix. If data is not correct, then print a
@@ -107,30 +110,46 @@ def smooth_cov(xi,
     sum_correlation = {}
     counts_correlation = {}
     for index in range(num_bins):
+        index_r_par = int(r_par[index]/delta_r_par)
         userprint("\rsmoothing {}".format(index), end="")
         for index2 in range(index + 1, num_bins):
             index_delta_r_par = round(
                 abs(r_par[index2] - r_par[index]) / delta_r_par)
             index_delta_r_trans = round(
                 abs(r_trans[index] - r_trans[index2]) / delta_r_trans)
-            if (index_delta_r_par, index_delta_r_trans) not in sum_correlation:
-                sum_correlation[(index_delta_r_par, index_delta_r_trans)] = 0.
-                counts_correlation[(index_delta_r_par, index_delta_r_trans)] = 0
+            if per_r_par :
+                if (index_r_par, index_delta_r_par, index_delta_r_trans) not in sum_correlation:
+                    sum_correlation[(index_r_par, index_delta_r_par, index_delta_r_trans)] = 0.
+                    counts_correlation[(index_r_par, index_delta_r_par, index_delta_r_trans)] = 0
 
-            sum_correlation[(index_delta_r_par,
-                             index_delta_r_trans)] += correlation[index, index2]
-            counts_correlation[(index_delta_r_par, index_delta_r_trans)] += 1
+                sum_correlation[(index_r_par, index_delta_r_par,
+                                 index_delta_r_trans)] += correlation[index, index2]
+                counts_correlation[(index_r_par, index_delta_r_par, index_delta_r_trans)] += 1
+            else :
+                if (index_delta_r_par, index_delta_r_trans) not in sum_correlation:
+                    sum_correlation[(index_delta_r_par, index_delta_r_trans)] = 0.
+                    counts_correlation[(index_delta_r_par, index_delta_r_trans)] = 0
+
+                sum_correlation[(index_delta_r_par,
+                                 index_delta_r_trans)] += correlation[index, index2]
+                counts_correlation[(index_delta_r_par, index_delta_r_trans)] += 1
 
     for index in range(num_bins):
         correlation_smooth[index, index] = 1.
+        index_r_par = int(r_par[index]/delta_r_par)
         for index2 in range(index + 1, num_bins):
             index_delta_r_par = round(
                 abs(r_par[index2] - r_par[index]) / delta_r_par)
             index_delta_r_trans = round(
                 abs(r_trans[index] - r_trans[index2]) / delta_r_trans)
-            correlation_smooth[index, index2] = (
-                sum_correlation[(index_delta_r_par, index_delta_r_trans)] /
-                counts_correlation[(index_delta_r_par, index_delta_r_trans)])
+            if per_r_par :
+                correlation_smooth[index, index2] = (
+                    sum_correlation[(index_r_par, index_delta_r_par, index_delta_r_trans)] /
+                    counts_correlation[(index_r_par , index_delta_r_par, index_delta_r_trans)])
+            else :
+                correlation_smooth[index, index2] = (
+                    sum_correlation[(index_delta_r_par, index_delta_r_trans)] /
+                    counts_correlation[(index_delta_r_par, index_delta_r_trans)])
             correlation_smooth[index2, index] = correlation_smooth[index,
                                                                    index2]
 
@@ -470,4 +489,3 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     corr = 1. / (10.**(0.4 * curve))
 
     return corr
-
