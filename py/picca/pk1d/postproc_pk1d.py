@@ -656,7 +656,6 @@ def compute_average_pk_redshift(
         )
 
     for ikbin, kbin in enumerate(kbin_edges[:-1]):  # Main loop 2) k bins
-
         if apply_z_weights:  # special chunk selection in that case
             delta_z = zbin_centers[1:] - zbin_centers[:-1]
             if not np.allclose(delta_z, delta_z[0], atol=1.0e-3):
@@ -705,7 +704,6 @@ def compute_average_pk_redshift(
         n_array[ikbin] = num_chunks
 
         for icol, col in enumerate(p1d_table_cols):
-
             if num_chunks == 0:
                 userprint(
                     "Warning: 0 chunks found in bin "
@@ -998,7 +996,7 @@ def compute_cov(
     # For fit_snr method, due to the SNR fitting scheme used for weighting,
     # the diagonal of the weigthed sample covariance matrix is not equal
     # to the error in mean P1D. This is tested on Ohio mocks.
-    # We choose to renormalize the covariance matrix.
+    # We choose to renormalize the whole covariance matrix.
     if weight_method == "fit_snr":
         # Third loop 1) k bins
         for ikbin in range(nbins_k):
