@@ -110,7 +110,8 @@ def smooth_cov(xi,
     sum_correlation = {}
     counts_correlation = {}
     for index in range(num_bins):
-        index_r_par = int(r_par[index]/delta_r_par)
+        if per_r_par :
+            index_r_par = int(r_par[index]/delta_r_par)
         userprint("\rsmoothing {}".format(index), end="")
         for index2 in range(index + 1, num_bins):
             index_delta_r_par = round(
@@ -136,7 +137,8 @@ def smooth_cov(xi,
 
     for index in range(num_bins):
         correlation_smooth[index, index] = 1.
-        index_r_par = int(r_par[index]/delta_r_par)
+        if per_r_par :
+            index_r_par = int(r_par[index]/delta_r_par)
         for index2 in range(index + 1, num_bins):
             index_delta_r_par = round(
                 abs(r_par[index2] - r_par[index]) / delta_r_par)
