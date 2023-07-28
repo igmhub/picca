@@ -735,10 +735,15 @@ def compute_average_pk_redshift(
                 standard_dev, _, _ = binned_statistic(
                     data_snr, p1d_values, statistic="std", bins=snr_bin_edges
                 )
+                standard_dev_error, _, _ = binned_statistic(
+                    data_snr, data_values, statistic="std", bins=snr_bin_edges
+                )
                 standard_dev_full = np.copy(standard_dev)
                 mask = np.isnan(standard_dev)
+                mask |= np.isnan(standard_dev_error)
                 if len(mask[mask]) != 0:
                     standard_dev = standard_dev[~mask]
+                    standard_dev_error = standard_dev_error[~mask]
                     snr_bins = snr_bins[~mask]
                 # the *_ is to ignore the rest of the return arguments
                 coef, *_ = curve_fit(
@@ -747,22 +752,30 @@ def compute_average_pk_redshift(
                     standard_dev**2,
                     bounds=(0, np.inf),
                 )
+                coef_error, *_ = curve_fit(
+                    fitfunc_variance_pk1d,
+                    snr_bins,
+                    standard_dev_error**2,
+                    bounds=(0, np.inf),
+                )
 
                 # Model variance from fit function
                 data_snr[data_snr > MEANPK_FITRANGE_SNR[1]] = MEANPK_FITRANGE_SNR[1]
                 data_snr[data_snr < 1.01] = 1.01
                 variance_estimated = fitfunc_variance_pk1d(data_snr, *coef)
+                variance_estimated_error = fitfunc_variance_pk1d(data_snr, *coef_error)
                 weights = 1.0 / variance_estimated
+                weights_error = 1.0 / variance_estimated_error
                 if apply_z_weights:
                     weights *= redshift_weights
                 mean = np.average(data_values, weights=weights)
                 if apply_z_weights:
                     # Analytic expression for the re-weighted average:
-                    error = np.sqrt(np.sum(weights * redshift_weights)) / np.sum(
-                        weights
+                    error = np.sqrt(np.sum(weights_error * redshift_weights)) / np.sum(
+                        weights_error
                     )
                 else:
-                    error = np.sqrt(1.0 / np.sum(weights))
+                    error = np.sqrt(1.0 / np.sum(weights_error))
                 if col == "Pk":
                     if len(mask[mask]) != 0:
                         standard_dev = np.concatenate(
