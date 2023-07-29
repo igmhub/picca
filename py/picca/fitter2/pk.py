@@ -170,7 +170,7 @@ def get_Fhcd(type_pdf='masking'):
             return rr, profile_r
 
     def save_function(type_pdf):
-        fidcosmo = constants.cosmo(Om=0.3)
+        fidcosmo = constants.cosmo(Om=0.3147)
         lamb = np.arange(2000, 8000, 1)
         if type_pdf=='nomasking':
             f_lambda=np.loadtxt(path+'data/f_lambda_nomasking.txt')
