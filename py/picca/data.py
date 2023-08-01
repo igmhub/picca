@@ -172,56 +172,7 @@ class Forest(QSO):
     """
     log_lambda_min = None
     log_lambda_max = None
-    log_lambda_min_rest_frame = None
-    log_lambda_max_rest_frame = None
-    rebin = None
     delta_log_lambda = None
-
-    @classmethod
-    def correct_flux(cls, log_lambda):
-        """Corrects for multiplicative errors in pipeline flux calibration.
-
-        Empty function to be loaded at run-time.
-
-        Args:
-            log_lambda: array of float
-                Array containing the logarithm of the wavelengths (in Angs)
-
-        Returns:
-            An array with the correction
-
-        Raises:
-            NotImplementedError: Function was not specified
-        """
-        raise NotImplementedError("Function should be specified at run-time")
-
-    @classmethod
-    def correct_ivar(cls, log_lambda):
-        """Corrects for multiplicative errors in pipeline inverse variance
-           calibration.
-
-        Empty function to be loaded at run-time.
-
-        Args:
-            log_lambda: array of float
-                Array containing the logarithm of the wavelengths (in Angs)
-
-        Returns:
-            An array with the correction
-
-        Raises:
-            NotImplementedError: Function was not specified
-        """
-        raise NotImplementedError("Function should be specified at run-time")
-
-    # map of g-band extinction to thingids for dust correction
-    extinction_bv_map = None
-
-    # absorber pixel mask limit
-    absorber_mask_width = None
-
-    ## minumum dla transmission
-    dla_mask_limit = None
 
     @classmethod
     def get_var_lss(cls, log_lambda):
