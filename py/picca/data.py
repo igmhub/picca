@@ -5,14 +5,11 @@ to manage the line-of-sight data.
 See the respective docstrings for more details
 """
 import numpy as np
-import iminuit
 from itertools import repeat
-import fitsio
 import warnings
 
 from . import constants
-from .utils import userprint, unred
-from .dla import DLA
+from .utils import userprint
 
 class QSO(object):
     """Class to represent quasar objects.
