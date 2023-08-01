@@ -22,7 +22,7 @@ import warnings
 from multiprocessing import Pool
 
 from .utils import userprint
-from .data import Forest, Delta, QSO
+from .data import Delta, QSO
 from .pk1d.prep_pk1d import exp_diff, spectral_resolution
 from .pk1d.prep_pk1d import spectral_resolution_desi
 

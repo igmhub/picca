@@ -7,10 +7,8 @@ This module provides three functions:
 See the respective documentation for details
 """
 import numpy as np
-import iminuit
 
 from .data import Forest
-from .utils import userprint
 
 def stack(data, stack_from_deltas=False):
     """Computes a stack of the delta field as a function of wavelength
