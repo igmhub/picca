@@ -230,7 +230,6 @@ def main(cmdargs):
     cf.counter = Value('i', 0)
     cf.lock = Lock()
     context = multiprocessing.get_context('fork')
-    pool = context.Pool(processes=args.nproc)
 
     if cf.x_correlation:
         healpixs = sorted([
@@ -238,8 +237,12 @@ def main(cmdargs):
         ])
     else:
         healpixs = sorted(list(cf.data.keys()))
-    correlation_function_data = pool.map(corr_func, healpixs)
-    pool.close()
+
+    if args.nproc>1:
+        with context.Pool(processes=args.nproc) as pool:
+            correlation_function_data = pool.map(corr_func, healpixs)
+    else:
+        correlation_function_data = [corr_func(h) for h in healpixs]
     userprint('\n')
 
     # group data from parallelisation
