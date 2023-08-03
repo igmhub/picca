@@ -239,7 +239,7 @@ def main(cmdargs):
     
 
     cf.num_pixels = int((cf.log_lambda_max - cf.log_lambda_min) /
-                        cf.delta_log_lambda + 1)
+                        cf.delta_log_lambda + 1 + 1e-10)  #+1e-7 to fix cases where the division is an integer, but numerically slightly below that int,  
     
 
 
