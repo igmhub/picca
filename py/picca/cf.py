@@ -874,7 +874,8 @@ def compute_xi_1d(healpix):
                 userprint(("computing xi: {}%").format(xicounter))
             counter.value += 1
 
-        bins = ((delta.log_lambda - log_lambda_min) / delta_log_lambda +
+        select = delta.log_lambda<=log_lambda_max
+        bins = ((delta.log_lambda[select] - log_lambda_min) / delta_log_lambda +
                 0.5).astype(int)
         bins = bins + num_pixels * bins[:, None]
         delta_times_weight = delta.weights * delta.delta

@@ -61,15 +61,15 @@ def main(cmdargs):
 
     parser.add_argument('--lambda-min',
                         type=float,
-                        default=3600.,
+                        default=None,
                         required=False,
-                        help='Lower limit on observed wavelength [Angstrom]')
+                        help='Lower limit on observed wavelength [Angstrom] (default: minimum available in data)')
 
     parser.add_argument('--lambda-max',
                         type=float,
-                        default=5500.,
+                        default=None,
                         required=False,
-                        help='Upper limit on observed wavelength [Angstrom]')
+                        help='Upper limit on observed wavelength [Angstrom] (default: maximum available in data)')
 
     parser.add_argument('--z-min-sources',
                         type=float,
@@ -157,11 +157,12 @@ def main(cmdargs):
 
     # setup variables in cf
     cf.nside = args.nside
-    cf.log_lambda_min = np.log10(args.lambda_min)
-    cf.log_lambda_max = np.log10(args.lambda_max)
+    if args.lambda_min is not None:
+        cf.log_lambda_min = np.log10(args.lambda_min)
+    if args.lambda_max is not None:
+        cf.log_lambda_max = np.log10(args.lambda_max)
     cf.delta_log_lambda = args.dll
-    cf.num_pixels = int((cf.log_lambda_max - cf.log_lambda_min) /
-                        cf.delta_log_lambda + 1)
+    
     cf.x_correlation = False
 
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
@@ -221,10 +222,30 @@ def main(cmdargs):
         cf.num_data2 = num_data2
         del z_min2, z_max2
 
+
+    #here we are trying to guess reasonable lambda bounds from the data
+    if args.lambda_min is None:
+        cf.log_lambda_min=np.min([d.log_lambda[0] for hp in cf.data.values() for d in hp])
+        if args.in_dir2:
+            log_lambda_min2=np.min([d.log_lambda[0] for hp in cf.data.values() for d in hp])
+            cf.log_lambda_min=np.min([cf.log_lambda_min,log_lambda_min2])
+    if args.lambda_max is None:
+        cf.log_lambda_max=np.max([d.log_lambda[-1] for hp in cf.data2.values() for d in hp])
+        if args.in_dir2:
+            log_lambda_max2=np.max([d.log_lambda[-1] for hp in cf.data2.values() for d in hp])
+            cf.log_lambda_max=np.max([cf.log_lambda_max,log_lambda_max2])
+    
+
+    cf.num_pixels = int((cf.log_lambda_max - cf.log_lambda_min) /
+                        cf.delta_log_lambda + 1)
+    
+
+
     # Convert lists to arrays
     cf.data = {key: np.array(value) for key, value in cf.data.items()}
     if cf.x_correlation:
         cf.data2 = {key: np.array(value) for key, value in cf.data2.items()}
+
 
     # Compute the correlation function, use pool to parallelize
     cf.counter = Value('i', 0)
