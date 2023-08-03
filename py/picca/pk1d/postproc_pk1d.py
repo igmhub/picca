@@ -656,7 +656,6 @@ def compute_average_pk_redshift(
         )
 
     for ikbin, kbin in enumerate(kbin_edges[:-1]):  # Main loop 2) k bins
-
         if apply_z_weights:  # special chunk selection in that case
             delta_z = zbin_centers[1:] - zbin_centers[:-1]
             if not np.allclose(delta_z, delta_z[0], atol=1.0e-3):
@@ -704,8 +703,36 @@ def compute_average_pk_redshift(
 
         n_array[ikbin] = num_chunks
 
-        for icol, col in enumerate(p1d_table_cols):
+        if weight_method == "fit_snr":
+            snr_bin_edges = np.arange(
+                MEANPK_FITRANGE_SNR[0], MEANPK_FITRANGE_SNR[1] + 1, 1
+            )
+            snr_bins = (snr_bin_edges[:-1] + snr_bin_edges[1:]) / 2
 
+            p1d_values = p1d_table["Pk"][select]
+            data_snr = p1d_table["forest_snr"][select]
+
+            data_snr = data_snr[(~np.isnan(p1d_values)) & (~np.isnan(data_snr))]
+            p1d_values = p1d_values[(~np.isnan(p1d_values)) & (~np.isnan(data_snr))]
+
+            standard_dev, _, _ = binned_statistic(
+                data_snr, p1d_values, statistic="std", bins=snr_bin_edges
+            )
+            standard_dev_full = np.copy(standard_dev)
+            standard_dev = standard_dev[~np.isnan(standard_dev)]
+            snr_bins = snr_bins[~np.isnan(standard_dev)]
+            coef, *_ = curve_fit(
+                fitfunc_variance_pk1d,
+                snr_bins,
+                standard_dev**2,
+                bounds=(0, np.inf),
+            )
+            data_snr[data_snr > MEANPK_FITRANGE_SNR[1]] = MEANPK_FITRANGE_SNR[1]
+            data_snr[data_snr < 1.01] = 1.01
+            variance_estimated = fitfunc_variance_pk1d(data_snr, *coef)
+            weights = 1.0 / variance_estimated
+
+        for icol, col in enumerate(p1d_table_cols):
             if num_chunks == 0:
                 userprint(
                     "Warning: 0 chunks found in bin "
@@ -726,50 +753,46 @@ def compute_average_pk_redshift(
                 snr_bins = (snr_bin_edges[:-1] + snr_bin_edges[1:]) / 2
 
                 data_values = p1d_table[col][select]
-                data_snr = p1d_table["forest_snr"][select]
-                p1d_values = p1d_table["Pk"][select]
-                mask = np.isnan(data_values) | np.isnan(data_snr)
-                if len(mask[mask]) != 0:
-                    data_snr = data_snr[~mask]
-                    data_values = data_values[~mask]
-                    p1d_values = p1d_values[~mask]
+                data_values = data_values[
+                    (~np.isnan(p1d_values)) & (~np.isnan(data_snr))
+                ]
                 # Fit function to observed dispersion in P1D:
-                standard_dev, _, _ = binned_statistic(
-                    data_snr, p1d_values, statistic="std", bins=snr_bin_edges
+                standard_dev_col, _, _ = binned_statistic(
+                    data_snr, data_values, statistic="std", bins=snr_bin_edges
                 )
-                standard_dev_full = np.copy(standard_dev)
-                mask = np.isnan(standard_dev)
-                if len(mask[mask]) != 0:
-                    standard_dev = standard_dev[~mask]
-                    snr_bins = snr_bins[~mask]
+                standard_dev_col = standard_dev_col[~np.isnan(standard_dev)]
+
                 # the *_ is to ignore the rest of the return arguments
-                coef, *_ = curve_fit(
+
+                coef_col, *_ = curve_fit(
                     fitfunc_variance_pk1d,
                     snr_bins,
-                    standard_dev**2,
+                    standard_dev_col**2,
                     bounds=(0, np.inf),
                 )
 
                 # Model variance from fit function
                 data_snr[data_snr > MEANPK_FITRANGE_SNR[1]] = MEANPK_FITRANGE_SNR[1]
                 data_snr[data_snr < 1.01] = 1.01
-                variance_estimated = fitfunc_variance_pk1d(data_snr, *coef)
-                weights = 1.0 / variance_estimated
+                variance_estimated_col = fitfunc_variance_pk1d(data_snr, *coef_col)
+                weights_col = 1.0 / variance_estimated_col
                 if apply_z_weights:
                     weights *= redshift_weights
                 mean = np.average(data_values, weights=weights)
                 if apply_z_weights:
                     # Analytic expression for the re-weighted average:
-                    error = np.sqrt(np.sum(weights * redshift_weights)) / np.sum(
-                        weights
+                    error = np.sqrt(np.sum(weights_col * redshift_weights)) / np.sum(
+                        weights_col
                     )
                 else:
-                    error = np.sqrt(1.0 / np.sum(weights))
+                    error = np.sqrt(1.0 / np.sum(weights_col))
                 if col == "Pk":
-                    if len(mask[mask]) != 0:
-                        standard_dev = np.concatenate(
-                            [standard_dev, np.full(len(mask[mask]), np.nan)]
-                        )
+                    standard_dev = np.concatenate(
+                        [
+                            standard_dev,
+                            np.full(len(standard_dev[np.isnan(standard_dev)]), np.nan),
+                        ]
+                    )
                     snrfit_array[ikbin, 0:4] = [
                         zbin_centers[izbin],
                         (kbin + kbin_edges[ikbin + 1]) / 2.0,
@@ -992,13 +1015,13 @@ def compute_cov(
 
                 zbin_array[index_2] = zbin_centers[izbin]
                 index_zbin_array[index_2] = izbin
-                k1_array[index_2] = kbin_centers[ikbin]
-                k2_array[index_2] = kbin_centers[ikbin2]
+                k1_array[index_2] = kbin_centers[ikbin2]
+                k2_array[index_2] = kbin_centers[ikbin]
 
     # For fit_snr method, due to the SNR fitting scheme used for weighting,
     # the diagonal of the weigthed sample covariance matrix is not equal
     # to the error in mean P1D. This is tested on Ohio mocks.
-    # We choose to renormalize the covariance matrix.
+    # We choose to renormalize the whole covariance matrix.
     if weight_method == "fit_snr":
         # Third loop 1) k bins
         for ikbin in range(nbins_k):
