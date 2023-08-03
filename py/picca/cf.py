@@ -875,11 +875,12 @@ def compute_xi_1d(healpix):
             counter.value += 1
 
         select = delta.log_lambda<=log_lambda_max
+        select &= delta.log_lambda>=log_lambda_min
         bins = ((delta.log_lambda[select] - log_lambda_min) / delta_log_lambda +
                 0.5).astype(int)
         bins = bins + num_pixels * bins[:, None]
-        delta_times_weight = delta.weights * delta.delta
-        weights = delta.weights
+        delta_times_weight = delta.weights[select] * delta.delta[select]
+        weights = delta.weights[select]
         xi1d[bins] += delta_times_weight * delta_times_weight[:, None]
         weights1d[bins] += weights * weights[:, None]
         num_pairs1d[bins] += (weights * weights[:, None] > 0.).astype(int)
@@ -913,19 +914,23 @@ def compute_xi_1d_cross(healpix):
                 userprint(("computing xi: {}%").format(xicounter))
             counter.value += 1
 
-        bins1 = ((delta1.log_lambda - log_lambda_min) / delta_log_lambda +
+        select1 = delta1.log_lambda<=log_lambda_max
+        select1 &= delta1.log_lambda>=log_lambda_min
+        bins1 = ((delta1.log_lambda[select1] - log_lambda_min) / delta_log_lambda +
                  0.5).astype(int)
-        delta_times_weight1 = delta1.weights * delta1.delta
-        weights1 = delta1.weights
+        delta_times_weight1 = delta1.weights[select1] * delta1.delta[select1]
+        weights1 = delta1.weights[select1]
 
         thingids = [delta2.thingid for delta2 in data2[healpix]]
         neighbours = data2[healpix][np.in1d(thingids, [delta1.thingid])]
         for delta2 in neighbours:
-            bins2 = ((delta2.log_lambda - log_lambda_min) / delta_log_lambda +
+            select2 = delta2.log_lambda<=log_lambda_max
+            select2 &= delta2.log_lambda>=log_lambda_min
+            bins2 = ((delta2.log_lambda[select2] - log_lambda_min) / delta_log_lambda +
                      0.5).astype(int)
             bins = bins1 + num_pixels * bins2[:, None]
-            delta_times_weight2 = delta2.weights * delta2.delta
-            weights2 = delta2.weights
+            delta_times_weight2 = delta2.weights[select2] * delta2.delta[select2]
+            weights2 = delta2.weights[select2]
             xi1d[bins] += delta_times_weight1 * delta_times_weight2[:, None]
             weights1d[bins] += weights1 * weights2[:, None]
             num_pairs1d[bins] += (weights1 * weights2[:, None] > 0.).astype(int)
