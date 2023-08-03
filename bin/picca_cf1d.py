@@ -227,10 +227,10 @@ def main(cmdargs):
     if args.lambda_min is None:
         cf.log_lambda_min=np.min([d.log_lambda[0] for hp in cf.data.values() for d in hp])
         if args.in_dir2:
-            log_lambda_min2=np.min([d.log_lambda[0] for hp in cf.data.values() for d in hp])
+            log_lambda_min2=np.min([d.log_lambda[0] for hp in cf.data2.values() for d in hp])
             cf.log_lambda_min=np.min([cf.log_lambda_min,log_lambda_min2])
     if args.lambda_max is None:
-        cf.log_lambda_max=np.max([d.log_lambda[-1] for hp in cf.data2.values() for d in hp])
+        cf.log_lambda_max=np.max([d.log_lambda[-1] for hp in cf.data.values() for d in hp])
         if args.in_dir2:
             log_lambda_max2=np.max([d.log_lambda[-1] for hp in cf.data2.values() for d in hp])
             cf.log_lambda_max=np.max([cf.log_lambda_max,log_lambda_max2])
