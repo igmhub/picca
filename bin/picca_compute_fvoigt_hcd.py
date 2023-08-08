@@ -74,7 +74,7 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                      description=('Compute FVoigt profile'))
 
-    parser.add_argument('-o', '--ouput', type=str, default=None,
+    parser.add_argument('-o', '--output', type=str, default=None,
                         help=('Name and path of file to write FVoigt profile to'))
 
     parser.add_argument('--weights', type=str, default=None,
@@ -134,7 +134,7 @@ def main():
 
     if args.normalize:
         Fvoigt /= Fvoigt[0]
-    if not args.postive_fvoigt:
+    if not args.positive_fvoigt:
         Fvoigt = -Fvoigt
 
     np.savetxt(args.output, np.c_[k, Fvoigt])
