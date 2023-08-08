@@ -711,16 +711,20 @@ def compute_average_pk_redshift(
 
             p1d_values = p1d_table["Pk"][select]
             data_snr = p1d_table["forest_snr"][select]
-
-            data_snr = data_snr[(~np.isnan(p1d_values)) & (~np.isnan(data_snr))]
-            p1d_values = p1d_values[(~np.isnan(p1d_values)) & (~np.isnan(data_snr))]
+            mask_nan_p1d_values = (~np.isnan(p1d_values)) & (~np.isnan(data_snr))
+            data_snr, p1d_values = (
+                data_snr[mask_nan_p1d_values],
+                p1d_values[mask_nan_p1d_values],
+            )
 
             standard_dev, _, _ = binned_statistic(
                 data_snr, p1d_values, statistic="std", bins=snr_bin_edges
             )
             standard_dev_full = np.copy(standard_dev)
-            standard_dev = standard_dev[~np.isnan(standard_dev)]
-            snr_bins = snr_bins[~np.isnan(standard_dev)]
+            standard_dev, snr_bins = (
+                standard_dev[~np.isnan(standard_dev)],
+                snr_bins[~np.isnan(standard_dev)],
+            )
             coef, *_ = curve_fit(
                 fitfunc_variance_pk1d,
                 snr_bins,
@@ -753,16 +757,15 @@ def compute_average_pk_redshift(
                 snr_bins = (snr_bin_edges[:-1] + snr_bin_edges[1:]) / 2
 
                 data_values = p1d_table[col][select]
-                data_values = data_values[
-                    (~np.isnan(p1d_values)) & (~np.isnan(data_snr))
-                ]
-                # Fit function to observed dispersion in P1D:
+                data_values = data_values[mask_nan_p1d_values]
+                # Fit function to observed dispersion in col:
                 standard_dev_col, _, _ = binned_statistic(
                     data_snr, data_values, statistic="std", bins=snr_bin_edges
                 )
-                standard_dev_col = standard_dev_col[~np.isnan(standard_dev)]
-
-                # the *_ is to ignore the rest of the return arguments
+                standard_dev_col, snr_bins = (
+                    standard_dev_col[~np.isnan(standard_dev_col)],
+                    snr_bins[~np.isnan(standard_dev_col)],
+                )
 
                 coef_col, *_ = curve_fit(
                     fitfunc_variance_pk1d,
