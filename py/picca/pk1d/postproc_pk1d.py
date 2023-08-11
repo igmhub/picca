@@ -704,6 +704,18 @@ def compute_average_pk_redshift(
         n_array[ikbin] = num_chunks
 
         if weight_method == "fit_snr":
+            if num_chunks == 0:
+                userprint(
+                    "Warning: 0 chunks found in bin "
+                    + str(zbin_edges[izbin])
+                    + "<z<"
+                    + str(zbin_edges[izbin + 1])
+                    + ", "
+                    + str(kbin_edges[ikbin])
+                    + "<k<"
+                    + str(kbin_edges[ikbin + 1])
+                )
+                continue
             snr_bin_edges = np.arange(
                 MEANPK_FITRANGE_SNR[0], MEANPK_FITRANGE_SNR[1] + 1, 1
             )
