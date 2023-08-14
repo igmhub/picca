@@ -12,7 +12,24 @@ def voigt_profile(x, sigma=1, gamma=1):
     return np.real(wofz((x + 1j*gamma) / (sigma * np.sqrt(2))))
 
 
-def tau(wave, z, N_hi):
+def get_voigt_profile_wave(wave, z, N_hi):
+    """Compute voigt profile at input redshift and column density
+    on an observed wavelength grid
+
+    Parameters
+    ----------
+    wave : array
+        Observed wavelength
+    z : float
+        Redshift
+    N_hi : float
+        Log10 column density
+
+    Returns
+    -------
+    array
+        Flux corresponding to a voigt profile
+    """
     # wave = lambda in A and N_HI in log10 and 10**N_hi in cm^-2
     wave_rf = wave / (1 + z)
 
@@ -37,15 +54,29 @@ def tau(wave, z, N_hi):
     absorbtion /= (4 * np.pi * epsilon0 * me * c**2 * Deltat_wave)
 
     # 10^N_hi in cm^-2 and absorb in m^2
-    return 10**N_hi * 1e4 * absorbtion
-
-
-def get_voigt_profile_wave(x, z, N_hi):
-    t = tau(x, z, N_hi).astype(float)
-    return np.exp(-t)
+    tau = (10**N_hi * 1e4 * absorbtion).astype(float)
+    return np.exp(-tau)
 
 
 def profile_wave_to_comov_dist(wave, profile_wave, cosmo, differential=False):
+    """Convert profile from a function of wavelength to a function of comoving distance
+
+    Parameters
+    ----------
+    wave : array
+        Observed wavelength
+    profile_wave : array
+        Profile as a function of wavelength
+    cosmo : picca.constants.Cosmo
+        Cosmology object
+    differential : bool, optional
+        Whether we have to account for a dlambda / dr factor, by default False
+
+    Returns
+    -------
+    (array, array)
+        (comoving distance grid, profile as a function of comoving distance)
+    """
     z = wave / constants.ABSORBER_IGM["LYA"] - 1
     comov_dist = cosmo.get_r_comov(z)
     lin_spaced_comov_dist = np.linspace(comov_dist[0], comov_dist[-1], comov_dist.size)
@@ -62,6 +93,20 @@ def profile_wave_to_comov_dist(wave, profile_wave, cosmo, differential=False):
 
 
 def fft_profile(profile, dx):
+    """Compute Fourier transform of a voigt profile
+
+    Parameters
+    ----------
+    profile : array
+        Input voigt profile in real space (function of comoving distance)
+    dx : float
+        Comoving distance bin size
+
+    Returns
+    -------
+    (array, array)
+        (wavenumber grid, voigt profile in Fourier space)
+    """
     # not normalized
     size = profile.size
     ft_profile = dx * np.fft.rfft(profile - 1)
