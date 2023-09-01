@@ -279,6 +279,12 @@ def main(cmdargs):
                         help='Rebin factor for deltas. If not None, deltas will '
                              'be rebinned by that factor')
 
+    parser.add_argument('--fast-metals',
+                    action='store_true',
+                    required=False,
+                    help='compute only the metal correlations used by Vega'
+                       'i.e. 4 LyaxSi matrices and CIVxCIV')
+
     args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
@@ -416,6 +422,16 @@ def main(cmdargs):
         for index2, abs_igm2 in enumerate(abs_igm_2[index0:]):
             if index1 == 0 and index2 == 0:
                 continue
+
+            if args.fast_metals:
+                default_si_metals = ['SiIII(1207)','SiII(1190)','SiII(1193)','SiII(1260)']
+                if (abs_igm1=='LYA')&(abs_igm2 in default_si_metals):
+                    pass
+                elif abs_igm1==abs_igm2=='CIV(eff)':
+                    pass
+                else:
+                    continue
+
             cf.counter.value = 0
             calc_metal_dmat_wrapper = partial(calc_metal_dmat, abs_igm1,
                                               abs_igm2)
