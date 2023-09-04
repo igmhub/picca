@@ -313,6 +313,9 @@ def main(cmdargs):
     cf.alpha_abs[args.lambda_abs] = cf.alpha
     for metal in args.abs_igm:
         cf.alpha_abs[metal] = args.metal_alpha
+    
+    #store the default silicon metals modelled in the CF/XCF
+    DEFAULT_SI_METALS = ['SiIII(1207)','SiII(1190)','SiII(1193)','SiII(1260)']
 
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir)
@@ -422,15 +425,11 @@ def main(cmdargs):
         for index2, abs_igm2 in enumerate(abs_igm_2[index0:]):
             if index1 == 0 and index2 == 0:
                 continue
-
-            if args.fast_metals:
-                default_si_metals = ['SiIII(1207)','SiII(1190)','SiII(1193)','SiII(1260)']
-                if (abs_igm1=='LYA')&(abs_igm2 in default_si_metals):
-                    pass
-                elif abs_igm1==abs_igm2=='CIV(eff)':
-                    pass
-                else:
-                    continue
+            
+            
+            if not (abs_igm1 == "LYA" and abs_igm2 in DEFAULT_SI_METALS) \
+            and not (abs_igm1 == "CIV(eff)" and abs_igm1 == abs_igm2):
+                continue
 
             cf.counter.value = 0
             calc_metal_dmat_wrapper = partial(calc_metal_dmat, abs_igm1,
