@@ -96,28 +96,28 @@ def calc_fast_metal_dmat(in_lambda_abs_1, in_lambda_abs_2,
 
     r_trans_eff = np.zeros(r_par_eff.shape)
 
-    if True :
-        # now we will return the full dmat to be consistent with the other computation
-        # it consists in duplicating the result found to all rt, with output_rt = input_rt
-        ntot = cf.num_bins_r_par*cf.num_bins_r_trans
+    # we could return the quantities computed as a function of rp only (and not rt):
+    # return dmat, r_par_eff, r_trans_eff, z_eff
+    # but for now we will return the full dmat to be consistent with the other computation
+    # it consists in duplicating the result found to all rt, with output_rt = input_rt
+    ntot = cf.num_bins_r_par*cf.num_bins_r_trans
 
-        full_dmat      = np.zeros((ntot,ntot))
-        full_r_par_eff = np.zeros(ntot)
-        full_r_trans_eff = np.zeros(ntot)
-        full_z_eff     = np.zeros(ntot)
-        ii = np.arange(cf.num_bins_r_par)
-        r_trans = (0.5+np.arange(cf.num_bins_r_trans))*cf.r_trans_max/cf.num_bins_r_trans
-        for j in range(cf.num_bins_r_trans) :
-            indices = j + cf.num_bins_r_trans *  ii
-            for k,i in zip(indices,ii) :
-                full_dmat[indices,k]  = dmat[ii,i]
-            full_r_par_eff[indices]   = r_par_eff
-            full_z_eff[indices]       = z_eff
-            full_r_trans_eff[indices] = r_trans[j]
+    full_dmat      = np.zeros((ntot,ntot))
+    full_r_par_eff = np.zeros(ntot)
+    full_r_trans_eff = np.zeros(ntot)
+    full_z_eff     = np.zeros(ntot)
+    ii = np.arange(cf.num_bins_r_par)
+    r_trans = (0.5+np.arange(cf.num_bins_r_trans))*cf.r_trans_max/cf.num_bins_r_trans
+    for j in range(cf.num_bins_r_trans) :
+        indices = j + cf.num_bins_r_trans *  ii
+        for k,i in zip(indices,ii) :
+            full_dmat[indices,k]  = dmat[ii,i]
+        full_r_par_eff[indices]   = r_par_eff
+        full_z_eff[indices]       = z_eff
+        full_r_trans_eff[indices] = r_trans[j]
 
-        return full_dmat, full_r_par_eff, full_r_trans_eff, full_z_eff
+    return full_dmat, full_r_par_eff, full_r_trans_eff, full_z_eff
 
-    return dmat, r_par_eff, r_trans_eff, z_eff
 
 def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
