@@ -48,49 +48,49 @@ def calc_fast_metal_dmat(in_lambda_abs_1, in_lambda_abs_2,
     loglam2=stack_table_2["LOGLAM"]
     weight2=stack_table_2["WEIGHT"]
     if rebin_factor is not None :
-        n1=loglam1.size
-        loglam1 = loglam1[:(n1//rebin_factor)*rebin_factor].reshape((n1//rebin_factor),rebin_factor).mean(-1)
-        weight1 = weight1[:(n1//rebin_factor)*rebin_factor].reshape((n1//rebin_factor),rebin_factor).mean(-1)
-        n2=loglam2.size
-        loglam2 = loglam2[:(n2//rebin_factor)*rebin_factor].reshape((n2//rebin_factor),rebin_factor).mean(-1)
-        weight2 = weight2[:(n2//rebin_factor)*rebin_factor].reshape((n2//rebin_factor),rebin_factor).mean(-1)
+        size1=loglam1.size
+        loglam1 = loglam1[:(size1//rebin_factor)*rebin_factor].reshape((size1//rebin_factor),rebin_factor).mean(-1)
+        weight1 = weight1[:(size1//rebin_factor)*rebin_factor].reshape((size1//rebin_factor),rebin_factor).mean(-1)
+        size2=loglam2.size
+        loglam2 = loglam2[:(size2//rebin_factor)*rebin_factor].reshape((size2//rebin_factor),rebin_factor).mean(-1)
+        weight2 = weight2[:(size2//rebin_factor)*rebin_factor].reshape((size2//rebin_factor),rebin_factor).mean(-1)
 
     # input
-    iz1 = (10**loglam1)/constants.ABSORBER_IGM[in_lambda_abs_1] - 1.
-    iz2 = (10**loglam2)/constants.ABSORBER_IGM[in_lambda_abs_2] - 1.
-    ir1 = cf.cosmo.get_r_comov(iz1)
-    ir2 = cf.cosmo.get_r_comov(iz2)
+    input_z1 = (10**loglam1)/constants.ABSORBER_IGM[in_lambda_abs_1] - 1.
+    input_z2 = (10**loglam2)/constants.ABSORBER_IGM[in_lambda_abs_2] - 1.
+    input_r1 = cf.cosmo.get_r_comov(input_z1)
+    input_r2 = cf.cosmo.get_r_comov(input_z2)
     # all pairs
-    irp = (ir1[:,None]-ir2[None,:]).ravel() # same sign as line 676 of cf.py (1-2)
+    input_rp = (input_r1[:,None]-input_r2[None,:]).ravel() # same sign as line 676 of cf.py (1-2)
     if not cf.x_correlation:
-        irp = np.abs(irp)
+        input_rp = np.abs(input_rp)
     # output
-    oz1 = (10**loglam1)/constants.ABSORBER_IGM[out_lambda_abs_1] - 1.
-    oz2 = (10**loglam2)/constants.ABSORBER_IGM[out_lambda_abs_2] - 1.
-    or1 = cf.cosmo.get_r_comov(oz1)
-    or2 = cf.cosmo.get_r_comov(oz2)
+    output_z1 = (10**loglam1)/constants.ABSORBER_IGM[out_lambda_abs_1] - 1.
+    output_z2 = (10**loglam2)/constants.ABSORBER_IGM[out_lambda_abs_2] - 1.
+    output_r1 = cf.cosmo.get_r_comov(output_z1)
+    output_r2 = cf.cosmo.get_r_comov(output_z2)
     # all pairs
-    orp = (or1[:,None]-or2[None,:]).ravel() # same sign as line 676 of cf.py (1-2)
+    output_rp = (output_r1[:,None]-output_r2[None,:]).ravel() # same sign as line 676 of cf.py (1-2)
     if not cf.x_correlation:
-        orp = np.abs(orp)
+        output_rp = np.abs(output_rp)
 
     # weights
-    sw  = ((weight1*((1+iz1)**(cf.alpha-1)))[:,None]*(weight2*((1+iz2)**(cf.alpha2-1)))[None,:]).ravel()
+    weights  = ((weight1*((1+input_z1)**(cf.alpha-1)))[:,None]*(weight2*((1+input_z2)**(cf.alpha2-1)))[None,:]).ravel()
 
     # distortion matrix
     rpbins   = cf.r_par_min + (cf.r_par_max-cf.r_par_min)/cf.num_bins_r_par*np.arange(cf.num_bins_r_par+1)
 
     # I checked the orientation of the matrix
-    dmat,_,_ = np.histogram2d(orp,irp,bins=(rpbins,rpbins),weights=sw)
+    dmat,_,_ = np.histogram2d(output_rp,input_rp,bins=(rpbins,rpbins),weights=weights)
 
     # normalize (sum of weight should be one for each input rp,rt)
-    sum_in_weight,_ = np.histogram(irp,bins=rpbins,weights=sw)
+    sum_in_weight,_ = np.histogram(input_rp,bins=rpbins,weights=weights)
     dmat *= ((sum_in_weight>0)/(sum_in_weight+(sum_in_weight==0)))[None,:]
 
     # mean outputs
-    sum_out_weight,_    = np.histogram(orp,bins=rpbins,weights=sw)
-    sum_out_weight_rp,_ = np.histogram(orp,bins=rpbins,weights=sw*(orp[None,:].ravel()))
-    sum_out_weight_z,_ = np.histogram(orp,bins=rpbins,weights=sw*(((oz1[:,None]+oz2[None,:])/2.).ravel()))
+    sum_out_weight,_    = np.histogram(output_rp,bins=rpbins,weights=weights)
+    sum_out_weight_rp,_ = np.histogram(output_rp,bins=rpbins,weights=weights*(output_rp[None,:].ravel()))
+    sum_out_weight_z,_ = np.histogram(output_rp,bins=rpbins,weights=weights*(((output_z1[:,None]+output_z2[None,:])/2.).ravel()))
     r_par_eff = sum_out_weight_rp/(sum_out_weight+(sum_out_weight==0))
     z_eff     = sum_out_weight_z/(sum_out_weight+(sum_out_weight==0))
 
@@ -100,12 +100,12 @@ def calc_fast_metal_dmat(in_lambda_abs_1, in_lambda_abs_2,
     # return dmat, r_par_eff, r_trans_eff, z_eff
     # but for now we will return the full dmat to be consistent with the other computation
     # it consists in duplicating the result found to all rt, with output_rt = input_rt
-    ntot = cf.num_bins_r_par*cf.num_bins_r_trans
+    num_bins_total = cf.num_bins_r_par*cf.num_bins_r_trans
 
-    full_dmat      = np.zeros((ntot,ntot))
-    full_r_par_eff = np.zeros(ntot)
-    full_r_trans_eff = np.zeros(ntot)
-    full_z_eff     = np.zeros(ntot)
+    full_dmat      = np.zeros((num_bins_total,num_bins_total))
+    full_r_par_eff = np.zeros(num_bins_total)
+    full_r_trans_eff = np.zeros(num_bins_total)
+    full_z_eff     = np.zeros(num_bins_total)
     ii = np.arange(cf.num_bins_r_par)
     r_trans = (0.5+np.arange(cf.num_bins_r_trans))*cf.r_trans_max/cf.num_bins_r_trans
     for j in range(cf.num_bins_r_trans) :
