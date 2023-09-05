@@ -316,7 +316,6 @@ def main(cmdargs):
     for metal in args.abs_igm:
         cf.alpha_abs[metal] = args.metal_alpha
 
-
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir)
 
@@ -426,10 +425,10 @@ def main(cmdargs):
             if index1 == 0 and index2 == 0:
                 continue
 
-
-            if not (abs_igm1 == "LYA" and abs_igm2 in DEFAULT_SI_METALS) \
-            and not (abs_igm1 == "CIV(eff)" and abs_igm1 == abs_igm2):
-                continue
+            if args.fast_metals:
+                if not (abs_igm1 == "LYA" and abs_igm2 in DEFAULT_SI_METALS) \
+                and not (abs_igm1 == "CIV(eff)" and abs_igm1 == abs_igm2):
+                    continue
 
             cf.counter.value = 0
             calc_metal_dmat_wrapper = partial(calc_metal_dmat, abs_igm1,
