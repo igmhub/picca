@@ -397,9 +397,6 @@ def main(cmdargs):
     r_trans_all = []
     z_all = []
     names = []
-    #weights_dmat_all = []
-    #num_pairs_all = []
-    #num_pairs_used_all = []
 
     # loop over metals
     for index1, abs_igm1 in enumerate(abs_igm):
@@ -424,10 +421,6 @@ def main(cmdargs):
             r_trans_all.append(r_trans_eff)
             z_all.append(z_eff)
             names.append(abs_igm1 + "_" + abs_igm2)
-            #weights_dmat_all.append(weights_dmat)
-            #r_trans_all.append(r_trans) NA
-            #num_pairs_all.append(num_pairs) NA
-            #num_pairs_used_all.append(num_pairs_used) NA
 
     t2 = time.time()
     userprint(f'picca_fast_metal_dmat.py - Time computing all metal matrices : {(t2-t1)/60:.3f} minutes')
@@ -510,14 +503,10 @@ def main(cmdargs):
     names = np.array(names, dtype='S' + str(len_names))
     results.write(
         [
-            #np.array(num_pairs_all),
-            #np.array(num_pairs_used_all),
             np.array(names)
         ],
-        #names=['NPALL', 'NPUSED', 'ABS_IGM'],
         names=['ABS_IGM'],
         header=header,
-        #comment=['Number of pairs', 'Number of used pairs', 'Absorption name'],
         comment=['Absorption name'],
         extname='ATTRI')
 
