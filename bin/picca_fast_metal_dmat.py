@@ -352,8 +352,8 @@ def main(cmdargs):
     if args.delta_dir is None :
         args.delta_dir = os.path.dirname(args.in_attributes)+"/../Delta/"
         if not os.path.isdir(args.delta_dir) :
-            print(f"Tried to guess the delta directory (containing the delta*.gz files) but '{args.delta_dir}' is not valid")
-            print("Please specify the directory with option --delta-dir")
+            userprint(f"Tried to guess the delta directory (containing the delta*.gz files) but '{args.delta_dir}' is not valid")
+            userprint("Please specify the directory with option --delta-dir")
             sys.exit(1)
     blinding = io.read_blinding(args.delta_dir)
 
@@ -407,7 +407,7 @@ def main(cmdargs):
             if index1 == 0 and index2 == 0:
                 continue
 
-            print("Computing",abs_igm1,abs_igm2)
+            userprint("Computing",abs_igm1,abs_igm2)
 
             # this a matrix as a function of rp only
             dmat, r_par_eff, r_trans_eff, z_eff = calc_fast_metal_dmat(abs_igm1,abs_igm2,
