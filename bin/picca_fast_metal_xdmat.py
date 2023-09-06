@@ -315,6 +315,11 @@ def main(cmdargs):
                         required=False,
                         help='Rebin factor for deltas. If not None, deltas will '
                              'be rebinned by that factor')
+    parser.add_argument('--qso-z-bins',
+                        type=int,
+                        default=1000,
+                        required=False,
+                        help='Bins for the distribution of QSO redshifts')
 
     args = parser.parse_args(cmdargs)
 
@@ -359,30 +364,12 @@ def main(cmdargs):
     stack_table = read_stack_deltas_table(args.in_attributes)
 
     # read objets
-    if 0 :
-        # dummy nside, we do not use this pixelization
-        # but we still want to use the existing picca I/O routines
-        nside = 4
-        objs, z_min2 = io.read_objects(args.drq, nside, args.z_min_obj,
-                                       args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                       cosmo, mode=args.mode)
-        # collect redshifts and weights
-        z_qso      = []
-        weight_qso = []
-        for qsos in objs.values() : # objs is a dictionary of healpixels
-            z_qso += [qso.z_qso for qso in qsos]
-            weight_qso += [qso.weights for qso in qsos]
-        # convert to numpy array
-        z_qso = np.hstack(z_qso)
-        weight_qso =  np.hstack(weight_qso)
-    else :
-        catalog = io.read_drq(args.drq, z_min=args.z_min_obj,
-                              z_max=args.z_max_obj, keep_bal=True, mode=args.mode)
-        z_qso   = catalog['Z']
-        weight_qso = ((1. + z_qso) / (1. + args.z_ref))**(args.z_evol_obj - 1.)
+    catalog = io.read_drq(args.drq, z_min=args.z_min_obj,
+                          z_max=args.z_max_obj, keep_bal=True, mode=args.mode)
+    z_qso   = catalog['Z']
+    weight_qso = ((1. + z_qso) / (1. + args.z_ref))**(args.z_evol_obj - 1.)
 
-
-    zbins=100
+    zbins=args.qso_z_bins
     userprint(f"Use histogram of QSO redshifts with {zbins} bins")
     hw,zbins  = np.histogram(z_qso,bins=zbins,weights=weight_qso)
     hwz,_     = np.histogram(z_qso,bins=zbins,weights=weight_qso*z_qso)
