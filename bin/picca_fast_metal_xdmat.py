@@ -67,7 +67,7 @@ def calc_fast_metal_dmat(in_lambda_abs, out_lambda_abs, stack_table,
 
     # weights
     alpha    = xcf.alpha_abs[out_lambda_abs] # this is how the correlation is computed
-    weights  = ((weight_forest*((1+input_zf)**(alpha-1)))[:,None]*weight_qso[None,:]).ravel() # qso weights have already been scale with (1+z) in picca.io.read_objects
+    weights  = ((weight_forest*((1+input_zf)**(alpha-1)))[:,None]*weight_qso[None,:]).ravel() # qso weights have already been scale with (1+z)
 
     # distortion matrix
     rpbins   = xcf.r_par_min + (xcf.r_par_max-xcf.r_par_min)/xcf.num_bins_r_par*np.arange(xcf.num_bins_r_par+1)
