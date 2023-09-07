@@ -66,8 +66,13 @@ def calc_fast_metal_dmat(in_lambda_abs, out_lambda_abs, stack_table,
     output_rp = (output_rf[:,None]-rq[None,:]).ravel() # same sign as line 528 of xcf.py (forest-qso)
 
     # weights
-    alpha    = xcf.alpha_abs[out_lambda_abs] # this is how the correlation is computed
-    weights  = ((weight_forest*((1+input_zf)**(alpha-1)))[:,None]*weight_qso[None,:]).ravel() # qso weights have already been scale with (1+z)
+    # alpha_in: in (1+z)^(alpha_in-1) is a scaling used to model how the metal contribution evolves with redshift (by default alpha=1 so that this has no effect)
+    alpha_in  = xcf.alpha_abs[in_lambda_abs]
+    # alpha_out: (1+z)^(alpha_out-1) is applied to the delta weights in io.read_deltas and used for the correlation function. It also has to be applied here.
+    alpha_out = xcf.alpha_abs[out_lambda_abs]
+    # so here we have to apply both scalings (in the original code : alpha_in is applied in xcf.calc_metal_dmat and alpha_out in io.read_deltas)
+    # qso weights have already been scaled with (1+z)^alpha_obj
+    weights  = ((weight_forest*((1+input_zf)**(alpha_in+alpha_out-2)))[:,None]*weight_qso[None,:]).ravel()
 
     # distortion matrix
     rpbins   = xcf.r_par_min + (xcf.r_par_max-xcf.r_par_min)/xcf.num_bins_r_par*np.arange(xcf.num_bins_r_par+1)

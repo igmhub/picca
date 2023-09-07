@@ -75,7 +75,15 @@ def calc_fast_metal_dmat(in_lambda_abs_1, in_lambda_abs_2,
         output_rp = np.abs(output_rp)
 
     # weights
-    weights  = ((weight1*((1+input_z1)**(cf.alpha-1)))[:,None]*(weight2*((1+input_z2)**(cf.alpha2-1)))[None,:]).ravel()
+    # alpha_in: in (1+z)^(alpha_in-1) is a scaling used to model how the metal contribution evolves with redshift (by default alpha=1 so that this has no effect)
+    # alpha_out: (1+z)^(alpha_out-1) is applied to the delta weights in io.read_deltas and used for the correlation function. It also has to be applied here.
+    # we have them for both forests (1 and 2)
+    alpha_in_1  = cf.alpha_abs[in_lambda_abs_1]
+    alpha_out_1 = cf.alpha # = args.z_evol in main function
+    alpha_in_2  = cf.alpha_abs[in_lambda_abs_2]
+    alpha_out_2 = cf.alpha2 # = args.z_evol2 in main function
+    # so here we have to apply both scalings (in the original code : alpha_in is applied in cf.calc_metal_dmat and alpha_out in io.read_deltas)
+    weights  = ((weight1*((1+input_z1)**(alpha_in_1+alpha_out_1-2)))[:,None]*(weight2*((1+input_z2)**(alpha_in_2+alpha_out_2-2)))[None,:]).ravel()
 
     # distortion matrix
     rpbins   = cf.r_par_min + (cf.r_par_max-cf.r_par_min)/cf.num_bins_r_par*np.arange(cf.num_bins_r_par+1)
