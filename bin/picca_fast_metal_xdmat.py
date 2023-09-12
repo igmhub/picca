@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-"""Compute the distortion matrix of the cross-correlation delta x object for a
-list of IGM absorption.
-
-This module follow the procedure described in sections 4.3 of du Mas des
-Bourboux et al. 2020 (In prep) to compute the distortion matrix
+"""Compute the metal matrices
 """
 import sys
 import os
