@@ -5,17 +5,25 @@ absorption.
 This module follow the procedure described in sections 4.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
-import sys,os
+import sys
+import os
 import time
 import argparse
 import numpy as np
 import fitsio
 
-from picca import constants, cf, utils, io
+from picca import constants, cf, io
 from picca.utils import userprint
 
-
 def read_stack_deltas_table(filename) :
+    """
+    Read stack.
+
+    Args:
+        filename : std , path
+    Returns:
+        table as numpy.ndarray
+    """
     return fitsio.read(filename,"STACK_DELTAS")
 
 def calc_fast_metal_dmat(in_lambda_abs_1, in_lambda_abs_2,
@@ -25,13 +33,17 @@ def calc_fast_metal_dmat(in_lambda_abs_1, in_lambda_abs_2,
 
     Args:
         in_lambda_abs_1 : str
-            Name of absorption in picca.constants in forest pixels from stack 1 (input, i.e. 'true' absorber)
+            Name of absorption in picca.constants in forest pixels from stack 1
+            (input, i.e. 'true' absorber)
         in_lambda_abs_2 : str
-            Name of absorption in picca.constants in forest pixels from stack 2 (input, i.e. 'true' absorber)
+            Name of absorption in picca.constants in forest pixels from stack 2
+            (input, i.e. 'true' absorber)
         out_lambda_abs_1 : str
-            Name of absorption in picca.constants in forest pixels from stack 1 (output, i.e. 'assumed' absorber, usually LYA)
+            Name of absorption in picca.constants in forest pixels from stack 1
+            (output, i.e. 'assumed' absorber, usually LYA)
         out_lambda_abs_2 : str
-            Name of absorption in picca.constants in forest pixels from stack 2 (output, i.e. 'assumed' absorber, usually LYA)
+            Name of absorption in picca.constants in forest pixels from stack 2
+            (output, i.e. 'assumed' absorber, usually LYA)
         stack_table_1: table
             table with cols LOGLAM and WEIGHT for first series of deltas
         stack_table_2: table
@@ -75,18 +87,23 @@ def calc_fast_metal_dmat(in_lambda_abs_1, in_lambda_abs_2,
         output_rp = np.abs(output_rp)
 
     # weights
-    # alpha_in: in (1+z)^(alpha_in-1) is a scaling used to model how the metal contribution evolves with redshift (by default alpha=1 so that this has no effect)
-    # alpha_out: (1+z)^(alpha_out-1) is applied to the delta weights in io.read_deltas and used for the correlation function. It also has to be applied here.
+    # alpha_in: in (1+z)^(alpha_in-1) is a scaling used to model how the metal contribution
+    # evolves with redshift (by default alpha_in=1 so that this has no effect)
+    # alpha_out: (1+z)^(alpha_out-1) is applied to the delta weights in io.read_deltas and
+    # used for the correlation function. It also has to be applied here.
     # we have them for both forests (1 and 2)
     alpha_in_1  = cf.alpha_abs[in_lambda_abs_1]
     alpha_out_1 = cf.alpha # = args.z_evol in main function
     alpha_in_2  = cf.alpha_abs[in_lambda_abs_2]
     alpha_out_2 = cf.alpha2 # = args.z_evol2 in main function
-    # so here we have to apply both scalings (in the original code : alpha_in is applied in cf.calc_metal_dmat and alpha_out in io.read_deltas)
-    weights  = ((weight1*((1+input_z1)**(alpha_in_1+alpha_out_1-2)))[:,None]*(weight2*((1+input_z2)**(alpha_in_2+alpha_out_2-2)))[None,:]).ravel()
+    # so here we have to apply both scalings (in the original code :
+    # alpha_in is applied in cf.calc_metal_dmat and alpha_out in io.read_deltas)
+    weights  = ((weight1*((1+input_z1)**(alpha_in_1+alpha_out_1-2)))[:,None]
+                *(weight2*((1+input_z2)**(alpha_in_2+alpha_out_2-2)))[None,:]).ravel()
 
     # distortion matrix
-    rpbins   = cf.r_par_min + (cf.r_par_max-cf.r_par_min)/cf.num_bins_r_par*np.arange(cf.num_bins_r_par+1)
+    rpbins   = cf.r_par_min \
+        + (cf.r_par_max-cf.r_par_min)/cf.num_bins_r_par*np.arange(cf.num_bins_r_par+1)
 
     # I checked the orientation of the matrix
     dmat,_,_ = np.histogram2d(output_rp,input_rp,bins=(rpbins,rpbins),weights=weights)
@@ -102,8 +119,6 @@ def calc_fast_metal_dmat(in_lambda_abs_1, in_lambda_abs_2,
     r_par_eff = sum_out_weight_rp/(sum_out_weight+(sum_out_weight==0))
     z_eff     = sum_out_weight_z/(sum_out_weight+(sum_out_weight==0))
 
-    r_trans_eff = np.zeros(r_par_eff.shape)
-
     # we could return the quantities computed as a function of rp only (and not rt):
     # return dmat, r_par_eff, r_trans_eff, z_eff
     # but for now we will return the full dmat to be consistent with the other computation
@@ -114,12 +129,12 @@ def calc_fast_metal_dmat(in_lambda_abs_1, in_lambda_abs_2,
     full_r_par_eff = np.zeros(num_bins_total)
     full_r_trans_eff = np.zeros(num_bins_total)
     full_z_eff     = np.zeros(num_bins_total)
-    ii = np.arange(cf.num_bins_r_par)
+    r_par_indices = np.arange(cf.num_bins_r_par)
     r_trans = (0.5+np.arange(cf.num_bins_r_trans))*cf.r_trans_max/cf.num_bins_r_trans
     for j in range(cf.num_bins_r_trans) :
-        indices = j + cf.num_bins_r_trans *  ii
-        for k,i in zip(indices,ii) :
-            full_dmat[indices,k]  = dmat[ii,i]
+        indices = j + cf.num_bins_r_trans *  r_par_indices
+        for k,i in zip(indices,r_par_indices) :
+            full_dmat[indices,k]  = dmat[r_par_indices,i]
         full_r_par_eff[indices]   = r_par_eff
         full_z_eff[indices]       = z_eff
         full_r_trans_eff[indices] = r_trans[j]
@@ -127,13 +142,13 @@ def calc_fast_metal_dmat(in_lambda_abs_1, in_lambda_abs_2,
     return full_dmat, full_r_par_eff, full_r_trans_eff, full_z_eff
 
 
-def main(cmdargs):
+def main():
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Compute the auto and cross-correlation of delta fields for a list of IGM
     absorption."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Computes metal matrices '))
+        description='Computes metal matrices')
 
     parser.add_argument('--out',
                         type=str,
@@ -145,7 +160,8 @@ def main(cmdargs):
                         type=str,
                         default=None,
                         required=True,
-                        help='Path to delta_attributes.fits.gz file with hdu STACK_DELTAS containing table with at least rows "LOGLAM" and "WEIGHT"')
+                        help='Path to delta_attributes.fits.gz file with hdu STACK_DELTAS'
+                             ' containing table with at least rows "LOGLAM" and "WEIGHT"')
 
     parser.add_argument('--in-attributes2',
                         type=str,
@@ -157,7 +173,8 @@ def main(cmdargs):
                         type=str,
                         default=None,
                         required=False,
-                        help='Path to directory with delta*.gz to get the blinding info (default is trying to guess from attributes file)')
+                        help='Path to directory with delta*.gz to get the blinding info'
+                             ' (default is trying to guess from attributes file)')
 
     parser.add_argument('--rp-min',
                         type=float,
@@ -323,8 +340,8 @@ def main(cmdargs):
         '--unfold-cf',
         action='store_true',
         required=False,
-        help=('rp can be positive or negative depending on the relative '
-              'position between absorber1 and absorber2'))
+        help='rp can be positive or negative depending on the relative '
+             'position between absorber1 and absorber2')
 
     parser.add_argument('--rebin-factor',
                         type=int,
@@ -333,7 +350,7 @@ def main(cmdargs):
                         help='Rebin factor for deltas. If not None, deltas will '
                              'be rebinned by that factor')
 
-    args = parser.parse_args(cmdargs)
+    args = parser.parse_args()
 
     # setup variables in module cf
     cf.r_par_max = args.rp_max
@@ -563,5 +580,4 @@ def main(cmdargs):
     userprint(f'picca_fast_metal_dmat.py - Time total : {(t3-t0)/60:.3f} minutes')
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)
+    main()
