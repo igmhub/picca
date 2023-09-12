@@ -5,16 +5,25 @@ list of IGM absorption.
 This module follow the procedure described in sections 4.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
-import sys,os
+import sys
+import os
 import time
 import argparse
 import numpy as np
 import fitsio
 
-from picca import constants, xcf, io, utils
+from picca import constants, xcf, io
 from picca.utils import userprint
 
 def read_stack_deltas_table(filename) :
+    """
+    Read stack.
+
+    Args:
+        filename : std , path
+    Returns:
+        table as numpy.ndarray
+    """
     return fitsio.read(filename,"STACK_DELTAS")
 
 def calc_fast_metal_dmat(in_lambda_abs, out_lambda_abs, stack_table,
@@ -24,9 +33,11 @@ def calc_fast_metal_dmat(in_lambda_abs, out_lambda_abs, stack_table,
 
     Args:
         in_lambda_abs : str
-            Name of absorption in picca.constants in forest pixels from stack (input, i.e. 'true' absorber)
+            Name of absorption in picca.constants in forest pixels from stack
+            (input, i.e. 'true' absorber)
         out_lambda_abs : str
-            Name of absorption in picca.constants in forest pixels from stack (output, i.e. 'assumed' absorber, usually LYA)
+            Name of absorption in picca.constants in forest pixels from stack
+            (output, i.e. 'assumed' absorber, usually LYA)
         stack_table: table
             table with cols LOGLAM and WEIGHT for first series of deltas
         z_qso : float 1D array
@@ -53,24 +64,27 @@ def calc_fast_metal_dmat(in_lambda_abs, out_lambda_abs, stack_table,
     input_zf = (10**loglam)/constants.ABSORBER_IGM[in_lambda_abs] - 1. # redshift in the forest
     input_rf = xcf.cosmo.get_r_comov(input_zf)
 
-    rq = xcf.cosmo.get_r_comov(z_qso) # comoving distance for qso
+    r_qso = xcf.cosmo.get_r_comov(z_qso) # comoving distance for qso
 
     # all pairs
-    input_rp = (input_rf[:,None]-rq[None,:]).ravel() # same sign as line 528 of xcf.py (forest-qso)
+    input_rp = (input_rf[:,None]-r_qso[None,:]).ravel() # same sign as line 528 of xcf.py (forest-qso)
 
     # output
     output_zf = (10**loglam)/constants.ABSORBER_IGM[out_lambda_abs] - 1.
     output_rf = xcf.cosmo.get_r_comov(output_zf)
 
     # all pairs
-    output_rp = (output_rf[:,None]-rq[None,:]).ravel() # same sign as line 528 of xcf.py (forest-qso)
+    output_rp = (output_rf[:,None]-r_qso[None,:]).ravel() # same sign as line 528 of xcf.py (forest-qso)
 
     # weights
-    # alpha_in: in (1+z)^(alpha_in-1) is a scaling used to model how the metal contribution evolves with redshift (by default alpha=1 so that this has no effect)
+    # alpha_in: in (1+z)^(alpha_in-1) is a scaling used to model how the metal contribution
+    # evolves with redshift (by default alpha=1 so that this has no effect)
     alpha_in  = xcf.alpha_abs[in_lambda_abs]
-    # alpha_out: (1+z)^(alpha_out-1) is applied to the delta weights in io.read_deltas and used for the correlation function. It also has to be applied here.
+    # alpha_out: (1+z)^(alpha_out-1) is applied to the delta weights in io.read_deltas and
+    # used for the correlation function. It also has to be applied here.
     alpha_out = xcf.alpha_abs[out_lambda_abs]
-    # so here we have to apply both scalings (in the original code : alpha_in is applied in xcf.calc_metal_dmat and alpha_out in io.read_deltas)
+    # so here we have to apply both scalings (in the original code : alpha_in is applied in
+    # xcf.calc_metal_dmat and alpha_out in io.read_deltas)
     # qso weights have already been scaled with (1+z)^alpha_obj
     weights  = ((weight_forest*((1+input_zf)**(alpha_in+alpha_out-2)))[:,None]*weight_qso[None,:]).ravel()
 
@@ -91,8 +105,6 @@ def calc_fast_metal_dmat(in_lambda_abs, out_lambda_abs, stack_table,
     r_par_eff = sum_out_weight_rp/(sum_out_weight+(sum_out_weight==0))
     z_eff     = sum_out_weight_z/(sum_out_weight+(sum_out_weight==0))
 
-    r_trans_eff = np.zeros(r_par_eff.shape)
-
     # we could return the quantities computed as a function of rp only (and not rt):
     # return dmat, r_par_eff, r_trans_eff, z_eff
     # but for now we will return the full dmat to be consistent with the other computation
@@ -103,19 +115,19 @@ def calc_fast_metal_dmat(in_lambda_abs, out_lambda_abs, stack_table,
     full_r_par_eff = np.zeros(num_bins_total)
     full_r_trans_eff = np.zeros(num_bins_total)
     full_z_eff     = np.zeros(num_bins_total)
-    ii = np.arange(xcf.num_bins_r_par)
+    r_par_indices = np.arange(xcf.num_bins_r_par)
     r_trans = (0.5+np.arange(xcf.num_bins_r_trans))*xcf.r_trans_max/xcf.num_bins_r_trans
     for j in range(xcf.num_bins_r_trans) :
-        indices = j + xcf.num_bins_r_trans *  ii
-        for k,i in zip(indices,ii) :
-            full_dmat[indices,k]  = dmat[ii,i]
+        indices = j + xcf.num_bins_r_trans *  r_par_indices
+        for k,i in zip(indices,r_par_indices) :
+            full_dmat[indices,k]  = dmat[r_par_indices,i]
         full_r_par_eff[indices]   = r_par_eff
         full_z_eff[indices]       = z_eff
         full_r_trans_eff[indices] = r_trans[j]
 
     return full_dmat, full_r_par_eff, full_r_trans_eff, full_z_eff
 
-def main(cmdargs):
+def main():
     """Compute the metal matrix of the cross-correlation delta x object for
      a list of IGM absorption."""
     parser = argparse.ArgumentParser(
@@ -133,13 +145,15 @@ def main(cmdargs):
                         type=str,
                         default=None,
                         required=True,
-                        help='Path to delta_attributes.fits.gz file with hdu STACK_DELTAS containing table with at least rows "LOGLAM" and "WEIGHT"')
+                        help='Path to delta_attributes.fits.gz file with hdu STACK_DELTAS'
+                             ' containing table with at least rows "LOGLAM" and "WEIGHT"')
 
     parser.add_argument('--delta-dir',
                         type=str,
                         default=None,
                         required=False,
-                        help='Path to directory with delta*.gz to get the blinding info (default is trying to guess from attributes file)')
+                        help='Path to directory with delta*.gz to get the blinding info'
+                             ' (default is trying to guess from attributes file)')
 
     parser.add_argument('--drq',
                         type=str,
@@ -236,7 +250,7 @@ def main(cmdargs):
         default=10.,
         required=False,
         help=('Limit the maximum redshift of the quasars '
-                'used as sources for spectra'))
+              'used as sources for spectra'))
 
     parser.add_argument(
         '--lambda-abs',
@@ -326,7 +340,7 @@ def main(cmdargs):
                         required=False,
                         help='Bins for the distribution of QSO redshifts')
 
-    args = parser.parse_args(cmdargs)
+    args = parser.parse_args()
 
     # setup variables in module xcf
     xcf.r_par_max = args.rp_max
@@ -376,11 +390,11 @@ def main(cmdargs):
 
     zbins=args.qso_z_bins
     userprint(f"Use histogram of QSO redshifts with {zbins} bins")
-    hw,zbins  = np.histogram(z_qso,bins=zbins,weights=weight_qso)
-    hwz,_     = np.histogram(z_qso,bins=zbins,weights=weight_qso*z_qso)
-    ok = (hw>0)
-    z_qso = hwz[ok]/hw[ok] # weighted mean in bins
-    weight_qso = hw[ok]
+    histo_w,zbins  = np.histogram(z_qso,bins=zbins,weights=weight_qso)
+    histo_wz,_     = np.histogram(z_qso,bins=zbins,weights=weight_qso*z_qso)
+    selection = histo_w>0
+    z_qso = histo_wz[selection]/histo_w[selection] # weighted mean in bins
+    weight_qso = histo_w[selection]
 
     t1 = time.time()
     userprint(f'picca_metal_xdmat.py - Time reading data: {(t1-t0)/60:.3f} minutes')
@@ -532,5 +546,4 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)
+    main()
