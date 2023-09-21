@@ -11,6 +11,7 @@ import fitsio
 from picca import constants, cf, io
 from picca.utils import userprint
 
+DEFAULT_SI_METALS = ['SiIII(1207)','SiII(1190)','SiII(1193)','SiII(1260)']
 
 def read_stack_deltas_table(filename):
     """
@@ -376,6 +377,12 @@ def main():
         help='Rebin factor for deltas. If not None, deltas will '
         'be rebinned by that factor')
 
+    parser.add_argument('--relevant-metals',
+                    action='store_true',
+                    required=False,
+                    help='compute only the metal correlations used by Vega'
+                       'i.e. 4 LyaxSi matrices and CIVxCIV')
+
     args = parser.parse_args()
 
     # setup variables in module cf
@@ -460,6 +467,11 @@ def main():
         for index2, abs_igm2 in enumerate(abs_igm_2[index0:]):
             if index1 == 0 and index2 == 0:
                 continue
+
+            if args.relevant_metals:
+                if not (abs_igm1 == "LYA" and abs_igm2 in DEFAULT_SI_METALS) \
+                and not (abs_igm1 == "CIV(eff)" and abs_igm1 == abs_igm2):
+                    continue
 
             userprint("Computing", abs_igm1, abs_igm2)
 
