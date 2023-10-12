@@ -528,91 +528,92 @@ class Dr16ExpectedFlux(ExpectedFlux):
         -----
         ExpectedFluxError if wavelength solution is not valid
         """
-        # initialize arrays
-        eta = self.get_eta(self.log_lambda_var_func_grid)
-        var_lss = self.get_var_lss(self.log_lambda_var_func_grid)
-        fudge = self.get_fudge(self.log_lambda_var_func_grid)
-        num_pixels = np.zeros(self.num_bins_variance)
-        valid_fit = np.zeros(self.num_bins_variance)
+        if len(self.fit_variance_functions) > 0:
+            # initialize arrays
+            eta = self.get_eta(self.log_lambda_var_func_grid)
+            var_lss = self.get_var_lss(self.log_lambda_var_func_grid)
+            fudge = self.get_fudge(self.log_lambda_var_func_grid)
+            num_pixels = np.zeros(self.num_bins_variance)
+            valid_fit = np.zeros(self.num_bins_variance)
 
-        chi2_in_bin = np.zeros(self.num_bins_variance)
+            chi2_in_bin = np.zeros(self.num_bins_variance)
 
-        # initialize the fitter class
-        leasts_squares = LeastsSquaresVarStats(
-            self.num_bins_variance,
-            forests,
-            self.log_lambda_var_func_grid,
-            self.min_num_qso_in_fit,
-        )
-
-        self.logger.progress(" Mean quantities in observer-frame")
-        self.logger.progress(
-            " loglam    eta      var_lss  fudge    chi2     num_pix valid_fit")
-        for index in range(self.num_bins_variance):
-            leasts_squares.set_fit_bins(index)
-
-            minimizer = iminuit.Minuit(leasts_squares,
-                                       name=("eta", "var_lss", "fudge"),
-                                       eta=eta[index],
-                                       var_lss=var_lss[index],
-                                       fudge=fudge[index] / FUDGE_REF)
-            minimizer.errors["eta"] = 0.05
-            minimizer.limits["eta"] = self.limit_eta
-            minimizer.errors["var_lss"] = 0.05
-            minimizer.limits["var_lss"] = self.limit_var_lss
-            minimizer.errors["fudge"] = 0.05
-            minimizer.limits["fudge"] = (0, None)
-            minimizer.errordef = 1.
-            minimizer.print_level = 0
-            minimizer.fixed["eta"] = "eta" not in self.fit_variance_functions
-            minimizer.fixed[
-                "var_lss"] = "var_lss" not in self.fit_variance_functions
-            minimizer.fixed[
-                "fudge"] = "fudge" not in self.fit_variance_functions
-            minimizer.migrad()
-
-            if minimizer.valid:
-                minimizer.hesse()
-                eta[index] = minimizer.values["eta"]
-                var_lss[index] = minimizer.values["var_lss"]
-                fudge[index] = minimizer.values["fudge"] * FUDGE_REF
-                valid_fit[index] = True
-            else:
-                eta[index] = ETA_DEFAULT
-                var_lss[index] = VAR_LSS_DEFAULT
-                fudge[index] = FUDGE_DEFAULT
-                valid_fit[index] = False
-            num_pixels[index] = leasts_squares.get_num_pixels()
-            chi2_in_bin[index] = minimizer.fval
-
-            self.logger.progress(
-                f" {self.log_lambda_var_func_grid[index]:.3e} "
-                f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "
-                f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} {valid_fit[index]}"
+            # initialize the fitter class
+            leasts_squares = LeastsSquaresVarStats(
+                self.num_bins_variance,
+                forests,
+                self.log_lambda_var_func_grid,
+                self.min_num_qso_in_fit,
             )
 
-        w = num_pixels > 0
+            self.logger.progress(" Mean quantities in observer-frame")
+            self.logger.progress(
+                " loglam    eta      var_lss  fudge    chi2     num_pix valid_fit")
+            for index in range(self.num_bins_variance):
+                leasts_squares.set_fit_bins(index)
 
-        self.get_eta = interp1d(self.log_lambda_var_func_grid[w],
-                                eta[w],
-                                fill_value="extrapolate",
-                                kind="cubic")
-        self.get_var_lss = interp1d(self.log_lambda_var_func_grid[w],
-                                    var_lss[w],
+                minimizer = iminuit.Minuit(leasts_squares,
+                                           name=("eta", "var_lss", "fudge"),
+                                           eta=eta[index],
+                                           var_lss=var_lss[index],
+                                           fudge=fudge[index] / FUDGE_REF)
+                minimizer.errors["eta"] = 0.05
+                minimizer.limits["eta"] = self.limit_eta
+                minimizer.errors["var_lss"] = 0.05
+                minimizer.limits["var_lss"] = self.limit_var_lss
+                minimizer.errors["fudge"] = 0.05
+                minimizer.limits["fudge"] = (0, None)
+                minimizer.errordef = 1.
+                minimizer.print_level = 0
+                minimizer.fixed["eta"] = "eta" not in self.fit_variance_functions
+                minimizer.fixed[
+                    "var_lss"] = "var_lss" not in self.fit_variance_functions
+                minimizer.fixed[
+                    "fudge"] = "fudge" not in self.fit_variance_functions
+                minimizer.migrad()
+
+                if minimizer.valid:
+                    minimizer.hesse()
+                    eta[index] = minimizer.values["eta"]
+                    var_lss[index] = minimizer.values["var_lss"]
+                    fudge[index] = minimizer.values["fudge"] * FUDGE_REF
+                    valid_fit[index] = True
+                else:
+                    eta[index] = ETA_DEFAULT
+                    var_lss[index] = VAR_LSS_DEFAULT
+                    fudge[index] = FUDGE_DEFAULT
+                    valid_fit[index] = False
+                num_pixels[index] = leasts_squares.get_num_pixels()
+                chi2_in_bin[index] = minimizer.fval
+
+                self.logger.progress(
+                    f" {self.log_lambda_var_func_grid[index]:.3e} "
+                    f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "
+                    f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} {valid_fit[index]}"
+                )
+
+            w = num_pixels > 0
+
+            self.get_eta = interp1d(self.log_lambda_var_func_grid[w],
+                                    eta[w],
                                     fill_value="extrapolate",
                                     kind="cubic")
-        self.get_fudge = interp1d(self.log_lambda_var_func_grid[w],
-                                  fudge[w],
-                                  fill_value="extrapolate",
-                                  kind="cubic")
-        self.get_num_pixels = interp1d(self.log_lambda_var_func_grid[w],
-                                       num_pixels[w],
-                                       fill_value="extrapolate",
-                                       kind="nearest")
-        self.get_valid_fit = interp1d(self.log_lambda_var_func_grid[w],
-                                      valid_fit[w],
+            self.get_var_lss = interp1d(self.log_lambda_var_func_grid[w],
+                                        var_lss[w],
+                                        fill_value="extrapolate",
+                                        kind="cubic")
+            self.get_fudge = interp1d(self.log_lambda_var_func_grid[w],
+                                      fudge[w],
                                       fill_value="extrapolate",
-                                      kind="nearest")
+                                      kind="cubic")
+            self.get_num_pixels = interp1d(self.log_lambda_var_func_grid[w],
+                                           num_pixels[w],
+                                           fill_value="extrapolate",
+                                           kind="nearest")
+            self.get_valid_fit = interp1d(self.log_lambda_var_func_grid[w],
+                                          valid_fit[w],
+                                          fill_value="extrapolate",
+                                          kind="nearest")
 
     def hdu_fit_metadata(self, results):
         """Add to the results file an HDU with the fits results
