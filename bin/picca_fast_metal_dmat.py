@@ -135,11 +135,14 @@ def calc_fast_metal_dmat(in_lambda_abs_1,
                                         bins=rpbins,
                                         weights=weights *
                                         (output_rp[None, :].ravel()))
+
+    # return the redshift of the actual absorber, which is the average of input_z1
+    # and input_z2
     sum_out_weight_z, _ = np.histogram(
         output_rp,
         bins=rpbins,
         weights=weights *
-        (((output_z1[:, None] + output_z2[None, :]) / 2.).ravel()))
+        (((input_z1[:, None] + input_z2[None, :]) / 2.).ravel()))
     r_par_eff = sum_out_weight_rp / (sum_out_weight + (sum_out_weight == 0))
     z_eff = sum_out_weight_z / (sum_out_weight + (sum_out_weight == 0))
 
