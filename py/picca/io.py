@@ -210,13 +210,18 @@ def read_drq(drq_filename,
     return catalog
 
 
-def read_blinding(in_dir, lambda_abs, lambda_abs2):
+def read_blinding(in_dir, tracer1, tracer2):
     """Checks the delta files for blinding settings
 
     Args:
         in_dir: str
             Directory to spectra files. If mode is "spec-mock-1D", then it is
             the filename of the fits file contianing the mock spectra
+        tracer1: str
+            Name of the first tracer (e.g. LYA)
+        tracer2: str of None
+            Name of the second tracer (e.g. QSO). If None, then first tracer
+            is assigned to tracer2
 
     Returns:
         The following variables:
@@ -249,7 +254,7 @@ def read_blinding(in_dir, lambda_abs, lambda_abs2):
                 if lambda_abs2 is None:
                     lambda_abs2 = lambda_abs
                 blinding_tracers = ["LYA", "QSO"]
-                if lambda_abs not in blinding_tracers and lambda_abs2 not in blinding_tracers:
+                if tracer1 not in blinding_tracers and tracer2 not in blinding_tracers:
                     # since we are doing metal forests, overwrite the read blinding
                     # and force data to not being blind
                     blinding = "none"
@@ -271,7 +276,7 @@ def read_blinding(in_dir, lambda_abs, lambda_abs2):
                 if lambda_abs2 is None:
                     lambda_abs2 = lambda_abs
                 blinding_tracers = ["LYA", "QSO"]
-                if lambda_abs not in blinding_tracers and lambda_abs2 not in blinding_tracers:
+                if tracer1 not in blinding_tracers and tracer2 not in blinding_tracers:
                     # since we are doing metal forests, overwrite the read blinding
                     # and force data to not being blind
                     blinding = "none"
