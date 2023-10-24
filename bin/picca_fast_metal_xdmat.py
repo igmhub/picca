@@ -402,7 +402,7 @@ def main():
             )
             userprint("Please specify the directory with option --delta-dir")
             sys.exit(1)
-    blinding = io.read_blinding(args.delta_dir)
+    blinding = io.read_blinding(args.in_dir, args.lambda_abs, args.obj_name)
 
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,

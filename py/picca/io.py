@@ -21,6 +21,7 @@ from astropy.table import Table
 import warnings
 from multiprocessing import Pool
 
+from .constants import ABSORBER_IGM
 from .utils import userprint
 from .data import Delta, QSO
 from .pk1d.prep_pk1d import exp_diff, spectral_resolution
@@ -209,7 +210,7 @@ def read_drq(drq_filename,
     return catalog
 
 
-def read_blinding(in_dir):
+def read_blinding(in_dir, lambda_abs, lambda_abs2):
     """Checks the delta files for blinding settings
 
     Args:
@@ -232,15 +233,48 @@ def read_blinding(in_dir):
                                                            + '/*.fits.gz')
     filename = files[0]
     hdul = fitsio.FITS(filename)
-    if "LAMBDA" in hdul: # This is for ImageHDU format
+    # This is for ImageHDU format
+    if "LAMBDA" in hdul:
         header = hdul["METADATA"].read_header()
+
+        # read blinding
         blinding = header["BLINDING"]
-    else: # This is for BinTable format
+
+        # check if we are doing metal forests
+        if "MIN_RF_WAVE" in header and "MIN_RF_WAVE" in header:
+            lya_wave = ABSORBER_IGM["LYA"]
+            min_rf_wave = header["MIN_RF_WAVE"]
+            max_rf_wave = header["MAX_RF_WAVE"]
+            if min_rf_wave > lya_wave and max_rf_wave > lya_wave:
+                if lambda_abs2 is None:
+                    lambda_abs2 = lambda_abs
+                blinding_tracers = ["LYA", "QSO"]
+                if lambda_abs not in blinding_tracers and lambda_abs2 not in blinding_tracers:
+                    # since we are doing metal forests, overwrite the read blinding
+                    # and force data to not being blind
+                    blinding = "none"
+
+    # This is for BinTable format
+    else:
         header = hdul[1].read_header()
         if "BLINDING" in header:
             blinding = header["BLINDING"]
         else:
             blinding = "none"
+
+        # check if we are doing metal forests
+        if "MIN_RF_WAVE" in header and "MIN_RF_WAVE" in header:
+            lya_wave = ABSORBER_IGM["LYA"]
+            min_rf_wave = header["MIN_RF_WAVE"]
+            max_rf_wave = header["MAX_RF_WAVE"]
+            if min_rf_wave > lya_wave and max_rf_wave > lya_wave:
+                if lambda_abs2 is None:
+                    lambda_abs2 = lambda_abs
+                blinding_tracers = ["LYA", "QSO"]
+                if lambda_abs not in blinding_tracers and lambda_abs2 not in blinding_tracers:
+                    # since we are doing metal forests, overwrite the read blinding
+                    # and force data to not being blind
+                    blinding = "none"
 
     return blinding
 
@@ -279,12 +313,12 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
         if hdul[card].read_header()['WAVE_SOLUTION'] != 'lin':
             raise ValueError('Delta rebinning only implemented for linear \
                     lambda bins')
-        
+
         dwave = hdul[card].read_header()['DELTA_LAMBDA']
-            
+
         for i in range(len(deltas)):
             deltas[i].rebin(rebin_factor, dwave=dwave)
-            
+
     hdul.close()
 
     return deltas

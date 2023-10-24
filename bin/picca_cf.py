@@ -251,7 +251,7 @@ def main(cmdargs):
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
     # read blinding keyword
-    blinding = io.read_blinding(args.in_dir)
+    blinding = io.read_blinding(args.in_dir, args.lambda_abs, args.lambda_abs2)
 
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,

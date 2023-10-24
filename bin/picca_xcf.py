@@ -154,6 +154,12 @@ def main(cmdargs):
         help=('Name of the absorption in picca.constants defining the redshift '
               'of the delta'))
 
+    parser.add_argument('--obj-name',
+                        type=str,
+                        default='QSO',
+                        required=False,
+                        help='Name of the object tracer')
+
     parser.add_argument('--z-ref',
                         type=float,
                         default=2.25,
@@ -269,7 +275,7 @@ def main(cmdargs):
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
 
     # read blinding keyword
-    blinding = io.read_blinding(args.in_dir)
+    blinding = io.read_blinding(args.in_dir, args.lambda_abs, args.obj_name)
 
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
