@@ -6,56 +6,8 @@ from scipy.constants import speed_of_light
 from scipy.special import wofz
 
 from picca import constants
-
-
-def voigt_profile(x, sigma=1, gamma=1):
-    return np.real(wofz((x + 1j*gamma) / (sigma * np.sqrt(2))))
-
-
-def get_voigt_profile_wave(wave, z, N_hi):
-    """Compute voigt profile at input redshift and column density
-    on an observed wavelength grid
-
-    Parameters
-    ----------
-    wave : array
-        Observed wavelength
-    z : float
-        Redshift
-    N_hi : float
-        Log10 column density
-
-    Returns
-    -------
-    array
-        Flux corresponding to a voigt profile
-    """
-    # wave = lambda in A and N_HI in log10 and 10**N_hi in cm^-2
-    wave_rf = wave / (1 + z)
-
-    e = 1.6021e-19  # C
-    epsilon0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
-    f = 0.4164
-    mp = 1.6726e-27  # kg
-    me = 9.109e-31  # kg
-    c = speed_of_light  # m.s^-1
-    k = 1.3806e-23  # m^2.kg.s^-2.K-1
-    T = 1e4  # K
-    gamma = 6.265e8  # s^-1
-
-    wave_lya = constants.ABSORBER_IGM["LYA"]  # A
-    Deltat_wave = wave_lya / c * np.sqrt(2 * k * T / mp)  # A
-
-    a = gamma / (4 * np.pi * Deltat_wave) * wave_lya**2 / c * 1e-10
-    u = (wave_rf - wave_lya) / Deltat_wave
-    H = voigt_profile(u, np.sqrt(1/2), a)
-
-    absorbtion = np.sqrt(np.pi) * e**2 * f * wave_lya**2 * 1e-10 * H
-    absorbtion /= (4 * np.pi * epsilon0 * me * c**2 * Deltat_wave)
-
-    # 10^N_hi in cm^-2 and absorb in m^2
-    tau = (10**N_hi * 1e4 * absorbtion).astype(float)
-    return np.exp(-tau)
+from picca.delta_extraction.masks.dal_mask import (
+    compute_tau, LAMBDA_LYA, OSCILLATOR_STRENGTH_LYA, GAMMA_LYA)
 
 
 def profile_wave_to_comov_dist(wave, profile_wave, cosmo, differential=False):
@@ -161,7 +113,8 @@ def main():
     wave = np.arange(2000, 8000, 1)  # TODO this grid may be too sparse
     integrand = np.empty((dN_NHI.size, wave.size // 2 + 1))
     for i, NHI in enumerate(dN_NHI):
-        profile_wave = get_voigt_profile_wave(wave, args.z_dla, NHI)
+        profile_wave = np.exp(
+            -compute_tau(wave, args.z_dla, NHI, LAMBDA_LYA, OSCILLATOR_STRENGTH_LYA, GAMMA_LYA)
         profile_wave /= np.mean(profile_wave)
 
         # r is in Mpc h^-1 --> k (from tf) will be in (Mpc h^-1)^-1 = h Mpc^-1 :)
