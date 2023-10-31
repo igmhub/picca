@@ -25,19 +25,23 @@ defaults = update_default_options(
 # Wavelengths in Angstroms
 LINES = np.array([
     ("lCIV", 1549),
-    ("lSiIV1", 1394),
     ("lSiIV2", 1403),
+    ("lSiIV1", 1394),
     ("lNV", 1240.81),
     ("lLya", 1216.1),
     ("lCIII", 1175),
-    ("lPV1", 1117),
     ("lPV2", 1128),
-    ("lSIV1", 1062),
+    ("lPV1", 1117),
     ("lSIV2", 1074),
-    ("lLyb", 1020),
+    ("lSIV1", 1062),
     ("lOIV", 1031),
     ("lOVI", 1037),
     ("lOI", 1039),
+    ("lLyb", 1025.7),
+    ("lLy3", 972.5),
+    ("lCIII", 977.0),
+    ("lNIII", 989.9),
+    ("lLy4", 949.7),
     ], dtype=[("name", "U10"), ("value", float)])
 
 @njit()
