@@ -252,7 +252,7 @@ def read_blinding(in_dir, tracer1, tracer2):
             max_rf_wave = header["MAX_RF_WAVE"]
             if min_rf_wave > lya_wave and max_rf_wave > lya_wave:
                 if tracer2 is None:
-                    tracer2 = lambda_abs
+                    tracer2 = tracer1
                 blinding_tracers = ["LYA", "QSO"]
                 if tracer1 not in blinding_tracers or tracer2 not in blinding_tracers:
                     # since we are doing metal forests, overwrite the read blinding
@@ -274,9 +274,9 @@ def read_blinding(in_dir, tracer1, tracer2):
             max_rf_wave = header["MAX_RF_WAVE"]
             if min_rf_wave > lya_wave and max_rf_wave > lya_wave:
                 if tracer2 is None:
-                    tracer2 = lambda_abs
+                    tracer2 = tracer1
                 blinding_tracers = ["LYA", "QSO"]
-                if tracer1 not in blinding_tracers and tracer2 not in blinding_tracers:
+                if tracer1 not in blinding_tracers or tracer2 not in blinding_tracers:
                     # since we are doing metal forests, overwrite the read blinding
                     # and force data to not being blind
                     blinding = "none"
