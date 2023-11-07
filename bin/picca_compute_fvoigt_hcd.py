@@ -6,8 +6,8 @@ from scipy.constants import speed_of_light
 from scipy.special import wofz
 
 from picca import constants
-from picca.delta_extraction.masks.dal_mask import (
-    compute_tau, LAMBDA_LYA, OSCILLATOR_STRENGTH_LYA, GAMMA_LYA)
+from picca.delta_extraction.masks.dla_mask import (
+    dla_profile, LAMBDA_LYA, OSCILLATOR_STRENGTH_LYA, GAMMA_LYA)
 
 
 def profile_wave_to_comov_dist(wave, profile_wave, cosmo, differential=False):
@@ -113,8 +113,7 @@ def main():
     wave = np.arange(2000, 8000, 1)  # TODO this grid may be too sparse
     integrand = np.empty((dN_NHI.size, wave.size // 2 + 1))
     for i, NHI in enumerate(dN_NHI):
-        profile_wave = np.exp(
-            -compute_tau(wave, args.z_dla, NHI, LAMBDA_LYA, OSCILLATOR_STRENGTH_LYA, GAMMA_LYA)
+        profile_wave = dla_profile(wave, z_abs, NHI)
         profile_wave /= np.mean(profile_wave)
 
         # r is in Mpc h^-1 --> k (from tf) will be in (Mpc h^-1)^-1 = h Mpc^-1 :)
