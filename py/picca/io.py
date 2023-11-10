@@ -240,7 +240,7 @@ def read_blinding(in_dir, tracer1, tracer2):
     hdul = fitsio.FITS(filename)
     # This is for ImageHDU format
     if "LAMBDA" in hdul:
-        header = hdul["METADATA"].read_header()
+        header = hdul["LAMBDA"].read_header()
 
         # read blinding
         blinding = header["BLINDING"]
