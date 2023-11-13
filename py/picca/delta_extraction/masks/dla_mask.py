@@ -5,23 +5,135 @@ import logging
 from astropy.table import Table
 import fitsio
 import numpy as np
+from scipy.constants import speed_of_light as SPEED_LIGHT
+from scipy.special import voigt_profile
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
-from picca.delta_extraction.mask import Mask
-from picca.delta_extraction.utils import ABSORBER_IGM
+from picca.delta_extraction.mask import Mask, accepted_options, defaults
+from picca.delta_extraction.utils import (
+    ABSORBER_IGM, update_accepted_options, update_default_options)
 
-defaults = {
-    "dla mask limit": 0.8,
-    "los_id name": "THING_ID",
-}
+accepted_options = update_accepted_options(accepted_options, [
+    "dla mask limit", "los_id name", "mask file", "filename"
+])
 
-accepted_options = ["dla mask limit", "los_id name", "mask file", "filename", "keep pixels"]
+defaults = update_default_options(
+    defaults, {
+        "dla mask limit": 0.8,
+        "los_id name": "THING_ID",
+    })
 
-np.random.seed(0)
-NUM_POINTS = 10000
-GAUSSIAN_DIST = np.random.normal(size=NUM_POINTS) * np.sqrt(2)
+LAMBDA_LYA = float(ABSORBER_IGM["LYA"]) ## Lya wavelength [A]
+LAMBDA_LYB = float(ABSORBER_IGM["LYB"]) ## Lyb wavelength [A]
+OSCILLATOR_STRENGTH_LYA = 0.41641
+OSCILLATOR_STRENGTH_LYB = 0.079142
+GAMMA_LYA = 6.2648e08  # s^-1 damping constant
+GAMMA_LYB = 1.6725e8  # s^-1 damping constant
 
+def dla_profile(lambda_, z_abs, nhi):
+    """Compute DLA profile
+
+    Arguments
+    ---------
+    lambda_: array of floats
+    Wavelength (in Angs)
+
+    z_abs: float
+    Redshift of the absorption
+
+    nhi: float
+    DLA column density in log10(cm^-2)
+    """
+    transmission = np.exp(
+        -compute_tau(lambda_, z_abs, nhi, LAMBDA_LYA, OSCILLATOR_STRENGTH_LYA, GAMMA_LYA)
+        -compute_tau(lambda_, z_abs, nhi, LAMBDA_LYB, OSCILLATOR_STRENGTH_LYB, GAMMA_LYB)
+    )
+    return transmission
+
+# constants to compute the optical depth of the DLA absoprtion
+ELEMENTARY_CHARGE = 1.6021e-19  # C
+EPSILON_0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
+PROTON_MASS = 1.6726e-27  # kg
+ELECTRON_MASS = 9.109e-31  # kg
+BOLTZMAN_CONSTANT_K = 1.3806e-23  # m^2.kg.s^-2.K-1
+GAS_TEMP = 5 * 1e4  # K
+
+# precomputed factors to save time
+# compared to equation 36 of Garnett et al 2017 there is a sqrt(2) missing
+# this is because otherwise we need to divide this quantity by sqrt(2)
+# when calling scipy.special.voigt
+GAUSSIAN_BROADENING_B = np.sqrt(BOLTZMAN_CONSTANT_K * GAS_TEMP / PROTON_MASS)
+# the 1e-10 appears as the wavelengths are given in Angstroms
+LORENTZIAN_BROADENING_GAMMA_PREFACTOR = 1e-10 / (4 * np.pi)
+TAU_PREFACTOR = (
+    ELEMENTARY_CHARGE**2 * 1e-10 / ELECTRON_MASS / SPEED_LIGHT / 4 / EPSILON_0)
+
+def compute_tau(lambda_, z_abs, log_nhi, lambda_t, oscillator_strength_f, gamma):
+    r"""Compute the optical depth for DLA absorption.
+
+    Tau is computed using equations 34 to 36 of Garnett et al. 2017. We add
+    a factor 4pi\epsion_0 in the denominator of their equation 34 so that
+    dimensions match. The equations we use are:
+
+    \tau(\lambda, z_{abs}, N_{HI}) = N_{HI} \frac {e^{2} f\lambda_{t} }
+        {4 \epsion_0 m_{e} c } \phi{\nu, b, \gamma}
+
+    where e is the elementary charge, \lambda_{t} is the transition wavelength
+    and f is the oscillator strength of the transition. The line profile
+    function \phi is a Voigt profile, where \nu is ther elative velocity
+
+    \nu = c ( \frac{ \lambda } { \lambda_{t}* (1+z_{DLA}) }  ) ,
+
+    b / \sqrt{2} is the standard deviation of the Gaussian (Maxwellian)
+    broadening contribution:
+
+    b = \sqrt{ \frac{ 2kT }{ m_{p} } }
+
+    and \gamma is the width of the Lorenztian broadening contribution:
+
+    \gamma = \frac { \Gamma \lambda_{t} } { 4\pi }
+
+    where \Gamma is a damping constant
+
+    Arguments
+    ---------
+    lambda_: array of floats
+    Wavelength (in Angs)
+
+    z_abs: float
+    Redshift of the absorption
+
+    log_nhi: float
+    DLA column density in log10(cm^-2)
+
+    lambda_t: float
+    Transition wavelength, in Angstroms, e.g. for Lya 1215.67
+
+    oscillator_strength_f: float
+    Oscillator strength, e.g. f = 0.41611 for Lya
+
+    gamma: float
+    Damping constant (in s^-1)
+
+    Return
+    ------
+    tau: array of float
+    The optical depth.
+    """
+    # compute broadenings for the voight profile
+    relative_velocity_nu = SPEED_LIGHT * (lambda_ / (1 + z_abs) / lambda_t - 1)
+    lorentzian_broadening_gamma = (
+        LORENTZIAN_BROADENING_GAMMA_PREFACTOR * gamma * lambda_t)
+
+    # convert column density to m^2
+    nhi = 10**log_nhi * 1e4
+
+    # the 1e-10 converts the wavelength from Angstroms to meters
+    tau = TAU_PREFACTOR * nhi * oscillator_strength_f * lambda_t * voigt_profile(
+        relative_velocity_nu, GAUSSIAN_BROADENING_B, lorentzian_broadening_gamma)
+
+    return tau
 
 class DlaMask(Mask):
     """Class to mask DLAs
@@ -152,8 +264,8 @@ class DlaMask(Mask):
         if self.los_ids.get(forest.los_id) is not None:
             dla_transmission = np.ones(len(lambda_))
             for (z_abs, nhi) in self.los_ids.get(forest.los_id):
-                dla_transmission *= DlaProfile(lambda_, z_abs,
-                                               nhi).transmission
+                dla_transmission *= dla_profile(lambda_, z_abs,
+                                                nhi)
 
             # find out which pixels to mask
             w = dla_transmission > self.dla_mask_limit
@@ -168,198 +280,3 @@ class DlaMask(Mask):
             forest.transmission_correction *= dla_transmission
             for param in Forest.mask_fields:
                 self._masker(forest, param, w)
-
-class DlaProfile:
-    """Class to represent Damped Lyman-alpha Absorbers.
-
-    Methods
-    -------
-    __init__
-    profile_lya_absorption
-    profile_lyb_absorption
-    tau_lya
-    tau_lyb
-    voigt
-
-    Attributes
-    ----------
-    log_lambda: array of float
-    Logarithm of the wavelength (in Angs)
-
-    nhi: float
-    DLA column density in log10(cm^-2)
-
-    transmission: array of floats
-    Decrease of the transmitted flux due to the presence of a DLA
-
-    z_abs: float
-    Redshift of the absorption
-    """
-    def __init__(self, lambda_, z_abs, nhi):
-        """Initialize class instance.
-
-        Arguments
-        ---------
-        lambda_: array of floats
-        Wavelength (in Angs)
-
-        z_abs: float
-        Redshift of the absorption
-
-        nhi: float
-        DLA column density in log10(cm^-2)
-        """
-        self.z_abs = z_abs
-        self.nhi = nhi
-
-        self.transmission = self.profile_lya_absorption(lambda_, z_abs, nhi)
-        self.transmission *= self.profile_lyb_absorption(lambda_, z_abs, nhi)
-
-    @staticmethod
-    def profile_lya_absorption(lambda_, z_abs, nhi):
-        """Compute the absorption profile for Lyman-alpha absorption.
-
-        Arguments
-        ---------
-        lambda_: array of floats
-        Wavelength (in Angs)
-
-        z_abs: float
-        Redshift of the absorption
-
-        nhi: float
-        DLA column density in log10(cm^-2)
-
-        Return
-        ------
-        profile: array of floats
-        The absorption profile.
-        """
-        return np.exp(-DlaProfile.tau_lya(lambda_, z_abs, nhi))
-
-    @staticmethod
-    def profile_lyb_absorption(lambda_, z_abs, nhi):
-        """Computes the absorption profile for Lyman-beta absorption.
-
-        Arguments
-        ---------
-        lambda_: array of floats
-        Wavelength (in Angs)
-
-        z_abs: float
-        Redshift of the absorption
-
-        nhi: float
-        DLA column density in log10(cm^-2)
-
-        Return
-        ------
-        profile: array of floats
-        The absorption profile.
-        """
-        return np.exp(-DlaProfile.tau_lyb(lambda_, z_abs, nhi))
-
-    ### Implementation of Pasquier code,
-    ###     also in Rutten 2003 at 3.3.3
-    @staticmethod
-    def tau_lya(lambda_, z_abs, nhi):
-        """Compute the optical depth for Lyman-alpha absorption.
-
-        Arguments
-        ---------
-        lambda_: array of floats
-        Wavelength (in Angs)
-
-        z_abs: float
-        Redshift of the absorption
-
-        nhi: float
-        DLA column density in log10(cm^-2)
-
-        Return
-        ------
-        tau: array of float
-        The optical depth.
-        """
-        lambda_lya = ABSORBER_IGM["LYA"]  ## Lya wavelength [A]
-        gamma = 6.625e8  ## damping constant of the transition [s^-1]
-        osc_strength = 0.4164  ## oscillator strength of the atomic transition
-        speed_light = 3e8  ## speed of light [m/s]
-        thermal_velocity = 30000.  ## sqrt(2*k*T/m_proton) with
-        ## T = 5*10^4 ## [m.s^-1]
-        nhi_cm2 = 10**nhi  ## column density [cm^-2]
-        lambda_rest_frame = lambda_ / (1 + z_abs)
-        ## wavelength at DLA restframe [A]
-
-        u_voight = ((speed_light / thermal_velocity) *
-                    (lambda_lya / lambda_rest_frame - 1))
-        ## dimensionless frequency offset in Doppler widths.
-        a_voight = lambda_lya * 1e-10 * gamma / (4 * np.pi * thermal_velocity)
-        ## Voigt damping parameter
-        voigt = DlaProfile.voigt(a_voight, u_voight)
-        thermal_velocity /= 1000.
-        ## 1.497e-16 = e**2/(4*sqrt(pi)*epsilon0*m_electron*c)*1e-10
-        ## [m^2.s^-1.m/]
-        ## we have b/1000 & 1.497e-15 to convert
-        ## 1.497e-15*osc_strength*lambda_rest_frame*h/n to cm^2
-        tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt /
-               thermal_velocity)
-        return tau
-
-    @staticmethod
-    def tau_lyb(lambda_, z_abs, nhi):
-        """Compute the optical depth for Lyman-beta absorption.
-
-        Arguments
-        ---------
-        lambda_: array of floats
-        Wavelength (in Angs)
-
-        z_abs: float
-        Redshift of the absorption
-
-        nhi: float
-        DLA column density in log10(cm^-2)
-
-        Return
-        ------
-        tau: array of float
-        The optical depth.
-        """
-        lam_lyb = ABSORBER_IGM["LYB"]
-        gamma = 0.079120
-        osc_strength = 1.897e8
-        speed_light = 3e8  ## speed of light m/s
-        thermal_velocity = 30000.
-        nhi_cm2 = 10**nhi
-        lambda_rest_frame = lambda_ / (1 + z_abs)
-
-        u_voight = ((speed_light / thermal_velocity) *
-                    (lam_lyb / lambda_rest_frame - 1))
-        a_voight = lam_lyb * 1e-10 * gamma / (4 * np.pi * thermal_velocity)
-        voigt = DlaProfile.voigt(a_voight, u_voight)
-        thermal_velocity /= 1000.
-        tau = (1.497e-15 * nhi_cm2 * osc_strength * lambda_rest_frame * voigt /
-               thermal_velocity)
-        return tau
-
-    @staticmethod
-    def voigt(a_voight, u_voight):
-        """Compute the classical Voigt function
-
-        Arguments
-        ---------
-        a_voight: array of floats
-        Voigt damping parameter.
-
-        u_voight: array of floats
-        Dimensionless frequency offset in Doppler widths.
-
-        Return
-        ------
-        voigt: array of float
-        The Voigt function for each element in a, u
-        """
-        unnormalized_voigt = np.mean(
-            1 / (a_voight**2 + (GAUSSIAN_DIST[:, None] - u_voight)**2), axis=0)
-        return unnormalized_voigt * a_voight / np.sqrt(np.pi)

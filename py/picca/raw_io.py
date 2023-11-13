@@ -318,8 +318,8 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
         userprint(f"ERROR: {err_msg}")
         raise KeyError(err_msg)
 
-    w = hdu['Z'][:] > max(0., lambda_min / lambda_max_rest_frame - 1.)
-    w &= hdu['Z'][:] < max(0., lambda_max / lambda_min_rest_frame - 1.)
+    w = hdu[z_key][:] > max(0., lambda_min / lambda_max_rest_frame - 1.)
+    w &= hdu[z_key][:] < max(0., lambda_max / lambda_min_rest_frame - 1.)
     objs_ra = hdu['RA'][:][w].astype('float64') * np.pi / 180.
     objs_dec = hdu['DEC'][:][w].astype('float64') * np.pi / 180.
     objs_thingid = objs_thingid[w]

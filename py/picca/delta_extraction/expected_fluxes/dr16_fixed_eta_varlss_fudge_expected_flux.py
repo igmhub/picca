@@ -25,7 +25,9 @@ defaults = update_default_options(defaults, defaults2)
 defaults = update_default_options(defaults, defaults3)
 defaults = update_default_options(defaults, {
     "num iterations": 1,
-})
+},
+                                  force_overwrite=True)
+
 
 
 class Dr16FixedEtaVarlssFudgeExpectedFlux(Dr16FixedEtaExpectedFlux,

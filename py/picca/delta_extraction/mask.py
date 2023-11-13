@@ -13,6 +13,14 @@ def _set_ivar_to_zero(forest, param, w):
     if param == 'ivar':
         forest.ivar[~w] = 0
 
+accepted_options = ["keep pixels"]
+
+defaults = {
+    "keep pixels": False,
+}
+
+
+
 class Mask:
     """Abstract class from which all Masks must inherit.
     Classes that inherit from this should be initialized using
@@ -41,7 +49,11 @@ class Mask:
         """Initialize class instance"""
         self.los_id = {}
 
-        keep_masked_pixels = config.getboolean("keep pixels", fallback=False)
+        keep_masked_pixels = config.getboolean("keep pixels")
+        if keep_masked_pixels is None:
+            raise MaskError(
+                "Missing argument 'keep pixels' required "
+                "by Mask")
 
         if keep_masked_pixels:
             self._masker = _set_ivar_to_zero

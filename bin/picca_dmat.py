@@ -119,6 +119,22 @@ def main(cmdargs):
               'z-cut-max'))
 
     parser.add_argument(
+        '--z-min-sources',
+        type=float,
+        default=0.,
+        required=False,
+        help=('Limit the minimum redshift of the quasars '
+                'used as sources for spectra'))
+
+    parser.add_argument(
+        '--z-max-sources',
+        type=float,
+        default=10.,
+        required=False,
+        help=('Limit the maximum redshift of the quasars '
+                'used as sources for spectra'))
+
+    parser.add_argument(
         '--lambda-abs',
         type=str,
         default='LYA',
@@ -280,7 +296,9 @@ def main(cmdargs):
                                                   max_num_spec=args.nspec,
                                                   no_project=args.no_project,
                                                   nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor)
+                                                  rebin_factor=args.rebin_factor,
+                                                  z_min_qso=args.z_min_sources,
+                                                  z_max_qso=args.z_max_sources)
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -310,7 +328,9 @@ def main(cmdargs):
             max_num_spec=args.nspec,
             no_project=args.no_project,
             nproc=args.nproc,
-            rebin_factor=args.rebin_factor)
+            rebin_factor=args.rebin_factor,
+            z_min_qso=args.z_min_sources,
+            z_max_qso=args.z_max_sources)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
@@ -338,22 +358,21 @@ def main(cmdargs):
         pool.close()
     elif args.nproc == 1:
         dmat_data = map(calc_dmat, sorted(cpu_data.values()))
-        dmat_data = list(dmat_data)
 
     t2 = time.time()
     userprint(f'picca_dmat.py - Time computing distortion matrix: {(t2-t1)/60:.3f} minutes')
 
 
     # merge the results from different CPUs
-    dmat_data = np.array(dmat_data)
-    weights_dmat = dmat_data[:, 0].sum(axis=0)
-    dmat = dmat_data[:, 1].sum(axis=0)
-    r_par = dmat_data[:, 2].sum(axis=0)
-    r_trans = dmat_data[:, 3].sum(axis=0)
-    z = dmat_data[:, 4].sum(axis=0)
-    weights = dmat_data[:, 5].sum(axis=0)
-    num_pairs = dmat_data[:, 6].sum(axis=0)
-    num_pairs_used = dmat_data[:, 7].sum(axis=0)
+    dmat_data = list(dmat_data)
+    weights_dmat = np.array([item[0] for item in dmat_data]).sum(axis=0)
+    dmat = np.array([item[1] for item in dmat_data]).sum(axis=0)
+    r_par = np.array([item[2] for item in dmat_data]).sum(axis=0)
+    r_trans = np.array([item[3] for item in dmat_data]).sum(axis=0)
+    z = np.array([item[4] for item in dmat_data]).sum(axis=0)
+    weights = np.array([item[5] for item in dmat_data]).sum(axis=0)
+    num_pairs = np.array([item[6] for item in dmat_data]).sum(axis=0)
+    num_pairs_used = np.array([item[7] for item in dmat_data]).sum(axis=0)
 
     # normalize values
     w = weights > 0.

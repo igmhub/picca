@@ -62,18 +62,18 @@ class Dr16FixedVarlssExpectedFlux(Dr16ExpectedFlux):
         # initialize fudge factor
         if self.var_lss_value.endswith(".fits") or self.var_lss_value.endswith(
                 ".fits.gz"):
-            hdu = fitsio.read(self.var_lss_value, ext="VAR_FUNC")
-            self.get_var_lss = interp1d(hdu["loglam"],
-                                        hdu["var_lss"],
+            hdu = fitsio.FITS(self.var_lss_value)["VAR_FUNC"]
+            self.get_var_lss = interp1d(hdu["LOGLAM"].read(),
+                                        hdu["VAR_LSS"].read(),
                                         fill_value='extrapolate',
-                                        kind='nearest')
+                                        kind='cubic')
         else:
             var_lss = np.ones(self.num_bins_variance) * float(
                 self.var_lss_value)
             self.get_var_lss = interp1d(self.log_lambda_var_func_grid,
                                         var_lss,
                                         fill_value='extrapolate',
-                                        kind='nearest')
+                                        kind='cubic')
         # note that for var_lss to be fitted, we need to include it to
         # self.fit_variance_functions:
         # self.fit_variance_functions.append("var_lss")

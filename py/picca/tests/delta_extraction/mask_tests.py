@@ -1,11 +1,14 @@
 """This file contains tests related to Mask and its childs"""
 from configparser import ConfigParser
+import copy
 import os
 import unittest
 
 import numpy as np
 
 from picca.delta_extraction.mask import Mask
+from picca.delta_extraction.masks.bal_mask import BalMask
+from picca.delta_extraction.masks.bal_mask import defaults as defaults_bal_mask
 from picca.delta_extraction.masks.lines_mask import LinesMask
 from picca.delta_extraction.masks.dla_mask import DlaMask
 from picca.delta_extraction.masks.dla_mask import defaults as defaults_dla_mask
@@ -114,16 +117,362 @@ class MaskTest(AbstractTest):
         reset_logger()
         self.compare_ascii(test_file, out_file)
 
-    def test_dla_mask(self):
+    def test_bal_mask_ai_remove(self):
         """Test correct initialisation and inheritance for class
-        DlaMask
+        BalMask
+
+        Load a BlaMask instace and check that it is
+        correctly initialized.
+        """
+        in_file = f"{THIS_DIR}/data/baltestcat.fits.gz"
+        out_file = f"{THIS_DIR}/results/bal_mask_print.txt"
+        test_file = f"{THIS_DIR}/data/bal_mask_print.txt"
+        test_file_forest1 = f"{THIS_DIR}/data/bal_mask_ai_forest1_remove.txt"
+        test_file_forest2 = f"{THIS_DIR}/data/bal_mask_ai_forest2_remove.txt"
+
+        # setup printing
+        setup_logger(log_file=out_file)
+
+        # initialize mask using AI to select BALs
+        config = ConfigParser()
+        config.read_dict({"mask": {"filename": in_file,
+                                   "los_id name": "TARGETID",
+                                   "bal index type": "ai",
+                                   "keep pixels": False}
+                        })
+        for key, value in defaults_bal_mask.items():
+            if key not in config["mask"]:
+                config["mask"][key] = str(value)
+        mask = BalMask(config["mask"])
+        self.assertTrue(isinstance(mask, Mask))
+
+        # apply mask to forests with a BAL
+        forest = copy.deepcopy(forest1)
+        mask.apply_mask(forest)
+        forest_masked = np.genfromtxt(test_file_forest1, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
+
+        forest = copy.deepcopy(forest2)
+        mask.apply_mask(forest)
+        forest_masked = np.genfromtxt(test_file_forest2, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
+
+
+        # apply mask to forest without BALs
+        mask.apply_mask(forest3)
+        self.assertTrue(np.allclose(forest3.flux, np.ones_like(forest3_log_lambda)))
+        self.assertTrue(np.allclose(forest3.log_lambda, forest3_log_lambda))
+        self.assertTrue(np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda)*4))
+        self.assertTrue(np.allclose(forest3.transmission_correction,
+                                    np.ones_like(forest3_log_lambda)))
+
+        reset_logger()
+        self.compare_ascii(test_file, out_file)
+
+    def test_bal_mask_ai_set_ivar(self):
+        """Test correct initialisation and inheritance for class
+        BalMask
+
+        Load a BlaMask instace and check that it is
+        correctly initialized.
+        """
+        in_file = f"{THIS_DIR}/data/baltestcat.fits.gz"
+        out_file = f"{THIS_DIR}/results/bal_mask_print.txt"
+        test_file = f"{THIS_DIR}/data/bal_mask_print.txt"
+        test_file_forest1 = f"{THIS_DIR}/data/bal_mask_ai_forest1_set_ivar.txt"
+        test_file_forest2 = f"{THIS_DIR}/data/bal_mask_ai_forest2_set_ivar.txt"
+
+        # setup printing
+        setup_logger(log_file=out_file)
+
+        # initialize mask using AI to select BALs
+        config = ConfigParser()
+        config.read_dict({"mask": {"filename": in_file,
+                                   "los_id name": "TARGETID",
+                                   "bal index type": "ai",
+                                   "keep pixels": True}
+                        })
+        for key, value in defaults_bal_mask.items():
+            if key not in config["mask"]:
+                config["mask"][key] = str(value)
+        mask = BalMask(config["mask"])
+        self.assertTrue(isinstance(mask, Mask))
+
+        # apply mask to forests with a BAL
+        forest = copy.deepcopy(forest1)
+        mask.apply_mask(forest)
+        forest_masked = np.genfromtxt(test_file_forest1, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
+
+        forest = copy.deepcopy(forest2)
+        mask.apply_mask(forest)
+        forest_masked = np.genfromtxt(test_file_forest2, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
+
+
+        # apply mask to forest without BALs
+        mask.apply_mask(forest3)
+        self.assertTrue(np.allclose(forest3.flux, np.ones_like(forest3_log_lambda)))
+        self.assertTrue(np.allclose(forest3.log_lambda, forest3_log_lambda))
+        self.assertTrue(np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda)*4))
+        self.assertTrue(np.allclose(forest3.transmission_correction,
+                                    np.ones_like(forest3_log_lambda)))
+
+        reset_logger()
+        self.compare_ascii(test_file, out_file)
+
+    def test_bal_mask_bi_remove(self):
+        """Test correct initialisation and inheritance for class
+        BalMask
+
+        Load a BlaMask instace and check that it is
+        correctly initialized.
+        """
+        in_file = f"{THIS_DIR}/data/baltestcat.fits.gz"
+        out_file = f"{THIS_DIR}/results/bal_mask_print.txt"
+        test_file = f"{THIS_DIR}/data/bal_mask_print.txt"
+        test_file_forest1 = f"{THIS_DIR}/data/bal_mask_bi_forest1_remove.txt"
+        test_file_forest2 = f"{THIS_DIR}/data/bal_mask_bi_forest2_remove.txt"
+
+        # setup printing
+        setup_logger(log_file=out_file)
+
+        # initialize mask using BI to select BALs
+        config = ConfigParser()
+        config.read_dict({"mask": {"filename": in_file,
+                                   "los_id name": "TARGETID",
+                                   "bal index type": "bi",
+                                   "keep pixels": False}
+                        })
+        for key, value in defaults_bal_mask.items():
+            if key not in config["mask"]:
+                config["mask"][key] = str(value)
+        mask = BalMask(config["mask"])
+        self.assertTrue(isinstance(mask, Mask))
+
+        # apply mask to forests with a BAL
+        forest = copy.deepcopy(forest1)
+        mask.apply_mask(forest)
+        forest_masked = np.genfromtxt(test_file_forest1, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
+
+        forest = copy.deepcopy(forest2)
+        mask.apply_mask(forest)
+        forest_masked = np.genfromtxt(test_file_forest2, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
+
+
+        # apply mask to forest without BALs
+        mask.apply_mask(forest3)
+        self.assertTrue(np.allclose(forest3.flux, np.ones_like(forest3_log_lambda)))
+        self.assertTrue(np.allclose(forest3.log_lambda, forest3_log_lambda))
+        self.assertTrue(np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda)*4))
+        self.assertTrue(np.allclose(forest3.transmission_correction,
+                                    np.ones_like(forest3_log_lambda)))
+
+        reset_logger()
+        self.compare_ascii(test_file, out_file)
+
+    def test_bal_mask_bi_set_ivar(self):
+        """Test correct initialisation and inheritance for class
+        BalMask
+
+        Load a BlaMask instace and check that it is
+        correctly initialized.
+        """
+        in_file = f"{THIS_DIR}/data/baltestcat.fits.gz"
+        out_file = f"{THIS_DIR}/results/bal_mask_print.txt"
+        test_file = f"{THIS_DIR}/data/bal_mask_print.txt"
+        test_file_forest1 = f"{THIS_DIR}/data/bal_mask_bi_forest1_set_ivar.txt"
+        test_file_forest2 = f"{THIS_DIR}/data/bal_mask_bi_forest2_set_ivar.txt"
+
+        # setup printing
+        setup_logger(log_file=out_file)
+
+        # initialize mask using AI to select BALs
+        config = ConfigParser()
+        config.read_dict({"mask": {"filename": in_file,
+                                   "los_id name": "TARGETID",
+                                   "bal index type": "bi",
+                                   "keep pixels": True}
+                        })
+        for key, value in defaults_bal_mask.items():
+            if key not in config["mask"]:
+                config["mask"][key] = str(value)
+        mask = BalMask(config["mask"])
+        self.assertTrue(isinstance(mask, Mask))
+
+        # apply mask to forests with a BAL
+        forest = copy.deepcopy(forest1)
+        mask.apply_mask(forest)
+        forest_masked = np.genfromtxt(test_file_forest1, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
+
+        forest = copy.deepcopy(forest2)
+        mask.apply_mask(forest)
+        forest_masked = np.genfromtxt(test_file_forest2, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
+
+
+        # apply mask to forest without BALs
+        mask.apply_mask(forest3)
+        self.assertTrue(np.allclose(forest3.flux, np.ones_like(forest3_log_lambda)))
+        self.assertTrue(np.allclose(forest3.log_lambda, forest3_log_lambda))
+        self.assertTrue(np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda)*4))
+        self.assertTrue(np.allclose(forest3.transmission_correction,
+                                    np.ones_like(forest3_log_lambda)))
+
+        reset_logger()
+        self.compare_ascii(test_file, out_file)
+
+    def test_bal_mask_missing_options(self):
+            """Test correct error reporting when initializing with missing options
+            for class BalMask
+            """
+            # create BalMask instance with missing Mask options
+            config = ConfigParser()
+            config.read_dict({"masks": {}})
+            expected_message = (
+                "Missing argument 'keep pixels' required by Mask")
+            with self.assertRaises(MaskError) as context_manager:
+                mask = BalMask(config["masks"])
+            self.compare_error_message(context_manager, expected_message)
+
+            # create BalMask instance with missing "filename"
+            config = ConfigParser()
+            config.read_dict({"masks": {"keep pixels": True}})
+            expected_message = (
+                "Missing argument 'filename' required by BalMask")
+            with self.assertRaises(MaskError) as context_manager:
+                mask = BalMask(config["masks"])
+            self.compare_error_message(context_manager, expected_message)
+
+            # create BalMask instance with missing "los_id"
+            config = ConfigParser()
+            config.read_dict({"masks": {
+                "keep pixels": True,
+                "filename": f"{THIS_DIR}/data/baltestcat.fits.gz",
+            }})
+            expected_message = (
+                "Missing argument 'los_id name' required by BalMask")
+            with self.assertRaises(MaskError) as context_manager:
+                mask = BalMask(config["masks"])
+            self.compare_error_message(context_manager, expected_message)
+
+            # create BalMask instance with missing "bal index type"
+            config = ConfigParser()
+            config.read_dict({"masks": {
+                "keep pixels": True,
+                "filename": f"{THIS_DIR}/data/baltestcat.fits.gz",
+                "los_id name": "TARGETID",
+            }})
+            expected_message = (
+                "Missing argument 'bal index type' required by BalMask")
+            with self.assertRaises(MaskError) as context_manager:
+                mask = BalMask(config["masks"])
+            self.compare_error_message(context_manager, expected_message)
+
+    def test_dla_mask_missing_options(self):
+            """Test correct error reporting when initializing with missing options
+            for class DlaMask
+            """
+            # create DlaMask instance with missing Mask options
+            config = ConfigParser()
+            config.read_dict({"masks": {}})
+            expected_message = (
+                "Missing argument 'keep pixels' required by Mask")
+            with self.assertRaises(MaskError) as context_manager:
+                mask = DlaMask(config["masks"])
+            self.compare_error_message(context_manager, expected_message)
+
+            # create DlaMask instance with missing "filename"
+            config = ConfigParser()
+            config.read_dict({"masks": {"keep pixels": True}})
+            expected_message = (
+                "Missing argument 'filename' required by DlaMask")
+            with self.assertRaises(MaskError) as context_manager:
+                mask = DlaMask(config["masks"])
+            self.compare_error_message(context_manager, expected_message)
+
+            # create DlaMask instance with missing "los_id"
+            config = ConfigParser()
+            config.read_dict({"masks": {
+                "keep pixels": True,
+                "filename": f"{THIS_DIR}/data/dummy_absorbers_cat.fits.gz",
+            }})
+            expected_message = (
+                "Missing argument 'los_id name' required by DlaMask")
+            with self.assertRaises(MaskError) as context_manager:
+                mask = DlaMask(config["masks"])
+            self.compare_error_message(context_manager, expected_message)
+
+            # create DlaMask instance with missing "dla mask limit"
+            config = ConfigParser()
+            config.read_dict({"masks": {
+                "keep pixels": True,
+                "filename": f"{THIS_DIR}/data/dummy_absorbers_cat.fits.gz",
+                "los_id name": "THING_ID",
+            }})
+            expected_message = (
+                "Missing argument 'dla mask limit' required by DlaMask")
+            with self.assertRaises(MaskError) as context_manager:
+                mask = DlaMask(config["masks"])
+            self.compare_error_message(context_manager, expected_message)
+
+    def test_dla_mask_remove(self):
+        """Test correct initialisation and inheritance for class
+        DlaMask when masked pixels are removed
 
         Load a DlaMask instace and check that it is
         correctly initialized.
         """
         in_file = f"{THIS_DIR}/data/dummy_absorbers_cat.fits.gz"
         out_file = f"{THIS_DIR}/results/dla_mask_print.txt"
+        out_file_forest1 = f"{THIS_DIR}/results/dla_mask_forest1_remove.txt"
+        out_file_forest2 = f"{THIS_DIR}/results/dla_mask_forest2_remove.txt"
         test_file = f"{THIS_DIR}/data/dla_mask_print.txt"
+        test_file_forest1 = f"{THIS_DIR}/data/dla_mask_forest1_remove.txt"
+        test_file_forest2 = f"{THIS_DIR}/data/dla_mask_forest2_remove.txt"
 
         # setup printing
         setup_logger(log_file=out_file)
@@ -131,7 +480,8 @@ class MaskTest(AbstractTest):
         # initialize mask
         config = ConfigParser()
         config.read_dict({"mask": {"filename": in_file,
-                                   "los_id name": "THING_ID"}
+                                   "los_id name": "THING_ID",
+                                   "keep pixels": False}
                         })
         for key, value in defaults_dla_mask.items():
             if key not in config["mask"]:
@@ -140,12 +490,133 @@ class MaskTest(AbstractTest):
         self.assertTrue(isinstance(mask, Mask))
 
         # apply mask to forest with 1 DLA
-        mask.apply_mask(forest1)
-        # TODO: check that the profile is correct
+        forest = copy.deepcopy(forest1)
+        mask.apply_mask(forest)
+
+        # save the results
+        f = open(out_file_forest1, "w")
+        f.write("# log_lambda flux ivar transmission_correction\n")
+        for log_lambda, flux, ivar, transmission_correction in zip(
+            forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
+                f.write(f"{log_lambda} {flux} {ivar} {transmission_correction}\n")
+        f.close()
+
+        # load expected values and compare
+        forest_masked = np.genfromtxt(test_file_forest1, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
+
 
         # apply mask to forest with 2 DLAs
-        mask.apply_mask(forest2)
-        # TODO: check that the profile is correct
+        forest = copy.deepcopy(forest2)
+        mask.apply_mask(forest)
+
+        # save the results
+        f = open(out_file_forest2, "w")
+        f.write("# log_lambda flux ivar transmission_correction\n")
+        for log_lambda, flux, ivar, transmission_correction in zip(
+            forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
+                f.write(f"{log_lambda} {flux} {ivar} {transmission_correction}\n")
+        f.close()
+
+        # load expected values and compare
+        forest_masked = np.genfromtxt(test_file_forest2, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
+
+        # apply mask to forest without DLAs
+        mask.apply_mask(forest3)
+        self.assertTrue(np.allclose(forest3.flux, np.ones_like(forest3_log_lambda)))
+        self.assertTrue(np.allclose(forest3.log_lambda, forest3_log_lambda))
+        self.assertTrue(np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda)*4))
+        self.assertTrue(np.allclose(forest3.transmission_correction,
+                                    np.ones_like(forest3_log_lambda)))
+
+        reset_logger()
+        self.compare_ascii(test_file, out_file)
+
+    def test_dla_mask_set_ivar(self):
+        """Test correct initialisation and inheritance for class
+        DlaMask when masked pixels are kept and masking is done by setting
+        the inverse variance to zero
+
+        Load a DlaMask instace and check that it is
+        correctly initialized.
+        """
+        in_file = f"{THIS_DIR}/data/dummy_absorbers_cat.fits.gz"
+        out_file = f"{THIS_DIR}/results/dla_mask_print.txt"
+        out_file_forest1 = f"{THIS_DIR}/results/dla_mask_forest1_set_ivar.txt"
+        out_file_forest2 = f"{THIS_DIR}/results/dla_mask_forest2_set_ivar.txt"
+        test_file = f"{THIS_DIR}/data/dla_mask_print.txt"
+        test_file_forest1 = f"{THIS_DIR}/data/dla_mask_forest1_set_ivar.txt"
+        test_file_forest2 = f"{THIS_DIR}/data/dla_mask_forest2_set_ivar.txt"
+
+        # setup printing
+        setup_logger(log_file=out_file)
+
+        # initialize mask
+        config = ConfigParser()
+        config.read_dict({"mask": {"filename": in_file,
+                                   "los_id name": "THING_ID",
+                                   "keep pixels": True}
+                        })
+        for key, value in defaults_dla_mask.items():
+            if key not in config["mask"]:
+                config["mask"][key] = str(value)
+        mask = DlaMask(config["mask"])
+        self.assertTrue(isinstance(mask, Mask))
+
+        # apply mask to forest with 1 DLA
+        forest = copy.deepcopy(forest1)
+        mask.apply_mask(forest)
+
+        # save the results
+        f = open(out_file_forest1, "w")
+        f.write("# log_lambda flux ivar transmission_correction\n")
+        for log_lambda, flux, ivar, transmission_correction in zip(
+            forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
+                f.write(f"{log_lambda} {flux} {ivar} {transmission_correction}\n")
+        f.close()
+
+        # load expected values and compare
+        forest_masked = np.genfromtxt(test_file_forest1, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
+
+
+        # apply mask to forest with 2 DLAs
+        forest = copy.deepcopy(forest2)
+        mask.apply_mask(forest)
+
+        # save the results
+        f = open(out_file_forest2, "w")
+        f.write("# log_lambda flux ivar transmission_correction\n")
+        for log_lambda, flux, ivar, transmission_correction in zip(
+            forest.log_lambda, forest.flux, forest.ivar, forest.transmission_correction):
+                f.write(f"{log_lambda} {flux} {ivar} {transmission_correction}\n")
+        f.close()
+
+        # load expected values and compare
+
+        forest_masked = np.genfromtxt(test_file_forest2, names=True)
+        self.assertEqual(forest.flux.size, forest_masked["flux"].size)
+        self.assertTrue(np.allclose(forest.flux, forest_masked["flux"]))
+        self.assertTrue(np.allclose(forest.log_lambda, forest_masked["log_lambda"]))
+        self.assertTrue(np.allclose(forest.ivar, forest_masked["ivar"]))
+        self.assertTrue(np.allclose(forest.transmission_correction,
+                                    forest_masked["transmission_correction"]))
 
         # apply mask to forest without DLAs
         mask.apply_mask(forest3)
@@ -166,9 +637,18 @@ class MaskTest(AbstractTest):
             """Test correct error reporting when initializing with missing options
             for class LinesMask
             """
-            # create LinesMask instance with missing options
+            # create LinesMask instance with missing Mask options
             config = ConfigParser()
             config.read_dict({"masks": {}})
+            expected_message = (
+                "Missing argument 'keep pixels' required by Mask")
+            with self.assertRaises(MaskError) as context_manager:
+                correction = LinesMask(config["masks"])
+            self.compare_error_message(context_manager, expected_message)
+
+            # create LinesMask instance with missing options
+            config = ConfigParser()
+            config.read_dict({"masks": {"keep pixels": True}})
             expected_message = (
                 "Missing argument 'filename' required by LinesMask")
             with self.assertRaises(MaskError) as context_manager:
@@ -182,6 +662,13 @@ class MaskTest(AbstractTest):
         """
         config = ConfigParser()
         config.read_dict({"masks": {}})
+        expected_message = (
+            "Missing argument 'keep pixels' required by Mask")
+        with self.assertRaises(MaskError) as context_manager:
+            mask = Mask(config['masks'])
+
+
+        config.read_dict({"masks": {"keep pixels": False}})
         mask = Mask(config['masks'])
         expected_message = (
             "Function 'apply_mask' was not overloaded by child class")

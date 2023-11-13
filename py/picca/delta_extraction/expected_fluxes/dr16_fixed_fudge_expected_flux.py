@@ -62,17 +62,17 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
         # initialize fudge factor
         if self.fudge_value.endswith(".fits") or self.fudge_value.endswith(
                 ".fits.gz"):
-            hdu = fitsio.read(self.fudge_value, ext="VAR_FUNC")
-            self.get_fudge = interp1d(hdu["loglam"],
-                                      hdu["fudge"],
+            hdu = fitsio.FITS(self.fudge_value)["VAR_FUNC"]
+            self.get_fudge = interp1d(hdu["LOGLAM"].read(),
+                                      hdu["FUDGE"].read(),
                                       fill_value='extrapolate',
-                                      kind='nearest')
+                                      kind='cubic')
         else:
             fudge = np.ones(self.num_bins_variance) * float(self.fudge_value)
             self.get_fudge = interp1d(self.log_lambda_var_func_grid,
                                       fudge,
                                       fill_value='extrapolate',
-                                      kind='nearest')
+                                      kind='cubic')
         # note that for fudge to be fitted, we need to include it to
         # self.fit_variance_functions:
         # self.fit_variance_functions.append("fudge")

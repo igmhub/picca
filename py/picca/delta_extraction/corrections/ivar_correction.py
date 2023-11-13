@@ -49,21 +49,21 @@ class IvarCorrection(Correction):
             raise CorrectionError("Missing argument 'filename' required by SdssIvarCorrection")
         try:
             hdu = fitsio.read(filename, ext="VAR_FUNC")
-            if "loglam" in hdu.dtype.names:
-                log_lambda = hdu['loglam']
-            elif "lambda" in hdu.dtype.names:
-                self.logger.warning("DeprecationWarning: Reading correction using 'lambda'. "
-                                    "Newer versions of picca always save 'log_lambda' and "
+            if "LOGLAM" in hdu.dtype.names:
+                log_lambda = hdu['LOGLAM']
+            elif "LAMBDA" in hdu.dtype.names:
+                self.logger.warning("DeprecationWarning: Reading correction using 'LAMBDA'. "
+                                    "Newer versions of picca always save 'LOGLAM' and "
                                     "so this option will be removed in the future.")
-                log_lambda = np.log10(hdu['lambda'])
+                log_lambda = np.log10(hdu['LAMBDA'])
             else:
                 raise CorrectionError("Error loading IvarCorrection. In "
                                       "extension 'VAR_FUNC' in file "
-                                      f"{filename} one of the fields 'loglam' "
-                                      "or 'lambda' should be present. I did not"
+                                      f"{filename} one of the fields 'LOGLAM' "
+                                      "or 'LAMBDA' should be present. I did not "
                                       "find them.")
 
-            eta = hdu['eta']
+            eta = hdu['ETA']
         except OSError as error:
             raise CorrectionError(
                 "Error loading CalibrationCorrection. "

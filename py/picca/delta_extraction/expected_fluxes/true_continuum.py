@@ -12,7 +12,7 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults, accepted_options
-from picca.delta_extraction.utils import (find_bins, update_accepted_options,
+from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, [
@@ -25,8 +25,8 @@ defaults = update_default_options(defaults, {
     "raw statistics file": "",
     "use constant weight": False,
     "force stack delta to zero": False,
-    "use splines": False,
-    "recompute var lss": True
+    "use splines": True,
+    "recompute var lss": False
 })
 
 IN_NSIDE = 16
@@ -78,7 +78,6 @@ class TrueContinuum(ExpectedFlux):
     Number of bins to be used to compute variance functions and statistics as
     a function of wavelength.
     """
-
 
     def __init__(self, config):
         """Initialize class instance.
@@ -170,6 +169,10 @@ class TrueContinuum(ExpectedFlux):
         # values due to some smoothing of the forests
         # thus, we recompute it from the actual deltas
         if self.recompute_varlss:
+            self.logger.warning(
+                'Asked for var lss recomputation, which can lead to unwanted '
+                'effects, and biased correlations. For more details see '
+                'https://github.com/igmhub/picca/issues/1009.')
             self.compute_var_lss(forests)
             # note that this does not change the output deltas but might slightly
             # affect the mean continuum so we have to compute it after updating
@@ -195,7 +198,7 @@ class TrueContinuum(ExpectedFlux):
 
         return super()._compute_mean_cont(forests)
 
-    def compute_forest_variance(self, forest, continuum):
+    def compute_forest_weights(self, forest, continuum):
         """Compute the forest variance
 
         Arguments
@@ -207,17 +210,17 @@ class TrueContinuum(ExpectedFlux):
         Quasar continuum associated with the forest
         """
         w = forest.ivar > 0
-        variance = np.empty_like(forest.log_lambda)
-        variance[~w] = np.inf
+        weights = np.empty_like(forest.log_lambda)
+        weights[~w] = 0.0
 
         if self.use_constant_weight:
-            variance[w] = 1
+            weights[w] = 1
         else:
             var_lss = self.get_var_lss(forest.log_lambda[w])
             ivar_pipe = forest.ivar * forest.continuum**2
-            variance[w] = var_lss + 1/ivar_pipe[w]
+            weights[w] = 1.0/(self.var_lss_mod * var_lss + 1/ivar_pipe[w])
 
-        return variance
+        return weights
 
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
@@ -232,11 +235,14 @@ class TrueContinuum(ExpectedFlux):
             self.get_var_lss(self.log_lambda_var_func_grid),
         ]
         names = [
-            "loglam",
-            "var_lss",
+            "LOGLAM",
+            "VAR_LSS",
         ]
+        units = ["log(Angstrom)", ""]
 
-        results.write(values, names=names, extname='VAR_FUNC')
+        results.write(values, names=names, units=units, extname='VAR_FUNC')
+        results["VAR_FUNC"].write_comment("Variance fitted functions")
+        results["VAR_FUNC"].write_checksum()
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
@@ -258,7 +264,7 @@ class TrueContinuum(ExpectedFlux):
                 weights[w] = 1
                 weights[~w] = 0
             else:
-                weights = 1. / self.compute_forest_variance(
+                weights = self.compute_forest_weights(
                     forest, forest.continuum)
 
             mean_expected_flux = np.copy(forest.continuum)
@@ -392,6 +398,12 @@ class TrueContinuum(ExpectedFlux):
             elif Forest.wave_solution == "lin" and np.isclose(
                     10**Forest.log_lambda_grid[1] -
                     10**Forest.log_lambda_grid[0],
+                    0.8,
+                    rtol=0.1):
+                filename += 'colore_v9_lya_lin_0.8.fits.gz'
+            elif Forest.wave_solution == "lin" and np.isclose(
+                    10**Forest.log_lambda_grid[1] -
+                    10**Forest.log_lambda_grid[0],
                     2.4,
                     rtol=0.1):
                 filename += 'colore_v9_lya_lin_2.4.fits.gz'
@@ -467,12 +479,12 @@ class TrueContinuum(ExpectedFlux):
             'L_MAX', lambda_max, atol, is_rawfile_consistent, err_msg)
         # Check minimum rest-frame lambda
         atol = (10**Forest.log_lambda_rest_frame_grid[1]
-              - 10**Forest.log_lambda_rest_frame_grid[0])/2
+                - 10**Forest.log_lambda_rest_frame_grid[0])/2
         is_rawfile_consistent, err_msg = _check_header_consistency(
             'LR_MIN', lambda_rest_min, atol, is_rawfile_consistent, err_msg)
         # Check maximum rest-frame lambda
         atol = (10**Forest.log_lambda_rest_frame_grid[-1]
-              - 10**Forest.log_lambda_rest_frame_grid[-2])/2
+                - 10**Forest.log_lambda_rest_frame_grid[-2])/2
         is_rawfile_consistent, err_msg = _check_header_consistency(
             'LR_MAX', lambda_rest_max, atol, is_rawfile_consistent, err_msg)
 
@@ -491,12 +503,12 @@ class TrueContinuum(ExpectedFlux):
         self.get_var_lss = interp1d(log_lambda,
                                     var_lss,
                                     fill_value='extrapolate',
-                                    kind='nearest')
+                                    kind='cubic')
 
         self.get_mean_flux = interp1d(log_lambda,
                                       mean_flux,
                                       fill_value='extrapolate',
-                                      kind='nearest')
+                                      kind='cubic')
 
     def compute_var_lss(self, forests):
         """Compute var lss from delta variance by substracting
@@ -511,9 +523,9 @@ class TrueContinuum(ExpectedFlux):
 
         for forest in forests:
             w = forest.ivar > 0
-            log_lambda_bins = find_bins(forest.log_lambda,
-                                        Forest.log_lambda_grid,
-                                        Forest.wave_solution)[w]
+            log_lambda_bins = Forest.find_bins( # pylint: disable=not-callable
+                forest.log_lambda,
+                Forest.log_lambda_grid)[w]
             var_pipe = 1. / forest.ivar[w] / forest.continuum[w]**2
             deltas = forest.flux[w] / forest.continuum[w] - 1
             var_lss[log_lambda_bins] += deltas**2 - var_pipe
@@ -524,4 +536,4 @@ class TrueContinuum(ExpectedFlux):
         self.get_var_lss = interp1d(Forest.log_lambda_grid[w],
                                     var_lss[w],
                                     fill_value='extrapolate',
-                                    kind='nearest')
+                                    kind='cubic')

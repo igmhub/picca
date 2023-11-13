@@ -277,6 +277,7 @@ class ExpectedFluxTest(AbstractTest):
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
                 "num processors": 1,
+                "var lss mod": 1.0,
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -757,7 +758,8 @@ class ExpectedFluxTest(AbstractTest):
             "iter out prefix": f"iter_out_prefix",
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
-            "num processors": 1
+            "num processors": 1,
+            "var lss mod": 1.0,
         }})
         expected_message = (
             "Missing argument 'force stack delta to zero' required by Dr16ExpectedFlux"
@@ -773,6 +775,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
         }})
         expected_message = (
@@ -789,6 +792,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
         }})
@@ -806,6 +810,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -824,6 +829,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -843,6 +849,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -863,6 +870,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -884,6 +892,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.0, 1.90",
@@ -906,6 +915,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "(0.0, 1.90)",
             "limit var lss": "(0.5, 1.40)",
@@ -926,6 +936,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "[0.0, 1.90]",
             "limit var lss": "[0.5, 1.40]",
@@ -947,6 +958,7 @@ class ExpectedFluxTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "num bins variance": 20,
             "num processors": 1,
+            "var lss mod": 1.0,
             "force stack delta to zero": True,
             "limit eta": "0.0, 1.90",
             "limit var lss": "0.5, 1.40",
@@ -1125,6 +1137,7 @@ class ExpectedFluxTest(AbstractTest):
                 "out dir": f"{THIS_DIR}/results/",
                 "num bins variance": 20,
                 "num processors": 1,
+                "var lss mod": 1.0,
             },
         })
         # this should raise an error as Forest variables are not defined
@@ -1529,7 +1542,7 @@ class ExpectedFluxTest(AbstractTest):
             print(f"New file: {out_file}")
             print("Difference found in var_lss")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont, expectations["var_lss"]):
+            for i1, i2 in zip(var_lss, expectations["var_lss"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
 
@@ -1592,7 +1605,7 @@ class ExpectedFluxTest(AbstractTest):
             print(f"New file: {out_file}")
             print("Difference found in var_lss")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont, expectations["var_lss"]):
+            for i1, i2 in zip(var_lss, expectations["var_lss"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
 
@@ -1603,7 +1616,7 @@ class ExpectedFluxTest(AbstractTest):
             print(f"New file: {out_file}")
             print("Difference found in mean_flux")
             print(f"result test are_close result-test")
-            for i1, i2 in zip(mean_cont, expectations["mean_flux"]):
+            for i1, i2 in zip(mean_flux, expectations["mean_flux"]):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(mean_flux, expectations["mean_flux"]))
 
@@ -1808,10 +1821,17 @@ class ExpectedFluxTest(AbstractTest):
         # run populate_los_ids
         expected_flux.populate_los_ids(data.forests)
 
+        
+
         for i, key in enumerate(("mean expected flux", "weights", "continuum")):
+            out_file = f"{THIS_DIR}/results/los_ids_{i}.txt"
+            np.savetxt(out_file,expected_flux.los_ids[59152][key])
+
+        for i, key in enumerate(("mean expected flux", "weights", "continuum")):
+            test_file = f"{test_folder}/los_ids_{i}.txt"
             self.assertTrue(np.allclose(
                 expected_flux.los_ids[59152][key],
-                np.loadtxt(f"{test_folder}/los_ids_{i}.txt")
+                np.loadtxt(test_file)
             ))
 
 if __name__ == '__main__':

@@ -4,37 +4,95 @@ import logging
 
 import fitsio
 import numpy as np
+from numba import njit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
-from picca.delta_extraction.mask import Mask
-from picca.delta_extraction.utils import SPEED_LIGHT
+from picca.delta_extraction.mask import Mask, accepted_options, defaults
+from picca.delta_extraction.utils import (
+    SPEED_LIGHT, update_accepted_options, update_default_options)
 
-defaults = {
-    "bal index type": "ai",
-    "los_id name": "THING_ID",
-}
+accepted_options = update_accepted_options(accepted_options, [
+    "bal index type", "filename", "los_id name", "keep pixels"
+])
 
-accepted_options = ["bal index type", "filename", "los_id name", "keep pixels"]
+defaults = update_default_options(
+    defaults, {
+        "bal index type": "ai",
+        "los_id name": "THING_ID",
+    })
 
 # Wavelengths in Angstroms
-lines = np.array([
+LINES = np.array([
     ("lCIV", 1549),
-    ("lSiIV1", 1394),
     ("lSiIV2", 1403),
+    ("lSiIV1", 1394),
     ("lNV", 1240.81),
     ("lLya", 1216.1),
     ("lCIII", 1175),
-    ("lPV1", 1117),
     ("lPV2", 1128),
-    ("lSIV1", 1062),
+    ("lPV1", 1117),
     ("lSIV2", 1074),
-    ("lLyb", 1020),
+    ("lSIV1", 1062),
     ("lOIV", 1031),
     ("lOVI", 1037),
     ("lOI", 1039),
+    ("lLyb", 1025.7),
+    ("lLy3", 972.5),
+    ("lCIII", 977.0),
+    ("lNIII", 989.9),
+    ("lLy4", 949.7),
     ], dtype=[("name", "U10"), ("value", float)])
 
+@njit()
+def add_bal_rest_frame(los_id, los_id_array, min_velocities_array, max_velocities_array):
+    """Creates a list of wavelengths to be masked out by forest.mask
+
+    Arguments
+    ---------
+    los_id: str
+    Line-of-sight id
+
+    los_id_name: str
+    Name of the line-of-sight id
+
+    Return
+    ------
+    log_lambda_min: array of float
+    Array with the minimum log(wavelength) values in the masks intervals
+
+    log_lambda_max: array of float
+    Array with the maximum log(wavelength) values in the masks intervals
+    """
+    # Match thing_id of object to BAL catalog index
+    # Will there be duplicates or only one index?
+    match_index = np.where(los_id_array == los_id)[0]
+
+    # Store the min/max velocity pairs from the BAL catalog
+    min_velocities = min_velocities_array[match_index].ravel()
+    max_velocities = max_velocities_array[match_index].ravel()
+
+    # Remove non-positive velocity rows
+    w = (min_velocities > 0) & (max_velocities > 0)
+    min_velocities = min_velocities[w]
+    max_velocities = max_velocities[w]
+
+    num_velocities = min_velocities.size
+    if num_velocities == 0:
+        return np.zeros(0), np.zeros(0)
+
+    # Calculate mask width for each velocity pair, for each emission line
+    # This might be  bit confusing, since BAL absorption is
+    # blueshifted from the emission lines. The “minimum velocity”
+    # corresponds to the red side of the BAL absorption (the larger
+    # wavelength value), and the “maximum velocity” corresponds to
+    # the blue side (the smaller wavelength value).
+    lambda_max = np.outer(LINES['value'], 1 - min_velocities / SPEED_LIGHT).ravel()
+    lambda_min = np.outer(LINES['value'], 1 - max_velocities / SPEED_LIGHT).ravel()
+    log_lambda_min = np.log10(lambda_min)
+    log_lambda_max = np.log10(lambda_max)
+
+    return log_lambda_min, log_lambda_max
 
 class BalMask(Mask):
     """Class to mask BALs
@@ -109,9 +167,10 @@ class BalMask(Mask):
         # setup bal index limit
         self.bal_index_type = config.get("bal index type")
         if self.bal_index_type is None:
-            self.bal_index_type = MaskError(
+            raise MaskError(
                 "Missing argument 'bal index type' "
                 "required by BalMask")
+        columns_list = None
         if self.bal_index_type == "ai":
             columns_list = [los_id_name, 'VMIN_CIV_450', 'VMAX_CIV_450']
         elif self.bal_index_type == "bi":
@@ -129,7 +188,11 @@ class BalMask(Mask):
 
         try:
             hdul = fitsio.FITS(filename)
-            self.cat = {col: hdul[ext_name][col][:] for col in columns_list}
+            self.cat = {
+                col: (hdul[ext_name][col][:].astype(np.int64)
+                    if col == los_id_name else
+                    hdul[ext_name][col][:].astype(np.float64))
+                for col in columns_list}
         except OSError as error:
             raise MaskError(
                 f"Error loading BalMask. File {filename} does "
@@ -145,64 +208,17 @@ class BalMask(Mask):
             hdul.close()
 
         # compute info for each line of sight
-        self.los_ids = {}
-        for los_id in np.unique(self.cat[los_id_name]):
-            self.los_ids[los_id] = self.add_bal_rest_frame(los_id, los_id_name)
+        self.los_ids = {
+            los_id: (
+                los_id,
+                self.cat[los_id_name],
+                self.cat[self.velocity_list[0]],
+                self.cat[self.velocity_list[1]])
+            for los_id in np.unique(self.cat[los_id_name])
+        }
 
-        num_bals = np.sum([len(los_id) for los_id in self.los_ids.values()
-                          if los_id is not None])
+        num_bals = len(self.los_ids)
         self.logger.progress(f'In catalog: {num_bals} BAL quasars')
-
-    def add_bal_rest_frame(self, los_id, los_id_name):
-        """Creates a list of wavelengths to be masked out by forest.mask
-
-        Arguments
-        ---------
-        los_id: str
-        Line-of-sight id
-
-        los_id_name: str
-        Name of the line-of-sight id
-        """
-        # Match thing_id of object to BAL catalog index
-        # Will there be duplicates or only one index?
-        match_index = np.where(self.cat[los_id_name] == los_id)[0]
-
-        # Store the min/max velocity pairs from the BAL catalog
-        colmin = self.cat[self.velocity_list[0]]
-        colmax = self.cat[self.velocity_list[1]]
-        # np.array of minimum velocities
-        min_velocities = np.array(colmin[match_index], dtype=float)
-        # np.array of maximum velocities
-        max_velocities = np.array(colmax[match_index], dtype=float)
-        # Remove non-positive velocity rows
-        w = (min_velocities>0) & (max_velocities>0)
-        min_velocities = min_velocities[w]
-        max_velocities = max_velocities[w]
-
-        num_velocities = min_velocities.size
-        if num_velocities == 0:
-            return None
-
-        num_lines = lines.size
-        mask_rest_frame_bal = np.empty(num_velocities * num_lines,
-            dtype=[('log_lambda_min', 'f8'), ('log_lambda_max', 'f8'),
-            ('lambda_min', 'f8'), ('lambda_max', 'f8')])
-
-        # Calculate mask width for each velocity pair, for each emission line
-        # This might be  bit confusing, since BAL absorption is
-        # blueshifted from the emission lines. The “minimum velocity”
-        # corresponds to the red side of the BAL absorption (the larger
-        # wavelength value), and the “maximum velocity” corresponds to
-        # the blue side (the smaller wavelength value).
-        lambda_max = np.outer(lines['value'], 1 - min_velocities / SPEED_LIGHT).ravel()
-        lambda_min = np.outer(lines['value'], 1 - max_velocities / SPEED_LIGHT).ravel()
-        mask_rest_frame_bal['lambda_min'] = lambda_min
-        mask_rest_frame_bal['lambda_max'] = lambda_max
-        mask_rest_frame_bal['log_lambda_min'] = np.log10(lambda_min)
-        mask_rest_frame_bal['log_lambda_max'] = np.log10(lambda_max)
-
-        return mask_rest_frame_bal
 
     def apply_mask(self, forest):
         """Apply the mask. The mask is done by removing the affected
@@ -217,16 +233,21 @@ class BalMask(Mask):
         -----
         MaskError if Forest.wave_solution is not 'log'
         """
-        mask_table = self.los_ids.get(forest.los_id)
+        if self.los_ids.get(forest.los_id) is None:
+            return
 
-        if (mask_table is None) or len(mask_table) == 0:
+        log_lambda_min, log_lambda_max = add_bal_rest_frame(
+            *self.los_ids.get(forest.los_id))
+
+        if len(log_lambda_min) == 0:
             return
 
         # find out which pixels to mask
         w = np.ones(forest.log_lambda.size, dtype=bool)
         rest_frame_log_lambda = forest.log_lambda - np.log10(1. + forest.z)
-        mask_idx_ranges = np.searchsorted(rest_frame_log_lambda,
-                [mask_table['log_lambda_min'], mask_table['log_lambda_max']]).T
+        mask_idx_ranges = np.searchsorted(
+            rest_frame_log_lambda,
+            [log_lambda_min, log_lambda_max]).T
         # Make sure first index comes before the second
         mask_idx_ranges.sort(axis=1)
 

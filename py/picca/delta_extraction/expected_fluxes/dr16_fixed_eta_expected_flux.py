@@ -62,17 +62,17 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
         # initialize eta factor
         if self.eta_value.endswith(".fits") or self.eta_value.endswith(
                 ".fits.gz"):
-            hdu = fitsio.read(self.eta_value, ext="VAR_FUNC")
-            self.get_eta = interp1d(hdu["loglam"],
-                                    hdu["eta"],
+            hdu = fitsio.FITS(self.eta_value)["VAR_FUNC"]
+            self.get_eta = interp1d(hdu["LOGLAM"].read(),
+                                    hdu["ETA"].read(),
                                     fill_value='extrapolate',
-                                    kind='nearest')
+                                    kind='cubic')
         else:
             eta = np.ones(self.num_bins_variance) * float(self.eta_value)
             self.get_eta = interp1d(self.log_lambda_var_func_grid,
                                     eta,
                                     fill_value='extrapolate',
-                                    kind='nearest')
+                                    kind='cubic')
         # note that for eta to be fitted, we need to include it to
         # self.fit_variance_functions:
         # self.fit_variance_functions.append("eta")

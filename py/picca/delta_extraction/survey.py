@@ -113,6 +113,9 @@ class Survey:
 
     def apply_corrections(self):
         """Apply the corrections. To be run after self.read_corrections()"""
+        if len(self.corrections) == 0:
+            return
+
         t0 = time.time()
         self.logger.info("Applying corrections")
 
@@ -125,6 +128,9 @@ class Survey:
 
     def apply_masks(self):
         """Apply the corrections. To be run after self.read_corrections()"""
+        if len(self.masks) == 0:
+            return
+
         t0 = time.time()
         self.logger.info("Applying masks")
 

@@ -160,7 +160,7 @@ class Cosmo(object):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,H0=100.,blinding=False):
+    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,blinding=False):
         """Initializes the methods for this instance
 
         Args:
@@ -176,6 +176,12 @@ class Cosmo(object):
                 Hubble constant at redshift 0 (in km/s/Mpc)
         """
 
+        # WARNING: This is introduced due to historical issues in how this class
+        # is coded. Using H0=100 implies that we are returning the distances
+        # in Mpc/h instead of Mpc. This class should be fixed at some point to
+        # make what we are doing more clear.
+        H0 = 100.0
+
         # Blind data
         if blinding == "none":
             userprint("ATTENTION: Analysis is not blinded!")
@@ -183,10 +189,10 @@ class Cosmo(object):
             userprint(f"ATTENTION: Analysis is blinded with strategy {blinding}")
 
         if blinding not in  ["strategyB", "strategyBC"]:
-            userprint(f"Om={Om}, Or={Or}, wl={wl}, H0={H0}")
+            userprint(f"Om={Om}, Or={Or}, wl={wl}")
         else:
             userprint("The specified cosmology is "
-                      f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
+                      f"not used: Om={Om}, Or={Or}, wl={wl}")
             # blind test small
             filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
             # blind test large
@@ -248,6 +254,7 @@ ABSORBER_IGM = {
     "Hbeta"       : 4862.68,
     "MgI(2853)"   : 2852.96,
     "MgII(2804)"  : 2803.5324,
+    "MgII(eff)"   : 2798.75,
     "MgII(2796)"  : 2796.3511,
     "FeII(2600)"  : 2600.1724835,
     "FeII(2587)"  : 2586.6495659,
@@ -255,6 +262,7 @@ ABSORBER_IGM = {
     "FeII(2383)"  : 2382.7641781,
     "FeII(2374)"  : 2374.4603294,
     "FeII(2344)"  : 2344.2129601,
+    "CIII(1908)"  : 1908.73,
     "AlIII(1863)" : 1862.79113,
     "AlIII(1855)" : 1854.71829,
     "AlII(1671)"  : 1670.7886,
@@ -265,6 +273,7 @@ ABSORBER_IGM = {
     "SiII(1527)"  : 1526.70698,
     "NiII(1455)"  : 1454.842,
     "SiIV(1403)"  : 1402.77291,
+    "SiIV(eff)"   : 1396.76,
     "SiIV(1394)"  : 1393.76018,
     "NiII(1370)"  : 1370.132,
     "CII(1335)"   : 1334.5323,

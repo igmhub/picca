@@ -7,14 +7,19 @@ import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
-from picca.delta_extraction.mask import Mask
+from picca.delta_extraction.mask import Mask, accepted_options, defaults
+from picca.delta_extraction.utils import (update_accepted_options,
+                                          update_default_options)
 
-defaults = {
-    "absorber mask width": 2.5,
-    "los_id name": "THING_ID",
-}
+accepted_options = update_accepted_options(accepted_options, [
+    "absorber mask width", "filename", "los_id name",
+])
 
-accepted_options = ["absorber mask width", "filename", "keep pixels", "los_id name"]
+defaults = update_default_options(
+    defaults, {
+        "absorber mask width": 2.5,
+        "los_id name": "THING_ID",
+    })
 
 class AbsorberMask(Mask):
     """Class to mask Absorbers

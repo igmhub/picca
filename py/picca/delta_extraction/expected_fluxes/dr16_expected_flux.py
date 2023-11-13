@@ -34,9 +34,9 @@ defaults = update_default_options(
         "use ivar as weight": False,
     })
 
-FUDGE_FIT_START = FUDGE_REF
-ETA_FIT_START = 1.
-VAR_LSS_FIT_START = 0.1
+FUDGE_DEFAULT = 0
+ETA_DEFAULT = 1.
+VAR_LSS_DEFAULT = 0.1
 
 
 class Dr16ExpectedFlux(ExpectedFlux):
@@ -56,7 +56,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
     _initialize_variance_functions
     __parse_config
     compute_delta_stack
-    compute_forest_variance
+    compute_forest_weights
     compute_mean_cont
     compute_expected_flux
     compute_var_stats
@@ -204,14 +204,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
             eta = np.zeros(self.num_bins_variance)
         # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
         else:
-            eta = np.ones(self.num_bins_variance)
+            eta = np.zeros(self.num_bins_variance) + ETA_DEFAULT
             # this bit is what is actually freeing eta for the fit
             self.fit_variance_functions.append("eta")
 
         self.get_eta = interp1d(self.log_lambda_var_func_grid,
                                 eta,
                                 fill_value='extrapolate',
-                                kind='nearest')
+                                kind='cubic')
 
     def _initialize_get_fudge(self):
         """Initialiaze function get_fudge"""
@@ -221,11 +221,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if not self.use_ivar_as_weight and not self.use_constant_weight:
             # this bit is what is actually freeing fudge for the fit
             self.fit_variance_functions.append("fudge")
-        fudge = np.zeros(self.num_bins_variance)
+        fudge = np.zeros(self.num_bins_variance) + FUDGE_DEFAULT
         self.get_fudge = interp1d(self.log_lambda_var_func_grid,
                                   fudge,
                                   fill_value='extrapolate',
-                                  kind='nearest')
+                                  kind='cubic')
 
     def _initialize_get_var_lss(self):
         """Initialiaze function get_var_lss"""
@@ -237,13 +237,13 @@ class Dr16ExpectedFlux(ExpectedFlux):
             var_lss = np.ones(self.num_bins_variance)
         # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
         else:
-            var_lss = np.zeros(self.num_bins_variance) + 0.2
+            var_lss = np.zeros(self.num_bins_variance) + VAR_LSS_DEFAULT
             # this bit is what is actually freeing var_lss for the fit
             self.fit_variance_functions.append("var_lss")
         self.get_var_lss = interp1d(self.log_lambda_var_func_grid,
                                     var_lss,
                                     fill_value='extrapolate',
-                                    kind='nearest')
+                                    kind='cubic')
 
     def _initialize_variance_functions(self):
         """Initialize variance functions
@@ -462,7 +462,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
 
-    def compute_forest_variance(self, forest, continuum):
+    def compute_forest_weights(self, forest, continuum):
         """Compute the forest variance following du Mas des Bourboux 2020
 
         Arguments
@@ -474,16 +474,17 @@ class Dr16ExpectedFlux(ExpectedFlux):
         Quasar continuum associated with the forest
         """
         w = forest.ivar > 0
-        variance = np.empty_like(forest.log_lambda)
-        variance[~w] = np.inf
+        weights = np.empty_like(forest.log_lambda)
+        weights[~w] = 0.0
 
         var_pipe = 1. / forest.ivar[w] / continuum[w]**2
         var_lss = self.get_var_lss(forest.log_lambda[w])
         eta = self.get_eta(forest.log_lambda[w])
         fudge = self.get_fudge(forest.log_lambda[w])
-        variance[w] = eta * var_pipe + var_lss + fudge / var_pipe
+        weights[w] = 1.0/(
+            eta * var_pipe + self.var_lss_mod*var_lss + fudge / var_pipe)
 
-        return variance
+        return weights
 
     # TODO: We should check if we can directly compute the mean continuum
     # in particular this means:
@@ -527,100 +528,92 @@ class Dr16ExpectedFlux(ExpectedFlux):
         -----
         ExpectedFluxError if wavelength solution is not valid
         """
-        # initialize arrays
-        if "eta" in self.fit_variance_functions:
-            eta = np.zeros(self.num_bins_variance) + ETA_FIT_START
-        else:
+        if len(self.fit_variance_functions) > 0:
+            # initialize arrays
             eta = self.get_eta(self.log_lambda_var_func_grid)
-        if "var_lss" in self.fit_variance_functions:
-            var_lss = np.zeros(self.num_bins_variance) + VAR_LSS_FIT_START
-        else:
             var_lss = self.get_var_lss(self.log_lambda_var_func_grid)
-        if "fudge" in self.fit_variance_functions:
-            fudge = np.zeros(self.num_bins_variance) + FUDGE_FIT_START
-        else:
             fudge = self.get_fudge(self.log_lambda_var_func_grid)
-        num_pixels = np.zeros(self.num_bins_variance)
-        valid_fit = np.zeros(self.num_bins_variance)
+            num_pixels = np.zeros(self.num_bins_variance)
+            valid_fit = np.zeros(self.num_bins_variance)
 
-        chi2_in_bin = np.zeros(self.num_bins_variance)
+            chi2_in_bin = np.zeros(self.num_bins_variance)
 
-        # initialize the fitter class
-        leasts_squares = LeastsSquaresVarStats(
-            self.num_bins_variance,
-            forests,
-            self.log_lambda_var_func_grid,
-            self.min_num_qso_in_fit,
-        )
-
-        self.logger.progress(" Mean quantities in observer-frame")
-        self.logger.progress(
-            " loglam    eta      var_lss  fudge    chi2     num_pix valid_fit")
-        for index in range(self.num_bins_variance):
-            leasts_squares.set_fit_bins(index)
-
-            minimizer = iminuit.Minuit(leasts_squares,
-                                       name=("eta", "var_lss", "fudge"),
-                                       eta=eta[index],
-                                       var_lss=var_lss[index],
-                                       fudge=fudge[index] / FUDGE_REF)
-            minimizer.errors["eta"] = 0.05
-            minimizer.limits["eta"] = self.limit_eta
-            minimizer.errors["var_lss"] = 0.05
-            minimizer.limits["var_lss"] = self.limit_var_lss
-            minimizer.errors["fudge"] = 0.05
-            minimizer.limits["fudge"] = (0, None)
-            minimizer.errordef = 1.
-            minimizer.print_level = 0
-            minimizer.fixed["eta"] = "eta" not in self.fit_variance_functions
-            minimizer.fixed[
-                "var_lss"] = "var_lss" not in self.fit_variance_functions
-            minimizer.fixed[
-                "fudge"] = "fudge" not in self.fit_variance_functions
-            minimizer.migrad()
-
-            if minimizer.valid:
-                minimizer.hesse()
-                eta[index] = minimizer.values["eta"]
-                var_lss[index] = minimizer.values["var_lss"]
-                fudge[index] = minimizer.values["fudge"] * FUDGE_REF
-                valid_fit[index] = True
-            else:
-                eta[index] = 1.
-                var_lss[index] = 0.1
-                fudge[index] = 1. * FUDGE_REF
-                valid_fit[index] = False
-            num_pixels[index] = leasts_squares.get_num_pixels()
-            chi2_in_bin[index] = minimizer.fval
-
-            self.logger.progress(
-                f" {self.log_lambda_var_func_grid[index]:.3e} "
-                f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "
-                f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} {valid_fit[index]}"
+            # initialize the fitter class
+            leasts_squares = LeastsSquaresVarStats(
+                self.num_bins_variance,
+                forests,
+                self.log_lambda_var_func_grid,
+                self.min_num_qso_in_fit,
             )
 
-        w = num_pixels > 0
+            self.logger.progress(" Mean quantities in observer-frame")
+            self.logger.progress(
+                " loglam    eta      var_lss  fudge    chi2     num_pix valid_fit")
+            for index in range(self.num_bins_variance):
+                leasts_squares.set_fit_bins(index)
 
-        self.get_eta = interp1d(self.log_lambda_var_func_grid[w],
-                                eta[w],
-                                fill_value="extrapolate",
-                                kind="nearest")
-        self.get_var_lss = interp1d(self.log_lambda_var_func_grid[w],
-                                    var_lss[w],
+                minimizer = iminuit.Minuit(leasts_squares,
+                                           name=("eta", "var_lss", "fudge"),
+                                           eta=eta[index],
+                                           var_lss=var_lss[index],
+                                           fudge=fudge[index] / FUDGE_REF)
+                minimizer.errors["eta"] = 0.05
+                minimizer.limits["eta"] = self.limit_eta
+                minimizer.errors["var_lss"] = 0.05
+                minimizer.limits["var_lss"] = self.limit_var_lss
+                minimizer.errors["fudge"] = 0.05
+                minimizer.limits["fudge"] = (0, None)
+                minimizer.errordef = 1.
+                minimizer.print_level = 0
+                minimizer.fixed["eta"] = "eta" not in self.fit_variance_functions
+                minimizer.fixed[
+                    "var_lss"] = "var_lss" not in self.fit_variance_functions
+                minimizer.fixed[
+                    "fudge"] = "fudge" not in self.fit_variance_functions
+                minimizer.migrad()
+
+                if minimizer.valid:
+                    minimizer.hesse()
+                    eta[index] = minimizer.values["eta"]
+                    var_lss[index] = minimizer.values["var_lss"]
+                    fudge[index] = minimizer.values["fudge"] * FUDGE_REF
+                    valid_fit[index] = True
+                else:
+                    eta[index] = ETA_DEFAULT
+                    var_lss[index] = VAR_LSS_DEFAULT
+                    fudge[index] = FUDGE_DEFAULT
+                    valid_fit[index] = False
+                num_pixels[index] = leasts_squares.get_num_pixels()
+                chi2_in_bin[index] = minimizer.fval
+
+                self.logger.progress(
+                    f" {self.log_lambda_var_func_grid[index]:.3e} "
+                    f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "
+                    f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} {valid_fit[index]}"
+                )
+
+            w = num_pixels > 0
+
+            self.get_eta = interp1d(self.log_lambda_var_func_grid[w],
+                                    eta[w],
                                     fill_value="extrapolate",
-                                    kind="nearest")
-        self.get_fudge = interp1d(self.log_lambda_var_func_grid[w],
-                                  fudge[w],
-                                  fill_value="extrapolate",
-                                  kind="nearest")
-        self.get_num_pixels = interp1d(self.log_lambda_var_func_grid[w],
-                                       num_pixels[w],
-                                       fill_value="extrapolate",
-                                       kind="nearest")
-        self.get_valid_fit = interp1d(self.log_lambda_var_func_grid[w],
-                                      valid_fit[w],
+                                    kind="cubic")
+            self.get_var_lss = interp1d(self.log_lambda_var_func_grid[w],
+                                        var_lss[w],
+                                        fill_value="extrapolate",
+                                        kind="cubic")
+            self.get_fudge = interp1d(self.log_lambda_var_func_grid[w],
+                                      fudge[w],
                                       fill_value="extrapolate",
-                                      kind="nearest")
+                                      kind="cubic")
+            self.get_num_pixels = interp1d(self.log_lambda_var_func_grid[w],
+                                           num_pixels[w],
+                                           fill_value="extrapolate",
+                                           kind="nearest")
+            self.get_valid_fit = interp1d(self.log_lambda_var_func_grid[w],
+                                          valid_fit[w],
+                                          fill_value="extrapolate",
+                                          kind="nearest")
 
     def hdu_fit_metadata(self, results):
         """Add to the results file an HDU with the fits results
@@ -648,9 +641,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 chi2_list.append(cont_fit[2])
                 ndata_list.append(cont_fit[3])
                 if any(np.isnan(cont_fit)):
-                    accepted_fit.append("no")
+                    accepted_fit.append(False)
                 else:
-                    accepted_fit.append("yes")
+                    accepted_fit.append(True)
             values = [
                 np.array(los_id_list),
                 np.array(zero_point_list),
@@ -660,15 +653,17 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 np.array(accepted_fit),
             ]
             names = [
-                "los_id",
-                "zero_point",
-                "slope",
-                "chi2",
-                "num_datapoints",
-                "accepted_fit",
+                "LOS_ID",
+                "ZERO_POINT",
+                "SLOPE",
+                "CHI2",
+                "NUM_DATAPOINTS",
+                "ACCEPTED_FIT",
             ]
 
             results.write(values, names=names, extname='FIT_METADATA')
+            results["FIT_METADATA"].write_comment("Quasar continuum in wavelength bins")
+            results["FIT_METADATA"].write_checksum()
 
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
@@ -683,19 +678,22 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.get_eta(self.log_lambda_var_func_grid),
             self.get_var_lss(self.log_lambda_var_func_grid),
             self.get_fudge(self.log_lambda_var_func_grid),
-            self.get_num_pixels(self.log_lambda_var_func_grid),
-            self.get_valid_fit(self.log_lambda_var_func_grid)
+            self.get_num_pixels(self.log_lambda_var_func_grid).astype(np.int32),
+            self.get_valid_fit(self.log_lambda_var_func_grid).astype(bool)
         ]
         names = [
-            "loglam",
-            "eta",
-            "var_lss",
-            "fudge",
-            "num_pixels",
-            "valid_fit",
+            "LOGLAM",
+            "ETA",
+            "VAR_LSS",
+            "FUDGE",
+            "NUM_PIXELS",
+            "VALID_FIT",
         ]
+        units = ["log(Angstrom)", "", "", "", "", ""]
 
-        results.write(values, names=names, extname='VAR_FUNC')
+        results.write(values, names=names, units=units, extname='VAR_FUNC')
+        results["VAR_FUNC"].write_comment("Variance fitted functions")
+        results["VAR_FUNC"].write_checksum()
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
@@ -718,7 +716,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 stack_delta = self.get_stack_delta(forest.log_lambda)
                 mean_expected_flux *= stack_delta
 
-            weights = 1. / self.compute_forest_variance(forest, mean_expected_flux)
+            weights = self.compute_forest_weights(forest, mean_expected_flux)
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,

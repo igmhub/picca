@@ -174,14 +174,12 @@ class AbstractTest(unittest.TestCase):
                             )
                         self.assertTrue(
                             (orig_header[key] == new_header[key]) or
-                            (np.isclose(orig_header[key], new_header[key])))
+                            (not isinstance(orig_header[key], str) and np.isclose(orig_header[key], new_header[key])))
                 for key in new_header:
                     if key not in orig_header:
                         print(f"\nOriginal file: {orig_file}")
                         print(f"New file: {new_file}")
                         print(f"key {key} missing in orig header")
-                        if key in ["MEANSNR", "BLINDING"]:
-                            continue
                     self.assertTrue(key in orig_header)
                 # check data
                 orig_data = orig_hdul[hdu_name].data
@@ -240,8 +238,6 @@ class AbstractTest(unittest.TestCase):
                     for col in new_data.dtype.names:
                         if col not in orig_data.dtype.names:
                             print(f"Column {col} missing in orig header")
-                            if col in ["num_pixels", "valid_fit"]:
-                                continue
                         self.assertTrue(col in orig_data.dtype.names)
         finally:
             orig_hdul.close()

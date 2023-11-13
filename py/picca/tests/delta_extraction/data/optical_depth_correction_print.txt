@@ -1,1 +1,1979 @@
 [INFO]: Adding 1 optical depths
+[INFO]:    tau = 1.0, gamma = 0.0, lambda_rest_frame = 1215.67
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.0003)
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.0003)
+[PROGRESS]: Input sample has 1 forests
+[PROGRESS]: Removed forests that are too short
+[PROGRESS]: Remaining sample has 1 forests
+[PROGRESS]: Input sample has 1 forests
+[PROGRESS]: Rejected forest with los_id 10000 due to finding nan
+[PROGRESS]: Removed forests that are too short
+[PROGRESS]: Remaining sample has 0 forests
+[PROGRESS]: Input sample has 1 forests
+[PROGRESS]: Rejected forest with los_id 10000 due to forest being too short (195)
+[PROGRESS]: Removed forests that are too short
+[PROGRESS]: Remaining sample has 0 forests
+[PROGRESS]: Input sample has 1 forests
+[PROGRESS]: Rejected forest with los_id 10000 due to low SNR (2.0 < 100000000.0)
+[PROGRESS]: Removed forests that are too short
+[PROGRESS]: Remaining sample has 0 forests
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/dummy_desi_quasar_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 3
+[PROGRESS]: and z >= 2.0        : nb object in cat = 3
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 3
+[PROGRESS]: and in selected surveys ['all', 'special', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 3
+[PROGRESS]: Time spent reading quasar catalogue: 0.0030443668365478516
+[PROGRESS]: Reading data
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'special', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.006177425384521484
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 24
+[PROGRESS]: Read 1 of 5. num_data: 75
+[PROGRESS]: Read 2 of 5. num_data: 156
+[PROGRESS]: Read 3 of 5. num_data: 186
+[PROGRESS]: Read 4 of 5. num_data: 189
+[PROGRESS]: Time spent reading data: 2.22802996635437
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'special', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.004015684127807617
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 24
+[PROGRESS]: Read 1 of 5. num_data: 75
+[PROGRESS]: Read 2 of 5. num_data: 156
+[PROGRESS]: Read 3 of 5. num_data: 186
+[PROGRESS]: Read 4 of 5. num_data: 189
+[PROGRESS]: Time spent reading data: 0.08226466178894043
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'special', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.0039958953857421875
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 24
+[PROGRESS]: Read 1 of 5. num_data: 75
+[PROGRESS]: Read 2 of 5. num_data: 156
+[PROGRESS]: Read 3 of 5. num_data: 186
+[PROGRESS]: Read 4 of 5. num_data: 189
+[PROGRESS]: Time spent reading data: 0.07819271087646484
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix_with_main.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'special', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.004300594329833984
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 24
+[PROGRESS]: Read 1 of 5. num_data: 75
+[PROGRESS]: Read 2 of 5. num_data: 156
+[PROGRESS]: Read 3 of 5. num_data: 186
+[PROGRESS]: Read 4 of 5. num_data: 189
+[PROGRESS]: Time spent reading data: 0.07886457443237305
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix_with_main.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'special', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.003947734832763672
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 24
+[PROGRESS]: Read 1 of 5. num_data: 75
+[PROGRESS]: Read 2 of 5. num_data: 156
+[PROGRESS]: Read 3 of 5. num_data: 186
+[PROGRESS]: Read 4 of 5. num_data: 189
+[PROGRESS]: Time spent reading data: 0.08189582824707031
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.0        : nb object in cat = 194
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 194
+[PROGRESS]: Time spent reading quasar catalogue: 0.007631063461303711
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Read 0 of 1. num_data: 582
+[PROGRESS]: Time spent reading data: 0.21296453475952148
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.0        : nb object in cat = 194
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 194
+[PROGRESS]: Time spent reading quasar catalogue: 0.007544279098510742
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Read 0 of 1. num_data: 582
+[PROGRESS]: Time spent reading data: 0.21137285232543945
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.0039975643157958984
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 24
+[PROGRESS]: Read 1 of 5. num_data: 75
+[PROGRESS]: Read 2 of 5. num_data: 156
+[PROGRESS]: Read 3 of 5. num_data: 186
+[PROGRESS]: Read 4 of 5. num_data: 189
+[PROGRESS]: Time spent reading data: 0.07876873016357422
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.003911733627319336
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 24
+[PROGRESS]: Read 1 of 5. num_data: 75
+[PROGRESS]: Read 2 of 5. num_data: 156
+[PROGRESS]: Read 3 of 5. num_data: 186
+[PROGRESS]: Read 4 of 5. num_data: 189
+[PROGRESS]: Time spent reading data: 1.0130701065063477
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.006382942199707031
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 24
+[PROGRESS]: Read 1 of 5. num_data: 75
+[PROGRESS]: Read 2 of 5. num_data: 156
+[PROGRESS]: Read 3 of 5. num_data: 186
+[PROGRESS]: Read 4 of 5. num_data: 189
+[PROGRESS]: Time spent reading data: 0.10353374481201172
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.00391387939453125
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Time spent reading data: 0.0984652042388916
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.004648447036743164
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Time spent reading data: 0.09850025177001953
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['sv2']         : nb object in cat = 0
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['sv1']         : nb object in cat = 62
+[PROGRESS]: Time spent reading quasar catalogue: 0.0040874481201171875
+[PROGRESS]: Reading data
+[INFO]: reading data from 4 files
+[PROGRESS]: Read 0 of 4. num_data: 24
+[PROGRESS]: Read 1 of 4. num_data: 75
+[PROGRESS]: Read 2 of 4. num_data: 156
+[PROGRESS]: Read 3 of 4. num_data: 186
+[PROGRESS]: Time spent reading data: 0.08308935165405273
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.004296064376831055
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 24
+[PROGRESS]: Read 1 of 5. num_data: 75
+[PROGRESS]: Read 2 of 5. num_data: 156
+[PROGRESS]: Read 3 of 5. num_data: 186
+[PROGRESS]: Read 4 of 5. num_data: 189
+[PROGRESS]: Time spent reading data: 0.07695651054382324
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.003940582275390625
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Time spent reading data: 0.08274173736572266
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.004706859588623047
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Time spent reading data: 0.09547853469848633
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.004652976989746094
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[WARNING]: Error reading '/home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/fake//sv1/dark/79/7941/coadd-sv1-dark-7941.fits'. Ignoring file
+[PROGRESS]: Read 0 of 5. num_data: 0
+[WARNING]: Error reading '/home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/fake//sv1/dark/79/7952/coadd-sv1-dark-7952.fits'. Ignoring file
+[PROGRESS]: Read 1 of 5. num_data: 0
+[WARNING]: Error reading '/home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/fake//sv1/dark/79/7953/coadd-sv1-dark-7953.fits'. Ignoring file
+[PROGRESS]: Read 2 of 5. num_data: 0
+[WARNING]: Error reading '/home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/fake//sv1/dark/81/8139/coadd-sv1-dark-8139.fits'. Ignoring file
+[PROGRESS]: Read 3 of 5. num_data: 0
+[WARNING]: Error reading '/home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/fake//main/dark/91/9144/coadd-main-dark-9144.fits'. Ignoring file
+[PROGRESS]: Read 4 of 5. num_data: 0
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.0        : nb object in cat = 63
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 63
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 63
+[PROGRESS]: Time spent reading quasar catalogue: 0.004025936126708984
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 24
+[PROGRESS]: Read 1 of 5. num_data: 75
+[PROGRESS]: Read 2 of 5. num_data: 156
+[PROGRESS]: Read 3 of 5. num_data: 186
+[PROGRESS]: Read 4 of 5. num_data: 189
+[PROGRESS]: Time spent reading data: 0.749077558517456
+[WARNING]: Missing Z band from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/bad_format/spectra-main-dark-9144.fits. Ignoring color.
+[DEBUG]: no resolution in files, reading from truth files
+[WARNING]: Error while reading B band from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/bad_format/spectra-main-dark-9144.fits. Ignoring color.
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_tile.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 10
+[PROGRESS]: and z >= 2.0        : nb object in cat = 10
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 10
+[PROGRESS]: Time spent reading quasar catalogue: 0.005099058151245117
+[PROGRESS]: Reading data
+[PROGRESS]: This is tile 80693, petal 1, night 20210204
+[PROGRESS]: read tile 0 of 137. ndata: 15
+[PROGRESS]: Found 15 quasars in input files
+[PROGRESS]: This is tile 80693, petal 2, night 20210204
+[PROGRESS]: read tile 1 of 137. ndata: 30
+[PROGRESS]: Found 30 quasars in input files
+[PROGRESS]: Time spent reading data: 0.021464109420776367
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_tile.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 10
+[PROGRESS]: and z >= 2.0        : nb object in cat = 10
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 10
+[PROGRESS]: Time spent reading quasar catalogue: 0.004765748977661133
+[PROGRESS]: Reading data
+[PROGRESS]: This is tile 80693, petal 1, night 20210204
+[PROGRESS]: read tile 0 of 137. ndata: 15
+[PROGRESS]: Found 15 quasars in input files
+[PROGRESS]: This is tile 80693, petal 2, night 20210204
+[PROGRESS]: read tile 1 of 137. ndata: 30
+[PROGRESS]: Found 30 quasars in input files
+[PROGRESS]: Time spent reading data: 0.019406795501708984
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_tile.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 10
+[PROGRESS]: and z >= 2.0        : nb object in cat = 10
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 10
+[PROGRESS]: Time spent reading quasar catalogue: 0.004681825637817383
+[PROGRESS]: Reading data
+[PROGRESS]: This is tile 80693, petal 1, night 20210204
+[PROGRESS]: read tile 0 of 137. ndata: 15
+[PROGRESS]: Found 15 quasars in input files
+[PROGRESS]: This is tile 80693, petal 2, night 20210204
+[PROGRESS]: read tile 1 of 137. ndata: 30
+[PROGRESS]: Found 30 quasars in input files
+[PROGRESS]: Time spent reading data: 0.019226551055908203
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_tile.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 10
+[PROGRESS]: and z >= 2.0        : nb object in cat = 10
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 10
+[PROGRESS]: Time spent reading quasar catalogue: 0.0047800540924072266
+[PROGRESS]: Reading data
+[PROGRESS]: This is tile 80693, petal 1, night 20210204
+[PROGRESS]: This is tile 80693, petal 2, night 20210204
+[PROGRESS]: Time spent reading data: 0.0616910457611084
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_tile.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 10
+[PROGRESS]: and z >= 2.0        : nb object in cat = 10
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 10
+[PROGRESS]: Time spent reading quasar catalogue: 0.003928661346435547
+[PROGRESS]: Reading data
+[PROGRESS]: This is tile 80693, petal 1, night 20210204
+[PROGRESS]: This is tile 80693, petal 2, night 20210204
+[PROGRESS]: Time spent reading data: 0.03749394416809082
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_tile.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 10
+[PROGRESS]: and z >= 2.0        : nb object in cat = 10
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 10
+[PROGRESS]: Time spent reading quasar catalogue: 0.004088401794433594
+[PROGRESS]: Reading data
+[PROGRESS]: This is tile 80693, petal 1, night 20210204
+[PROGRESS]: read tile 0 of 137. ndata: 15
+[PROGRESS]: Found 15 quasars in input files
+[PROGRESS]: This is tile 80693, petal 2, night 20210204
+[PROGRESS]: read tile 1 of 137. ndata: 30
+[PROGRESS]: Found 30 quasars in input files
+[PROGRESS]: Time spent reading data: 0.014793634414672852
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_tile.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 10
+[PROGRESS]: and z >= 2.0        : nb object in cat = 10
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 10
+[PROGRESS]: Time spent reading quasar catalogue: 0.0032105445861816406
+[PROGRESS]: Reading data
+[PROGRESS]: This is tile 80693, petal 1, night 20210204
+[PROGRESS]: This is tile 80693, petal 2, night 20210204
+[PROGRESS]: Time spent reading data: 0.04810810089111328
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_tile.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 10
+[PROGRESS]: and z >= 2.0        : nb object in cat = 10
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 10
+[PROGRESS]: Time spent reading quasar catalogue: 0.003993988037109375
+[PROGRESS]: Reading data
+[PROGRESS]: This is tile 80693, petal 1, night 20210204
+[PROGRESS]: This is tile 80693, petal 2, night 20210204
+[PROGRESS]: Time spent reading data: 0.036748409271240234
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.0        : nb object in cat = 194
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 194
+[PROGRESS]: Time spent reading quasar catalogue: 0.008327722549438477
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Read 0 of 1. num_data: 582
+[PROGRESS]: Time spent reading data: 0.21409821510314941
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.0        : nb object in cat = 194
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 194
+[PROGRESS]: Time spent reading quasar catalogue: 0.00757145881652832
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[DEBUG]: no resolution in files, reading from truth files
+[PROGRESS]: Read 0 of 1. num_data: 582
+[PROGRESS]: Time spent reading data: 2.3133435249328613
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.0        : nb object in cat = 194
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 194
+[PROGRESS]: Time spent reading quasar catalogue: 0.01308584213256836
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Read 0 of 1. num_data: 582
+[PROGRESS]: Time spent reading data: 0.2577042579650879
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.0        : nb object in cat = 194
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 194
+[PROGRESS]: Time spent reading quasar catalogue: 0.007670879364013672
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Time spent reading data: 0.30137109756469727
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.0        : nb object in cat = 194
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 194
+[PROGRESS]: Time spent reading quasar catalogue: 0.008332490921020508
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Time spent reading data: 0.29803967475891113
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.0        : nb object in cat = 194
+[PROGRESS]: and z < 4.288461538461538         : nb object in cat = 194
+[PROGRESS]: Time spent reading quasar catalogue: 0.008517265319824219
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[WARNING]: Error reading '/home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/fake//0/1/spectra-16-1.fits'. Ignoring file
+[PROGRESS]: Read 0 of 1. num_data: 0
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 0.15384615384615374        : nb object in cat = 79
+[PROGRESS]: and z < 1.4948275862068967         : nb object in cat = 24
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 26 spectra with required THING_ID
+[PROGRESS]: Found 26 spectra with 'good' plate
+[PROGRESS]: Found 26 spectra without 0 bit set: SKY
+[PROGRESS]: Found 26 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 26 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 26 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 26 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 24
+[PROGRESS]: # spectra: 26
+[PROGRESS]: Reading 26 objects
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0184.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0054.fits
+[WARNING]: Error reading /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spec-3657-55244-0660.fits. Ignoring file
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0436.fits
+[WARNING]: Error reading /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spec-3657-55244-0540.fits. Ignoring file
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0179.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0258.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0138.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0332.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0256.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0404.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0262.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0066.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0438.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0104.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0330.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0446.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0154.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0340.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0540.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0780.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0774.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0994.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0960.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0630.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0872.fits
+[PROGRESS]: Input sample has 24 forests
+[PROGRESS]: Rejected forest with los_id 427104307 due to forest being too short (10)
+[PROGRESS]: Rejected forest with los_id 429527830 due to forest being too short (0)
+[PROGRESS]: Removed forests that are too short
+[PROGRESS]: Remaining sample has 22 forests
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: Reading 55 objects
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0310.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0457.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0228.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0446.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0170.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0344.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0482.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0186.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0386.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0388.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0352.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0100.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0345.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0396.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0198.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0234.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0026.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0500.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0370.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0110.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0208.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0410.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0601.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0273.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0472.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0030.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0070.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0156.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0434.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0538.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0368.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0114.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0002.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0881.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0728.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0650.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spec-3657-55244-0552.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0890.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0734.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0972.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/10656/spec-10656-58163-0366.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0990.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0836.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0686.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0764.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0554.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0635.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0638.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0958.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0714.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0941.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0743.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0710.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0864.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0744.fits
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: Reading 55 objects
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0310.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0457.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0228.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0446.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0170.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0344.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0482.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0186.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0386.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0388.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0352.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0100.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0345.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0396.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0198.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0234.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0026.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0500.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0370.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0110.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0208.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0410.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0601.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0273.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0472.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0030.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0070.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0156.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0434.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0538.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0368.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0114.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0002.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0881.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0728.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0650.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spec-3657-55244-0552.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0890.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0734.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0972.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/10656/spec-10656-58163-0366.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0990.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spec-9367-57758-0836.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0686.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0764.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0554.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0635.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0638.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0958.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0714.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0941.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0743.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0710.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0864.fits
+[PROGRESS]: Read /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spec-3655-55240-0744.fits
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.048 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.027 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.003 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.011 per spec. Progress: 55 of 55
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.001 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.018 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.003 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.011 per spec. Progress: 55 of 55
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.1        : nb object in cat = 60
+[PROGRESS]: and z < 3.5         : nb object in cat = 50
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 50
+[PROGRESS]: Time spent reading quasar catalogue: 0.0037560462951660156
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 21
+[PROGRESS]: Read 1 of 5. num_data: 57
+[PROGRESS]: Read 2 of 5. num_data: 123
+[PROGRESS]: Read 3 of 5. num_data: 147
+[PROGRESS]: Read 4 of 5. num_data: 150
+[PROGRESS]: Time spent reading data: 0.06528234481811523
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.001 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.018 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.003 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.011 per spec. Progress: 55 of 55
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.1        : nb object in cat = 60
+[PROGRESS]: and z < 3.5         : nb object in cat = 50
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 50
+[PROGRESS]: Time spent reading quasar catalogue: 0.004811286926269531
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 21
+[PROGRESS]: Read 1 of 5. num_data: 57
+[PROGRESS]: Read 2 of 5. num_data: 123
+[PROGRESS]: Read 3 of 5. num_data: 147
+[PROGRESS]: Read 4 of 5. num_data: 150
+[PROGRESS]: Time spent reading data: 0.06731510162353516
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.001 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.018 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.003 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.011 per spec. Progress: 55 of 55
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.1        : nb object in cat = 60
+[PROGRESS]: and z < 3.5         : nb object in cat = 50
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 50
+[PROGRESS]: Time spent reading quasar catalogue: 0.0036890506744384766
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 21
+[PROGRESS]: Read 1 of 5. num_data: 57
+[PROGRESS]: Read 2 of 5. num_data: 123
+[PROGRESS]: Read 3 of 5. num_data: 147
+[PROGRESS]: Read 4 of 5. num_data: 150
+[PROGRESS]: Time spent reading data: 0.06609892845153809
+[PROGRESS]: Continuum fitting: starting iteration 0 of 5
+[INFO]: Computing quasar continua using 1 processors
+[INFO]: Time spent computing quasar continua: 0.11076760292053223
+[INFO]: Time spent computing the mean continuum: 0.008947372436523438
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.556e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.53e+02 0.0
+[PROGRESS]:  3.568e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.62e+03 0.0
+[PROGRESS]:  3.580e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.82e+03 0.0
+[PROGRESS]:  3.591e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.97e+03 0.0
+[PROGRESS]:  3.602e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.64e+03 0.0
+[PROGRESS]:  3.613e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.54e+03 0.0
+[PROGRESS]:  3.623e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.60e+03 0.0
+[PROGRESS]:  3.633e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.30e+03 0.0
+[PROGRESS]:  3.643e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.91e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.25e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.97e+02 0.0
+[PROGRESS]:  3.672e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.13e+02 0.0
+[PROGRESS]:  3.681e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.25e+02 0.0
+[PROGRESS]:  3.690e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.00e+00 0.0
+[PROGRESS]:  3.699e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 6.70e+01 0.0
+[PROGRESS]:  3.708e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.25e+02 0.0
+[PROGRESS]:  3.716e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.25e+02 0.0
+[PROGRESS]:  3.724e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.25e+02 0.0
+[PROGRESS]:  3.732e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.50e+01 0.0
+[PROGRESS]:  3.740e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.04709315299987793
+[INFO]: Time spent computing delta stack: 0.009135246276855469
+[PROGRESS]: Continuum fitting: ending iteration 0 of 5
+[PROGRESS]: Continuum fitting: starting iteration 1 of 5
+[INFO]: Computing quasar continua using 1 processors
+[INFO]: Time spent computing quasar continua: 0.11243557929992676
+[INFO]: Time spent computing the mean continuum: 0.009018182754516602
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.556e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 5.77e+02 0.0
+[PROGRESS]:  3.568e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.65e+03 0.0
+[PROGRESS]:  3.580e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.91e+03 0.0
+[PROGRESS]:  3.591e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.00e+03 0.0
+[PROGRESS]:  3.602e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.62e+03 0.0
+[PROGRESS]:  3.613e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.54e+03 0.0
+[PROGRESS]:  3.623e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.63e+03 0.0
+[PROGRESS]:  3.633e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.36e+03 0.0
+[PROGRESS]:  3.643e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.92e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.51e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.67e+02 0.0
+[PROGRESS]:  3.672e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.43e+02 0.0
+[PROGRESS]:  3.681e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.38e+02 0.0
+[PROGRESS]:  3.690e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.00e+00 0.0
+[PROGRESS]:  3.699e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 5.10e+01 0.0
+[PROGRESS]:  3.708e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.90e+01 0.0
+[PROGRESS]:  3.716e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.07e+02 0.0
+[PROGRESS]:  3.724e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.25e+02 0.0
+[PROGRESS]:  3.732e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.50e+01 0.0
+[PROGRESS]:  3.740e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.04498648643493652
+[INFO]: Time spent computing delta stack: 0.009289264678955078
+[PROGRESS]: Continuum fitting: ending iteration 1 of 5
+[PROGRESS]: Continuum fitting: starting iteration 2 of 5
+[INFO]: Computing quasar continua using 1 processors
+[INFO]: Time spent computing quasar continua: 0.11604475975036621
+[INFO]: Time spent computing the mean continuum: 0.00908041000366211
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.556e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 6.03e+02 0.0
+[PROGRESS]:  3.568e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.66e+03 0.0
+[PROGRESS]:  3.580e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.94e+03 0.0
+[PROGRESS]:  3.591e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.01e+03 0.0
+[PROGRESS]:  3.602e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.61e+03 0.0
+[PROGRESS]:  3.613e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.51e+03 0.0
+[PROGRESS]:  3.623e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.64e+03 0.0
+[PROGRESS]:  3.633e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.37e+03 0.0
+[PROGRESS]:  3.643e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.67e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 6.97e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.20e+02 0.0
+[PROGRESS]:  3.672e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.45e+02 0.0
+[PROGRESS]:  3.681e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.48e+02 0.0
+[PROGRESS]:  3.690e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 6.00e+00 0.0
+[PROGRESS]:  3.699e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.40e+01 0.0
+[PROGRESS]:  3.708e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.20e+01 0.0
+[PROGRESS]:  3.716e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.90e+01 0.0
+[PROGRESS]:  3.724e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.25e+02 0.0
+[PROGRESS]:  3.732e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.50e+01 0.0
+[PROGRESS]:  3.740e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.04448819160461426
+[INFO]: Time spent computing delta stack: 0.009400129318237305
+[PROGRESS]: Continuum fitting: ending iteration 2 of 5
+[PROGRESS]: Continuum fitting: starting iteration 3 of 5
+[INFO]: Computing quasar continua using 1 processors
+[INFO]: Time spent computing quasar continua: 0.11202216148376465
+[INFO]: Time spent computing the mean continuum: 0.009063720703125
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.556e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 6.08e+02 0.0
+[PROGRESS]:  3.568e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.67e+03 0.0
+[PROGRESS]:  3.580e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.94e+03 0.0
+[PROGRESS]:  3.591e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.00e+03 0.0
+[PROGRESS]:  3.602e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.61e+03 0.0
+[PROGRESS]:  3.613e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.50e+03 0.0
+[PROGRESS]:  3.623e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.64e+03 0.0
+[PROGRESS]:  3.633e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.37e+03 0.0
+[PROGRESS]:  3.643e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.57e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 6.88e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.06e+02 0.0
+[PROGRESS]:  3.672e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.42e+02 0.0
+[PROGRESS]:  3.681e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.50e+02 0.0
+[PROGRESS]:  3.690e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 6.00e+00 0.0
+[PROGRESS]:  3.699e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.10e+01 0.0
+[PROGRESS]:  3.708e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.00e+01 0.0
+[PROGRESS]:  3.716e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.70e+01 0.0
+[PROGRESS]:  3.724e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.25e+02 0.0
+[PROGRESS]:  3.732e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.50e+01 0.0
+[PROGRESS]:  3.740e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.045012474060058594
+[INFO]: Time spent computing delta stack: 0.009401559829711914
+[PROGRESS]: Continuum fitting: ending iteration 3 of 5
+[PROGRESS]: Continuum fitting: starting iteration 4 of 5
+[INFO]: Computing quasar continua using 1 processors
+[INFO]: Time spent computing quasar continua: 0.11920332908630371
+[INFO]: Time spent computing delta stack: 0.009282112121582031
+[PROGRESS]: Continuum fitting: ending iteration 4 of 5
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.001 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.018 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.004 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.011 per spec. Progress: 55 of 55
+[PROGRESS]: Continuum fitting: starting iteration 0 of 5
+[INFO]: Computing quasar continua using 1 processors
+[INFO]: Time spent computing quasar continua: 0.08371233940124512
+[INFO]: Time spent computing the mean continuum: 0.005240678787231445
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.556e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.98e+02 0.0
+[PROGRESS]:  3.566e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.23e+02 0.0
+[PROGRESS]:  3.576e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.10e+02 0.0
+[PROGRESS]:  3.585e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.01e+03 0.0
+[PROGRESS]:  3.595e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.16e+02 0.0
+[PROGRESS]:  3.605e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 5.84e+02 0.0
+[PROGRESS]:  3.614e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.67e+02 0.0
+[PROGRESS]:  3.624e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.36e+02 0.0
+[PROGRESS]:  3.634e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.42e+02 0.0
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.60e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.12e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.92e+02 0.0
+[PROGRESS]:  3.673e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.92e+02 0.0
+[PROGRESS]:  3.682e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.72e+02 0.0
+[PROGRESS]:  3.692e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.28e+02 0.0
+[PROGRESS]:  3.702e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.50e+01 0.0
+[PROGRESS]:  3.711e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.00e+01 0.0
+[PROGRESS]:  3.721e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[PROGRESS]:  3.731e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[PROGRESS]:  3.741e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.04461097717285156
+[INFO]: Time spent computing delta stack: 0.0052051544189453125
+[PROGRESS]: Continuum fitting: ending iteration 0 of 5
+[PROGRESS]: Continuum fitting: starting iteration 1 of 5
+[INFO]: Computing quasar continua using 1 processors
+[INFO]: Time spent computing quasar continua: 0.08043217658996582
+[INFO]: Time spent computing the mean continuum: 0.0049588680267333984
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.556e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.19e+02 0.0
+[PROGRESS]:  3.566e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.75e+02 0.0
+[PROGRESS]:  3.576e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.10e+02 0.0
+[PROGRESS]:  3.585e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.02e+03 0.0
+[PROGRESS]:  3.595e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.16e+02 0.0
+[PROGRESS]:  3.605e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 5.84e+02 0.0
+[PROGRESS]:  3.614e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.67e+02 0.0
+[PROGRESS]:  3.624e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.36e+02 0.0
+[PROGRESS]:  3.634e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.42e+02 0.0
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.60e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.12e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.92e+02 0.0
+[PROGRESS]:  3.673e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.92e+02 0.0
+[PROGRESS]:  3.682e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.72e+02 0.0
+[PROGRESS]:  3.692e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.28e+02 0.0
+[PROGRESS]:  3.702e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.50e+01 0.0
+[PROGRESS]:  3.711e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.00e+01 0.0
+[PROGRESS]:  3.721e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[PROGRESS]:  3.731e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[PROGRESS]:  3.741e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.04431414604187012
+[INFO]: Time spent computing delta stack: 0.00505828857421875
+[PROGRESS]: Continuum fitting: ending iteration 1 of 5
+[PROGRESS]: Continuum fitting: starting iteration 2 of 5
+[INFO]: Computing quasar continua using 1 processors
+[INFO]: Time spent computing quasar continua: 0.07996439933776855
+[INFO]: Time spent computing the mean continuum: 0.005030155181884766
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.556e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.27e+02 0.0
+[PROGRESS]:  3.566e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.77e+02 0.0
+[PROGRESS]:  3.576e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.12e+02 0.0
+[PROGRESS]:  3.585e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.02e+03 0.0
+[PROGRESS]:  3.595e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.16e+02 0.0
+[PROGRESS]:  3.605e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 5.84e+02 0.0
+[PROGRESS]:  3.614e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.67e+02 0.0
+[PROGRESS]:  3.624e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.36e+02 0.0
+[PROGRESS]:  3.634e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.42e+02 0.0
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.60e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.12e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.92e+02 0.0
+[PROGRESS]:  3.673e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.92e+02 0.0
+[PROGRESS]:  3.682e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.72e+02 0.0
+[PROGRESS]:  3.692e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.28e+02 0.0
+[PROGRESS]:  3.702e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.50e+01 0.0
+[PROGRESS]:  3.711e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.00e+01 0.0
+[PROGRESS]:  3.721e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[PROGRESS]:  3.731e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[PROGRESS]:  3.741e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.04475140571594238
+[INFO]: Time spent computing delta stack: 0.005084037780761719
+[PROGRESS]: Continuum fitting: ending iteration 2 of 5
+[PROGRESS]: Continuum fitting: starting iteration 3 of 5
+[INFO]: Computing quasar continua using 1 processors
+[INFO]: Time spent computing quasar continua: 0.07984280586242676
+[INFO]: Time spent computing the mean continuum: 0.005015850067138672
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.556e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.30e+02 0.0
+[PROGRESS]:  3.566e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.80e+02 0.0
+[PROGRESS]:  3.576e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.12e+02 0.0
+[PROGRESS]:  3.585e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.02e+03 0.0
+[PROGRESS]:  3.595e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.16e+02 0.0
+[PROGRESS]:  3.605e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 5.84e+02 0.0
+[PROGRESS]:  3.614e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.67e+02 0.0
+[PROGRESS]:  3.624e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.36e+02 0.0
+[PROGRESS]:  3.634e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.42e+02 0.0
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.60e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.12e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.92e+02 0.0
+[PROGRESS]:  3.673e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.92e+02 0.0
+[PROGRESS]:  3.682e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.72e+02 0.0
+[PROGRESS]:  3.692e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.28e+02 0.0
+[PROGRESS]:  3.702e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.50e+01 0.0
+[PROGRESS]:  3.711e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.00e+01 0.0
+[PROGRESS]:  3.721e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[PROGRESS]:  3.731e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[PROGRESS]:  3.741e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[INFO]: Time spent computing eta, var_lss and fudge: 0.044873952865600586
+[INFO]: Time spent computing delta stack: 0.005105733871459961
+[PROGRESS]: Continuum fitting: ending iteration 3 of 5
+[PROGRESS]: Continuum fitting: starting iteration 4 of 5
+[INFO]: Computing quasar continua using 1 processors
+[INFO]: Time spent computing quasar continua: 0.0802011489868164
+[INFO]: Time spent computing delta stack: 0.005101919174194336
+[PROGRESS]: Continuum fitting: ending iteration 4 of 5
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.1        : nb object in cat = 60
+[PROGRESS]: and z < 3.5         : nb object in cat = 50
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 50
+[PROGRESS]: Time spent reading quasar catalogue: 0.003691434860229492
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 21
+[PROGRESS]: Read 1 of 5. num_data: 57
+[PROGRESS]: Read 2 of 5. num_data: 123
+[PROGRESS]: Read 3 of 5. num_data: 147
+[PROGRESS]: Read 4 of 5. num_data: 150
+[PROGRESS]: Time spent reading data: 0.06801581382751465
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.001 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.018 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.003 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.011 per spec. Progress: 55 of 55
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.1        : nb object in cat = 60
+[PROGRESS]: and z < 3.5         : nb object in cat = 50
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 50
+[PROGRESS]: Time spent reading quasar catalogue: 0.00368499755859375
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 21
+[PROGRESS]: Read 1 of 5. num_data: 57
+[PROGRESS]: Read 2 of 5. num_data: 123
+[PROGRESS]: Read 3 of 5. num_data: 147
+[PROGRESS]: Read 4 of 5. num_data: 150
+[PROGRESS]: Time spent reading data: 0.06917500495910645
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.556e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.53e+02 0.0
+[PROGRESS]:  3.568e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.62e+03 0.0
+[PROGRESS]:  3.580e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.82e+03 0.0
+[PROGRESS]:  3.591e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.97e+03 0.0
+[PROGRESS]:  3.602e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.64e+03 0.0
+[PROGRESS]:  3.613e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.54e+03 0.0
+[PROGRESS]:  3.623e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.60e+03 0.0
+[PROGRESS]:  3.633e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.30e+03 0.0
+[PROGRESS]:  3.643e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.91e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.25e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.97e+02 0.0
+[PROGRESS]:  3.672e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.13e+02 0.0
+[PROGRESS]:  3.681e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.25e+02 0.0
+[PROGRESS]:  3.690e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.00e+00 0.0
+[PROGRESS]:  3.699e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 6.70e+01 0.0
+[PROGRESS]:  3.708e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.25e+02 0.0
+[PROGRESS]:  3.716e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.25e+02 0.0
+[PROGRESS]:  3.724e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.25e+02 0.0
+[PROGRESS]:  3.732e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.50e+01 0.0
+[PROGRESS]:  3.740e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.001 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.018 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.004 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.011 per spec. Progress: 55 of 55
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix valid_fit
+[PROGRESS]:  3.556e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.98e+02 0.0
+[PROGRESS]:  3.566e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.23e+02 0.0
+[PROGRESS]:  3.576e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 9.10e+02 0.0
+[PROGRESS]:  3.585e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.01e+03 0.0
+[PROGRESS]:  3.595e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 8.16e+02 0.0
+[PROGRESS]:  3.605e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 5.84e+02 0.0
+[PROGRESS]:  3.614e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.67e+02 0.0
+[PROGRESS]:  3.624e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 4.36e+02 0.0
+[PROGRESS]:  3.634e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.42e+02 0.0
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 3.60e+02 0.0
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.12e+02 0.0
+[PROGRESS]:  3.663e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.92e+02 0.0
+[PROGRESS]:  3.673e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.92e+02 0.0
+[PROGRESS]:  3.682e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.72e+02 0.0
+[PROGRESS]:  3.692e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 1.28e+02 0.0
+[PROGRESS]:  3.702e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 7.50e+01 0.0
+[PROGRESS]:  3.711e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 2.00e+01 0.0
+[PROGRESS]:  3.721e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[PROGRESS]:  3.731e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[PROGRESS]:  3.741e+00 1.00e+00 1.00e-01 0.00e+00 0.00e+00 0.00e+00 0.0
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.001 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.018 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.003 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.011 per spec. Progress: 55 of 55
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (0.8)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/QSO_cat_fuji_dark_healpix.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 175
+[PROGRESS]: and z >= 2.1        : nb object in cat = 60
+[PROGRESS]: and z < 3.5         : nb object in cat = 50
+[PROGRESS]: and in selected surveys ['all', 'sv1', 'sv2', 'sv3', 'main']         : nb object in cat = 50
+[PROGRESS]: Time spent reading quasar catalogue: 0.003732919692993164
+[PROGRESS]: Reading data
+[INFO]: reading data from 5 files
+[PROGRESS]: Read 0 of 5. num_data: 21
+[PROGRESS]: Read 1 of 5. num_data: 57
+[PROGRESS]: Read 2 of 5. num_data: 123
+[PROGRESS]: Read 3 of 5. num_data: 147
+[PROGRESS]: Read 4 of 5. num_data: 150
+[PROGRESS]: Time spent reading data: 0.06944704055786133
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.00030000000000000003)
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution
+[PROGRESS]: Reading DRQ catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.001 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.018 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.003 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.011 per spec. Progress: 55 of 55
+[INFO]: Reading raw statistics var_lss and mean_flux from file: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/delta_extraction/expected_fluxes/raw_stats/colore_v9_lya_log.fits.gz
+[INFO]: Reading raw statistics var_lss and mean_flux from file: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/delta_extraction/expected_fluxes/raw_stats/colore_v9_lya_lin_2.4.fits.gz
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (2.4)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.1        : nb object in cat = 166
+[PROGRESS]: and z < 3.5         : nb object in cat = 166
+[PROGRESS]: Time spent reading quasar catalogue: 0.009773015975952148
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Read 0 of 1. num_data: 498
+[PROGRESS]: Time spent reading data: 0.16896605491638184
+[INFO]: Reading raw statistics var_lss and mean_flux from file: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/delta_extraction/expected_fluxes/raw_stats/colore_v9_lya_lin_2.4.fits.gz
+[PROGRESS]: Reading continum with 1 processors
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.0003)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.1        : nb object in cat = 166
+[PROGRESS]: and z < 3.5         : nb object in cat = 166
+[PROGRESS]: Time spent reading quasar catalogue: 0.008108139038085938
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Read 0 of 1. num_data: 498
+[PROGRESS]: Time spent reading data: 0.12695860862731934
+[INFO]: Reading raw statistics var_lss and mean_flux from file: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/delta_extraction/expected_fluxes/raw_stats/colore_v9_lya_log.fits.gz
+[PROGRESS]: Reading continum with 1 processors
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (2.4)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.1        : nb object in cat = 166
+[PROGRESS]: and z < 3.5         : nb object in cat = 166
+[PROGRESS]: Time spent reading quasar catalogue: 0.006841897964477539
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Read 0 of 1. num_data: 498
+[PROGRESS]: Time spent reading data: 0.1638481616973877
+[INFO]: Reading raw statistics var_lss and mean_flux from file: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/delta_extraction/expected_fluxes/raw_stats/colore_v9_lya_lin_2.4.fits.gz
+[PROGRESS]: Reading continum with 1 processors
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.0003)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.1        : nb object in cat = 166
+[PROGRESS]: and z < 3.5         : nb object in cat = 166
+[PROGRESS]: Time spent reading quasar catalogue: 0.006793022155761719
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Read 0 of 1. num_data: 498
+[PROGRESS]: Time spent reading data: 0.1266469955444336
+[INFO]: Reading raw statistics var_lss and mean_flux from file: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/delta_extraction/expected_fluxes/raw_stats/colore_v9_lya_log.fits.gz
+[PROGRESS]: Reading continum with 1 processors
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.0003)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.1        : nb object in cat = 166
+[PROGRESS]: and z < 3.5         : nb object in cat = 166
+[PROGRESS]: Time spent reading quasar catalogue: 0.006848573684692383
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Read 0 of 1. num_data: 498
+[PROGRESS]: Time spent reading data: 0.13613057136535645
+[INFO]: Reading raw statistics var_lss and mean_flux from file: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/delta_extraction/expected_fluxes/raw_stats/colore_v9_lya_log.fits.gz
+[PROGRESS]: Reading continum with 1 processors
+[INFO]: Reading raw statistics var_lss and mean_flux from file: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/delta_extraction/expected_fluxes/raw_stats/colore_v9_lya_lin_2.4.fits.gz
+[INFO]: Reading raw statistics var_lss and mean_flux from file: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/delta_extraction/expected_fluxes/raw_stats/colore_v9_lya_log.fits.gz
+[INFO]: 'delta lambda rest frame' not set, using the same value as for 'delta lambda' (2.4)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.1        : nb object in cat = 166
+[PROGRESS]: and z < 3.5         : nb object in cat = 166
+[PROGRESS]: Time spent reading quasar catalogue: 0.00677490234375
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Read 0 of 1. num_data: 498
+[PROGRESS]: Time spent reading data: 0.1637270450592041
+[INFO]: Reading raw statistics var_lss and mean_flux from file: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/delta_extraction/expected_fluxes/raw_stats/colore_v9_lya_lin_2.4.fits.gz
+[INFO]: 'delta log lambda rest frame' not set, using the same value as for 'delta log lambda' (0.0003)
+[PROGRESS]: Reading quasar catalogue
+[PROGRESS]: Reading catalogue from /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/desi_mock_test_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 247
+[PROGRESS]: and z >= 2.1        : nb object in cat = 166
+[PROGRESS]: and z < 3.5         : nb object in cat = 166
+[PROGRESS]: Time spent reading quasar catalogue: 0.006734132766723633
+[PROGRESS]: Reading data
+[INFO]: reading data from 1 files
+[PROGRESS]: Read 0 of 1. num_data: 498
+[PROGRESS]: Time spent reading data: 0.14960026741027832
+[INFO]: Reading raw statistics var_lss and mean_flux from file: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/delta_extraction/expected_fluxes/raw_stats/colore_v9_lya_log.fits.gz
+[PROGRESS]: Reading absorbers from: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]:  In catalog: 3 absorbers
+[PROGRESS]:  In catalog: 2 forests have absorbers
+
+[PROGRESS]: Reading absorbers from: /home/m/Michael.Walther/Dokumente/codes/igmhub/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]:  In catalog: 3 absorbers
+[PROGRESS]:  In catalog: 2 forests have absorbers
+

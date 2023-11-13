@@ -130,6 +130,22 @@ def main(cmdargs):
               'z-cut-max'))
 
     parser.add_argument(
+        '--z-min-sources',
+        type=float,
+        default=0.,
+        required=False,
+        help=('Limit the minimum redshift of the quasars '
+                'used as sources for spectra'))
+
+    parser.add_argument(
+        '--z-max-sources',
+        type=float,
+        default=10.,
+        required=False,
+        help=('Limit the maximum redshift of the quasars '
+                'used as sources for spectra'))
+
+    parser.add_argument(
         '--lambda-abs',
         type=str,
         default='LYA',
@@ -153,7 +169,7 @@ def main(cmdargs):
     parser.add_argument(
         '--z-evol-obj',
         type=float,
-        default=1.,
+        default=1.44,
         required=False,
         help='Exponent of the redshift evolution of the object field')
 
@@ -236,7 +252,7 @@ def main(cmdargs):
                         default=None,
                         required=False,
                         help='Rebin factor for deltas. If not None, deltas will '
-                             'be rebinned by that factor')    
+                             'be rebinned by that factor')
 
     args = parser.parse_args(cmdargs)
     if args.nproc is None:
@@ -281,7 +297,9 @@ def main(cmdargs):
                                                   cosmo=cosmo,
                                                   max_num_spec=args.nspec,
                                                   nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor)
+                                                  rebin_factor=args.rebin_factor,
+                                                  z_min_qso=args.z_min_sources,
+                                                  z_max_qso=args.z_max_sources)
     for deltas in data.values():
         for delta in deltas:
             delta.fname = 'D1'
@@ -390,17 +408,17 @@ def main(cmdargs):
     userprint(" \nFinished\n")
     pool.close()
 
-    wick_data = np.array(wick_data)
-    weights_wick = wick_data[:, 0].sum(axis=0)
-    num_pairs_wick = wick_data[:, 1].sum(axis=0)
-    npairs = wick_data[:, 2].sum(axis=0)
-    npairs_used = wick_data[:, 3].sum(axis=0)
-    t1 = wick_data[:, 4].sum(axis=0)
-    t2 = wick_data[:, 5].sum(axis=0)
-    t3 = wick_data[:, 6].sum(axis=0)
-    t4 = wick_data[:, 7].sum(axis=0)
-    t5 = wick_data[:, 8].sum(axis=0)
-    t6 = wick_data[:, 9].sum(axis=0)
+    wick_data = list(wick_data)
+    weights_wick = np.array([item[0] for item in wick_data]).sum(axis=0)
+    num_pairs_wick = np.array([item[1] for item in wick_data]).sum(axis=0)
+    npairs = np.array([item[2] for item in wick_data]).sum(axis=0)
+    npairs_used = np.array([item[3] for item in wick_data]).sum(axis=0)
+    t1 = np.array([item[4] for item in wick_data]).sum(axis=0)
+    t2 = np.array([item[5] for item in wick_data]).sum(axis=0)
+    t3 = np.array([item[6] for item in wick_data]).sum(axis=0)
+    t4 = np.array([item[7] for item in wick_data]).sum(axis=0)
+    t5 = np.array([item[8] for item in wick_data]).sum(axis=0)
+    t6 = np.array([item[9] for item in wick_data]).sum(axis=0)
     weights = weights_wick * weights_wick[:, None]
     w = weights > 0.
     t1[w] /= weights[w]

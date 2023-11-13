@@ -72,6 +72,7 @@ class SdssData(Data):
         self.mode = None
         self.__parse_config(config)
 
+        config["flux units"] = "10**-19 W/(m2 nm)"
         super().__init__(config)
 
         # load DRQ Catalogue
@@ -138,10 +139,14 @@ class SdssData(Data):
                 continue
             self.logger.progress(f"Read {filename}")
 
-            log_lambda = np.array(hdul[1]["loglam"][:], dtype=np.float64)
-            flux = np.array(hdul[1]["flux"][:], dtype=np.float64)
-            ivar = (np.array(hdul[1]["ivar"][:], dtype=np.float64) *
-                    hdul[1]["and_mask"][:] == 0)
+            try:
+                log_lambda = np.array(hdul[1]["loglam"][:], dtype=np.float64)
+                flux = np.array(hdul[1]["flux"][:], dtype=np.float64)
+                ivar = (np.array(hdul[1]["ivar"][:], dtype=np.float64) *
+                        hdul[1]["and_mask"][:] == 0)
+            except OSError:
+                self.logger.warning(f"Error reading HDU for {filename}. Ignoring file")
+                continue
 
             if self.analysis_type == "BAO 3D":
                 forest = SdssForest(

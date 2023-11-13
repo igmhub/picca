@@ -2,13 +2,19 @@
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
 name: Pytest
-on:
-  [push, pull_request]
+on: 
+  push:
+    paths-ignore:
+      - '**/*.md'
+  pull_request:  
+    paths-ignore:
+      - '**/*.md'
+  merge_group:
 env:
   SETUP_XVFB: True  # avoid issues if mpl tries to open a GUI window
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     # the whole CI pipeline will be skipped if [ci skip] is in the commit msg
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
@@ -16,16 +22,16 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
 #    env:   
 #      OMP_NUM_THREADS: 1
 #      MKL_NUM_THREADS: 1
 #      OPENBLAS_NUM_THREADS: 1
 #      NUMEXPR_NUM_THREADS: 1
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies

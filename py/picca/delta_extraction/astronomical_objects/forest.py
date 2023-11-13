@@ -8,7 +8,7 @@ from numba.types import bool_
 
 from picca.delta_extraction.astronomical_object import AstronomicalObject
 from picca.delta_extraction.errors import AstronomicalObjectError
-from picca.delta_extraction.utils import find_bins
+from picca.delta_extraction.utils import find_bins_lin, find_bins_log
 
 defaults = {
     "mask fields": [
@@ -58,7 +58,7 @@ def get_inner_region_slice(bincounts):
 
 @njit()
 def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
-          log_lambda_grid, log_lambda_rest_frame_grid):
+          log_lambda_grid, log_lambda_rest_frame_grid, find_bins):
     """Rebin the arrays and update control variables
     Rebinned arrays are flux, ivar, lambda_ or log_lambda, and
     transmission_correction. Control variables are mean_snr
@@ -140,29 +140,24 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
         pixel_step = log_lambda_grid[1] - log_lambda_grid[0]
         half_pixel_step = pixel_step / 2.
 
-        half_pixel_step_rest_frame = (log_lambda_rest_frame_grid[1] -
-                                      log_lambda_rest_frame_grid[0]) / 2.
-
         w1 &= log_lambda >= log_lambda_grid[0] - half_pixel_step
         w1 &= log_lambda < log_lambda_grid[-1] + half_pixel_step
         w1 &= (log_lambda - np.log10(1. + z) >=
-               log_lambda_rest_frame_grid[0] - half_pixel_step_rest_frame)
+               log_lambda_rest_frame_grid[0])
         w1 &= (log_lambda - np.log10(1. + z) <
-               log_lambda_rest_frame_grid[-1] + half_pixel_step_rest_frame)
+               log_lambda_rest_frame_grid[-1])
 
     elif wave_solution == "lin":
         pixel_step = 10**log_lambda_grid[1] - 10**log_lambda_grid[0]
         half_pixel_step = pixel_step / 2.
 
-        half_pixel_step_rest_frame = (10**log_lambda_rest_frame_grid[1] -
-                                      10**log_lambda_rest_frame_grid[0]) / 2.
         lambda_ = 10**log_lambda
         w1 &= (lambda_ >= 10**log_lambda_grid[0] - half_pixel_step)
         w1 &= (lambda_ < 10**log_lambda_grid[-1] + half_pixel_step)
         w1 &= (lambda_ / (1. + z) >=
-               10**log_lambda_rest_frame_grid[0] - half_pixel_step_rest_frame)
+               10**log_lambda_rest_frame_grid[0])
         w1 &= (lambda_ / (1. + z) <
-               10**log_lambda_rest_frame_grid[-1] + half_pixel_step_rest_frame)
+               10**log_lambda_rest_frame_grid[-1])
     else:
         raise AstronomicalObjectError("Error in Forest.rebin(). "
                                       "Class variable 'wave_solution' "
@@ -187,7 +182,8 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     transmission_correction = transmission_correction[w1]
     # Out-of-bounds pixels are removed. IVAR=0 pixels are kept
 
-    bins = find_bins(log_lambda, log_lambda_grid, wave_solution)
+
+    bins = find_bins(log_lambda, log_lambda_grid)
     binned_arr_size = bins.max() + 1
 
     # Find non-empty bins. There will be empty bins
@@ -224,7 +220,7 @@ def rebin(log_lambda, flux, ivar, transmission_correction, z, wave_solution,
     else:  # we have already checked that it will always be "lin" at this point
         log_lambda = np.log10(10**log_lambda_grid[0] + pixel_step *
                     np.arange(binned_arr_size)[wslice_inner])
-    rebin_bins = find_bins(log_lambda, log_lambda_grid, wave_solution)
+    rebin_bins = find_bins(log_lambda, log_lambda_grid)
 
     # finally update control variables
     snr = flux * np.sqrt(ivar)
@@ -242,6 +238,7 @@ class Forest(AstronomicalObject):
     -------------
     (see AstronomicalObject in py/picca/delta_extraction/astronomical_objects/forest.py)
     class_variable_check
+    get_cont_units
     get_metadata_dtype
     get_metadata_units
     set_class_variables
@@ -320,6 +317,8 @@ class Forest(AstronomicalObject):
     Weights associated to the delta field. None for no information
     """
     blinding = "none"
+    find_bins = None # this will store the correct find_bins function
+    flux_units = None
     log_lambda_grid = np.array([])  #None
     log_lambda_rest_frame_grid = np.array([])  #None
     log_lambda_index = np.array([]) #None
@@ -496,7 +495,7 @@ class Forest(AstronomicalObject):
             cols += [self.log_lambda]
             names += ["LOGLAM"]
             comments += ["Log lambda"]
-            units += ["log Angstrom"]
+            units += ["log(Angstrom)"]
             array_size = self.log_lambda.size
         elif Forest.wave_solution == "lin":
             cols += [10**self.log_lambda]
@@ -536,7 +535,7 @@ class Forest(AstronomicalObject):
         names += ["CONT"]
         comments += ["Quasar continuum. Check input "
                      "spectra for units"]
-        units += ["Flux units"]
+        units += [Forest.flux_units]
 
         return cols, names, units, comments
 
@@ -675,7 +674,8 @@ class Forest(AstronomicalObject):
          self.mean_snr, bins, self.log_lambda_index, rebin_ivar, orig_ivar, w1,
          w2, wslice_inner) = rebin(self.log_lambda, self.flux, self.ivar,
                      self.transmission_correction, self.z, Forest.wave_solution,
-                     Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid)
+                     Forest.log_lambda_grid, Forest.log_lambda_rest_frame_grid,
+                     Forest.find_bins)
 
         # return weights and binning solution to be used by child classes if
         # required
@@ -684,7 +684,7 @@ class Forest(AstronomicalObject):
     @classmethod
     def set_class_variables(cls, lambda_min, lambda_max, lambda_min_rest_frame,
                             lambda_max_rest_frame, pixel_step,
-                            pixel_step_rest_frame, wave_solution):
+                            pixel_step_rest_frame, wave_solution, flux_units):
         """Set class variables
 
         Arguments
@@ -709,20 +709,27 @@ class Forest(AstronomicalObject):
         wave_solution: "log" or "lin"
         Specifies whether we want to construct a wavelength grid that is evenly
         spaced on wavelength (lin) or on the logarithm of the wavelength (log)
+
+        flux_units: str
+        Flux units
         """
         if wave_solution == "log":
             cls.log_lambda_grid = np.arange(
                 np.log10(lambda_min),
                 np.log10(lambda_max) + pixel_step / 2, pixel_step)
             cls.log_lambda_rest_frame_grid = np.arange(
-                np.log10(lambda_min_rest_frame) + pixel_step_rest_frame / 2,
-                np.log10(lambda_max_rest_frame), pixel_step_rest_frame)
+                np.log10(lambda_min_rest_frame),
+                np.log10(lambda_max_rest_frame) + pixel_step_rest_frame / 2,
+                pixel_step_rest_frame)
+            cls.find_bins = find_bins_log
         elif wave_solution == "lin":
             cls.log_lambda_grid = np.log10(
                 np.arange(lambda_min, lambda_max + pixel_step / 2, pixel_step))
             cls.log_lambda_rest_frame_grid = np.log10(
-                np.arange(lambda_min_rest_frame + pixel_step_rest_frame / 2,
-                          lambda_max_rest_frame, pixel_step_rest_frame))
+                np.arange(lambda_min_rest_frame,
+                          lambda_max_rest_frame + pixel_step_rest_frame / 2,
+                          pixel_step_rest_frame))
+            cls.find_bins = find_bins_lin
         else:
             raise AstronomicalObjectError("Error in setting Forest class "
                                           "variables. 'wave_solution' "
@@ -732,3 +739,5 @@ class Forest(AstronomicalObject):
         cls.wave_solution = wave_solution
 
         cls.mask_fields = defaults.get("mask fields").copy()
+
+        cls.flux_units = flux_units

@@ -24,6 +24,7 @@ try:
     git_hash = git.Repo(PICCA_BASE).head.object.hexsha
 except InvalidGitRepositoryError:  # pragma: no cover
     git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
+picca_version = metadata.metadata('picca')['Version']
 
 accepted_corrections_options = [
     "num corrections", "type {int}", "module name {int}"
@@ -49,6 +50,7 @@ default_config = {
     "run specs": {
         "git hash": git_hash,
         "timestamp": str(datetime.now()),
+        "version": picca_version,
     }
 }
 

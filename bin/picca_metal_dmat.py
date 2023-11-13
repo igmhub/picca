@@ -17,6 +17,8 @@ import fitsio
 from picca import constants, cf, utils, io
 from picca.utils import userprint
 
+#store the default silicon metals modelled in the CF/XCF
+DEFAULT_SI_METALS = ['SiIII(1207)','SiII(1190)','SiII(1193)','SiII(1260)']
 
 def calc_metal_dmat(abs_igm1, abs_igm2, healpixs):
     """Computes the metal distortion matrix.
@@ -128,6 +130,22 @@ def main(cmdargs):
         help=('Use only pairs of forest x object with the mean of the last '
               'absorber redshift and the object redshift smaller than '
               'z-cut-max'))
+
+    parser.add_argument(
+        '--z-min-sources',
+        type=float,
+        default=0.,
+        required=False,
+        help=('Limit the minimum redshift of the quasars '
+                'used as sources for spectra'))
+
+    parser.add_argument(
+        '--z-max-sources',
+        type=float,
+        default=10.,
+        required=False,
+        help=('Limit the maximum redshift of the quasars '
+                'used as sources for spectra'))
 
     parser.add_argument(
         '--lambda-abs',
@@ -263,6 +281,12 @@ def main(cmdargs):
                         help='Rebin factor for deltas. If not None, deltas will '
                              'be rebinned by that factor')
 
+    parser.add_argument('--fast-metals',
+                    action='store_true',
+                    required=False,
+                    help='compute only the metal correlations used by Vega'
+                       'i.e. 4 LyaxSi matrices and CIVxCIV')
+
     args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
@@ -313,7 +337,9 @@ def main(cmdargs):
                                                   cf.cosmo,
                                                   max_num_spec=args.nspec,
                                                   nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor)
+                                                  rebin_factor=args.rebin_factor,
+                                                  z_min_qso=args.z_min_sources,
+                                                  z_max_qso=args.z_max_sources)
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -345,7 +371,9 @@ def main(cmdargs):
             cf.cosmo,
             max_num_spec=args.nspec,
             nproc=args.nproc,
-            rebin_factor=args.rebin_factor)
+            rebin_factor=args.rebin_factor,
+            z_min_qso=args.z_min_sources,
+            z_max_qso=args.z_max_sources)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
@@ -396,6 +424,12 @@ def main(cmdargs):
         for index2, abs_igm2 in enumerate(abs_igm_2[index0:]):
             if index1 == 0 and index2 == 0:
                 continue
+
+            if args.fast_metals:
+                if not (abs_igm1 == "LYA" and abs_igm2 in DEFAULT_SI_METALS) \
+                and not (abs_igm1 == "CIV(eff)" and abs_igm1 == abs_igm2):
+                    continue
+
             cf.counter.value = 0
             calc_metal_dmat_wrapper = partial(calc_metal_dmat, abs_igm1,
                                               abs_igm2)
@@ -411,18 +445,17 @@ def main(cmdargs):
             elif args.nproc == 1:
                 dmat_data = map(calc_metal_dmat_wrapper,
                                 sorted(cpu_data.values()))
-                dmat_data = list(dmat_data)
 
             # merge the results from different CPUs
-            dmat_data = np.array(dmat_data)
-            weights_dmat = dmat_data[:, 0].sum(axis=0)
-            dmat = dmat_data[:, 1].sum(axis=0)
-            r_par = dmat_data[:, 2].sum(axis=0)
-            r_trans = dmat_data[:, 3].sum(axis=0)
-            z = dmat_data[:, 4].sum(axis=0)
-            weights = dmat_data[:, 5].sum(axis=0)
-            num_pairs = dmat_data[:, 6].sum(axis=0)
-            num_pairs_used = dmat_data[:, 7].sum(axis=0)
+            dmat_data = list(dmat_data)
+            weights_dmat = np.array([item[0] for item in dmat_data]).sum(axis=0)
+            dmat = np.array([item[1] for item in dmat_data]).sum(axis=0)
+            r_par = np.array([item[2] for item in dmat_data]).sum(axis=0)
+            r_trans = np.array([item[3] for item in dmat_data]).sum(axis=0)
+            z = np.array([item[4] for item in dmat_data]).sum(axis=0)
+            weights = np.array([item[5] for item in dmat_data]).sum(axis=0)
+            num_pairs = np.array([item[6] for item in dmat_data]).sum(axis=0)
+            num_pairs_used = np.array([item[7] for item in dmat_data]).sum(axis=0)
 
             # normalize_values
             w = weights > 0

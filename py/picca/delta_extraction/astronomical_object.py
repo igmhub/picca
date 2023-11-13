@@ -188,4 +188,4 @@ class AstronomicalObject:
         metadata_units: list
         A list with the units of the line-of-sight data
         """
-        return ["", "DEGREES", "DEGREES", ""]
+        return ["", "rad", "rad", ""]

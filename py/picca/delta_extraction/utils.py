@@ -11,9 +11,9 @@ from scipy.constants import speed_of_light as speed_light
 
 from picca.delta_extraction.errors import DeltaExtractionError
 
-module_logger = logging.getLogger(__name__)
-
 SPEED_LIGHT = speed_light / 1000.  # [km/s]
+
+module_logger = logging.getLogger(__name__)
 
 ABSORBER_IGM = {
     "Halpha": 6562.8,
@@ -21,12 +21,14 @@ ABSORBER_IGM = {
     "MgI(2853)": 2852.96,
     "MgII(2804)": 2803.5324,
     "MgII(2796)": 2796.3511,
+    "MgII(eff)" : 2798.75,
     "FeII(2600)": 2600.1724835,
     "FeII(2587)": 2586.6495659,
     "MnII(2577)": 2576.877,
     "FeII(2383)": 2382.7641781,
     "FeII(2374)": 2374.4603294,
     "FeII(2344)": 2344.2129601,
+    "CIII(1908)"  : 1908.73,
     "AlIII(1863)": 1862.79113,
     "AlIII(1855)": 1854.71829,
     "AlII(1671)": 1670.7886,
@@ -37,6 +39,7 @@ ABSORBER_IGM = {
     "SiII(1527)": 1526.70698,
     "NiII(1455)": 1454.842,
     "SiIV(1403)": 1402.77291,
+    "SiIV(eff)" : 1396.76,
     "SiIV(1394)": 1393.76018,
     "NiII(1370)": 1370.132,
     "CII(1335)": 1334.5323,
@@ -134,10 +137,11 @@ def class_from_string(class_name, module_name):
         accepted_options = []
     return class_object, default_args, accepted_options
 
-
 @njit()
-def find_bins(original_array, grid_array, wave_solution):
+def find_bins_lin(original_array, grid_array):
     """For each element in original_array, find the corresponding bin in grid_array
+
+    This function assumes that wavelength grid that is evenly spaced on wavelength
 
     Arguments
     ---------
@@ -147,9 +151,31 @@ def find_bins(original_array, grid_array, wave_solution):
     grid_array: array of float
     Common array, e.g. Forest.log_lambda_grid
 
-    wave_solution: "log" or "lin"
-    Specifies whether we want to construct a wavelength grid that is evenly
-    spaced on wavelength (lin) or on the logarithm of the wavelength (log)
+    Return
+    ------
+    found_bin: array of int
+    An array of size original_array.size filled with values smaller than
+    grid_array.size with the bins correspondance
+    """
+    aux = 10**grid_array[0]
+    step = 10**grid_array[1] - aux
+    found_bin = ((10**original_array - aux) / step + 0.5).astype(np.int64)
+    return found_bin
+
+@njit()
+def find_bins_log(original_array, grid_array):
+    """For each element in original_array, find the corresponding bin in grid_array
+
+    This function assumes that wavelength grid that is evenly spaced on the
+    logarithm of the wavelength
+
+    Arguments
+    ---------
+    original_array: array of float
+    Read array, e.g. forest.log_lambda
+
+    grid_array: array of float
+    Common array, e.g. Forest.log_lambda_grid
 
     Return
     ------
@@ -157,27 +183,8 @@ def find_bins(original_array, grid_array, wave_solution):
     An array of size original_array.size filled with values smaller than
     grid_array.size with the bins correspondance
     """
-    if wave_solution == "log":
-        pass
-    elif wave_solution == "lin":
-        original_array = 10**original_array
-        grid_array = 10**grid_array
-    else:  # pragma: no cover
-        raise DeltaExtractionError(
-            "Error in function find_bins from py/picca/delta_extraction/utils.py"
-            "expected wavelength solution to be either 'log' or 'lin'. ")
-    original_array_size = original_array.size
-    grid_array_size = grid_array.size
-    found_bin = np.zeros(original_array_size, dtype=np.int64)
-    for index1 in range(original_array_size):
-        min_dist = np.finfo(np.float64).max
-        for index2 in range(grid_array_size):
-            dist = np.abs(grid_array[index2] - original_array[index1])
-            if dist < min_dist:
-                min_dist = dist
-                found_bin[index1] = index2
-            else:
-                break
+    step = grid_array[1] - grid_array[0]
+    found_bin = ((original_array - grid_array[0]) / step + 0.5).astype(np.int64)
     return found_bin
 
 PROGRESS_LEVEL_NUM = 15
@@ -299,7 +306,7 @@ def update_accepted_options(accepted_options, new_options, remove=False):
 
     return accepted_options
 
-def update_default_options(default_options, new_options):
+def update_default_options(default_options, new_options, force_overwrite=False):
     """Update the content of the list of accepted options
 
     Arguments
@@ -309,6 +316,12 @@ def update_default_options(default_options, new_options):
 
     new_options: dict
     The new options
+
+    force_overwrite: bool - default: False
+    If different values for a specific key are given the code raises an error
+    complaining about conflicting default values. If `force_overwrite` is True,
+    keep the value from new_options instead. This should be used with caution
+    and only to overwrite default values from parent classes.
 
     Return
     ------
@@ -325,11 +338,14 @@ def update_default_options(default_options, new_options):
                     "found to have values with different type: "
                     f"{type(default_value)} and {type(value)}. "
                     "Revise your recent changes or contact picca developpers.")
-            if default_value != value:
+            if default_value != value and not force_overwrite:
                 raise DeltaExtractionError(
                     f"Incompatible defaults are being added. Key {key} "
                     f"found to have two default values: '{value}' and '{default_value}' "
-                    "Revise your recent changes or contact picca developpers.")
+                    "Please revise your recent changes. If you really want to "
+                    "overwrite the default values of a parent class, then pass "
+                    "`force_overload=True`. If you are unsure what this message "
+                    "means contact picca developpers.")
         else:
             default_options[key] = value
 

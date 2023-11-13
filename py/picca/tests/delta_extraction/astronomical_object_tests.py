@@ -598,7 +598,7 @@ class AstronomicalObjectTest(AbstractTest):
         if Forest.wave_solution == "log":
             self.assertTrue(names[0] == "LOGLAM")
             self.assertTrue(np.allclose(cols[0], test_obj.log_lambda))
-            self.assertTrue(units[0] == "log Angstrom")
+            self.assertTrue(units[0] == "log(Angstrom)")
             self.assertTrue(comments[0] == "Log lambda")
         elif Forest.wave_solution == "lin":
             self.assertTrue(names[0] == "LAMBDA")
@@ -641,7 +641,7 @@ class AstronomicalObjectTest(AbstractTest):
         if isinstance(test_obj, Pk1dForest):
             self.assertTrue(names[4] == "IVAR")
             self.assertTrue(np.allclose(cols[4], test_obj.ivar))
-            self.assertTrue(units[4] == "Flux units")
+            self.assertTrue(units[4] == "(Flux units)^-1")
             self.assertTrue(
                 comments[4] == "Inverse variance. Check input spectra for units")
 
@@ -955,6 +955,9 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
         kwargs_desi_forest  = get_desi_kwargs_input("lin", "1")
 
+        Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 0.8, 0.8,
+                                   "lin", "Flux units")
+
         # create a DesiForest
         test_obj = DesiForest(**kwargs_desi_forest)
         test_obj.rebin()
@@ -1211,6 +1214,9 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
         setup_pk1d_forest("LYA")
         kwargs_desi_pk1d_forest = get_desi_kwargs_input("lin", "1", is_p1d=True)
+
+        Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 0.8, 0.8,
+                                   "lin", "Flux units")
 
         # create a DesiPk1dForest
         test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
@@ -1578,6 +1584,8 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="log", rebin=3)
         kwargs_forest_log  = get_kwargs_input("log", "1")
 
+        Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 50e-4, 50e-4,
+                                   "log", "Flux units")
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
         test_obj.rebin()
@@ -1587,6 +1595,9 @@ class AstronomicalObjectTest(AbstractTest):
         reset_forest()
         setup_forest(wave_solution="lin")
         kwargs_forest_lin  = get_kwargs_input("lin", "1")
+
+        Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 0.8, 0.8,
+                                   "lin", "Flux units")
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_lin)
@@ -1648,7 +1659,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test class method set_class_variables from Forest"""
         # logarithmic binning
         Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 50e-4, 50e-4,
-                                   "log")
+                                   "log", "test")
 
         log_lambda_grid = np.array([
             3.5563025, 3.5613025, 3.5663025, 3.5713025, 3.5763025, 3.5813025,
@@ -1657,41 +1668,44 @@ class AstronomicalObjectTest(AbstractTest):
             3.6463025, 3.6513025, 3.6563025, 3.6613025, 3.6663025, 3.6713025,
             3.6763025, 3.6813025, 3.6863025, 3.6913025, 3.6963025, 3.7013025,
             3.7063025, 3.7113025, 3.7163025, 3.7213025, 3.7263025, 3.7313025,
-            3.7363025, 3.7413025
+            3.7363025, 3.7413025,
         ])
         self.assertTrue(np.allclose(Forest.log_lambda_grid, log_lambda_grid))
 
         log_lambda_rest_frame_grid = np.array([
-            3.01953334, 3.02453334, 3.02953334, 3.03453334, 3.03953334,
-            3.04453334, 3.04953334, 3.05453334, 3.05953334, 3.06453334,
-            3.06953334, 3.07453334
+            3.01703334, 3.02203334, 3.02703334, 3.03203334, 3.03703334,
+            3.04203334, 3.04703334, 3.05203334, 3.05703334, 3.06203334,
+            3.06703334, 3.07203334, 3.07703334,
         ])
         self.assertTrue(np.allclose(Forest.log_lambda_rest_frame_grid,
                                     log_lambda_rest_frame_grid))
 
         self.assertTrue(Forest.mask_fields, defaults_forest.get("mask fields"))
         self.assertTrue(Forest.wave_solution == "log")
+        self.assertTrue(Forest.flux_units == "test")
 
         # linear binning
         Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 100, 100,
-                                   "lin")
+                                   "lin", "test")
 
         log_lambda_grid = np.array([
             3.5563025 , 3.56820172, 3.5797836 , 3.59106461, 3.60205999,
             3.61278386, 3.62324929, 3.63346846, 3.64345268, 3.65321251,
             3.66275783, 3.67209786, 3.68124124, 3.69019608, 3.69897   ,
-            3.70757018, 3.71600334, 3.72427587, 3.73239376, 3.74036269
+            3.70757018, 3.71600334, 3.72427587, 3.73239376, 3.74036269,
         ])
         self.assertTrue(np.allclose(Forest.log_lambda_grid, log_lambda_grid))
 
         log_lambda_rest_frame_grid = np.array([
-            3.0374265 , 3.07554696
+            3.01703334, 3.05690485, 3.09342169,
         ])
+        print(Forest.log_lambda_rest_frame_grid)
         self.assertTrue(np.allclose(Forest.log_lambda_rest_frame_grid,
                                     log_lambda_rest_frame_grid))
 
         self.assertTrue(Forest.mask_fields, defaults_forest.get("mask fields"))
         self.assertTrue(Forest.wave_solution == "lin")
+        self.assertTrue(Forest.flux_units == "test")
 
         # specifying wrong bining should raise and error
         expected_message = (
@@ -1700,7 +1714,7 @@ class AstronomicalObjectTest(AbstractTest):
         )
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 100, 100,
-                                       "wrong")
+                                       "wrong", "")
         self.compare_error_message(context_manager, expected_message)
 
     def test_pk1d_forest(self):
@@ -1912,6 +1926,9 @@ class AstronomicalObjectTest(AbstractTest):
         kwargs_pk1d_forest_log = get_kwargs_input("log", "1", is_p1d=True)
         kwargs_pk1d_forest_lin = get_kwargs_input("lin", "1", is_p1d=True)
 
+        Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 50e-4, 50e-4,
+                                   "log", "Flux units")
+
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
         test_obj.rebin()
@@ -1922,6 +1939,8 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
         setup_pk1d_forest("LYA")
 
+        Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 0.8, 0.8,
+                                   "lin", "Flux units")
         # create a Forest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)
         test_obj.rebin()
@@ -2133,6 +2152,9 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="log", rebin=3)
         kwargs_sdss_forest = get_sdss_kwargs_input("log", "1")
 
+        Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 50e-4, 50e-4,
+                                   "log", "Flux units")
+
         # create an SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
         test_obj.rebin()
@@ -2316,6 +2338,9 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
         kwargs_sdss_pk1d_forest = get_sdss_kwargs_input("log", "1", is_p1d=True)
+
+        Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, 50e-4, 50e-4,
+                                   "log", "Flux units")
 
         # create an SdssPk1dForest
         test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
