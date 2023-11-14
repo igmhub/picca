@@ -240,16 +240,17 @@ def read_blinding(in_dir, tracer1, tracer2):
     hdul = fitsio.FITS(filename)
     # This is for ImageHDU format
     if "LAMBDA" in hdul:
-        header = hdul["LAMBDA"].read_header()
+        header_blinding = hdul["METADATA"].read_header()
+        header_lambda = hdul["LAMBDA"].read_header()
 
         # read blinding
-        blinding = header["BLINDING"]
+        blinding = header_blinding["BLINDING"]
 
         # check if we are doing metal forests
-        if "MIN_RF_WAVE" in header and "MAX_RF_WAVE" in header:
+        if "MIN_RF_WAVE" in header_lambda and "MAX_RF_WAVE" in header_lambda:
             lya_wave = ABSORBER_IGM["LYA"]
-            min_rf_wave = header["MIN_RF_WAVE"]
-            max_rf_wave = header["MAX_RF_WAVE"]
+            min_rf_wave = header_lambda["MIN_RF_WAVE"]
+            max_rf_wave = header_lambda["MAX_RF_WAVE"]
             if min_rf_wave > lya_wave and max_rf_wave > lya_wave:
                 if tracer2 is None:
                     tracer2 = tracer1
