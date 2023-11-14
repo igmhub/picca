@@ -2,11 +2,11 @@
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
 name: Pytest
-on: 
+on:
   push:
     paths-ignore:
       - '**/*.md'
-  pull_request:  
+  pull_request:
     paths-ignore:
       - '**/*.md'
   merge_group:
@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
-#    env:   
+#    env:
 #      OMP_NUM_THREADS: 1
 #      MKL_NUM_THREADS: 1
 #      OPENBLAS_NUM_THREADS: 1
@@ -67,21 +67,21 @@ jobs:
       with:
         name: test-results_v${{ matrix.python-version }}
         path: /tmp/last_run_picca_test
-        
-        
+
+
     - name: Archive test results delta_extraction
       if: ${{ failure() }}
       uses: actions/upload-artifact@v1
       with:
         name: test-results-de_v${{ matrix.python-version }}
         path: /home/runner/work/picca/picca/py/picca/tests/delta_extraction/results
-        
+
     - name: Coveralls
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      run: coveralls
-        
+      run: coveralls --service=gihtub
+
   # flake8:
   #   runs-on: ubuntu-latest
   #   if: "!contains(github.event.head_commit.message, '[ci skip]')"
