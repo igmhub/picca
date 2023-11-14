@@ -217,6 +217,7 @@ def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out
         header['FIBERID'] = delta.fiberid
         header['ORDER'] = delta.order
         header['WAVE_SOLUTION'] = 'lin' if lin_spaced else 'log'
+        header['DELTA_LAMBDA'] = delta_x
 
         cols = [
             delta.log_lambda, delta.delta, delta.weights,
