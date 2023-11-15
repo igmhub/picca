@@ -275,7 +275,7 @@ def read_blinding(in_dir, tracer1, tracer2):
             lyb_wave = ABSORBER_IGM["LYB"]
             min_rf_wave = header["MIN_RF_WAVE"]
             max_rf_wave = header["MAX_RF_WAVE"]
-            if min_rf_wave > lya_wave and max_rf_wave > lya_wave:
+            if (min_rf_wave > lya_wave and max_rf_wave > lya_wave) or (min_rf_wave < lyb_wave and max_rf_wave < lyb_wave) :
                 if tracer2 is None:
                     tracer2 = tracer1
                 blinding_tracers = ["LYA", "QSO"]
