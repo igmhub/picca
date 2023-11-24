@@ -13,7 +13,7 @@ This package contains tools used for the analysis of the Lyman-alpha forest samp
 The current reference is du Mas des Bourboux et al. 2020 (https://arxiv.org/abs/2007.08995).
 
 ## Installation
-First, create a clean environment:
+First, create a clean environment with `version`>=3.9:
 ```
 conda create -n my_picca_env python==version
 conda activate my_picca_env
