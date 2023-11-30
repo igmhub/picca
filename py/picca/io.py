@@ -246,19 +246,23 @@ def read_blinding(in_dir, tracer1, tracer2):
         # read blinding
         blinding = header_blinding["BLINDING"]
 
-        # check if we are doing metal forests
-        if "MIN_RF_WAVE" in header_lambda and "MAX_RF_WAVE" in header_lambda:
-            lya_wave = ABSORBER_IGM["LYA"]
-            lyb_wave = ABSORBER_IGM["LYB"]
-            min_rf_wave = header_lambda["MIN_RF_WAVE"]
-            max_rf_wave = header_lambda["MAX_RF_WAVE"]
-            if (min_rf_wave > lya_wave and max_rf_wave > lya_wave) or (min_rf_wave < lyb_wave and max_rf_wave < lyb_wave) :
-                if tracer2 is None:
-                    tracer2 = tracer1
-                blinding_tracers = ["LYA", "QSO"]
-                if tracer1 not in blinding_tracers or tracer2 not in blinding_tracers:
-                    # since we are doing metal forests, overwrite the read blinding
-                    # and force data to not being blind
+        # check if we need to blind
+        if tracer2 is None:
+            tracer2 = tracer1
+        blinding_tracers = ["LYA", "QSO"]
+        if tracer1 not in blinding_tracers or tracer2 not in blinding_tracers:
+            # one of the tracers is not relevant, so do not blind (ever)
+            blinding = "none"
+        else:
+            # check if we are doing metal forests
+            if "MIN_RF_WAVE" in header_lambda and "MAX_RF_WAVE" in header_lambda:
+                lya_wave = ABSORBER_IGM["LYA"]
+                lyb_wave = ABSORBER_IGM["LYB"]
+                min_rf_wave = header_lambda["MIN_RF_WAVE"]
+                max_rf_wave = header_lambda["MAX_RF_WAVE"]
+                if ((min_rf_wave > lya_wave and max_rf_wave > lya_wave) or
+                    (min_rf_wave < lyb_wave and max_rf_wave < lyb_wave)):
+                    # we are doing a metal forest, so do not blind (ever)
                     blinding = "none"
 
     # This is for BinTable format
@@ -269,19 +273,23 @@ def read_blinding(in_dir, tracer1, tracer2):
         else:
             blinding = "none"
 
-        # check if we are doing metal forests
-        if "MIN_RF_WAVE" in header and "MAX_RF_WAVE" in header:
-            lya_wave = ABSORBER_IGM["LYA"]
-            lyb_wave = ABSORBER_IGM["LYB"]
-            min_rf_wave = header["MIN_RF_WAVE"]
-            max_rf_wave = header["MAX_RF_WAVE"]
-            if (min_rf_wave > lya_wave and max_rf_wave > lya_wave) or (min_rf_wave < lyb_wave and max_rf_wave < lyb_wave) :
-                if tracer2 is None:
-                    tracer2 = tracer1
-                blinding_tracers = ["LYA", "QSO"]
-                if tracer1 not in blinding_tracers or tracer2 not in blinding_tracers:
-                    # since we are doing metal forests, overwrite the read blinding
-                    # and force data to not being blind
+        # check if we need to blind
+        if tracer2 is None:
+            tracer2 = tracer1
+        blinding_tracers = ["LYA", "QSO"]
+        if tracer1 not in blinding_tracers or tracer2 not in blinding_tracers:
+            # one of the tracers is not relevant, so do not blind (ever)
+            blinding = "none"
+        else:
+            # check if we are doing metal forests
+            if "MIN_RF_WAVE" in header and "MAX_RF_WAVE" in header:
+                lya_wave = ABSORBER_IGM["LYA"]
+                lyb_wave = ABSORBER_IGM["LYB"]
+                min_rf_wave = header["MIN_RF_WAVE"]
+                max_rf_wave = header["MAX_RF_WAVE"]
+                if ((min_rf_wave > lya_wave and max_rf_wave > lya_wave) or
+                    (min_rf_wave < lyb_wave and max_rf_wave < lyb_wave)):
+                    # we are doing a metal forest, so do not blind (ever)
                     blinding = "none"
 
     return blinding
