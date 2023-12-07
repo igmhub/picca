@@ -81,6 +81,12 @@ def main(cmdargs):
         choices=['lyaxlya', 'lyaxlyb', 'qsoxlya', 'qsoxlyb'],
         help='Type of correlation. Required to apply blinding in DESI')
 
+    parser.add_argument(
+        '--unblind-y1',
+        action='store_true',
+        default=False,
+        help='Unblind the Y1 correlations.')
+
     args = parser.parse_args(cmdargs)
 
     hdul = fitsio.FITS(args.data)
@@ -220,8 +226,7 @@ def main(cmdargs):
         'name': "BLINDING",
         'value': blinding,
         'comment': 'String specifying the blinding strategy'
-    },
-    {
+    }, {
         'name': 'RPMIN',
         'value': r_par_min,
         'comment': 'Minimum r-parallel'
@@ -263,6 +268,16 @@ def main(cmdargs):
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
     ]
+
+    # Check if we need to unblind
+    if args.unblind_y1:
+        if blinding == 'desi_y1':
+            userprint("Unblinding Y1 correlations.")
+            blinding = 'none'
+            data_name = 'DA'
+            dmat_name = 'DM'
+        else:
+            raise ValueError("Unblinding requires blinding to be 'desi_y1'. Found {}.".format(blinding))
 
     # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
