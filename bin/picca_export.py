@@ -81,12 +81,6 @@ def main(cmdargs):
         choices=['lyaxlya', 'lyaxlyb', 'qsoxlya', 'qsoxlyb'],
         help='Type of correlation. Required to apply blinding in DESI')
 
-    parser.add_argument(
-        '--unblind-y1',
-        action='store_true',
-        default=False,
-        help='Unblind the Y1 correlations.')
-
     args = parser.parse_args(cmdargs)
 
     hdul = fitsio.FITS(args.data)
@@ -270,23 +264,16 @@ def main(cmdargs):
     ]
 
     # Check if we need to unblind
-    if args.unblind_y1:
-        if blinding == 'desi_y1':
-            userprint("Unblinding Y1 correlations.")
-            blinding = 'none'
-            data_name = 'DA'
-            dmat_name = 'DM'
-        else:
-            raise ValueError("Unblinding requires blinding to be 'desi_y1'. Found {}.".format(blinding))
+    if blinding in ['desi_y1', 'desi_m2']:
+        userprint("Y1 correlations are not blinded.")
+        blinding = 'none'
+        data_name = 'DA'
+        dmat_name = 'DM'
 
     # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
         blinding_dir = '/global/cfs/projectdirs/desi/science/lya/y1-kp6/blinding/'
-        blinding_templates = {'desi_m2': {'standard': 'm2_blinding_v1.2_standard_29_03_2022.h5',
-                                          'grid': 'm2_blinding_v1.2_regular_grid_29_03_2022.h5'},
-                              'desi_y1': {'standard': 'y1_blinding_v2_standard_17_12_2022.h5',
-                                          'grid': 'y1_blinding_v2_regular_grid_17_12_2022.h5'},
-                              'desi_y3': {'standard': 'y3_blinding_v3_standard_18_12_2022.h5',
+        blinding_templates = {'desi_y3': {'standard': 'y3_blinding_v3_standard_18_12_2022.h5',
                                           'grid': 'y3_blinding_v3_regular_grid_18_12_2022.h5'}}
 
         if blinding in blinding_templates:
