@@ -28,7 +28,7 @@ accepted_options = update_accepted_options(
 defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
-    "unblind": False,
+    "unblind": True,
     "use non-coadded spectra": False,
     "wave solution": "lin",
 })
