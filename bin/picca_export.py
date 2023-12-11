@@ -11,6 +11,7 @@ import os.path
 
 from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
+from picca.delta_extraction.utils import UNBLINDABLE_STRATEGIES
 
 
 def main(cmdargs):
@@ -264,7 +265,7 @@ def main(cmdargs):
     ]
 
     # Check if we need to unblind
-    if blinding in ['desi_y1', 'desi_m2']:
+    if blinding in UNBLINDABLE_STRATEGIES:
         userprint("Y1 correlations are not blinded.")
         blinding = 'none'
         data_name = 'DA'
