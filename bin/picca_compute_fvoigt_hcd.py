@@ -61,8 +61,8 @@ def fft_profile(profile, dx):
     """
     # not normalized
     size = profile.size
-    ft_profile = dx * np.fft.rfft(profile - 1)
-    k = np.fft.rfftfreq(size, dx) * (2 * np.pi)
+    ft_profile = dx * np.fft.fftshift(np.fft.fft(profile - 1))
+    k = np.fft.fftshift(np.fft.fftfreq(size, dx)) * (2 * np.pi)
 
     return k, np.abs(ft_profile)
 
