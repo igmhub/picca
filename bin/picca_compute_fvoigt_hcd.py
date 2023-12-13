@@ -71,20 +71,20 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                      description=('Compute FVoigt profile'))
 
-    parser.add_argument('-o', '--output', type=str, default=None,
+    parser.add_argument('-o', '--output', type=str, required=True,
                         help=('Name and path of file to write FVoigt profile to'))
 
-    parser.add_argument('--weights', type=str, default=None,
+    parser.add_argument('--weights', type=str, required=True,
                         help=('File with total weight as a function of observed wavelength'))
 
-    parser.add_argument('--cddf', type=str, default=None,
+    parser.add_argument('--cddf', type=str, required=True,
                         help=('File with column density distribution function (CDDF)'))
 
-    parser.add_argument('--dla-prob', type=str, default=None,
+    parser.add_argument('--dla-prob', type=str, required=True,
                         help=('File with probability of finding DLAs in a forest '
                               'as a function of observed wavelength'))
 
-    parser.add_argument('--z-dla', type=float, default=None,
+    parser.add_argument('--z-dla', type=float, required=True,
                         help=('Mean DLA redshift'))
 
     parser.add_argument('--normalize', action='store_true', required=False,
