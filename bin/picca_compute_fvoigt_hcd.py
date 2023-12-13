@@ -111,7 +111,7 @@ def main():
     mean_density = np.average(dla_prob_comov_dist, weights=weight_interp)
 
     wave = np.arange(2000, 8000, 1)  # TODO this grid may be too sparse
-    integrand = np.empty((dN_NHI.size, wave.size))# // 2 + 1))
+    integrand = np.empty((dN_NHI.size, wave.size // 2 + 1))
     for i, NHI in enumerate(dN_NHI):
         profile_wave = dla_profile(wave, args.z_dla, NHI)
         profile_wave /= np.mean(profile_wave)
