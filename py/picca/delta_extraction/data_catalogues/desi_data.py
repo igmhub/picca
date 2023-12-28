@@ -370,13 +370,13 @@ class DesiDataFileHandler():
                     ivar = spec['IVAR'][w_t].copy()
 
                 # If keep_single_exposures is activated, all exposures are kept.
-                # To avoid coadding exposures, we store the forest with 
+                # To avoid coadding exposures, we store the forest with
                 # targetid_i (i = exposure index) instead of targetid
                 if self.use_non_coadded_spectra & self.keep_single_exposures:
                     # One exposure case
                     if len(flux.shape) != 2:
                         flux , ivar = np.array([flux]), np.array([ivar])
-                    for i in range(len(flux)):
+                    for i, _ in enumerate(flux):
                         num_data = self.update_forest_dictionary(
                                 forests_by_targetid,
                                 f"{targetid}_{i}",
@@ -413,6 +413,43 @@ class DesiDataFileHandler():
                                  w_t,
                                  reso_from_truth,
                                  num_data):
+        """Add new forests to the current forest dictonary
+
+        Arguments
+        ---------
+        forests_by_targetid: dict
+        Dictionary were forests are stored.
+
+        key_update: int or str
+        The key to update in the forest dictionary
+
+        spec: dict
+        Dictionary containing the spectrum information.
+
+        row: dict
+        Metadata of the spectrum to treat.
+
+        flux: numpy.array
+        Flux of the spectrum to add.
+
+        ivar: numpy.array
+        Inverse variance of the spectrum to add.
+
+        w_t: numpy.array
+        The index of spectrum with the same targetid.
+
+        reso_from_truth: bool - Default: False
+        Specifies whether resolution matrixes are read from truth files (True)
+        or directly from data (False)
+
+        num_data: int
+        The number of instances loaded
+        
+        Return
+        ------
+        num_data: int
+        The number of instances loaded
+        """
         args = {
             "flux": flux,
             "ivar": ivar,
