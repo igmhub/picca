@@ -23,13 +23,14 @@ from picca.delta_extraction.utils import (
 accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(
     accepted_options,
-    ["unblind", "use non-coadded spectra", "wave solution"])
+    ["unblind", "use non-coadded spectra", "keep single exposures", "wave solution"])
 
 defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
     "unblind": False,
     "use non-coadded spectra": False,
+    "keep single exposures": False,
     "wave solution": "lin",
 })
 defaults = update_default_options(defaults, defaults_quasar_catalogue)
@@ -88,8 +89,12 @@ class DesiData(Data):
     Logger object
 
     use_non_coadded_spectra: bool
-    If True, load data from non-coadded spectra and coadd them here. Otherwise,
+    If True, load data from non-coadded spectra. Otherwise,
     load coadded data
+
+    keep_single_exposures: bool
+    If True, the date loadded from non-coadded spectra are not coadded. 
+    Otherwise, coadd the spectra here.
     """
 
     def __init__(self, config):
@@ -108,6 +113,7 @@ class DesiData(Data):
         # load variables from config
         self.unblind = None
         self.use_non_coadded_spectra = None
+        self.keep_single_exposures = None
         self.__parse_config(config)
 
         # load z_truth catalogue
@@ -151,6 +157,13 @@ class DesiData(Data):
             raise DataError(
                 "Missing argument 'use non-coadded spectra' required by DesiData"
             )
+        self.keep_single_exposures = config.getboolean(
+            "keep single exposures")
+        if self.keep_single_exposures is None:
+            raise DataError(
+                "Missing argument 'keep single exposures' required by DesiData"
+            )
+
 
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
@@ -240,11 +253,15 @@ class DesiDataFileHandler():
     Logger object
 
     use_non_coadded_spectra: bool
-    If True, load data from non-coadded spectra and coadd them here. Otherwise,
+    If True, load data from non-coadded spectra. Otherwise,
     load coadded data
+
+    keep_single_exposures: bool
+    If True, the date loadded from non-coadded spectra are not coadded. 
+    Otherwise, coadd the spectra here.
     """
 
-    def __init__(self, analysis_type, use_non_coadded_spectra, logger):
+    def __init__(self, analysis_type, use_non_coadded_spectra, keep_single_exposures, logger):
         """Initialize file handler
 
         Arguments
@@ -254,8 +271,12 @@ class DesiDataFileHandler():
         for details
 
         use_non_coadded_spectra: bool
-        If True, load data from non-coadded spectra and coadd them here. Otherwise,
+        If True, load data from non-coadded spectra. Otherwise,
         load coadded data
+
+        keep_single_exposures: bool
+        If True, the date loadded from non-coadded spectra are not coadded. 
+        Otherwise, coadd the spectra here.
 
         logger: logging.Logger
         Logger object from parent class. Trying to initialize it here
@@ -266,6 +287,7 @@ class DesiDataFileHandler():
         self.logger = logger
         self.analysis_type = analysis_type
         self.use_non_coadded_spectra = use_non_coadded_spectra
+        self.keep_single_exposures = keep_single_exposures
 
     def __call__(self, args):
         """Call method read_file. Note imap can be called with
@@ -325,9 +347,10 @@ class DesiDataFileHandler():
                     f"Error reading {targetid}. Ignoring object")
                 continue
             if len(w_t) > 1:
-                self.logger.warning(
-                    "Warning: more than one spectrum in this file "
-                    f"for {targetid}")
+                if not self.use_non_coadded_spectra:
+                    self.logger.warning(
+                        "Warning: more than one spectrum in this file "
+                        f"for {targetid}")
             else:
                 w_t = w_t[0]
             # Construct DesiForest instance

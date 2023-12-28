@@ -119,6 +119,7 @@ class DesiHealpix(DesiData):
                 imap_it = pool.imap(
                     DesiHealpixFileHandler(self.analysis_type,
                                            self.use_non_coadded_spectra,
+                                           self.keep_single_exposures,
                                            self.logger), arguments)
                 for forests_by_targetid_aux, _ in imap_it:
                     # Merge each dict to master forests_by_targetid
@@ -128,6 +129,7 @@ class DesiHealpix(DesiData):
         else:
             reader = DesiHealpixFileHandler(self.analysis_type,
                                             self.use_non_coadded_spectra,
+                                            self.keep_single_exposures,
                                             self.logger)
             num_data = 0
             for index, this_arg in enumerate(arguments):

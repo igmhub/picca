@@ -96,6 +96,7 @@ class DesiTile(DesiData):
                 imap_it = pool.imap(
                     DesiTileFileHandler(self.analysis_type,
                                         self.use_non_coadded_spectra,
+                                        self.keep_single_exposures,
                                         self.logger, self.input_directory),
                     arguments)
                 for forests_by_targetid_aux, _ in imap_it:
@@ -106,6 +107,7 @@ class DesiTile(DesiData):
             num_data = 0
             reader = DesiTileFileHandler(self.analysis_type,
                                          self.use_non_coadded_spectra,
+                                         self.keep_single_exposures,
                                          self.logger, self.input_directory)
             for index, filename in enumerate(filenames):
                 forests_by_targetid_aux, num_data_aux = reader(
@@ -140,7 +142,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
     (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
     """
 
-    def __init__(self, analysis_type, use_non_coadded_spectra, logger,
+    def __init__(self, analysis_type, use_non_coadded_spectra, keep_single_exposures, logger,
                  input_directory):
         """Initialize file handler
 
@@ -151,9 +153,13 @@ class DesiTileFileHandler(DesiDataFileHandler):
         for details
 
         use_non_coadded_spectra: bool
-        If True, load data from non-coadded spectra and coadd them here. Otherwise,
+        If True, load data from non-coadded spectra. Otherwise,
         load coadded data
 
+        keep_single_exposures: bool
+        If True, the date loadded from non-coadded spectra are not coadded. 
+        Otherwise, coadd the spectra here.
+        
         logger: logging.Logger
         Logger object
 
@@ -161,7 +167,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
         Directory where input data is stored.
         """
         self.input_directory = input_directory
-        super().__init__(analysis_type, use_non_coadded_spectra, logger)
+        super().__init__(analysis_type, use_non_coadded_spectra, keep_single_exposures, logger)
 
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.

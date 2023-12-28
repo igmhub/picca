@@ -79,6 +79,7 @@ class DataTest(AbstractTest):
         with self.assertRaises(DataError) as context_manager:
             reader = DesiHealpixFileHandler(data.analysis_type,
                                             data.use_non_coadded_spectra,
+                                            data.keep_single_exposures,
                                             data.logger)
 
             reader((filename, catalogue))
