@@ -112,7 +112,6 @@ class DesiHealpix(DesiData):
             arguments.append((filename, group))
 
         self.logger.info(f"reading data from {len(arguments)} files")
-
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
             with context.Pool(processes=self.num_processors) as pool:
@@ -121,7 +120,12 @@ class DesiHealpix(DesiData):
                                            self.use_non_coadded_spectra,
                                            self.keep_single_exposures,
                                            self.logger), arguments)
-                for forests_by_targetid_aux, _ in imap_it:
+                for index, output_imap in enumerate(imap_it):
+                    forests_by_targetid_aux = output_imap[0]
+                    if self.use_non_coadded_spectra & self.keep_single_exposures:
+                        # Change the dictionary key to prevent coadding.
+                        forests_by_targetid_aux= {f"{index}_{key}": forests_by_targetid_aux[key] 
+                                                  for key in forests_by_targetid_aux.keys()}
                     # Merge each dict to master forests_by_targetid
                     merge_new_forest(forests_by_targetid,
                                      forests_by_targetid_aux)
@@ -134,6 +138,10 @@ class DesiHealpix(DesiData):
             num_data = 0
             for index, this_arg in enumerate(arguments):
                 forests_by_targetid_aux, num_data_aux = reader(this_arg)
+                if self.use_non_coadded_spectra & self.keep_single_exposures:
+                    # Change the dictionary key to prevent coadding.
+                    forests_by_targetid_aux= {f"{index}_{key}": forests_by_targetid_aux[key] 
+                                              for key in forests_by_targetid_aux.keys()}                        
                 merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
                 num_data += num_data_aux
                 self.logger.progress(f"Read {index} of {len(arguments)}. "

@@ -99,7 +99,12 @@ class DesiTile(DesiData):
                                         self.keep_single_exposures,
                                         self.logger, self.input_directory),
                     arguments)
-                for forests_by_targetid_aux, _ in imap_it:
+                for index, output_imap in enumerate(imap_it):
+                    forests_by_targetid_aux = output_imap[0]
+                    if self.use_non_coadded_spectra & self.keep_single_exposures:
+                        # Change the dictionary key to prevent coadding.
+                        forests_by_targetid_aux= {f"{index}_{key}": forests_by_targetid_aux[key] 
+                                                  for key in forests_by_targetid_aux.keys()}
                     # Merge each dict to master forests_by_targetid
                     merge_new_forest(forests_by_targetid,
                                      forests_by_targetid_aux)
@@ -112,6 +117,10 @@ class DesiTile(DesiData):
             for index, filename in enumerate(filenames):
                 forests_by_targetid_aux, num_data_aux = reader(
                     (filename, self.catalogue))
+                if self.use_non_coadded_spectra & self.keep_single_exposures:
+                    # Change the dictionary key to prevent coadding.
+                    forests_by_targetid_aux= {f"{index}_{key}": forests_by_targetid_aux[key] 
+                                              for key in forests_by_targetid_aux.keys()}
                 merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
                 num_data += num_data_aux
                 self.logger.progress(
@@ -159,7 +168,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
         keep_single_exposures: bool
         If True, the date loadded from non-coadded spectra are not coadded. 
         Otherwise, coadd the spectra here.
-        
+
         logger: logging.Logger
         Logger object
 
