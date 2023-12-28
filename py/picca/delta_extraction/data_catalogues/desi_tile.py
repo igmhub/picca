@@ -103,8 +103,8 @@ class DesiTile(DesiData):
                     forests_by_targetid_aux = output_imap[0]
                     if self.use_non_coadded_spectra & self.keep_single_exposures:
                         # Change the dictionary key to prevent coadding.
-                        forests_by_targetid_aux= {f"{index}_{key}": forests_by_targetid_aux[key]
-                                                  for key, _ in forests_by_targetid_aux.items()}
+                        forests_by_targetid_aux= {f"{index}_{key}": items
+                                                  for key, items in forests_by_targetid_aux.items()}
                     # Merge each dict to master forests_by_targetid
                     merge_new_forest(forests_by_targetid,
                                      forests_by_targetid_aux)
@@ -119,8 +119,8 @@ class DesiTile(DesiData):
                     (filename, self.catalogue))
                 if self.use_non_coadded_spectra & self.keep_single_exposures:
                     # Change the dictionary key to prevent coadding.
-                    forests_by_targetid_aux= {f"{index}_{key}": forests_by_targetid_aux[key]
-                                              for key, _ in forests_by_targetid_aux.items()}
+                    forests_by_targetid_aux= {f"{index}_{key}": items
+                                              for key, items in forests_by_targetid_aux.items()}
                 merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
                 num_data += num_data_aux
                 self.logger.progress(

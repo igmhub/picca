@@ -376,13 +376,13 @@ class DesiDataFileHandler():
                     # One exposure case
                     if len(flux.shape) != 2:
                         flux , ivar = np.array([flux]), np.array([ivar])
-                    for i, _ in enumerate(flux):
+                    for i, flux_i in enumerate(flux):
                         num_data = self.update_forest_dictionary(
                                 forests_by_targetid,
                                 f"{targetid}_{i}",
                                 spec,
                                 row,
-                                flux[i],
+                                flux_i,
                                 ivar[i],
                                 targetid,
                                 w_t,
