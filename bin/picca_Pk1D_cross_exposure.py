@@ -92,7 +92,7 @@ def read_delta_k_file(filename,args):
                     correction_reso=correction_reso,
                     pk=pk_cross_exposure,
                 )
-                
+            file_index =0
             if file_out is None:
                 file_out = fitsio.FITS((args.out_dir + '/Pk1D-' +
                                            str(file_index) + '.fits.gz'),

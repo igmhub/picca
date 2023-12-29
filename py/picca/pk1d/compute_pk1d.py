@@ -299,9 +299,7 @@ def fill_masked_pixels(
     )
 
 
-def compute_pk_raw(
-    delta_lambda_or_log_lambda, delta, linear_binning=False, return_delta=False
-):
+def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False):
     """Compute the raw power spectrum
 
     Arguments
@@ -316,13 +314,13 @@ def compute_pk_raw(
     If set then inputs need to be in AA, outputs will be 1/AA else inputs will
     be in log(AA) and outputs in s/km
 
-    return_delta: bool
-    If set to True, return the fourier transform of delta, not pk.
-
     Return
     ------
     k: array of float
     The Fourier modes the Power Spectrum is measured on
+
+    fft_delta: array of complex
+    The Fourier transform of delta
 
     pk: array of float
     The Power Spectrum
@@ -344,15 +342,13 @@ def compute_pk_raw(
     # compute wavenumber
     k = 2 * np.pi * rfftfreq(num_pixels, length_lambda / num_pixels)
 
-    if return_delta:
-        # return the Fourier transform of delta (delta_k),
-        # normalized so that pk = delta_k.real**2 + delta_k.imag**2
-        return k, fft_delta * np.sqrt(length_lambda) / num_pixels
+    # normalize Fourier transform of delta
+    fft_delta = fft_delta * np.sqrt(length_lambda) / num_pixels
 
     # compute power spectrum
-    pk = (fft_delta.real**2 + fft_delta.imag**2) * length_lambda / num_pixels**2
+    pk = fft_delta.real**2 + fft_delta.imag**2
 
-    return k, pk
+    return k, fft_delta, pk
 
 
 def compute_pk_cross_exposure(fft_delta_real_array, fft_delta_imag_array):
@@ -459,14 +455,14 @@ def compute_pk_noise(
         for _ in range(num_noise_exposures):
             delta_exp = np.zeros(num_pixels)
             delta_exp[w] = np.random.normal(0.0, error[w])
-            _, pk_exp = compute_pk_raw(
+            _, _, pk_exp = compute_pk_raw(
                 delta_lambda_or_log_lambda, delta_exp, linear_binning=linear_binning
             )
             pk_noise += pk_exp
 
         pk_noise /= float(num_noise_exposures)
 
-    _, pk_diff = compute_pk_raw(
+    _, _, pk_diff = compute_pk_raw(
         delta_lambda_or_log_lambda, exposures_diff, linear_binning=linear_binning
     )
 
@@ -535,7 +531,7 @@ def compute_correction_reso_matrix(
     # first compute the power in the resmat for each pixel, then average
     for resmat in reso_matrix:
         r = np.append(resmat, np.zeros(num_pixel - resmat.size))
-        k_resmat, w2 = compute_pk_raw(delta_pixel, r, linear_binning=True)
+        k_resmat, _, w2 = compute_pk_raw(delta_pixel, r, linear_binning=True)
         try:
             assert np.all(k_resmat == k)
         except AssertionError as error:
@@ -680,8 +676,8 @@ class Pk1D:
         pk_diff=None,
         correction_reso=None,
         pk=None,
-        fft_delta_real = None,
-        fft_delta_imag = None,
+        fft_delta_real=None,
+        fft_delta_imag=None,
     ):
         """Initialize instance
 
@@ -793,16 +789,15 @@ class Pk1D:
         pk_noise = data["PK_NOISE"][:]
         correction_reso = data["COR_RESO"][:]
         pk_diff = data["PK_DIFF"][:]
+        pk = data["PK"][:]
+        pk_raw = data["PK_RAW"][:]
+
         try:
-            pk = data["PK"][:]
-            pk_raw = data["PK_RAW"][:]
-            fft_delta_real = None
-            fft_delta_imag = None
-        except:
-            pk = None
-            pk_raw = None
             fft_delta_real = data["DELTA_K_REAL"][:]
             fft_delta_imag = data["DELTA_K_IMAG"][:]
+        except:
+            fft_delta_real = None
+            fft_delta_imag = None
 
         return cls(
             ra=ra,
@@ -875,50 +870,23 @@ class Pk1D:
             },
         ]
 
-        if self.pk is not None:
-            cols = [
-                self.k,
-                self.pk_raw,
-                self.pk_noise,
-                self.pk_diff,
-                self.correction_reso,
-                self.pk,
-            ]
-            names = ["K", "PK_NOISE", "PK_DIFF", "COR_RESO", "PK_RAW", "PK"]
-            comments = [
-                "Wavenumber",
-                "Noise's power spectrum",
-                "Noise coadd difference power spectrum",
-                "Correction resolution function",
-                "Raw power spectrum",
-                "Corrected power spectrum (resolution and noise)",
-            ]
-        else:
-            cols = [
-                self.k,
-                self.pk_noise,
-                self.pk_diff,
-                self.correction_reso,
-                self.fft_delta_real,
-                self.fft_delta_imag,
-            ]
-            names = [
-                "K",
-                "PK_NOISE",
-                "PK_DIFF",
-                "COR_RESO",
-                "DELTA_K_REAL",
-                "DELTA_K_IMAG",
-            ]
-            comments = [
-                "Wavenumber",
-                "Noise's power spectrum",
-                "Noise coadd difference power spectrum",
-                "Correction resolution function",
-                "Fourier delta real part",
-                "Fourier delta imaginary part",
-            ]
-
+        cols = [
+            self.k,
+            self.pk_raw,
+            self.pk_noise,
+            self.pk_diff,
+            self.correction_reso,
+            self.pk,
+        ]
+        names = ["K", "PK_RAW", "PK_NOISE", "PK_DIFF", "COR_RESO", "PK"]
+        comments = [
+            "Wavenumber",
+            "Raw power spectrum",
+            "Noise's power spectrum",
+            "Noise coadd difference power spectrum",
+            "Correction resolution function",
+            "Corrected power spectrum (resolution and noise)",
+        ]
         if self.linear_bining:
             baseunit = "AA"
         else:
@@ -932,4 +900,25 @@ class Pk1D:
             f"{baseunit}",
         ]
 
-        file.write(cols, names=names, header=header, comment=comments, units=units)
+        if self.fft_delta_real is not None:
+            cols += [self.fft_delta_real, self.fft_delta_imag]
+            names += [
+                "DELTA_K_REAL",
+                "DELTA_K_IMAG",
+            ]
+            comments += [
+                "Fourier delta real part",
+                "Fourier delta imaginary part",
+            ]
+            units += [
+                f"{baseunit}^(1/2)",
+                f"{baseunit}^(1/2)",
+            ]
+
+        file.write(
+            cols,
+            names=names,
+            header=header,
+            comment=comments,
+            units=units,
+        )
