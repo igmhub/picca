@@ -234,7 +234,7 @@ def process_all_files(index_file_args):
                     selection = (((k > args.kmin_noise_avg) if args.kmax_noise_avg is not None else 1) &
                                  ((k < args.kmax_noise_avg) if args.kmax_noise_avg is not None else 1))
                 mean_pk_noise = np.mean(pk_noise[selection])
-                pk = (pk_raw - pk_noise) / correction_reso
+                pk = (pk_raw - mean_pk_noise) / correction_reso
 
 
 
