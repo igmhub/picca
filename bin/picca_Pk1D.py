@@ -242,16 +242,6 @@ def process_all_files(index_file_args):
                 mean_pk_diff = np.mean(pk_diff[selection])
                 pk = (pk_raw - mean_pk_diff) / correction_reso
 
-            if args.force_output_in_velocity and linear_binning:
-                #division by 1000 to convert speed_light from m/s to km/s
-                c_kms=constants.speed_light / 1000
-                lambda_mean=np.mean(lambda_new)
-                pk *= c_kms / lambda_mean
-                pk_raw *= c_kms / lambda_mean
-                pk_noise *= c_kms / lambda_mean
-                pk_diff *= c_kms / 1000 / lambda_mean
-                k /= c_kms / lambda_mean
-
             # save in fits format
             if args.out_format == 'fits':
                 header = [{
@@ -308,7 +298,7 @@ def process_all_files(index_file_args):
                     'Correction resolution function',
                     'Corrected power spectrum (resolution and noise)'
                 ]
-                if linear_binning and not args.force_output_in_velocity:
+                if linear_binning:
                     baseunit = "AA"
                 else:
                     baseunit = "km/s"
@@ -468,16 +458,6 @@ def main(cmdargs):
                         help=('Add a pixelization correction, as if the resolution  '
                               'matrix was doubly pixelized. Only use this option in '
                               'quickquasars mocks'))
-
-
-    parser.add_argument(
-        '--force-output-in-velocity',
-        default=False,
-        action='store_true',
-        required=False,
-        help=
-        ('store outputs in units of velocity even for linear binning computations'
-         ))
 
     parser.add_argument(
         '--seed',
