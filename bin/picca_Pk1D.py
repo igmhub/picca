@@ -24,6 +24,7 @@ num_data=0
 def process_all_files(index_file_args):
     global num_data
     file_index, file, args = index_file_args
+    file_number = file.split("-")[-1].split(".fits.gz")[0]
     if file_index % 5 == 0:
         userprint("\rread {} of {} {}".format(file_index, args.len_files,
                                               num_data),
@@ -270,7 +271,7 @@ def process_all_files(index_file_args):
                 
                 if file_out is None:
                     file_out = fitsio.FITS((args.out_dir + '/Pk1D-' +
-                                           str(file_index) + '.fits.gz'),
+                                           str(file_number) + '.fits.gz'),
                                           'rw',
                                           clobber=True)
                                     
