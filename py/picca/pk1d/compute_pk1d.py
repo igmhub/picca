@@ -18,16 +18,18 @@ from picca import constants
 from picca.utils import userprint
 
 
-def split_forest(num_parts,
-                 pixel_step,
-                 lambda_or_log_lambda,
-                 delta,
-                 exposures_diff,
-                 ivar,
-                 first_pixel_index,
-                 abs_igm="LYA",
-                 reso_matrix=None,
-                 linear_binning=False):
+def split_forest(
+    num_parts,
+    pixel_step,
+    lambda_or_log_lambda,
+    delta,
+    exposures_diff,
+    ivar,
+    first_pixel_index,
+    abs_igm="LYA",
+    reso_matrix=None,
+    linear_binning=False,
+):
     """Split the forest in n parts
 
     Arguments
@@ -95,15 +97,17 @@ def split_forest(num_parts,
 
     for index in range(1, num_parts):
         lambda_or_log_lambda_limit.append(
-            lambda_or_log_lambda[num_bins * index + first_pixel_index])
+            lambda_or_log_lambda[num_bins * index + first_pixel_index]
+        )
 
     lambda_or_log_lambda_limit.append(
-        lambda_or_log_lambda[len(lambda_or_log_lambda) - 1] + 0.1 * pixel_step)
+        lambda_or_log_lambda[len(lambda_or_log_lambda) - 1] + 0.1 * pixel_step
+    )
 
     for index in range(num_parts):
-        selection = (
-            (lambda_or_log_lambda >= lambda_or_log_lambda_limit[index]) &
-            (lambda_or_log_lambda < lambda_or_log_lambda_limit[index + 1]))
+        selection = (lambda_or_log_lambda >= lambda_or_log_lambda_limit[index]) & (
+            lambda_or_log_lambda < lambda_or_log_lambda_limit[index + 1]
+        )
 
         lambda_or_log_lambda_part = lambda_or_log_lambda[selection].copy()
         lambda_abs_igm = constants.ABSORBER_IGM[abs_igm]
@@ -111,8 +115,7 @@ def split_forest(num_parts,
         if linear_binning:
             mean_z = np.mean(lambda_or_log_lambda_part) / lambda_abs_igm - 1.0
         else:
-            mean_z = np.mean(10**
-                             lambda_or_log_lambda_part) / lambda_abs_igm - 1.0
+            mean_z = np.mean(10**lambda_or_log_lambda_part) / lambda_abs_igm - 1.0
 
         if reso_matrix is not None:
             reso_matrix_part = reso_matrix[:, selection].copy()
@@ -123,15 +126,18 @@ def split_forest(num_parts,
         if exposures_diff is not None:
             exposures_diff_array.append(exposures_diff[selection].copy())
         else:  # fill exposures_diff_array with zeros
-            userprint('WARNING: exposure_diff is None, filling with zeros.')
+            userprint("WARNING: exposure_diff is None, filling with zeros.")
             exposures_diff_array.append(np.zeros(delta[selection].shape))
         ivar_array.append(ivar[selection].copy())
         if reso_matrix is not None:
             reso_matrix_array.append(reso_matrix_part)
 
     out = [
-        mean_z_array, lambda_or_log_lambda_array, delta_array,
-        exposures_diff_array, ivar_array
+        mean_z_array,
+        lambda_or_log_lambda_array,
+        delta_array,
+        exposures_diff_array,
+        ivar_array,
     ]
     if reso_matrix is not None:
         out.append(reso_matrix_array)
@@ -175,8 +181,11 @@ def rebin_diff_noise(pixel_step, lambda_or_log_lambda, exposures_diff):
     rebin_delta_lambda_or_log_lambda = rebin * pixel_step
 
     # rebin not mixing pixels separated by masks
-    bins = np.floor((lambda_or_log_lambda - lambda_or_log_lambda.min()) /
-                    rebin_delta_lambda_or_log_lambda + 0.5).astype(int)
+    bins = np.floor(
+        (lambda_or_log_lambda - lambda_or_log_lambda.min())
+        / rebin_delta_lambda_or_log_lambda
+        + 0.5
+    ).astype(int)
 
     rebin_exposure_diff = np.bincount(bins.astype(int), weights=exposures_diff)
     rebin_counts = np.bincount(bins.astype(int))
@@ -188,19 +197,24 @@ def rebin_diff_noise(pixel_step, lambda_or_log_lambda, exposures_diff):
     # now merge the rebinned array into a noise array
     noise = np.zeros(exposures_diff.size)
     for index in range(len(exposures_diff) // len(rebin_exposure_diff) + 1):
-        length_max = min(len(exposures_diff),
-                         (index + 1) * len(rebin_exposure_diff))
-        noise[index *
-              len(rebin_exposure_diff):length_max] = rebin_exposure_diff[:(
-                  length_max - index * len(rebin_exposure_diff))]
+        length_max = min(len(exposures_diff), (index + 1) * len(rebin_exposure_diff))
+        noise[index * len(rebin_exposure_diff) : length_max] = rebin_exposure_diff[
+            : (length_max - index * len(rebin_exposure_diff))
+        ]
         # shuffle the array before the next iteration
         np.random.shuffle(rebin_exposure_diff)
 
     return noise
 
 
-def fill_masked_pixels(delta_lambda_or_log_lambda, lambda_or_log_lambda, delta,
-                       exposures_diff, ivar, no_apply_filling):
+def fill_masked_pixels(
+    delta_lambda_or_log_lambda,
+    lambda_or_log_lambda,
+    delta,
+    exposures_diff,
+    ivar,
+    no_apply_filling,
+):
     """Fills the masked pixels with zeros
 
     Note that inputs can be either linear or log-lambda spaced units (but
@@ -276,12 +290,18 @@ def fill_masked_pixels(delta_lambda_or_log_lambda, lambda_or_log_lambda, delta,
 
     num_masked_pixels = len(index_all) - len(lambda_or_log_lambda_index)
 
-    return (lambda_or_log_lambda_new, delta_new, exposures_diff_new, ivar_new,
-            num_masked_pixels)
+    return (
+        lambda_or_log_lambda_new,
+        delta_new,
+        exposures_diff_new,
+        ivar_new,
+        num_masked_pixels,
+    )
 
 
-def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False,
-                   return_delta=False):
+def compute_pk_raw(
+    delta_lambda_or_log_lambda, delta, linear_binning=False, return_delta=False
+):
     """Compute the raw power spectrum
 
     Arguments
@@ -310,8 +330,12 @@ def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False,
     if linear_binning:  # spectral length in AA
         length_lambda = delta_lambda_or_log_lambda * len(delta)
     else:  # spectral length in km/s
-        length_lambda = (delta_lambda_or_log_lambda * constants.SPEED_LIGHT *
-                         np.log(10.) * len(delta))
+        length_lambda = (
+            delta_lambda_or_log_lambda
+            * constants.SPEED_LIGHT
+            * np.log(10.0)
+            * len(delta)
+        )
 
     # make 1D FFT
     num_pixels = len(delta)
@@ -322,7 +346,7 @@ def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False,
 
     if return_delta:
         # return the Fourier transform of delta (delta_k),
-        # normalized so that pk = delta_k.real**2 + delta_k.imag**2
+        # normalized so that pk = delta_k.real**2 + delta_k.imag**2
         return k, fft_delta * np.sqrt(length_lambda) / num_pixels
 
     # compute power spectrum
@@ -331,12 +355,65 @@ def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False,
     return k, pk
 
 
-def compute_pk_noise(delta_lambda_or_log_lambda,
-                     ivar,
-                     exposures_diff,
-                     run_noise,
-                     num_noise_exposures=10,
-                     linear_binning=False):
+def compute_pk_cross_exposure(fft_delta_real_array, fft_delta_imag_array):
+    """
+    Computes the cross-exposure power spectrum estimator.
+
+    Arguments
+    ---------
+    fft_delta_real_array: numpy.array
+    Contains the real part of the fft of delta for all individual exposures
+
+    fft_delta_imag_array: numpy.array
+    Contains the imaginary part of the fft of delta for all individual exposures
+
+    Return
+    ------
+    pk_cross_exposure: numpy.array
+    The power spectrum of the cross exposure estimator
+
+    """
+    number_exposures = len(fft_delta_real_array)
+    if number_exposures < 2:
+        raise ValueError(
+            "The cross exposure estimator can only be used "
+            "with a number of exposures equal or higher than 2"
+        )
+
+    pk_cross_exposure = np.zeros_like(fft_delta_real_array[0])
+
+    for i, (fft_delta_real_i, fft_delta_imag_i) in enumerate(
+        zip(fft_delta_real_array, fft_delta_imag_array)
+    ):
+        for _, (fft_delta_real_j, fft_delta_imag_j) in enumerate(
+            zip(fft_delta_real_array, fft_delta_imag_array), start=i + 1
+        ):
+            pk_cross_exposure += np.sqrt(
+                (
+                    fft_delta_real_i * fft_delta_real_j
+                    - fft_delta_imag_i * fft_delta_imag_j
+                )
+                ** 2
+                + (
+                    fft_delta_real_i * fft_delta_imag_j
+                    + fft_delta_real_j * fft_delta_imag_i
+                )
+                ** 2
+            )
+    number_pairs = number_exposures * (number_exposures + 1) / 2
+    pk_cross_exposure = pk_cross_exposure / number_pairs
+
+    return pk_cross_exposure
+
+
+def compute_pk_noise(
+    delta_lambda_or_log_lambda,
+    ivar,
+    exposures_diff,
+    run_noise,
+    num_noise_exposures=10,
+    linear_binning=False,
+):
     """Compute the noise power spectrum
 
     Two noise power spectrum are computed: one using the pipeline noise and
@@ -381,17 +458,17 @@ def compute_pk_noise(delta_lambda_or_log_lambda,
     if run_noise:
         for _ in range(num_noise_exposures):
             delta_exp = np.zeros(num_pixels)
-            delta_exp[w] = np.random.normal(0., error[w])
-            _, pk_exp = compute_pk_raw(delta_lambda_or_log_lambda,
-                                       delta_exp,
-                                       linear_binning=linear_binning)
+            delta_exp[w] = np.random.normal(0.0, error[w])
+            _, pk_exp = compute_pk_raw(
+                delta_lambda_or_log_lambda, delta_exp, linear_binning=linear_binning
+            )
             pk_noise += pk_exp
 
         pk_noise /= float(num_noise_exposures)
 
-    _, pk_diff = compute_pk_raw(delta_lambda_or_log_lambda,
-                                exposures_diff,
-                                linear_binning=linear_binning)
+    _, pk_diff = compute_pk_raw(
+        delta_lambda_or_log_lambda, exposures_diff, linear_binning=linear_binning
+    )
 
     return pk_noise, pk_diff
 
@@ -419,15 +496,16 @@ def compute_correction_reso(delta_pixel, mean_reso, k):
     num_bins_fft = len(k)
     correction = np.ones(num_bins_fft)
 
-    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))**2
+    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi)) ** 2
 
-    correction *= np.exp(-(k * mean_reso)**2)
+    correction *= np.exp(-((k * mean_reso) ** 2))
     correction *= pixelization_factor
     return correction
 
 
-def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel,
-                                   pixelization_correction = False):
+def compute_correction_reso_matrix(
+    reso_matrix, k, delta_pixel, num_pixel, pixelization_correction=False
+):
     """Computes the resolution correction based on the resolution matrix using linear binning
 
     Arguments
@@ -450,11 +528,11 @@ def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel,
     correction: array of float
     The resolution correction
     """
-    #this allows either computing the power for each pixel seperately or for the mean
+    # this allows either computing the power for each pixel seperately or for the mean
     reso_matrix = np.atleast_2d(reso_matrix)
 
     w2_arr = []
-    #first compute the power in the resmat for each pixel, then average
+    # first compute the power in the resmat for each pixel, then average
     for resmat in reso_matrix:
         r = np.append(resmat, np.zeros(num_pixel - resmat.size))
         k_resmat, w2 = compute_pk_raw(delta_pixel, r, linear_binning=True)
@@ -463,7 +541,8 @@ def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel,
         except AssertionError as error:
             raise AssertionError(
                 "for some reason the resolution matrix correction has "
-                "different k scaling than the pk") from error
+                "different k scaling than the pk"
+            ) from error
         w2 /= w2[0]
         w2_arr.append(w2)
 
@@ -472,8 +551,8 @@ def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel,
     # the following assumes that the resolution matrix is storing the actual
     # resolution convolved with the pixelization kernel along each matrix axis
     correction = w_res2
-    if pixelization_correction :
-        pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))**2
+    if pixelization_correction:
+        pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi)) ** 2
         correction /= pixelization_factor
 
     return correction
@@ -540,23 +619,26 @@ class Pk1D:
     pk_diff: array of float or None
     Power spectrum of exposures_diff for the different Fourier modes
     """
-    def __init__(self,
-                 ra,
-                 dec,
-                 z_qso,
-                 mean_z,
-                 plate,
-                 mjd,
-                 fiberid,
-                 mean_snr,
-                 mean_reso,
-                 k,
-                 pk_raw,
-                 pk_noise,
-                 correction_reso,
-                 pk,
-                 num_masked_pixels,
-                 pk_diff=None):
+
+    def __init__(
+        self,
+        ra,
+        dec,
+        z_qso,
+        mean_z,
+        plate,
+        mjd,
+        fiberid,
+        mean_snr,
+        mean_reso,
+        k,
+        pk_raw,
+        pk_noise,
+        correction_reso,
+        pk,
+        num_masked_pixels,
+        pk_diff=None,
+    ):
         """Initialize instance
 
         Arguments
@@ -643,30 +725,43 @@ class Pk1D:
 
         header = hdu.read_header()
 
-        ra = header['RA']
-        dec = header['DEC']
-        z_qso = header['Z']
-        mean_z = header['MEANZ']
-        mean_reso = header['MEANRESO']
-        mean_snr = header['MEANSNR']
-        plate = header['PLATE']
-        mjd = header['MJD']
-        fiberid = header['FIBER']
-        num_masked_pixels = header['NBMASKPIX']
+        ra = header["RA"]
+        dec = header["DEC"]
+        z_qso = header["Z"]
+        mean_z = header["MEANZ"]
+        mean_reso = header["MEANRESO"]
+        mean_snr = header["MEANSNR"]
+        plate = header["PLATE"]
+        mjd = header["MJD"]
+        fiberid = header["FIBER"]
+        num_masked_pixels = header["NBMASKPIX"]
 
         data = hdu.read()
-        k = data['k'][:]
-        pk = data['Pk'][:]
-        pk_raw = data['Pk_raw'][:]
-        pk_noise = data['Pk_noise'][:]
-        correction_reso = data['cor_reso'][:]
-        pk_diff = data['Pk_diff'][:]
+        k = data["k"][:]
+        pk = data["Pk"][:]
+        pk_raw = data["Pk_raw"][:]
+        pk_noise = data["Pk_noise"][:]
+        correction_reso = data["cor_reso"][:]
+        pk_diff = data["Pk_diff"][:]
 
-        return cls(ra, dec, z_qso, mean_z, plate, mjd, fiberid, mean_snr,
-                   mean_reso, k, pk_raw, pk_noise, correction_reso, pk,
-                   num_masked_pixels, pk_diff)
-
-
+        return cls(
+            ra,
+            dec,
+            z_qso,
+            mean_z,
+            plate,
+            mjd,
+            fiberid,
+            mean_snr,
+            mean_reso,
+            k,
+            pk_raw,
+            pk_noise,
+            correction_reso,
+            pk,
+            num_masked_pixels,
+            pk_diff,
+        )
 
 
 def check_linear_binning(delta):
@@ -677,7 +772,7 @@ def check_linear_binning(delta):
         delta (Delta): delta class as read with Delta.from_...
 
     Raises:
-        ValueError: Raised if binning is neither linear nor log, 
+        ValueError: Raised if binning is neither linear nor log,
         or if delta.log_lambda was actually wavelength
 
     Returns:
@@ -690,16 +785,16 @@ def check_linear_binning(delta):
     q5_lambda, q25_lambda = np.percentile(diff_lambda, [5, 25])
     q5_log_lambda, q25_log_lambda = np.percentile(diff_log_lambda, [5, 25])
     if (q25_lambda - q5_lambda) < 1e-6:
-        #we can assume linear binning for this case
+        # we can assume linear binning for this case
         linear_binning = True
         pixel_step = np.min(diff_lambda)
     elif (q25_log_lambda - q5_log_lambda) < 1e-6 and q5_log_lambda < 0.01:
-        #we can assume log_linear binning for this case
+        # we can assume log_linear binning for this case
         linear_binning = False
         pixel_step = np.min(diff_log_lambda)
     elif q5_log_lambda >= 0.01:
         raise ValueError(
-            "Could not figure out if linear or log wavelength binning was used," 
+            "Could not figure out if linear or log wavelength binning was used,"
             "probably submitted lambda as log_lambda"
         )
     else:
