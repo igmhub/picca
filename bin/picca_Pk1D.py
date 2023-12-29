@@ -165,59 +165,49 @@ def process_all_files(index_file_args):
                 continue
 
             # Compute pk_raw, needs uniform binning
-            if linear_binning:
-                k, pk_raw = compute_pk_raw(pixel_step,
-                                           delta_new,
-                                           linear_binning=True)
-            else:
-                k, pk_raw = compute_pk_raw(pixel_step,
-                                           delta_new,
-                                           linear_binning=False)
+            k, pk_raw = compute_pk_raw(pixel_step,
+                                       delta_new,
+                                       linear_binning=linear_binning)
 
             # Compute pk_noise
-            run_noise = False
-            if args.noise_estimate == 'pipeline':
-                run_noise = True
-            if linear_binning and not running_on_raw_transmission:
+            if (args.noise_estimate == 'pipeline')|(args.noise_estimate == 'mean_pipeline'):
+                run_gaussian_noise = True
+            else:
+                run_gaussian_noise = False
+            if not running_on_raw_transmission:
                 pk_noise, pk_diff = compute_pk_noise(pixel_step,
                                                      ivar_new,
                                                      exposures_diff_new,
-                                                     run_noise,
-                                                     linear_binning=True,
-                                                     num_noise_exposures=args.num_noise_exp)
-            elif not running_on_raw_transmission:
-                pk_noise, pk_diff = compute_pk_noise(pixel_step,
-                                                     ivar_new,
-                                                     exposures_diff_new,
-                                                     run_noise,
-                                                     linear_binning=False,
+                                                     run_gaussian_noise,
+                                                     linear_binning=linear_binning,
                                                      num_noise_exposures=args.num_noise_exp)
             else:
                 pk_noise=pk_diff=np.zeros(pk_raw.shape)
 
             # Compute resolution correction, needs uniform binning
-            if linear_binning and not running_on_raw_transmission:
-                #in this case all is in AA space
-                if reso_correction == 'matrix':
-                    correction_reso = compute_correction_reso_matrix(
-                        reso_matrix=np.mean(reso_matrix_array[part_index],
-                                            axis=1),
-                        k=k,
-                        delta_pixel=pixel_step,
-                        num_pixel=len(lambda_new),
-                        pixelization_correction = args.add_pixelization_correction)
-                elif reso_correction == 'Gaussian':
-                    #this is roughly converting the mean resolution estimate back to pixels
-                    #and then multiplying with pixel size
-                    mean_reso_AA = pixel_step * delta.mean_reso_pix
+            if not running_on_raw_transmission:
+                if linear_binning:
+                    #in this case all is in AA space
+                    if reso_correction == 'matrix':
+                        correction_reso = compute_correction_reso_matrix(
+                            reso_matrix=np.mean(reso_matrix_array[part_index],
+                                                axis=1),
+                            k=k,
+                            delta_pixel=pixel_step,
+                            num_pixel=len(lambda_new),
+                            pixelization_correction = args.add_pixelization_correction)
+                    elif reso_correction == 'Gaussian':
+                        #this is roughly converting the mean resolution estimate back to pixels
+                        #and then multiplying with pixel size
+                        mean_reso_AA = pixel_step * delta.mean_reso_pix
+                        correction_reso = compute_correction_reso(
+                            delta_pixel=pixel_step, mean_reso=mean_reso_AA, k=k)
+                else:
+                    #in this case all is in velocity space
+                    delta_pixel = (pixel_step * np.log(10.) *
+                                constants.speed_light / 1000.)
                     correction_reso = compute_correction_reso(
-                        delta_pixel=pixel_step, mean_reso=mean_reso_AA, k=k)
-            elif not running_on_raw_transmission:
-                #in this case all is in velocity space
-                delta_pixel = (pixel_step * np.log(10.) *
-                               constants.speed_light / 1000.)
-                correction_reso = compute_correction_reso(
-                    delta_pixel=delta_pixel, mean_reso=delta.mean_reso, k=k)
+                        delta_pixel=delta_pixel, mean_reso=delta.mean_reso, k=k)
             else:
                 correction_reso= compute_correction_reso(delta_pixel=pixel_step, mean_reso=0., k=k)
 
