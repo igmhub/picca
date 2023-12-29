@@ -14,47 +14,9 @@ from picca.data import Delta
 from picca.pk1d.compute_pk1d import (compute_correction_reso,
                         compute_correction_reso_matrix, compute_pk_noise,
                         compute_pk_raw, fill_masked_pixels, rebin_diff_noise,
-                        split_forest)
+                        split_forest, check_linear_binning)
 from picca.utils import userprint
 from multiprocessing import Pool
-
-
-def check_linear_binning(delta):
-    """checks if the wavelength binning is linear or log this is stable against masking
-
-    Args:
-        delta (Delta): delta class as read with Delta.from_...
-
-    Raises:
-        ValueError: Raised if binning is neither linear nor log, or if delta.log_lambda was actually wavelength
-
-    Returns:
-        linear_binning (bool): boolean telling the binning_type
-        pixel_step (float): size of a wavelength bin in the right unit
-    """
-
-    diff_lambda = np.diff(10**delta.log_lambda)
-    diff_log_lambda = np.diff(delta.log_lambda)
-    q5_lambda, q25_lambda = np.percentile(diff_lambda, [5, 25])
-    q5_log_lambda, q25_log_lambda = np.percentile(diff_log_lambda, [5, 25])
-    if (q25_lambda - q5_lambda) < 1e-6:
-        #we can assume linear binning for this case
-        linear_binning = True
-        pixel_step = np.min(diff_lambda)
-    elif (q25_log_lambda - q5_log_lambda) < 1e-6 and q5_log_lambda < 0.01:
-        #we can assume log_linear binning for this case
-        linear_binning = False
-        pixel_step = np.min(diff_log_lambda)
-    elif (q5_log_lambda >= 0.01):
-        raise ValueError(
-            "Could not figure out if linear or log wavelength binning was used, probably submitted lambda as log_lambda"
-        )
-    else:
-        raise ValueError(
-            "Could not figure out if linear or log wavelength binning was used"
-        )
-
-    return linear_binning, pixel_step
 
 
 # loop over input files
