@@ -279,7 +279,8 @@ def fill_masked_pixels(delta_lambda_or_log_lambda, lambda_or_log_lambda, delta,
             num_masked_pixels)
 
 
-def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False):
+def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False,
+                   return_delta=False):
     """Compute the raw power spectrum
 
     Arguments
@@ -293,6 +294,9 @@ def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False):
     linear_binning: bool
     If set then inputs need to be in AA, outputs will be 1/AA else inputs will
     be in log(AA) and outputs in s/km
+
+    return_delta: bool
+    If set to True, return the fourier transform of delta, not pk.
 
     Return
     ------
@@ -312,9 +316,14 @@ def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False):
     num_pixels = len(delta)
     fft_delta = rfft(delta)
 
+    # compute wavenumber
+    k = 2 * np.pi * rfftfreq(num_pixels, length_lambda / num_pixels)
+
+    if return_delta:
+        return k, fft_delta
+
     # compute power spectrum
     pk = (fft_delta.real**2 + fft_delta.imag**2) * length_lambda / num_pixels**2
-    k = 2 * np.pi * rfftfreq(num_pixels, length_lambda / num_pixels)
 
     return k, pk
 
