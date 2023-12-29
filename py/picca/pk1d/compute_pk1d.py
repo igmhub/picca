@@ -601,7 +601,7 @@ class Pk1D:
     Class Methods
     -------------
     from_fitsio
-    write
+    write_fits
 
     Methods
     -------
@@ -795,7 +795,7 @@ class Pk1D:
         try:
             fft_delta_real = data["DELTA_K_REAL"][:]
             fft_delta_imag = data["DELTA_K_IMAG"][:]
-        except:
+        except ValueError:
             fft_delta_real = None
             fft_delta_imag = None
 
@@ -821,6 +821,17 @@ class Pk1D:
         )
 
     def write_fits(self, file):
+        """Write an individual pk1D inside a FITS file.
+
+        Arguments
+        ---------
+        file: fitsio file
+        File to which a pk1D hdu will be added
+
+        Return
+        ------
+        None
+        """
         header = [
             {
                 "name": "RA",
