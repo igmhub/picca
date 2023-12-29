@@ -8,6 +8,7 @@ This module provides with one clas (Pk1D) and several functions:
     - compute_pk_raw
     - compute_pk_noise
     - compute_correction_reso
+    - check_linear_binning
 See the respective docstrings for more details
 """
 import numpy as np
@@ -669,13 +670,15 @@ class Pk1D:
 
 
 def check_linear_binning(delta):
-    """checks if the wavelength binning is linear or log this is stable against masking
+    """checks if the wavelength binning is linear or log,
+      this is stable against masking
 
     Args:
         delta (Delta): delta class as read with Delta.from_...
 
     Raises:
-        ValueError: Raised if binning is neither linear nor log, or if delta.log_lambda was actually wavelength
+        ValueError: Raised if binning is neither linear nor log, 
+        or if delta.log_lambda was actually wavelength
 
     Returns:
         linear_binning (bool): boolean telling the binning_type
@@ -694,9 +697,10 @@ def check_linear_binning(delta):
         #we can assume log_linear binning for this case
         linear_binning = False
         pixel_step = np.min(diff_log_lambda)
-    elif (q5_log_lambda >= 0.01):
+    elif q5_log_lambda >= 0.01:
         raise ValueError(
-            "Could not figure out if linear or log wavelength binning was used, probably submitted lambda as log_lambda"
+            "Could not figure out if linear or log wavelength binning was used," 
+            "probably submitted lambda as log_lambda"
         )
     else:
         raise ValueError(
