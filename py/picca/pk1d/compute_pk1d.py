@@ -789,17 +789,16 @@ class Pk1D:
         chunk_id = header["CHUNK_ID"]
 
         data = hdu.read()
-        k = data["k"][:]
-        pk_noise = data["Pk_noise"][:]
-        correction_reso = data["cor_reso"][:]
-        pk_diff = data["Pk_diff"][:]
-
-        if "Pk" in data:
-            pk = data["Pk"][:]
-            pk_raw = data["Pk_raw"][:]
+        k = data["K"][:]
+        pk_noise = data["PK_NOISE"][:]
+        correction_reso = data["COR_RESO"][:]
+        pk_diff = data["PK_DIFF"][:]
+        try:
+            pk = data["PK"][:]
+            pk_raw = data["PK_RAW"][:]
             fft_delta_real = None
             fft_delta_imag = None
-        else:
+        except:
             pk = None
             pk_raw = None
             fft_delta_real = data["DELTA_K_REAL"][:]
