@@ -558,212 +558,6 @@ def compute_correction_reso_matrix(
     return correction
 
 
-class Pk1D:
-    """Class to represent the 1D Power Spectrum for a given forest
-
-    Class Methods
-    -------------
-    from_fitsio
-
-    Methods
-    -------
-    __init__
-
-    Attributes
-    ----------
-    ra: float
-    Right-ascension of the quasar (in radians).
-
-    dec: float
-    Declination of the quasar (in radians).
-
-    z_qso: float
-    Redshift of the quasar.
-
-    plate: int
-    Plate number of the observation.
-
-    fiberid: int
-    Fiberid of the observation.
-
-    mjd: int
-    Modified Julian Date of the observation.
-
-    mean_snr: float
-    Mean signal-to-noise ratio in the forest
-
-    mean_reso: float
-    Mean resolution of the forest
-
-    mean_z: float
-    Mean redshift of the forest
-
-    num_masked_pixels: int
-    Number of masked pixels
-
-    k: array of float
-    Fourier modes
-
-    pk_raw: array of float
-    Raw power spectrum
-
-    pk_noise: array of float
-    Noise power spectrum for the different Fourier modes
-
-    correction_reso: array of float
-    Resolution correction
-
-    pk: array of float
-    Power Spectrum
-
-    pk_diff: array of float or None
-    Power spectrum of exposures_diff for the different Fourier modes
-    """
-
-    def __init__(
-        self,
-        ra,
-        dec,
-        z_qso,
-        mean_z,
-        plate,
-        mjd,
-        fiberid,
-        mean_snr,
-        mean_reso,
-        k,
-        pk_raw,
-        pk_noise,
-        correction_reso,
-        pk,
-        num_masked_pixels,
-        pk_diff=None,
-    ):
-        """Initialize instance
-
-        Arguments
-        ---------
-        ra: float
-        Right-ascension of the quasar (in radians).
-
-        dec: float
-        Declination of the quasar (in radians).
-
-        z_qso: float
-        Redshift of the quasar.
-
-        mean_z: float
-        Mean redshift of the forest
-
-        plate: int
-        Plate number of the observation.
-
-        mjd: int
-        Modified Julian Date of the observation.
-
-        fiberid: int
-        Fiberid of the observation.
-
-        mean_snr: float
-        Mean signal-to-noise ratio in the forest
-
-        mean_reso: float
-        Mean resolution of the forest
-
-        k: array of float
-        Fourier modes
-
-        pk_raw: array of float
-        Raw power spectrum
-
-        pk_noise: array of float
-        Noise power spectrum for the different Fourier modes
-
-        correction_reso: array of float
-        Resolution correction
-
-        pk: array of float
-        Power Spectrum
-
-        num_masked_pixels: int
-        Number of masked pixels
-
-        pk_diff: array of float or None - default: None
-        Power spectrum of exposures_diff for the different Fourier modes
-        """
-        self.ra = ra
-        self.dec = dec
-        self.z_qso = z_qso
-        self.mean_z = mean_z
-        self.mean_snr = mean_snr
-        self.mean_reso = mean_reso
-        self.num_masked_pixels = num_masked_pixels
-
-        self.plate = plate
-        self.mjd = mjd
-        self.fiberid = fiberid
-        self.k = k
-        self.pk_raw = pk_raw
-        self.pk_noise = pk_noise
-        self.correction_reso = correction_reso
-        self.pk = pk
-        self.pk_diff = pk_diff
-
-    @classmethod
-    def from_fitsio(cls, hdu):
-        """Read the 1D Power Spectrum from fits file
-
-        Arguments
-        ---------
-        hdu: Header Data Unit
-        Header Data Unit where the 1D Power Spectrum is read
-
-        Return
-        ------
-        An intialized instance of Pk1D
-        """
-
-        header = hdu.read_header()
-
-        ra = header["RA"]
-        dec = header["DEC"]
-        z_qso = header["Z"]
-        mean_z = header["MEANZ"]
-        mean_reso = header["MEANRESO"]
-        mean_snr = header["MEANSNR"]
-        plate = header["PLATE"]
-        mjd = header["MJD"]
-        fiberid = header["FIBER"]
-        num_masked_pixels = header["NBMASKPIX"]
-
-        data = hdu.read()
-        k = data["k"][:]
-        pk = data["Pk"][:]
-        pk_raw = data["Pk_raw"][:]
-        pk_noise = data["Pk_noise"][:]
-        correction_reso = data["cor_reso"][:]
-        pk_diff = data["Pk_diff"][:]
-
-        return cls(
-            ra,
-            dec,
-            z_qso,
-            mean_z,
-            plate,
-            mjd,
-            fiberid,
-            mean_snr,
-            mean_reso,
-            k,
-            pk_raw,
-            pk_noise,
-            correction_reso,
-            pk,
-            num_masked_pixels,
-            pk_diff,
-        )
-
-
 def check_linear_binning(delta):
     """checks if the wavelength binning is linear or log,
       this is stable against masking
@@ -803,3 +597,340 @@ def check_linear_binning(delta):
         )
 
     return linear_binning, pixel_step
+
+
+class Pk1D:
+    """Class to represent the 1D Power Spectrum for a given forest
+
+    Class Methods
+    -------------
+    from_fitsio
+    write
+
+    Methods
+    -------
+    __init__
+
+    Attributes
+    ----------
+    ra: float
+    Right-ascension of the quasar (in radians).
+
+    dec: float
+    Declination of the quasar (in radians).
+
+    z_qso: float
+    Redshift of the quasar.
+
+    mean_z: float
+    Mean redshift of the forest
+
+    mean_snr: float
+    Mean signal-to-noise ratio in the forest
+
+    mean_reso: float
+    Mean resolution of the forest
+
+    num_masked_pixels: int
+    Number of masked pixels
+
+    linear_bining: bool
+    If the spectra used is linearly binned or not
+
+    los_id: int
+    Indentifier of the quasar (TARGETID in DESI)
+
+    chunk_id: int
+    For forest cut in chunks, identifier of the chunk
+
+    k: array of float
+    Fourier modes
+
+    pk_raw: array of float
+    Raw power spectrum
+
+    pk_noise: array of float
+    Noise power spectrum for the different Fourier modes
+
+    pk_diff: array of float or None - default: None
+    Power spectrum of exposures_diff for the different Fourier modes
+
+    correction_reso: array of float
+    Resolution correction
+
+    pk: array of float
+    Power Spectrum
+    """
+
+    def __init__(
+        self,
+        ra=None,
+        dec=None,
+        z_qso=None,
+        mean_z=None,
+        mean_snr=None,
+        mean_reso=None,
+        num_masked_pixels=None,
+        linear_bining=None,
+        los_id=None,
+        chunk_id=None,
+        k=None,
+        pk_raw=None,
+        pk_noise=None,
+        pk_diff=None,
+        correction_reso=None,
+        pk=None,
+        fft_delta_real = None,
+        fft_delta_imag = None,
+    ):
+        """Initialize instance
+
+        Arguments
+        ---------
+        ra: float
+        Right-ascension of the quasar (in radians).
+
+        dec: float
+        Declination of the quasar (in radians).
+
+        z_qso: float
+        Redshift of the quasar.
+
+        mean_z: float
+        Mean redshift of the forest
+
+        mean_snr: float
+        Mean signal-to-noise ratio in the forest
+
+        mean_reso: float
+        Mean resolution of the forest
+
+        num_masked_pixels: int
+        Number of masked pixels
+
+        linear_bining: bool
+        If the spectra used is linearly binned or not
+
+        los_id: int
+        Indentifier of the quasar (TARGETID in DESI)
+
+        chunk_id: int
+        For forest cut in chunks, identifier of the chunk
+
+        k: array of float
+        Fourier modes
+
+        pk_raw: array of float
+        Raw power spectrum
+
+        pk_noise: array of float
+        Noise power spectrum for the different Fourier modes
+
+        pk_diff: array of float or None - default: None
+        Power spectrum of exposures_diff for the different Fourier modes
+
+        correction_reso: array of float
+        Resolution correction
+
+        pk: array of float
+        Power Spectrum
+
+        fft_delta_real: array of float
+        In the case where the fft of delta is stored, contains its real part
+
+        fft_delta_imag: array of float
+        In the case where the fft of delta is stored, contains its imaginary part
+        """
+        self.ra = ra
+        self.dec = dec
+        self.z_qso = z_qso
+        self.mean_z = mean_z
+        self.mean_snr = mean_snr
+        self.mean_reso = mean_reso
+        self.num_masked_pixels = num_masked_pixels
+        self.linear_bining = linear_bining
+        self.los_id = los_id
+        self.chunk_id = chunk_id
+
+        self.k = k
+        self.pk_raw = pk_raw
+        self.pk_noise = pk_noise
+        self.pk_diff = pk_diff
+        self.correction_reso = correction_reso
+        self.pk = pk
+        self.fft_delta_real = fft_delta_real
+        self.fft_delta_imag = fft_delta_imag
+
+    @classmethod
+    def from_fitsio(cls, hdu):
+        """Read the 1D Power Spectrum from fits file
+
+        Arguments
+        ---------
+        hdu: Header Data Unit
+        Header Data Unit where the 1D Power Spectrum is read
+
+        Return
+        ------
+        An intialized instance of Pk1D
+        """
+
+        header = hdu.read_header()
+
+        ra = header["RA"]
+        dec = header["DEC"]
+        z_qso = header["Z"]
+        mean_z = header["MEANZ"]
+        mean_reso = header["MEANRESO"]
+        mean_snr = header["MEANSNR"]
+        num_masked_pixels = header["NBMASKPIX"]
+        linear_bining = header["LIN_BIN"]
+        los_id = header["LOS_ID"]
+        chunk_id = header["CHUNK_ID"]
+
+        data = hdu.read()
+        k = data["k"][:]
+        pk_noise = data["Pk_noise"][:]
+        correction_reso = data["cor_reso"][:]
+        pk_diff = data["Pk_diff"][:]
+
+        if "Pk" in data:
+            pk = data["Pk"][:]
+            pk_raw = data["Pk_raw"][:]
+            fft_delta_real = None
+            fft_delta_imag = None
+        else:
+            pk = None
+            pk_raw = None
+            fft_delta_real = data["DELTA_K_REAL"][:]
+            fft_delta_imag = data["DELTA_K_IMAG"][:]
+
+        return cls(
+            ra=ra,
+            dec=dec,
+            z_qso=z_qso,
+            mean_z=mean_z,
+            mean_snr=mean_snr,
+            mean_reso=mean_reso,
+            num_masked_pixels=num_masked_pixels,
+            linear_bining=linear_bining,
+            los_id=los_id,
+            chunk_id=chunk_id,
+            k=k,
+            pk_raw=pk_raw,
+            pk_noise=pk_noise,
+            pk_diff=pk_diff,
+            correction_reso=correction_reso,
+            pk=pk,
+            fft_delta_real=fft_delta_real,
+            fft_delta_imag=fft_delta_imag,
+        )
+
+    def write_fits(self, file):
+        header = [
+            {
+                "name": "RA",
+                "value": self.ra,
+                "comment": "QSO's Right Ascension [degrees]",
+            },
+            {
+                "name": "DEC",
+                "value": self.dec,
+                "comment": "QSO's Declination [degrees]",
+            },
+            {"name": "Z", "value": self.z_qso, "comment": "QSO's redshift"},
+            {
+                "name": "MEANZ",
+                "value": self.mean_z,
+                "comment": "Absorbers mean redshift",
+            },
+            {
+                "name": "MEANSNR",
+                "value": self.mean_snr,
+                "comment": "Mean signal to noise ratio",
+            },
+            {
+                "name": "MEANRESO",
+                "value": self.mean_reso,
+                "comment": "Mean resolution [km/s]",
+            },
+            {
+                "name": "NBMASKPIX",
+                "value": self.num_masked_pixels,
+                "comment": "Number of masked pixels in the section",
+            },
+            {
+                "name": "LIN_BIN",
+                "value": self.linear_bining,
+                "comment": "analysis was performed on delta with linear binned lambda",
+            },
+            {
+                "name": "LOS_ID",
+                "value": self.los_id,
+                "comment": "line of sight identifier, e.g. THING_ID or TARGETID",
+            },
+            {
+                "name": "CHUNK_ID",
+                "value": self.chunk_id,
+                "comment": "Chunk (sub-forest) identifier",
+            },
+        ]
+
+        if self.pk is not None:
+            cols = [
+                self.k,
+                self.pk_raw,
+                self.pk_noise,
+                self.pk_diff,
+                self.correction_reso,
+                self.pk,
+            ]
+            names = ["K", "PK_NOISE", "PK_DIFF", "COR_RESO", "PK_RAW", "PK"]
+            comments = [
+                "Wavenumber",
+                "Noise's power spectrum",
+                "Noise coadd difference power spectrum",
+                "Correction resolution function",
+                "Raw power spectrum",
+                "Corrected power spectrum (resolution and noise)",
+            ]
+        else:
+            cols = [
+                self.k,
+                self.pk_noise,
+                self.pk_diff,
+                self.correction_reso,
+                self.fft_delta_real,
+                self.fft_delta_imag,
+            ]
+            names = [
+                "K",
+                "PK_NOISE",
+                "PK_DIFF",
+                "COR_RESO",
+                "DELTA_K_REAL",
+                "DELTA_K_IMAG",
+            ]
+            comments = [
+                "Wavenumber",
+                "Noise's power spectrum",
+                "Noise coadd difference power spectrum",
+                "Correction resolution function",
+                "Fourier delta real part",
+                "Fourier delta imaginary part",
+            ]
+
+        if self.linear_bining:
+            baseunit = "AA"
+        else:
+            baseunit = "km/s"
+        units = [
+            f"({baseunit})^-1",
+            f"{baseunit}",
+            f"{baseunit}",
+            f"{baseunit}",
+            f"{baseunit}",
+            f"{baseunit}",
+        ]
+
+        file.write(cols, names=names, header=header, comment=comments, units=units)

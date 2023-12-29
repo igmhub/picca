@@ -14,7 +14,7 @@ from picca.data import Delta
 from picca.pk1d.compute_pk1d import (compute_correction_reso,
                         compute_correction_reso_matrix, compute_pk_noise,
                         compute_pk_raw, fill_masked_pixels, rebin_diff_noise,
-                        split_forest, check_linear_binning)
+                        split_forest, check_linear_binning, Pk1D)
 from picca.utils import userprint
 from multiprocessing import Pool
 
@@ -217,91 +217,34 @@ def process_all_files(index_file_args):
 
             # save in fits format
             if args.out_format == 'fits':
-                header = [{
-                    'name': 'RA',
-                    'value': delta.ra,
-                    'comment': "QSO's Right Ascension [degrees]"
-                }, {
-                    'name': 'DEC',
-                    'value': delta.dec,
-                    'comment': "QSO's Declination [degrees]"
-                }, {
-                    'name': 'Z',
-                    'value': delta.z_qso,
-                    'comment': "QSO's redshift"
-                }, {
-                    'name': 'MEANZ',
-                    'value': mean_z_array[part_index],
-                    'comment': "Absorbers mean redshift"
-                }, {
-                    'name': 'MEANRESO',
-                    'value': delta.mean_reso,
-                    'comment': 'Mean resolution [km/s]'
-                }, {
-                    'name': 'MEANSNR',
-                    'value': delta.mean_snr,
-                    'comment': 'Mean signal to noise ratio'
-                }, {
-                    'name': 'NBMASKPIX',
-                    'value': num_masked_pixels,
-                    'comment': 'Number of masked pixels in the section'
-                }, {
-                    'name': 'LIN_BIN',
-                    'value': linear_binning,
-                    'comment': "analysis was performed on delta with linear binned lambda"
-                }, {
-                    'name': 'LOS_ID',
-                    'value': delta.los_id,
-                    'comment': "line of sight identifier, e.g. THING_ID or TARGETID"
-                }, {
-                    'name': 'CHUNK_ID',
-                    'value': part_index,
-                    'comment': "Chunk (sub-forest) identifier"
-                },
-                ]
-
-                cols = [k, fft_delta_raw_real, fft_delta_raw_imag, pk_noise, pk_diff, correction_reso]
-                names = [
-                    'K', 'DELTA_K_REAL', 'DELTA_K_IMAG', 'PK_NOISE', 'PK_DIFF', 'COR_RESO'
-                ]
-                comments = [
-                    'Wavenumber', 
-                    'Fourier delta real part',
-                    'Fourier delta imaginary part',
-                    "Noise's power spectrum",
-                    'Noise coadd difference power spectrum',
-                    'Correction resolution function',
-                ]
-                if linear_binning:
-                    baseunit = "AA"
-                else:
-                    baseunit = "km/s"
-                units = [
-                    f'({baseunit})^-1', f'{baseunit}', f'{baseunit}',
-                    f'{baseunit}', f'{baseunit}', f'{baseunit}'
-                ]
-
-                try:
-                    results.write(cols,
-                                  names=names,
-                                  header=header,
-                                  comments=comments,
-                                  units=units)
-                except AttributeError:
-                    userprint("writing to " + args.out_dir + '/Deltak-' +
-                                           str(file_index) + '.fits.gz')
-                    results = fitsio.FITS((args.out_dir + '/Deltak-' +
+                pk1d_class = Pk1D(
+                    ra=delta.ra,
+                    dec=delta.dec,
+                    z_qso=delta.z_qso,
+                    mean_z=mean_z_array[part_index],
+                    mean_snr=delta.mean_snr,
+                    mean_reso=delta.mean_reso,
+                    num_masked_pixels=num_masked_pixels,
+                    linear_bining=linear_binning,
+                    los_id=delta.los_id,
+                    chunk_id=part_index,
+                    k=k,
+                    pk_noise=pk_noise,
+                    pk_diff=pk_diff,
+                    correction_reso=correction_reso,
+                    fft_delta_real=fft_delta_raw_real,
+                    fft_delta_imag=fft_delta_raw_imag,
+                )
+                if file_out is None:
+                    file_out = fitsio.FITS((args.out_dir + '/Deltak-' +
                                            str(file_index) + '.fits.gz'),
                                           'rw',
                                           clobber=True)
-                    results.write(cols,
-                                  names=names,
-                                  header=header,
-                                  comment=comments,
-                                  units=units)
+                                    
+                pk1d_class.write_fits(file_out)
 
-    if (args.out_format == 'fits' and results is not None):
-        results.close()
+    if (args.out_format == 'fits' and file_out is not None):
+        file_out.close()
 
     return 0
 
