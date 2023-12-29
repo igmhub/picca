@@ -321,7 +321,7 @@ def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False,
     k = 2 * np.pi * rfftfreq(num_pixels, length_lambda / num_pixels)
 
     if return_delta:
-        # return the Fourier transform of delta (delta_k), 
+        # return the Fourier transform of delta (delta_k),
         # normalized so that pk = delta_k.real**2 + delta_k.imag**2
         return k, fft_delta * np.sqrt(length_lambda) / num_pixels
 
