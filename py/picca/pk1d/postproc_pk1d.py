@@ -73,6 +73,8 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
                 "Pk_diff",
                 "cor_reso",
                 "Pk_noise_miss",
+                "Delta_k_real",
+                "Delta_k_imag",
             ]:
                 try:
                     chunk_table.rename_column(colname.upper(), colname)
@@ -220,6 +222,12 @@ def compute_mean_pk1d(
     p1d_table_cols.remove("forest_id")
     if "sub_forest_id" in p1d_table_cols:
         p1d_table_cols.remove("sub_forest_id")
+
+    if "Delta_k_real" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_k_real")
+
+    if "Delta_k_imag" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_k_imag")
 
     # Convert data into velocity units
     if velunits:
