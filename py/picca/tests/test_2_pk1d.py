@@ -69,7 +69,7 @@ class TestPk1d(AbstractTest):
         ### Test
         if self._test:
             path1 = self._masterFiles + "/test_Pk1D/Pk1D_raw.fits.gz"
-            path2 = self._branchFiles + "/Products/Pk1D_raw/Pk1D-0.fits.gz"
+            path2 = self._branchFiles + "/Products/Pk1D_raw/Pk1D-272.fits.gz"
             self.compare_fits(path1, path2, "picca_Pk1D.py")
 
         return
