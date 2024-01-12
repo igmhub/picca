@@ -24,7 +24,13 @@ num_data=0
 def process_all_files(index_file_args):
     global num_data
     file_index, file, args = index_file_args
+
+    # If the healpix or tile number is given in the delta name,
+    # it names the Pk accordingly, else it takes
     file_number = file.split("-")[-1].split(".fits.gz")[0]
+    if not file_number.isdigit():
+        file_number = file_index
+
     if file_index % 5 == 0:
         userprint("\rread {} of {} {}".format(file_index, args.len_files,
                                               num_data),
