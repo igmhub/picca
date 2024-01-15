@@ -266,7 +266,7 @@ def main(cmdargs):
 
     # Check if we need to unblind
     if blinding in UNBLINDABLE_STRATEGIES:
-        userprint("Y1 correlations are not blinded.")
+        userprint(f"'{blinding}' correlations are not blinded.")
         blinding = 'none'
         data_name = 'DA'
         dmat_name = 'DM'
