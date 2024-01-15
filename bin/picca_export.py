@@ -11,7 +11,9 @@ import os.path
 
 from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
-from picca.delta_extraction.utils import UNBLINDABLE_STRATEGIES
+
+# TODO: add tags here when we are allowed to unblind them
+UNBLINDABLE_STRATEGIES = ["none", "desi_m2", "desi_y1"]
 
 
 def main(cmdargs):
