@@ -384,7 +384,6 @@ class DesiDataFileHandler():
                                 row,
                                 flux_i,
                                 ivar[i],
-                                targetid,
                                 w_t,
                                 reso_from_truth,
                                 num_data)
@@ -396,7 +395,6 @@ class DesiDataFileHandler():
                             row,
                             flux,
                             ivar,
-                            targetid,
                             w_t,
                             reso_from_truth,
                             num_data)
@@ -404,12 +402,11 @@ class DesiDataFileHandler():
 
     def update_forest_dictionary(self,
                                  forests_by_targetid,
-                                 key_update,
+                                 targetid,
                                  spec,
                                  row,
                                  flux,
                                  ivar,
-                                 targetid,
                                  w_t,
                                  reso_from_truth,
                                  num_data):
@@ -496,12 +493,12 @@ class DesiDataFileHandler():
         # Forest constructor
         forest.rebin()
 
-        if key_update in forests_by_targetid:
-            existing_forest = forests_by_targetid[key_update]
+        if targetid in forests_by_targetid:
+            existing_forest = forests_by_targetid[targetid]
             existing_forest.coadd(forest)
-            forests_by_targetid[key_update] = existing_forest
+            forests_by_targetid[targetid] = existing_forest
         else:
-            forests_by_targetid[key_update] = forest
+            forests_by_targetid[targetid] = forest
 
         num_data += 1
 
