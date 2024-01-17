@@ -682,6 +682,7 @@ class Pk1D:
     Imaginary part of the fft of exposure difference
     """
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         ra=None,
@@ -797,10 +798,10 @@ class Pk1D:
         self.pk = pk
         self.fft_delta_real = fft_delta_real
         self.fft_delta_imag = fft_delta_imag
-        self.fft_delta_noise_real = fft_delta_noise_real,
-        self.fft_delta_noise_imag = fft_delta_noise_imag,
-        self.fft_delta_diff_real = fft_delta_diff_real,
-        self.fft_delta_diff_imag = fft_delta_diff_imag,
+        self.fft_delta_noise_real = fft_delta_noise_real
+        self.fft_delta_noise_imag = fft_delta_noise_imag
+        self.fft_delta_diff_real = fft_delta_diff_real
+        self.fft_delta_diff_imag = fft_delta_diff_imag
 
     @classmethod
     def from_fitsio(cls, hdu):
