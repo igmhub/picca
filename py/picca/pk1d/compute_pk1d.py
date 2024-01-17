@@ -442,6 +442,12 @@ def compute_pk_noise(
 
     pk_diff: array of float
     The noise Power Spectrum using the noise derived from exposures_diff
+
+    fft_delta_noise: array of float
+    The Fourier transform of noise pipeline realization
+
+    fft_delta_diff: array of float
+    The Fourier transform of the exposure difference delta
     """
     num_pixels = len(ivar)
     num_bins_fft = num_pixels // 2 + 1
@@ -455,18 +461,18 @@ def compute_pk_noise(
         for _ in range(num_noise_exposures):
             delta_exp = np.zeros(num_pixels)
             delta_exp[w] = np.random.normal(0.0, error[w])
-            _, _, pk_exp = compute_pk_raw(
+            _, fft_delta_noise, pk_exp = compute_pk_raw(
                 delta_lambda_or_log_lambda, delta_exp, linear_binning=linear_binning
             )
             pk_noise += pk_exp
 
         pk_noise /= float(num_noise_exposures)
 
-    _, _, pk_diff = compute_pk_raw(
+    _, fft_delta_diff, pk_diff = compute_pk_raw(
         delta_lambda_or_log_lambda, exposures_diff, linear_binning=linear_binning
     )
 
-    return pk_noise, pk_diff
+    return pk_noise, pk_diff, fft_delta_noise, fft_delta_diff
 
 
 def compute_correction_reso(delta_pixel, mean_reso, k):
@@ -656,6 +662,24 @@ class Pk1D:
 
     pk: array of float
     Power Spectrum
+
+    fft_delta_real: array of float
+    In the case where the fft of delta is stored, contains its real part
+
+    fft_delta_imag: array of float
+    In the case where the fft of delta is stored, contains its imaginary part
+
+    fft_delta_noise_real: array of float
+    Real part of the fft of noise realization
+
+    fft_delta_noise_imag: array of float
+    Imaginary part of the fft of noise realization
+
+    fft_delta_diff_real: array of float
+    Real part of the fft of exposure difference
+
+    fft_delta_diff_imag: array of float
+    Imaginary part of the fft of exposure difference
     """
 
     def __init__(
@@ -678,6 +702,10 @@ class Pk1D:
         pk=None,
         fft_delta_real=None,
         fft_delta_imag=None,
+        fft_delta_noise_real = None,
+        fft_delta_noise_imag = None,
+        fft_delta_diff_real = None,
+        fft_delta_diff_imag = None,
     ):
         """Initialize instance
 
@@ -736,6 +764,19 @@ class Pk1D:
 
         fft_delta_imag: array of float
         In the case where the fft of delta is stored, contains its imaginary part
+
+        fft_delta_noise_real: array of float
+        Real part of the fft of noise realization
+
+        fft_delta_noise_imag: array of float
+        Imaginary part of the fft of noise realization
+
+        fft_delta_diff_real: array of float
+        Real part of the fft of exposure difference
+
+        fft_delta_diff_imag: array of float
+        Imaginary part of the fft of exposure difference
+    
         """
         self.ra = ra
         self.dec = dec
@@ -756,6 +797,10 @@ class Pk1D:
         self.pk = pk
         self.fft_delta_real = fft_delta_real
         self.fft_delta_imag = fft_delta_imag
+        self.fft_delta_noise_real = fft_delta_noise_real,
+        self.fft_delta_noise_imag = fft_delta_noise_imag,
+        self.fft_delta_diff_real = fft_delta_diff_real,
+        self.fft_delta_diff_imag = fft_delta_diff_imag,
 
     @classmethod
     def from_fitsio(cls, hdu):
@@ -795,9 +840,18 @@ class Pk1D:
         try:
             fft_delta_real = data["DELTA_K_REAL"][:]
             fft_delta_imag = data["DELTA_K_IMAG"][:]
+            fft_delta_noise_real = data["DELTA_NOISE_K_REAL"][:]
+            fft_delta_noise_imag = data["DELTA_NOISE_K_IMAG"][:]
+            fft_delta_diff_real = data["DELTA_DIFF_K_REAL"][:]
+            fft_delta_diff_imag = data["DELTA_DIFF_K_IMAG"][:]
+
         except ValueError:
             fft_delta_real = None
             fft_delta_imag = None
+            fft_delta_noise_real = None
+            fft_delta_noise_imag = None
+            fft_delta_diff_real = None
+            fft_delta_diff_imag = None
 
         return cls(
             ra=ra,
@@ -818,6 +872,10 @@ class Pk1D:
             pk=pk,
             fft_delta_real=fft_delta_real,
             fft_delta_imag=fft_delta_imag,
+            fft_delta_noise_real = fft_delta_noise_real,
+            fft_delta_noise_imag = fft_delta_noise_imag,
+            fft_delta_diff_real = fft_delta_diff_real,
+            fft_delta_diff_imag = fft_delta_diff_imag,
         )
 
     def write_fits(self, file):
@@ -912,16 +970,34 @@ class Pk1D:
         ]
 
         if self.fft_delta_real is not None:
-            cols += [self.fft_delta_real, self.fft_delta_imag]
+            cols += [self.fft_delta_real,
+                     self.fft_delta_imag,
+                     self.fft_delta_noise_real,
+                     self.fft_delta_noise_imag,
+                     self.fft_delta_diff_real,
+                     self.fft_delta_diff_imag,
+                     ]
             names += [
                 "DELTA_K_REAL",
                 "DELTA_K_IMAG",
+                "DELTA_NOISE_K_REAL",
+                "DELTA_NOISE_K_IMAG",
+                "DELTA_DIFF_K_REAL",
+                "DELTA_DIFF_K_IMAG",                
             ]
             comments += [
                 "Fourier delta real part",
                 "Fourier delta imaginary part",
+                "Fourier delta noise real part",
+                "Fourier delta noise imaginary part",
+                "Fourier delta diff real part",
+                "Fourier delta diff imaginary part",
             ]
             units += [
+                f"{baseunit}^(1/2)",
+                f"{baseunit}^(1/2)",
+                f"{baseunit}^(1/2)",
+                f"{baseunit}^(1/2)",
                 f"{baseunit}^(1/2)",
                 f"{baseunit}^(1/2)",
             ]

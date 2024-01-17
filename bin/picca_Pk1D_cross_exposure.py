@@ -39,32 +39,44 @@ def treat_pk_file(out_dir, filename):
             if len(index) < 2:
                 continue
             index = np.concatenate(index, axis=0)
-            fft_delta_real = np.array([fft_delta_list[i].fft_delta_real for i in index])
-            fft_delta_imag = np.array([fft_delta_list[i].fft_delta_imag for i in index])
 
             ra = fft_delta_list[index[0]].ra
             dec = fft_delta_list[index[0]].dec
             z_qso = fft_delta_list[index[0]].z_qso
             mean_z = fft_delta_list[index[0]].mean_z
+
             num_masked_pixels = fft_delta_list[index[0]].num_masked_pixels
             linear_bining = fft_delta_list[index[0]].linear_bining
 
             k = fft_delta_list[index[0]].k
 
-            mean_snr = np.mean([fft_delta_list[i].mean_snr for i in index])
+            mean_snr = np.sqrt(len(index)) * np.mean([fft_delta_list[i].mean_snr for i in index])
             mean_reso = np.mean([fft_delta_list[i].mean_reso for i in index])
 
-            pk_noise = np.mean([fft_delta_list[i].pk_noise for i in index], axis=0)
-            pk_diff = np.mean([fft_delta_list[i].pk_diff for i in index], axis=0)
-            correction_reso = np.mean(
-                [fft_delta_list[i].correction_reso for i in index], axis=0
-            )
+            fft_delta_real = np.array([fft_delta_list[i].fft_delta_real for i in index])
+            fft_delta_imag = np.array([fft_delta_list[i].fft_delta_imag for i in index])
 
             pk_raw_cross_exposure = compute_pk_cross_exposure(
                 fft_delta_real, fft_delta_imag
             )
 
-            pk_cross_exposure = pk_raw_cross_exposure / correction_reso
+            fft_delta_noise_real = np.array([fft_delta_list[i].fft_delta_noise_real for i in index])
+            fft_delta_noise_imag = np.array([fft_delta_list[i].fft_delta_noise_imag for i in index])
+
+            pk_noise_cross_exposure = compute_pk_cross_exposure(
+                fft_delta_noise_real, fft_delta_noise_imag
+            )
+
+            # Since diff is a method using exposure differences, it cannot be computed
+            # in a general matter here. 
+            pk_diff = np.zeros_like(fft_delta_list[0].pk_noise)
+
+            correction_reso = np.mean(
+                [fft_delta_list[i].correction_reso for i in index], axis=0
+            )
+
+
+            pk_cross_exposure = (pk_raw_cross_exposure - pk_noise_cross_exposure) / correction_reso
 
             pk1d_class = Pk1D(
                 ra=ra,
@@ -79,7 +91,7 @@ def treat_pk_file(out_dir, filename):
                 chunk_id=chunk_id,
                 k=k,
                 pk_raw=pk_raw_cross_exposure,
-                pk_noise=pk_noise,
+                pk_noise=pk_noise_cross_exposure,
                 pk_diff=pk_diff,
                 correction_reso=correction_reso,
                 pk=pk_cross_exposure,

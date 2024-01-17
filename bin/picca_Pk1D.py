@@ -185,12 +185,18 @@ def process_all_files(index_file_args):
             else:
                 run_gaussian_noise = False
             if not running_on_raw_transmission:
-                pk_noise, pk_diff = compute_pk_noise(pixel_step,
-                                                     ivar_new,
-                                                     exposures_diff_new,
-                                                     run_gaussian_noise,
-                                                     linear_binning=linear_binning,
-                                                     num_noise_exposures=args.num_noise_exp)
+                pk_noise, pk_diff, fft_delta_noise, fft_delta_diff = compute_pk_noise(
+                    pixel_step,
+                    ivar_new,
+                    exposures_diff_new,
+                    run_gaussian_noise,
+                    linear_binning=linear_binning,
+                    num_noise_exposures=args.num_noise_exp,
+                )
+                fft_delta_noise_real = fft_delta_noise.real
+                fft_delta_noise_imag = fft_delta_noise.imag
+                fft_delta_diff_real = fft_delta_diff.real
+                fft_delta_diff_imag = fft_delta_diff.imag
             else:
                 pk_noise=pk_diff=np.zeros(pk_raw.shape)
 
@@ -273,6 +279,10 @@ def process_all_files(index_file_args):
                     pk=pk,
                     fft_delta_real=fft_delta_real,
                     fft_delta_imag=fft_delta_imag,
+                    fft_delta_noise_real = fft_delta_noise_real,
+                    fft_delta_noise_imag = fft_delta_noise_imag,
+                    fft_delta_diff_real = fft_delta_diff_real,
+                    fft_delta_diff_imag = fft_delta_diff_imag,
                 )
                 
                 if file_out is None:
