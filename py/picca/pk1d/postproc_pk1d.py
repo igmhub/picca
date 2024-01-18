@@ -75,6 +75,10 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
                 "Pk_noise_miss",
                 "Delta_k_real",
                 "Delta_k_imag",
+                "Delta_noise_k_real",
+                "Delta_noise_k_imag",
+                "Delta_diff_k_real",
+                "Delta_diff_k_imag",
             ]:
                 try:
                     chunk_table.rename_column(colname.upper(), colname)
@@ -228,6 +232,18 @@ def compute_mean_pk1d(
 
     if "Delta_k_imag" in p1d_table_cols:
         p1d_table_cols.remove("Delta_k_imag")
+
+    if "Delta_noise_k_real" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_noise_k_real")
+
+    if "Delta_noise_k_imag" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_noise_k_real")
+
+    if "Delta_diff_k_real" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_noise_k_real")
+
+    if "Delta_diff_k_imag" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_noise_k_real")
 
     # Convert data into velocity units
     if velunits:
