@@ -199,6 +199,10 @@ def process_all_files(index_file_args):
                 fft_delta_diff_imag = fft_delta_diff.imag
             else:
                 pk_noise=pk_diff=np.zeros(pk_raw.shape)
+                fft_delta_noise_real = np.zeros(pk_raw.shape)
+                fft_delta_noise_imag = np.zeros(pk_raw.shape)
+                fft_delta_diff_real = np.zeros(pk_raw.shape)
+                fft_delta_diff_imag = np.zeros(pk_raw.shape)
 
             # Compute resolution correction, needs uniform binning
             if not running_on_raw_transmission:

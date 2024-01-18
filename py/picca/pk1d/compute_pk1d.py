@@ -453,6 +453,7 @@ def compute_pk_noise(
     num_bins_fft = num_pixels // 2 + 1
 
     pk_noise = np.zeros(num_bins_fft)
+    fft_delta_noise = np.zeros(num_bins_fft)
     error = np.zeros(num_pixels)
     w = ivar > 0
     error[w] = 1.0 / np.sqrt(ivar[w])
