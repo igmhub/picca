@@ -237,13 +237,13 @@ def compute_mean_pk1d(
         p1d_table_cols.remove("Delta_noise_k_real")
 
     if "Delta_noise_k_imag" in p1d_table_cols:
-        p1d_table_cols.remove("Delta_noise_k_real")
+        p1d_table_cols.remove("Delta_noise_k_imag")
 
     if "Delta_diff_k_real" in p1d_table_cols:
-        p1d_table_cols.remove("Delta_noise_k_real")
+        p1d_table_cols.remove("Delta_diff_k_real")
 
     if "Delta_diff_k_imag" in p1d_table_cols:
-        p1d_table_cols.remove("Delta_noise_k_real")
+        p1d_table_cols.remove("Delta_diff_k_imag")
 
     # Convert data into velocity units
     if velunits:
