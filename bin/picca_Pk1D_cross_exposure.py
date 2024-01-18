@@ -69,7 +69,7 @@ def treat_pk_file(out_dir, filename):
 
             # Since diff is a method using exposure differences, it cannot be computed
             # in a general matter here. 
-            pk_diff = np.zeros_like(fft_delta_list[0].pk_noise)
+            pk_diff = np.zeros_like(pk_noise_cross_exposure)
 
             correction_reso = np.mean(
                 [fft_delta_list[i].correction_reso for i in index], axis=0
