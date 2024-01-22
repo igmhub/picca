@@ -8,7 +8,7 @@ import numpy as np
 from scipy.constants import (
     speed_of_light as SPEED_LIGHT,
     e as ELEMENTARY_CHARGE,
-    epsion_0 as EPSILON_0,
+    epsilon_0 as EPSILON_0,
     m_p as PROTON_MASS,
     m_e as ELECTRON_MASS,
     k as BOLTZMAN_CONSTANT_K,
