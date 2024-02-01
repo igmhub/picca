@@ -15,7 +15,7 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     defaults as defaults_quasar_catalogue)
 from picca.delta_extraction.utils import (
-    ACCEPTED_BLINDING_STRATEGIES, UNBLINDABLE_STRATEGIES)
+    ACCEPTED_BLINDING_STRATEGIES)
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 from picca.delta_extraction.utils import (
     ABSORBER_IGM, update_accepted_options, update_default_options)
@@ -23,12 +23,11 @@ from picca.delta_extraction.utils import (
 accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(
     accepted_options,
-    ["unblind", "use non-coadded spectra", "keep single exposures", "wave solution"])
+    ["use non-coadded spectra", "keep single exposures", "wave solution"])
 
 defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
-    "unblind": False,
     "use non-coadded spectra": False,
     "keep single exposures": False,
     "wave solution": "lin",
@@ -112,7 +111,6 @@ class DesiData(Data):
 
         # load variables from config
         self.keep_single_exposures = None
-        self.unblind = None
         self.use_non_coadded_spectra = None
         self.__parse_config(config)
 
@@ -147,10 +145,6 @@ class DesiData(Data):
         DataError upon missing required variables
         """
         # instance variables
-        self.unblind = config.getboolean("unblind")
-        if self.unblind is None:
-            raise DataError("Missing argument 'unblind' required by DesiData")
-
         self.keep_single_exposures = config.getboolean(
             "keep single exposures")
         if self.keep_single_exposures is None:
@@ -211,14 +205,6 @@ class DesiData(Data):
                 self.blinding = "desi_y1"
             else:
                 self.blinding = "desi_y3"
-
-            if self.unblind:
-                if self.blinding not in UNBLINDABLE_STRATEGIES:
-                    raise DataError(
-                        "In DesiData: Requested unblinding but data requires blinding strategy "
-                        f"{self.blinding} and this strategy do not support "
-                        "unblinding. If you believe this is an error, contact "
-                        "picca developers")
 
         if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
             raise DataError(
