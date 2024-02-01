@@ -12,6 +12,25 @@ from functools import partial
 
 
 def treat_pk_file(out_dir, filename):
+    """
+    Takes a single file containing the FFT of delta for
+    multiple exposures and computes the cross-exposure power spectrum. The function
+    returns nothing, but writes to disk a new fits file with all the information needed
+    to compute Pk_cross_exposure. This is done by looping over each targetid and chunkid, 
+    and computing Pk_cross_exposure for each pair of exposures.
+    
+    Arguments
+    ---------
+    out_dir: string
+    The directory path where the cross-exposure will be written
+
+    filename: string
+    The file for which to compute cross-exposure
+
+    Return
+    ------
+    None
+    """
     fft_delta_list = []
     file_out = None
     file_number = filename.split("-")[-1].split(".fits.gz")[0]

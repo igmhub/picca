@@ -15,7 +15,7 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     defaults as defaults_quasar_catalogue)
 from picca.delta_extraction.utils import (
-    ACCEPTED_BLINDING_STRATEGIES)
+    ACCEPTED_BLINDING_STRATEGIES, UNBLINDABLE_STRATEGIES)
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 from picca.delta_extraction.utils import (
     ABSORBER_IGM, update_accepted_options, update_default_options)
@@ -23,11 +23,12 @@ from picca.delta_extraction.utils import (
 accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(
     accepted_options,
-    ["use non-coadded spectra", "keep single exposures", "wave solution"])
+    ["unblind", "use non-coadded spectra", "keep single exposures", "wave solution"])
 
 defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
+    "unblind": False,
     "use non-coadded spectra": False,
     "keep single exposures": False,
     "wave solution": "lin",
@@ -110,8 +111,9 @@ class DesiData(Data):
         super().__init__(config)
 
         # load variables from config
-        self.use_non_coadded_spectra = None
         self.keep_single_exposures = None
+        self.unblind = None
+        self.use_non_coadded_spectra = None
         self.__parse_config(config)
 
         # load z_truth catalogue
@@ -145,18 +147,24 @@ class DesiData(Data):
         DataError upon missing required variables
         """
         # instance variables
-        self.use_non_coadded_spectra = config.getboolean(
-            "use non-coadded spectra")
-        if self.use_non_coadded_spectra is None:
-            raise DataError(
-                "Missing argument 'use non-coadded spectra' required by DesiData"
-            )
+        self.unblind = config.getboolean("unblind")
+        if self.unblind is None:
+            raise DataError("Missing argument 'unblind' required by DesiData")
+
         self.keep_single_exposures = config.getboolean(
             "keep single exposures")
         if self.keep_single_exposures is None:
             raise DataError(
                 "Missing argument 'keep single exposures' required by DesiData"
             )
+
+        self.use_non_coadded_spectra = config.getboolean(
+            "use non-coadded spectra")
+        if self.use_non_coadded_spectra is None:
+            raise DataError(
+                "Missing argument 'use non-coadded spectra' required by DesiData"
+            )
+
 
 
     def read_data(self):
@@ -203,6 +211,14 @@ class DesiData(Data):
                 self.blinding = "desi_y1"
             else:
                 self.blinding = "desi_y3"
+
+            if self.unblind:
+                if self.blinding not in UNBLINDABLE_STRATEGIES:
+                    raise DataError(
+                        "In DesiData: Requested unblinding but data requires blinding strategy "
+                        f"{self.blinding} and this strategy do not support "
+                        "unblinding. If you believe this is an error, contact "
+                        "picca developers")
 
         if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
             raise DataError(
@@ -256,13 +272,13 @@ class DesiDataFileHandler():
         Selected analysis type. See class Data from py/picca/delta_extraction/data.py
         for details
 
-        use_non_coadded_spectra: bool
-        If True, load data from non-coadded spectra. Otherwise,
-        load coadded data
-
         keep_single_exposures: bool
         If True, the date loadded from non-coadded spectra are not coadded. 
         Otherwise, coadd the spectra here.
+        
+        use_non_coadded_spectra: bool
+        If True, load data from non-coadded spectra. Otherwise,
+        load coadded data
 
         logger: logging.Logger
         Logger object from parent class. Trying to initialize it here
@@ -272,8 +288,8 @@ class DesiDataFileHandler():
         # self.logger = logging.getLogger(__name__)
         self.logger = logger
         self.analysis_type = analysis_type
-        self.use_non_coadded_spectra = use_non_coadded_spectra
         self.keep_single_exposures = keep_single_exposures
+        self.use_non_coadded_spectra = use_non_coadded_spectra
 
     def __call__(self, args):
         """Call method read_file. Note imap can be called with
@@ -341,16 +357,12 @@ class DesiDataFileHandler():
             # Construct DesiForest instance
             # Fluxes from the different spectrographs will be coadded
             for spec in spectrographs_data.values():
-                if self.use_non_coadded_spectra:
-                    if self.keep_single_exposures:
-                        flux = spec['FLUX'][w_t].copy()
-                        ivar = spec['IVAR'][w_t].copy()
-                    else:
-                        ivar = np.atleast_2d(spec['IVAR'][w_t])
-                        ivar_coadded_flux = np.atleast_2d(
+                if self.use_non_coadded_spectra and not self.keep_single_exposures:
+                    ivar = np.atleast_2d(spec['IVAR'][w_t])
+                    ivar_coadded_flux = np.atleast_2d(
                             ivar * spec['FLUX'][w_t]).sum(axis=0)
-                        ivar = ivar.sum(axis=0)
-                        flux = ivar_coadded_flux / ivar
+                    ivar = ivar.sum(axis=0)
+                    flux = ivar_coadded_flux / ivar
                 else:
                     flux = spec['FLUX'][w_t].copy()
                     ivar = spec['IVAR'][w_t].copy()
@@ -358,12 +370,13 @@ class DesiDataFileHandler():
                 # If keep_single_exposures is activated, all exposures are kept.
                 # To avoid coadding exposures, we store the forest with
                 # targetid_i (i = exposure index) instead of targetid
+                # The variable forests_by_targetid is modified by update_forest_dictionary.
                 if self.use_non_coadded_spectra & self.keep_single_exposures:
                     # One exposure case
                     if len(flux.shape) != 2:
                         flux , ivar = np.array([flux]), np.array([ivar])
                     for i, flux_i in enumerate(flux):
-                        num_data = self.update_forest_dictionary(
+                        forests_by_targetid, num_data = self.update_forest_dictionary(
                                 forests_by_targetid,
                                 f"{targetid}_{i}",
                                 spec,
@@ -374,7 +387,7 @@ class DesiDataFileHandler():
                                 reso_from_truth,
                                 num_data)
                 else:
-                    num_data = self.update_forest_dictionary(
+                    forests_by_targetid, num_data  = self.update_forest_dictionary(
                             forests_by_targetid,
                             targetid,
                             spec,
@@ -430,6 +443,9 @@ class DesiDataFileHandler():
         
         Return
         ------
+        forests_by_targetid: dict
+        Dictionary were forests are stored.
+
         num_data: int
         The number of instances loaded
         """
@@ -450,7 +466,7 @@ class DesiDataFileHandler():
             if (self.use_non_coadded_spectra) & (not self.keep_single_exposures):
                 exposures_diff = exp_diff_desi(spec, w_t)
                 if exposures_diff is None:
-                    return num_data
+                    return forests_by_targetid, num_data
             else:
                 exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
             if reso_from_truth:
@@ -488,7 +504,7 @@ class DesiDataFileHandler():
 
         num_data += 1
 
-        return num_data
+        return forests_by_targetid, num_data
 
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
