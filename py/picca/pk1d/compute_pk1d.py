@@ -351,7 +351,8 @@ def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False):
     return k, fft_delta, pk
 
 
-def compute_pk_cross_exposure(fft_delta_real_array, fft_delta_imag_array):
+def compute_pk_cross_exposure(fft_delta_real_array, fft_delta_imag_array,
+                              fft_delta_real_array_2, fft_delta_imag_array_2):
     """
     Computes the cross-exposure power spectrum estimator.
 
@@ -381,22 +382,15 @@ def compute_pk_cross_exposure(fft_delta_real_array, fft_delta_imag_array):
     for i, (fft_delta_real_i, fft_delta_imag_i) in enumerate(
         zip(fft_delta_real_array, fft_delta_imag_array)
     ):
-        for _, (fft_delta_real_j, fft_delta_imag_j) in enumerate(
-            zip(fft_delta_real_array, fft_delta_imag_array), start=i + 1
+        for j, (fft_delta_real_2_j, fft_delta_imag_2_j) in enumerate(
+            zip(fft_delta_real_array_2, fft_delta_imag_array_2)
         ):
-            pk_cross_exposure += np.sqrt(
-                (
-                    fft_delta_real_i * fft_delta_real_j
-                    - fft_delta_imag_i * fft_delta_imag_j
+            if j != i :
+                pk_cross_exposure += (
+                    fft_delta_real_i * fft_delta_real_2_j
+                    + fft_delta_imag_i * fft_delta_imag_2_j
                 )
-                ** 2
-                + (
-                    fft_delta_real_i * fft_delta_imag_j
-                    + fft_delta_real_j * fft_delta_imag_i
-                )
-                ** 2
-            )
-    number_pairs = number_exposures * (number_exposures + 1) / 2
+    number_pairs = number_exposures * (number_exposures - 1)
     pk_cross_exposure = pk_cross_exposure / number_pairs
 
     return pk_cross_exposure
