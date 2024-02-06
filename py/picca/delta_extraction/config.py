@@ -11,6 +11,7 @@ from datetime import datetime
 import git
 from git.exc import InvalidGitRepositoryError
 
+from picca._version import __version__ as picca_version
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.data import Data
 from picca.delta_extraction.errors import ConfigError
@@ -24,7 +25,6 @@ try:
     git_hash = git.Repo(PICCA_BASE).head.object.hexsha
 except InvalidGitRepositoryError:  # pragma: no cover
     git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
-picca_version = metadata.metadata('picca')['Version']
 
 accepted_corrections_options = [
     "num corrections", "type {int}", "module name {int}"
