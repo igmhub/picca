@@ -34,6 +34,16 @@ defaults = update_default_options(defaults, {
 })
 defaults = update_default_options(defaults, defaults_quasar_catalogue)
 
+def verify_exposures_shape(forests_by_targetid):
+    print(forests_by_targetid)
+    test_key = list(forests_by_targetid.keys())[0]
+    if type(test_key) == int:
+        raise ValueError("The key of this dictionnary should be str"
+                         "in order to verify if exposures have "
+                         "different shapes")
+    unique_los_id = np.unique([int(key.split("_")[1]) for key in forests_by_targetid.keys()])
+    print(unique_los_id)
+
 
 def merge_new_forest(forests_by_targetid, new_forests_by_targetid):
     """Merge new_forests_by_targetid and forests_by_targetid as Forest instances.
@@ -365,6 +375,7 @@ class DesiDataFileHandler():
                         forests_by_targetid, num_data = self.update_forest_dictionary(
                                 forests_by_targetid,
                                 f"{targetid}_{i}",
+                                targetid,
                                 spec,
                                 row,
                                 flux_i,
@@ -375,6 +386,7 @@ class DesiDataFileHandler():
                 else:
                     forests_by_targetid, num_data  = self.update_forest_dictionary(
                             forests_by_targetid,
+                            targetid,
                             targetid,
                             spec,
                             row,
@@ -387,6 +399,7 @@ class DesiDataFileHandler():
 
     def update_forest_dictionary(self,
                                  forests_by_targetid,
+                                 key_update,
                                  targetid,
                                  spec,
                                  row,
@@ -404,6 +417,9 @@ class DesiDataFileHandler():
 
         key_update: int or str
         The key to update in the forest dictionary
+
+        targetid: int
+        The los_id of the forest
 
         spec: dict
         Dictionary containing the spectrum information.
@@ -481,12 +497,12 @@ class DesiDataFileHandler():
         # Forest constructor
         forest.rebin()
 
-        if targetid in forests_by_targetid:
-            existing_forest = forests_by_targetid[targetid]
+        if key_update in forests_by_targetid:
+            existing_forest = forests_by_targetid[key_update]
             existing_forest.coadd(forest)
-            forests_by_targetid[targetid] = existing_forest
+            forests_by_targetid[key_update] = existing_forest
         else:
-            forests_by_targetid[targetid] = forest
+            forests_by_targetid[key_update] = forest
 
         num_data += 1
 

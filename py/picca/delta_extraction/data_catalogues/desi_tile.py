@@ -9,7 +9,7 @@ import fitsio
 import numpy as np
 
 from picca.delta_extraction.data_catalogues.desi_data import (
-    DesiData, DesiDataFileHandler, merge_new_forest)
+    DesiData, DesiDataFileHandler, merge_new_forest, verify_exposures_shape)
 from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
     defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
@@ -103,6 +103,7 @@ class DesiTile(DesiData):
                     forests_by_targetid_aux = output_imap[0]
                     if self.use_non_coadded_spectra & self.keep_single_exposures:
                         # Change the dictionary key to prevent coadding.
+                        # exposures on different files.
                         forests_by_targetid_aux= {f"{index}_{key}": items
                                                   for key, items in forests_by_targetid_aux.items()}
                     # Merge each dict to master forests_by_targetid
@@ -119,6 +120,7 @@ class DesiTile(DesiData):
                     (filename, self.catalogue))
                 if self.use_non_coadded_spectra & self.keep_single_exposures:
                     # Change the dictionary key to prevent coadding.
+                    # exposures on different files.
                     forests_by_targetid_aux= {f"{index}_{key}": items
                                               for key, items in forests_by_targetid_aux.items()}
                 merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
@@ -128,6 +130,9 @@ class DesiTile(DesiData):
 
                 self.logger.progress(f"Found {num_data} quasars in input files")
 
+        if self.use_non_coadded_spectra & self.keep_single_exposures:
+            verify_exposures_shape(forests_by_targetid)
+            
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")
 

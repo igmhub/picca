@@ -1,17 +1,20 @@
 """This module defines the class DesiData to load DESI data
 """
 import logging
-import os
 import multiprocessing
+import os
 
 import fitsio
 import numpy as np
-
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
-from picca.delta_extraction.data_catalogues.desi_data import (
-    DesiData, DesiDataFileHandler, merge_new_forest)
 from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
-    defaults, accepted_options)
+    DesiData,
+    DesiDataFileHandler,
+    accepted_options,
+    defaults,
+    merge_new_forest,
+    verify_exposures_shape,
+)
 from picca.delta_extraction.errors import DataError
 
 
@@ -124,6 +127,7 @@ class DesiHealpix(DesiData):
                     forests_by_targetid_aux = output_imap[0]
                     if self.use_non_coadded_spectra & self.keep_single_exposures:
                         # Change the dictionary key to prevent coadding.
+                        # exposures on different files.
                         forests_by_targetid_aux= {f"{index}_{key}": items
                                                   for key, items in forests_by_targetid_aux.items()}
                     # Merge each dict to master forests_by_targetid
@@ -139,13 +143,16 @@ class DesiHealpix(DesiData):
             for index, this_arg in enumerate(arguments):
                 forests_by_targetid_aux, num_data_aux = reader(this_arg)
                 if self.use_non_coadded_spectra & self.keep_single_exposures:
-                    # Change the dictionary key to prevent coadding.
+                    # Change the dictionary key to prevent coadding
+                    # exposures on different files.
                     forests_by_targetid_aux= {f"{index}_{key}": items
                                               for key, items in forests_by_targetid_aux.items()}
                 merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
                 num_data += num_data_aux
                 self.logger.progress(f"Read {index} of {len(arguments)}. "
                                      f"num_data: {num_data}")
+        if self.use_non_coadded_spectra & self.keep_single_exposures:
+            verify_exposures_shape(forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
             raise DataError("No quasars found, stopping here")
