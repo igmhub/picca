@@ -179,6 +179,17 @@ def main(cmdargs):
                         required=False,
                         help=('Equation of state of dark energy of fiducial '
                               'LambdaCDM cosmology'))
+    
+    parser.add_argument('--fid-H0',
+                        type=float,
+                        default=67.36,
+                        required=False,
+                        help='Hubble constant at z=0')
+    
+    parser.add_argument('--use-mpc',
+                        action='store_true',
+                        required=False,
+                        help='Return correlation in Mpc grid rather than Mpc/h')
 
     parser.add_argument('--no-project',
                         action='store_true',
@@ -253,11 +264,18 @@ def main(cmdargs):
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir)
 
+
+    if args.use_mpc:
+        print("WARNING: You are computing distances in Mpc," 
+              "this is not currently supported in Vega.")
+
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
                             wl=args.fid_wl,
+                            H0=args.fid_H0,
+                            use_mpc=args.use_mpc,
                             blinding=blinding)
 
     t0 = time.time()
