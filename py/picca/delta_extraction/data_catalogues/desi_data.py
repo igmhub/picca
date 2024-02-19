@@ -338,7 +338,13 @@ class DesiDataFileHandler():
                     "z": row['Z'],
                 }
                 args["log_lambda"] = np.log10(spec['WAVELENGTH'])
-
+                if "TILEID" in row:
+                    args["tile"] = row['TILE']
+                if "PETAL_LOC" in row:
+                    args["petal"] = row['PETAL_LOC']
+                if "NIGHT" in row:
+                    args["night"] = row['NIGHT']
+                    
                 if self.analysis_type == "BAO 3D":
                     forest = DesiForest(**args)
                 elif self.analysis_type == "PK 1D":
