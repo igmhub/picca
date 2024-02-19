@@ -137,7 +137,7 @@ class Cosmo(object):
     
     def get_r_comov(self,z):
         """
-        Compute co-moving distance at redshift z1 in Mpc or Mpc/h (dependent on hubble_distance)
+        Compute co-moving distance at redshift z in Mpc or Mpc/h (dependent on hubble_distance)
         """
         integral = quad(inv_E_z,0,z,args=self.cosmo_params)[0]
         return self._hubble_distance * integral
