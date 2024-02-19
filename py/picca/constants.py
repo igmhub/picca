@@ -23,6 +23,16 @@ SPEED_LIGHT = speed_light/1000. # [km/s]
 ACCEPTED_BLINDING_STRATEGIES = ["none", "minimal", "strategyB", "strategyC",
     "strategyBC", "corr_yshift"]
 
+def inv_E_z(z,Om,Or,Ok,wl):
+    """ Compute inverse hubble parameter as a function of redshift.
+    """
+    Ol = 1 - Om - Or
+    E_z = np.sqrt(Ol*(1. + z)**(3.*(1. + wl)) +
+                    Ok*(1. + z)**2 +
+                    Om*(1. + z)**3 +
+                    Or*(1. + z)**4)
+    return 1./E_z
+
 class Cosmo(object):
     """This class defines the fiducial cosmology
 
@@ -45,39 +55,6 @@ class Cosmo(object):
         get_dist_v: Interpolates the geometric mean of the transverse and radial
         distances on the redshfit array.
     """
-    def inv_E_z(z,Om,Or,Ok,wl):
-        """
-        Compute inverse hubble parameter as a function of redshift.
-        """
-        Ol = 1 - Om - Or
-        E_z = np.sqrt(Ol*(1. + z)**(3.*(1. + wl)) +
-                        Ok*(1. + z)**2 +
-                        Om*(1. + z)**3 +
-                        Or*(1. + z)**4)
-        return 1./E_z
-
-    def get_r_comov(self,z):
-        """
-        Compute co-moving distance at redshift z in Mpc or Mpc/h (dependent on hubble_distance)
-        """
-        integral = quad(inv_E_z,0,z,args=(self.inv_E_z_args))[0]
-        return self._hubble_distance * integral
-
-    def get_dist_m(self,z):
-        """
-        Compute transverse comoving distance in Mpc or Mpc/h (dependent on hubble_distance)
-        """
-        if self.Ok == 0.:
-            return self.get_r_comov(z)
-        elif self.Ok < 0.:
-            return (self._hubble_distance*(1/np.sqrt(abs(self.Ok)))
-                    *np.sin(np.sqrt(abs(self.Ok))*self.get_r_comov(z)/self._hubble_distance))
-        elif self.Ok > 0.:
-            return (self._hubble_distance*(1/np.sqrt(self.Ok))
-                    *np.sinh(np.sqrt(self.Ok)*self.get_r_comov(z)/self._hubble_distance))
-
-    # pylint: disable=method-hidden
-    # Added here to mark it as function
     def get_hubble(self, z):
         """Interpolates the Hubble constant on the redshift array.
 
@@ -135,25 +112,6 @@ class Cosmo(object):
 
     # pylint: disable=method-hidden
     # Added here to mark it as function
-    def get_dist_m(self, z):
-        """Interpolates the angular diameter distance on the redshfit array.
-
-        Empty function to be loaded at run-time.
-
-        Args:
-            z: array of floats
-                Array containing the redshifts
-
-        Returns:
-            An array with the angular diameter distance
-
-        Raises:
-            NotImplementedError: Function was not specified
-        """
-        raise NotImplementedError("Function should be specified at run-time")
-
-    # pylint: disable=method-hidden
-    # Added here to mark it as function
     def get_dist_v(self, z):
         """Interpolates the geometric mean of the transverse and radial
         distances on the redshfit array.
@@ -172,7 +130,7 @@ class Cosmo(object):
             NotImplementedError: Function was not specified
         """
         raise NotImplementedError("Function should be specified at run-time")
-
+    
     def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,H0=67.36,
                  use_mpc=False,blinding=False,verbose=True):
         """Initializes the methods for this instance
@@ -217,34 +175,58 @@ class Cosmo(object):
             H0 = hdu[1].read_header()['H0']
             hdu.close()
 
-
+        #new implemenetation
         hubble_distance = SPEED_LIGHT / H0
         if not use_mpc:
             hubble_distance *= H0/100
 
         self._hubble_distance = hubble_distance
-        self.inv_E_z_args = (Om,Or,Ok,wl)
+        self.cosmo_params = (Om,Or,Ok,wl)
         self.Ok = Ok
 
         #Old Picca functions
+        Ol = 1 - Om - Ok - Or
         num_bins = 10000
         z_max = 10.
         delta_z = z_max/num_bins
         z = np.arange(num_bins, dtype=float)*delta_z
-        hubble = H0*np.sqrt(Ol*(1. + z)**(3.*(1. + wl)) +
+        hubble = 100*np.sqrt(Ol*(1. + z)**(3.*(1. + wl)) +
                             Ok*(1. + z)**2 +
                             Om*(1. + z)**3 +
                             Or*(1. + z)**4)
 
         self.get_hubble = interpolate.interp1d(z, hubble)
-        self.distance_to_redshift = interpolate.interp1d(r_comov, z)
-
+        self.distance_to_redshift = self.get_r_comov(z)
         # D_H
         self.get_dist_hubble = interpolate.interp1d(z, SPEED_LIGHT/hubble)
         # D_V
         dist_v = np.power(z*self.get_dist_m(z)**2*self.get_dist_hubble(z),
                           1./3.)
         self.get_dist_v = interpolate.interp1d(z, dist_v)
+
+
+
+    #new implementation
+    def get_r_comov(self,z):
+        """
+        Compute co-moving distance at redshift z in Mpc or Mpc/h (dependent on hubble_distance)
+        """
+        import pdb;pdb.set_trace()
+        integral = quad(inv_E_z,0,z,args=self.cosmo_params)[0]
+        return self._hubble_distance * integral
+
+    def get_dist_m(self,z):
+        """
+        Compute transverse comoving distance in Mpc or Mpc/h (dependent on hubble_distance)
+        """
+        if self.Ok == 0.:
+            return self.get_r_comov(z)
+        elif self.Ok < 0.:
+            return (self._hubble_distance*(1/np.sqrt(abs(self.Ok)))
+                    *np.sin(np.sqrt(abs(self.Ok))*self.get_r_comov(z)/self._hubble_distance))
+        elif self.Ok > 0.:
+            return (self._hubble_distance*(1/np.sqrt(self.Ok))
+                    *np.sinh(np.sqrt(self.Ok)*self.get_r_comov(z)/self._hubble_distance))
 
 ### Absorber names and wavelengths [Angstrom]
 ABSORBER_IGM = {
