@@ -344,7 +344,7 @@ class DesiDataFileHandler():
                     args["petal"] = row['PETAL_LOC']
                 if "NIGHT" in row:
                     args["night"] = row['NIGHT']
-                    
+
                 if self.analysis_type == "BAO 3D":
                     forest = DesiForest(**args)
                 elif self.analysis_type == "PK 1D":
