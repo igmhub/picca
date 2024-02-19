@@ -11,11 +11,6 @@ from scipy.constants import speed_of_light as speed_light
 from pkg_resources import resource_filename
 from picca.utils import userprint
 
-# TODO: this constant is unused. They should be removed at some point
-BOSS_LAMBDA_MIN = 3600. # [Angstrom]
-
-SMALL_ANGLE_CUT_OFF = 2./3600.*np.pi/180. # 2 arcsec
-
 SPEED_LIGHT = speed_light/1000. # [km/s]
 
 # different strategies are explained in
@@ -55,61 +50,6 @@ class Cosmo(object):
         get_dist_v: Interpolates the geometric mean of the transverse and radial
         distances on the redshfit array.
     """
-    def get_hubble(self, z):
-        """Interpolates the Hubble constant on the redshift array.
-
-        Empty function to be loaded at run-time.
-
-        Args:
-            z: array of floats
-                Array containing the redshifts
-
-        Returns:
-            An array with the Hubble constant
-
-        Raises:
-            NotImplementedError: Function was not specified
-        """
-        raise NotImplementedError("Function should be specified at run-time")
-
-    # pylint: disable=method-hidden
-    # Added here to mark it as function
-    def distance_to_redshift(self, r_comov):
-        """Interpolates the redhsift on the comoving distance array.
-
-        Empty function to be loaded at run-time.
-
-        Args:
-            r_comov: array of floats
-                Array containing the comoving distances
-
-        Returns:
-            An array with the redshfits
-
-        Raises:
-            NotImplementedError: Function was not specified
-        """
-        raise NotImplementedError("Function should be specified at run-time")
-
-    # pylint: disable=method-hidden
-    # Added here to mark it as function
-    def get_dist_hubble(self, z):
-        """Interpolates the Hubble distance on the redshfit array.
-
-        Empty function to be loaded at run-time.
-
-        Args:
-            z: array of floats
-                Array containing the redshifts
-
-        Returns:
-            An array with the Hubble distance
-
-        Raises:
-            NotImplementedError: Function was not specified
-        """
-        raise NotImplementedError("Function should be specified at run-time")
-
     # pylint: disable=method-hidden
     # Added here to mark it as function
     def get_dist_v(self, z):
@@ -184,34 +124,21 @@ class Cosmo(object):
         self.cosmo_params = (Om,Or,Ok,wl)
         self.Ok = Ok
 
-        #Old Picca functions
-        Ol = 1 - Om - Ok - Or
-        num_bins = 10000
-        z_max = 10.
-        delta_z = z_max/num_bins
-        z = np.arange(num_bins, dtype=float)*delta_z
-        hubble = 100*np.sqrt(Ol*(1. + z)**(3.*(1. + wl)) +
-                            Ok*(1. + z)**2 +
-                            Om*(1. + z)**3 +
-                            Or*(1. + z)**4)
-
-        self.get_hubble = interpolate.interp1d(z, hubble)
-        self.distance_to_redshift = self.get_r_comov(z)
-        # D_H
-        self.get_dist_hubble = interpolate.interp1d(z, SPEED_LIGHT/hubble)
-        # D_V
-        dist_v = np.power(z*self.get_dist_m(z)**2*self.get_dist_hubble(z),
-                          1./3.)
-        self.get_dist_v = interpolate.interp1d(z, dist_v)
-
-
-
     #new implementation
+    def get_dist_hubble(self,z):
+        """Get Hubble distance DH as defined in  dMdB (2020) """
+        return self._hubble_distance * inv_E_z(z,*self.cosmo_params)
+
+    def get_dist_v(self,z):
+        """geometric mean of the transverse and radial
+        distances on the redshfit array."""
+        return np.power(z * self.get_dist_m(z)**2 * self.get_dist_hubble(z),
+                          1./3.)
+    
     def get_r_comov(self,z):
         """
-        Compute co-moving distance at redshift z in Mpc or Mpc/h (dependent on hubble_distance)
+        Compute co-moving distance at redshift z1 in Mpc or Mpc/h (dependent on hubble_distance)
         """
-        import pdb;pdb.set_trace()
         integral = quad(inv_E_z,0,z,args=self.cosmo_params)[0]
         return self._hubble_distance * integral
 
