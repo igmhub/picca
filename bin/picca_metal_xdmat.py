@@ -295,7 +295,7 @@ def main(cmdargs):
         xcf.alpha_abs[metal] = args.metal_alpha
 
     # read blinding keyword
-    blinding = io.read_blinding(args.in_dir)
+    blinding = io.read_blinding(args.in_dir, args.lambda_abs, args.obj_name)
 
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,

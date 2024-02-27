@@ -153,6 +153,12 @@ def main(cmdargs):
         help=('Name of the absorption in picca.constants defining the redshift '
               'of the delta'))
 
+    parser.add_argument('--obj-name',
+                        type=str,
+                        default='QSO',
+                        required=False,
+                        help='Name of the object tracer')
+
     parser.add_argument('--z-ref',
                         type=float,
                         default=2.25,
@@ -275,7 +281,7 @@ def main(cmdargs):
     xcf.max_diagram = args.max_diagram
 
     # read blinding keyword
-    blinding = io.read_blinding(args.in_dir)
+    blinding = io.read_blinding(args.in_dir, args.lambda_abs, args.obj_name)
 
     # load fiducial cosmology
     if (args.fid_Or != 0.) or (args.fid_Ok != 0.) or (args.fid_wl != -1.):

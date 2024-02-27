@@ -21,6 +21,7 @@ from astropy.table import Table
 import warnings
 from multiprocessing import Pool
 
+from .constants import ABSORBER_IGM
 from .utils import userprint
 from .data import Delta, QSO
 from .pk1d.prep_pk1d import exp_diff, spectral_resolution
@@ -209,13 +210,18 @@ def read_drq(drq_filename,
     return catalog
 
 
-def read_blinding(in_dir):
+def read_blinding(in_dir, tracer1, tracer2):
     """Checks the delta files for blinding settings
 
     Args:
         in_dir: str
             Directory to spectra files. If mode is "spec-mock-1D", then it is
             the filename of the fits file contianing the mock spectra
+        tracer1: str
+            Name of the first tracer (e.g. LYA)
+        tracer2: str of None
+            Name of the second tracer (e.g. QSO). If None, then first tracer
+            is assigned to tracer2
 
     Returns:
         The following variables:
@@ -232,15 +238,59 @@ def read_blinding(in_dir):
                                                            + '/*.fits.gz')
     filename = files[0]
     hdul = fitsio.FITS(filename)
-    if "LAMBDA" in hdul: # This is for ImageHDU format
-        header = hdul["METADATA"].read_header()
-        blinding = header["BLINDING"]
-    else: # This is for BinTable format
+    # This is for ImageHDU format
+    if "LAMBDA" in hdul:
+        header_blinding = hdul["METADATA"].read_header()
+        header_lambda = hdul["LAMBDA"].read_header()
+
+        # read blinding
+        blinding = header_blinding["BLINDING"]
+
+        # check if we need to blind
+        if tracer2 is None:
+            tracer2 = tracer1
+        blinding_tracers = ["LYA", "QSO"]
+        if tracer1 not in blinding_tracers or tracer2 not in blinding_tracers:
+            # one of the tracers is not relevant, so do not blind (ever)
+            blinding = "none"
+        else:
+            # check if we are doing metal forests
+            if "MIN_RF_WAVE" in header_lambda and "MAX_RF_WAVE" in header_lambda:
+                lya_wave = ABSORBER_IGM["LYA"]
+                lyb_wave = ABSORBER_IGM["LYB"]
+                min_rf_wave = header_lambda["MIN_RF_WAVE"]
+                max_rf_wave = header_lambda["MAX_RF_WAVE"]
+                if ((min_rf_wave > lya_wave and max_rf_wave > lya_wave) or
+                    (min_rf_wave < lyb_wave and max_rf_wave < lyb_wave)):
+                    # we are doing a metal forest, so do not blind (ever)
+                    blinding = "none"
+
+    # This is for BinTable format
+    else:
         header = hdul[1].read_header()
         if "BLINDING" in header:
             blinding = header["BLINDING"]
         else:
             blinding = "none"
+
+        # check if we need to blind
+        if tracer2 is None:
+            tracer2 = tracer1
+        blinding_tracers = ["LYA", "QSO"]
+        if tracer1 not in blinding_tracers or tracer2 not in blinding_tracers:
+            # one of the tracers is not relevant, so do not blind (ever)
+            blinding = "none"
+        else:
+            # check if we are doing metal forests
+            if "MIN_RF_WAVE" in header and "MAX_RF_WAVE" in header:
+                lya_wave = ABSORBER_IGM["LYA"]
+                lyb_wave = ABSORBER_IGM["LYB"]
+                min_rf_wave = header["MIN_RF_WAVE"]
+                max_rf_wave = header["MAX_RF_WAVE"]
+                if ((min_rf_wave > lya_wave and max_rf_wave > lya_wave) or
+                    (min_rf_wave < lyb_wave and max_rf_wave < lyb_wave)):
+                    # we are doing a metal forest, so do not blind (ever)
+                    blinding = "none"
 
     return blinding
 
@@ -279,12 +329,12 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
         if hdul[card].read_header()['WAVE_SOLUTION'] != 'lin':
             raise ValueError('Delta rebinning only implemented for linear \
                     lambda bins')
-        
+
         dwave = hdul[card].read_header()['DELTA_LAMBDA']
-            
+
         for i in range(len(deltas)):
             deltas[i].rebin(rebin_factor, dwave=dwave)
-            
+
     hdul.close()
 
     return deltas

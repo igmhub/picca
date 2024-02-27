@@ -301,7 +301,7 @@ def main(cmdargs):
     cf.max_diagram = args.max_diagram
 
     # read blinding keyword
-    blinding = io.read_blinding(args.in_dir)
+    blinding = io.read_blinding(args.in_dir, args.lambda_abs, args.lambda_abs2)
 
     # load cosmology
     if (args.fid_Or != 0.) or (args.fid_Ok != 0.) or (args.fid_wl != -1.):
