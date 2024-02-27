@@ -326,7 +326,7 @@ def read_deltas(in_dir,
         max_num_spec: int or None - default: None
             Maximum number of spectra to read
         no_project: bool - default: False
-            If True, project the deltas (see equation 5 of du Mas des Bourboux
+            If False, project the deltas (see equation 5 of du Mas des Bourboux
             et al. 2020)
         nproc: int - default: None
             Number of cpus for parallelization. If None, uses all available.
