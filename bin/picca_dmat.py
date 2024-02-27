@@ -197,11 +197,6 @@ def main(cmdargs):
         required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--no-project',
-                        action='store_true',
-                        required=False,
-                        help='Do not project out continuum fitting modes')
-
     parser.add_argument(
         '--remove-same-half-plate-close-pairs',
         action='store_true',
@@ -294,7 +289,6 @@ def main(cmdargs):
                                                   cf.z_ref,
                                                   cosmo,
                                                   max_num_spec=args.nspec,
-                                                  no_project=args.no_project,
                                                   nproc=args.nproc,
                                                   rebin_factor=args.rebin_factor,
                                                   z_min_qso=args.z_min_sources,
@@ -326,7 +320,6 @@ def main(cmdargs):
             cf.z_ref,
             cosmo,
             max_num_spec=args.nspec,
-            no_project=args.no_project,
             nproc=args.nproc,
             rebin_factor=args.rebin_factor,
             z_min_qso=args.z_min_sources,
