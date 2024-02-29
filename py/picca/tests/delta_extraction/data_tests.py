@@ -79,6 +79,7 @@ class DataTest(AbstractTest):
         with self.assertRaises(DataError) as context_manager:
             reader = DesiHealpixFileHandler(data.analysis_type,
                                             data.use_non_coadded_spectra,
+                                            data.keep_single_exposures,
                                             data.logger)
 
             reader((filename, catalogue))
@@ -749,7 +750,7 @@ class DataTest(AbstractTest):
 
         # run __parse_config with missing 'use_non_coadded_spectra'
         config = ConfigParser()
-        config.read_dict({"data": {
+        config.read_dict({"data": {"keep single exposures": False,
                         }})
         expected_message = (
             "Missing argument 'use non-coadded spectra' required by DesiData"

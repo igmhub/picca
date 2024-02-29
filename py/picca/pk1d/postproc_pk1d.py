@@ -73,6 +73,12 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
                 "Pk_diff",
                 "cor_reso",
                 "Pk_noise_miss",
+                "Delta_k_real",
+                "Delta_k_imag",
+                "Delta_noise_k_real",
+                "Delta_noise_k_imag",
+                "Delta_diff_k_real",
+                "Delta_diff_k_imag",
             ]:
                 try:
                     chunk_table.rename_column(colname.upper(), colname)
@@ -108,7 +114,7 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
             # Empirically remove very noisy chunks
             (wk,) = np.where(chunk_table["k"] < kbin_edges[-1])
             if (
-                chunk_table["Pk_noise"][wk] > 1000000 * chunk_table["Pk_raw"][wk]
+                np.abs(chunk_table["Pk_noise"][wk]) > 1000000 * np.abs(chunk_table["Pk_raw"][wk])
             ).any():
                 userprint(
                     f"file {filename} hdu {i+1} has very high noise power: discarded"
@@ -220,6 +226,24 @@ def compute_mean_pk1d(
     p1d_table_cols.remove("forest_id")
     if "sub_forest_id" in p1d_table_cols:
         p1d_table_cols.remove("sub_forest_id")
+
+    if "Delta_k_real" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_k_real")
+
+    if "Delta_k_imag" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_k_imag")
+
+    if "Delta_noise_k_real" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_noise_k_real")
+
+    if "Delta_noise_k_imag" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_noise_k_imag")
+
+    if "Delta_diff_k_real" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_diff_k_real")
+
+    if "Delta_diff_k_imag" in p1d_table_cols:
+        p1d_table_cols.remove("Delta_diff_k_imag")
 
     # Convert data into velocity units
     if velunits:
@@ -737,6 +761,8 @@ def compute_average_pk_redshift(
                 standard_dev[~np.isnan(standard_dev)],
                 snr_bins[~np.isnan(standard_dev)],
             )
+            if len(standard_dev) == 0:
+                continue
             coef, *_ = curve_fit(
                 fitfunc_variance_pk1d,
                 snr_bins,

@@ -23,15 +23,26 @@ from picca.delta_extraction.utils import (
 accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(
     accepted_options,
-    ["use non-coadded spectra", "wave solution"])
+    ["use non-coadded spectra", "keep single exposures", "wave solution"])
 
 defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
     "use non-coadded spectra": False,
+    "keep single exposures": False,
     "wave solution": "lin",
 })
 defaults = update_default_options(defaults, defaults_quasar_catalogue)
+
+def verify_exposures_shape(forests_by_targetid):
+    print(forests_by_targetid)
+    test_key = list(forests_by_targetid.keys())[0]
+    if type(test_key) == int:
+        raise ValueError("The key of this dictionnary should be str"
+                         "in order to verify if exposures have "
+                         "different shapes")
+    unique_los_id = np.unique([int(key.split("_")[1]) for key in forests_by_targetid.keys()])
+    print(unique_los_id)
 
 
 def merge_new_forest(forests_by_targetid, new_forests_by_targetid):
@@ -87,8 +98,12 @@ class DesiData(Data):
     Logger object
 
     use_non_coadded_spectra: bool
-    If True, load data from non-coadded spectra and coadd them here. Otherwise,
+    If True, load data from non-coadded spectra. Otherwise,
     load coadded data
+
+    keep_single_exposures: bool
+    If True, the date loadded from non-coadded spectra are not coadded. 
+    Otherwise, coadd the spectra here.
     """
 
     def __init__(self, config):
@@ -105,6 +120,7 @@ class DesiData(Data):
         super().__init__(config)
 
         # load variables from config
+        self.keep_single_exposures = None
         self.use_non_coadded_spectra = None
         self.__parse_config(config)
 
@@ -139,12 +155,21 @@ class DesiData(Data):
         DataError upon missing required variables
         """
         # instance variables
+        self.keep_single_exposures = config.getboolean(
+            "keep single exposures")
+        if self.keep_single_exposures is None:
+            raise DataError(
+                "Missing argument 'keep single exposures' required by DesiData"
+            )
+
         self.use_non_coadded_spectra = config.getboolean(
             "use non-coadded spectra")
         if self.use_non_coadded_spectra is None:
             raise DataError(
                 "Missing argument 'use non-coadded spectra' required by DesiData"
             )
+
+
 
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
@@ -226,11 +251,15 @@ class DesiDataFileHandler():
     Logger object
 
     use_non_coadded_spectra: bool
-    If True, load data from non-coadded spectra and coadd them here. Otherwise,
+    If True, load data from non-coadded spectra. Otherwise,
     load coadded data
+
+    keep_single_exposures: bool
+    If True, the date loadded from non-coadded spectra are not coadded. 
+    Otherwise, coadd the spectra here.
     """
 
-    def __init__(self, analysis_type, use_non_coadded_spectra, logger):
+    def __init__(self, analysis_type, use_non_coadded_spectra, keep_single_exposures, logger):
         """Initialize file handler
 
         Arguments
@@ -239,8 +268,12 @@ class DesiDataFileHandler():
         Selected analysis type. See class Data from py/picca/delta_extraction/data.py
         for details
 
+        keep_single_exposures: bool
+        If True, the date loadded from non-coadded spectra are not coadded. 
+        Otherwise, coadd the spectra here.
+        
         use_non_coadded_spectra: bool
-        If True, load data from non-coadded spectra and coadd them here. Otherwise,
+        If True, load data from non-coadded spectra. Otherwise,
         load coadded data
 
         logger: logging.Logger
@@ -251,6 +284,7 @@ class DesiDataFileHandler():
         # self.logger = logging.getLogger(__name__)
         self.logger = logger
         self.analysis_type = analysis_type
+        self.keep_single_exposures = keep_single_exposures
         self.use_non_coadded_spectra = use_non_coadded_spectra
 
     def __call__(self, args):
@@ -299,7 +333,6 @@ class DesiDataFileHandler():
         """
         num_data = 0
         forests_by_targetid = {}
-
         # Loop over quasars in catalogue fragment
         for row in catalogue:
             # Find which row in tile contains this quasar
@@ -311,78 +344,168 @@ class DesiDataFileHandler():
                     f"Error reading {targetid}. Ignoring object")
                 continue
             if len(w_t) > 1:
-                self.logger.warning(
-                    "Warning: more than one spectrum in this file "
-                    f"for {targetid}")
+                if not self.use_non_coadded_spectra:
+                    self.logger.warning(
+                        "Warning: more than one spectrum in this file "
+                        f"for {targetid}")
             else:
                 w_t = w_t[0]
             # Construct DesiForest instance
             # Fluxes from the different spectrographs will be coadded
             for spec in spectrographs_data.values():
-                if self.use_non_coadded_spectra:
+                if self.use_non_coadded_spectra and not self.keep_single_exposures:
                     ivar = np.atleast_2d(spec['IVAR'][w_t])
                     ivar_coadded_flux = np.atleast_2d(
-                        ivar * spec['FLUX'][w_t]).sum(axis=0)
+                            ivar * spec['FLUX'][w_t]).sum(axis=0)
                     ivar = ivar.sum(axis=0)
                     flux = ivar_coadded_flux / ivar
                 else:
                     flux = spec['FLUX'][w_t].copy()
                     ivar = spec['IVAR'][w_t].copy()
 
-                args = {
-                    "flux": flux,
-                    "ivar": ivar,
-                    "targetid": targetid,
-                    "ra": row['RA'],
-                    "dec": row['DEC'],
-                    "z": row['Z'],
-                }
-                args["log_lambda"] = np.log10(spec['WAVELENGTH'])
-
-                if self.analysis_type == "BAO 3D":
-                    forest = DesiForest(**args)
-                elif self.analysis_type == "PK 1D":
-                    if self.use_non_coadded_spectra:
-                        exposures_diff = exp_diff_desi(spec, w_t)
-                        if exposures_diff is None:
-                            continue
-                    else:
-                        exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
-                    if reso_from_truth:
-                        reso_sum = spec['RESO'][:, :]
-                    else:
-                        if len(spec['RESO'][w_t].shape) < 3:
-                            reso_sum = spec['RESO'][w_t].copy()
-                        else:
-                            reso_sum = spec['RESO'][w_t].sum(axis=0)
-                    reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
-                        reso_sum, spec['WAVELENGTH'])
-                    args["exposures_diff"] = exposures_diff
-                    args["reso"] = reso_in_km_per_s
-                    args["resolution_matrix"] = reso_sum
-                    args["reso_pix"] = reso_in_pix
-
-                    forest = DesiPk1dForest(**args)
-                # this should never be entered added here in case at some point
-                # we add another analysis type
-                else:  # pragma: no cover
-                    raise DataError("Unkown analysis type. Expected 'BAO 3D'"
-                                    f"or 'PK 1D'. Found '{self.analysis_type}'")
-
-                # rebin arrays
-                # this needs to happen after all arrays are initialized by
-                # Forest constructor
-                forest.rebin()
-
-                # keep the forest
-                if targetid in forests_by_targetid:
-                    existing_forest = forests_by_targetid[targetid]
-                    existing_forest.coadd(forest)
-                    forests_by_targetid[targetid] = existing_forest
+                # If keep_single_exposures is activated, all exposures are kept.
+                # To avoid coadding exposures, we store the forest with
+                # targetid_i (i = exposure index) instead of targetid
+                # The variable forests_by_targetid is modified by update_forest_dictionary.
+                if self.use_non_coadded_spectra & self.keep_single_exposures:
+                    # One exposure case
+                    if len(flux.shape) != 2:
+                        flux , ivar = np.array([flux]), np.array([ivar])
+                    for i, flux_i in enumerate(flux):
+                        forests_by_targetid, num_data = self.update_forest_dictionary(
+                                forests_by_targetid,
+                                f"{targetid}_{i}",
+                                targetid,
+                                spec,
+                                row,
+                                flux_i,
+                                ivar[i],
+                                w_t,
+                                reso_from_truth,
+                                num_data)
                 else:
-                    forests_by_targetid[targetid] = forest
+                    forests_by_targetid, num_data  = self.update_forest_dictionary(
+                            forests_by_targetid,
+                            targetid,
+                            targetid,
+                            spec,
+                            row,
+                            flux,
+                            ivar,
+                            w_t,
+                            reso_from_truth,
+                            num_data)
+        return forests_by_targetid, num_data
 
-                num_data += 1
+    def update_forest_dictionary(self,
+                                 forests_by_targetid,
+                                 key_update,
+                                 targetid,
+                                 spec,
+                                 row,
+                                 flux,
+                                 ivar,
+                                 w_t,
+                                 reso_from_truth,
+                                 num_data):
+        """Add new forests to the current forest dictonary
+
+        Arguments
+        ---------
+        forests_by_targetid: dict
+        Dictionary were forests are stored.
+
+        key_update: int or str
+        The key to update in the forest dictionary
+
+        targetid: int
+        The los_id of the forest
+
+        spec: dict
+        Dictionary containing the spectrum information.
+
+        row: dict
+        Metadata of the spectrum to treat.
+
+        flux: numpy.array
+        Flux of the spectrum to add.
+
+        ivar: numpy.array
+        Inverse variance of the spectrum to add.
+
+        w_t: numpy.array
+        The index of spectrum with the same targetid.
+
+        reso_from_truth: bool - Default: False
+        Specifies whether resolution matrixes are read from truth files (True)
+        or directly from data (False)
+
+        num_data: int
+        The number of instances loaded
+        
+        Return
+        ------
+        forests_by_targetid: dict
+        Dictionary were forests are stored.
+
+        num_data: int
+        The number of instances loaded
+        """
+        args = {
+            "flux": flux,
+            "ivar": ivar,
+            "targetid": targetid,
+            "ra": row['RA'],
+            "dec": row['DEC'],
+            "z": row['Z'],
+        }
+        args["log_lambda"] = np.log10(spec['WAVELENGTH'])
+
+
+        if self.analysis_type == "BAO 3D":
+            forest = DesiForest(**args)
+        elif self.analysis_type == "PK 1D":
+            if (self.use_non_coadded_spectra) & (not self.keep_single_exposures):
+                exposures_diff = exp_diff_desi(spec, w_t)
+                if exposures_diff is None:
+                    return forests_by_targetid, num_data
+            else:
+                exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
+            if reso_from_truth:
+                reso_sum = spec['RESO'][:, :]
+            else:
+                if len(spec['RESO'][w_t].shape) < 3:
+                    reso_sum = spec['RESO'][w_t].copy()
+                else:
+                    reso_sum = spec['RESO'][w_t].sum(axis=0)
+            reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
+                reso_sum, spec['WAVELENGTH'])
+            args["exposures_diff"] = exposures_diff
+            args["reso"] = reso_in_km_per_s
+            args["resolution_matrix"] = reso_sum
+            args["reso_pix"] = reso_in_pix
+
+            forest = DesiPk1dForest(**args)
+        # this should never be entered added here in case at some point
+        # we add another analysis type
+        else:  # pragma: no cover
+            raise DataError("Unkown analysis type. Expected 'BAO 3D'"
+                            f"or 'PK 1D'. Found '{self.analysis_type}'")
+
+        # rebin arrays
+        # this needs to happen after all arrays are initialized by
+        # Forest constructor
+        forest.rebin()
+
+        if key_update in forests_by_targetid:
+            existing_forest = forests_by_targetid[key_update]
+            existing_forest.coadd(forest)
+            forests_by_targetid[key_update] = existing_forest
+        else:
+            forests_by_targetid[key_update] = forest
+
+        num_data += 1
+
         return forests_by_targetid, num_data
 
     def read_file(self, filename, catalogue):
