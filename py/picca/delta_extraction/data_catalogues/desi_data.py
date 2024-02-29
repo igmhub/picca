@@ -339,7 +339,7 @@ class DesiDataFileHandler():
                 }
                 args["log_lambda"] = np.log10(spec['WAVELENGTH'])
                 if "TILEID" in row:
-                    args["tile"] = row['TILE']
+                    args["tile"] = row['TILEID']
                 if "PETAL_LOC" in row:
                     args["petal"] = row['PETAL_LOC']
                 if "NIGHT" in row:
