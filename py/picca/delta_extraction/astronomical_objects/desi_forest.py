@@ -37,7 +37,7 @@ class DesiForest(Forest):
     targetid: int
     Targetid of the object
 
-    tile: list of int
+    tileid: list of int
     Identifier of the tile used in the observation. None for no info
     """
     def __init__(self, **kwargs):
@@ -68,10 +68,10 @@ class DesiForest(Forest):
                                           "Missing variable 'targetid'")
         del kwargs["targetid"]
 
-        self.tile = []
-        if kwargs.get("tile") is not None:
-            self.tile.append(kwargs.get("tile"))
-            del kwargs["tile"]
+        self.tileid = []
+        if kwargs.get("tileid") is not None:
+            self.tileid.append(kwargs.get("tileid"))
+            del kwargs["tileid"]
 
         # call parent constructor
         kwargs["los_id"] = self.targetid
@@ -98,7 +98,7 @@ class DesiForest(Forest):
                                           f"{type(other).__name__}")
         self.night += other.night
         self.petal += other.petal
-        self.tile += other.tile
+        self.tileid += other.tileid
         super().coadd(other)
 
     def get_header(self):
@@ -129,9 +129,9 @@ class DesiForest(Forest):
                 'comment': 'Observation petal(s)'
             },
             {
-                'name': 'TILE',
-                'value': "-".join(str(tile) for tile in self.tile),
-                'comment': 'Observation tile(s)'
+                'name': 'TILEID',
+                'value': "-".join(str(tileid) for tileid in self.tileid),
+                'comment': 'Observation tileid(s)'
             },
         ]
 
@@ -152,7 +152,7 @@ class DesiForest(Forest):
             self.targetid,
             "-".join(str(night) for night in self.night),
             "-".join(str(petal) for petal in self.petal),
-            "-".join(str(tile) for tile in self.tile),
+            "-".join(str(tileid) for tileid in self.tileid),
         ]
         return metadata
 
@@ -168,7 +168,7 @@ class DesiForest(Forest):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('TARGETID', int), ('NIGHT', 'S12'), ('PETAL', 'S12'), ('TILE', 'S12')]
+        dtype += [('TARGETID', int), ('NIGHT', 'S12'), ('PETAL', 'S12'), ('TILEID', 'S12')]
         return dtype
 
     @classmethod

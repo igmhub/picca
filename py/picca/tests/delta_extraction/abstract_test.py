@@ -159,7 +159,12 @@ class AbstractTest(unittest.TestCase):
                 orig_header = orig_hdul[hdu_name].header
                 new_header = new_hdul[hdu_name].header
                 for key in orig_header:
-                    self.assertTrue(key in new_header)
+                    if not key in new_header:
+                        print(f"\nOriginal file: {orig_file}")
+                        print(f"New file: {new_file}")
+                        print(f"\n For header {orig_header['EXTNAME']}")
+                        print(f"\n Missing key {key} in new header")
+                        self.assertTrue(key in new_header)
                     if not key in ["CHECKSUM", "DATASUM"]:
                         if (orig_header[key] != new_header[key] and
                                 (isinstance(orig_header[key], str) or not

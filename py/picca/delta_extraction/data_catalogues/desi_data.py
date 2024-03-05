@@ -302,7 +302,7 @@ class DesiDataFileHandler():
 
         # Loop over quasars in catalogue fragment
         for row in catalogue:
-            # Find which row in tile contains this quasar
+            # Find which row in catalogue contains this quasar
             # It should be there by construction
             targetid = row["TARGETID"]
             w_t = np.where(targetid_spec == targetid)[0]
@@ -338,6 +338,12 @@ class DesiDataFileHandler():
                     "z": row['Z'],
                 }
                 args["log_lambda"] = np.log10(spec['WAVELENGTH'])
+                if "TILEID" in row:
+                    args["tileid"] = row['TILEID']
+                if "PETAL_LOC" in row:
+                    args["petal"] = row['PETAL_LOC']
+                if "NIGHT" in row:
+                    args["night"] = row['NIGHT']
 
                 if self.analysis_type == "BAO 3D":
                     forest = DesiForest(**args)
