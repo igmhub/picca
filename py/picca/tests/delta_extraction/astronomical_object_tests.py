@@ -249,7 +249,7 @@ def get_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False, is_de
 # define contructors for DesiForest
 def get_desi_kwargs_input(wave_solution, which_spectrum, is_p1d=False):
     """ This function creates the sparse input spectrum for DESI.
-    Also includes targetid, night, petal and tile information.
+    Also includes targetid, night, petal and tileid information.
 
     Arguments
     ---------
@@ -276,14 +276,14 @@ def get_desi_kwargs_input(wave_solution, which_spectrum, is_p1d=False):
             "targetid": TARGETID,
             "night": 0,
             "petal": 0,
-            "tile": 0,
+            "tileid": 0,
         })
     elif which_spectrum == "2":
         kwargs_desi_forest.update({
             "targetid": TARGETID,
             "night": 1,
             "petal": 2,
-            "tile": 3,
+            "tileid": 3,
         })
     else:
         return None
@@ -292,7 +292,7 @@ def get_desi_kwargs_input(wave_solution, which_spectrum, is_p1d=False):
 
 def get_desi_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False):
     """ This function creates the rebinned spectrum for DESI.
-    Also includes targetid, night, petal and tile information.
+    Also includes targetid, night, petal and tileid information.
 
     Arguments
     ---------
@@ -323,14 +323,14 @@ def get_desi_kwargs_rebin(wave_solution, which_spectrum, rebin=1, is_p1d=False):
             "targetid": TARGETID,
             "night": [0, 1],
             "petal": [0, 2],
-            "tile": [0, 3],
+            "tileid": [0, 3],
         })
     else:
         kwargs_desi_forest.update({
             "targetid": TARGETID,
             "night": [0],
             "petal": [0],
-            "tile": [0],
+            "tileid": [0],
         })
 
     kwargs_desi_forest["los_id"] = TARGETID
@@ -556,8 +556,8 @@ class AstronomicalObjectTest(AbstractTest):
             self.assertTrue(test_obj.night == kwargs.get("night"))
             self.assertTrue(isinstance(test_obj.petal, list))
             self.assertTrue(test_obj.petal == kwargs.get("petal"))
-            self.assertTrue(isinstance(test_obj.tile, list))
-            self.assertTrue(test_obj.tile == kwargs.get("tile"))
+            self.assertTrue(isinstance(test_obj.tileid, list))
+            self.assertTrue(test_obj.tileid == kwargs.get("tileid"))
             self.assertTrue(test_obj.targetid == kwargs.get("targetid"))
 
         if isinstance(test_obj, Pk1dForest):
@@ -725,9 +725,9 @@ class AstronomicalObjectTest(AbstractTest):
             self.assertTrue(header[index + 3].get("name") == "PETAL")
             petal = "-".join([f"{petal}" for petal in test_obj.petal])
             self.assertTrue(header[index + 3].get("value") == petal)
-            self.assertTrue(header[index + 4].get("name") == "TILE")
-            tile = "-".join([f"{tile}" for tile in test_obj.tile])
-            self.assertTrue(header[index + 4].get("value") == tile)
+            self.assertTrue(header[index + 4].get("name") == "TILEID")
+            tileid = "-".join([f"{tileid}" for tileid in test_obj.tileid])
+            self.assertTrue(header[index + 4].get("value") == tileid)
             index += 4
 
     def test_astronomical_object(self):
@@ -840,16 +840,16 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj.rebin()
         self.assert_forest_object(test_obj, kwargs_desi_forest_rebin)
 
-        # create a DesiForest with missing night, petal and tile
+        # create a DesiForest with missing night, petal and tileid
         kwargs = kwargs_desi_forest.copy()
-        del kwargs["night"], kwargs["petal"], kwargs["tile"]
+        del kwargs["night"], kwargs["petal"], kwargs["tileid"]
         test_obj = DesiForest(**kwargs)
         test_obj.rebin()
 
         kwargs = kwargs_desi_forest_rebin.copy()
         kwargs["night"] = []
         kwargs["petal"] = []
-        kwargs["tile"] = []
+        kwargs["tileid"] = []
         self.assert_forest_object(test_obj, kwargs)
 
         # create a DesiForest with missing DesiForest variables
@@ -1035,16 +1035,16 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj = DesiPk1dForest(**kwargs)
         test_obj.rebin()
 
-        # create a DesiPk1dForest with missing night, petal and tile
+        # create a DesiPk1dForest with missing night, petal and tileid
         kwargs = kwargs_desi_pk1d_forest.copy()
-        del kwargs["night"], kwargs["petal"], kwargs["tile"]
+        del kwargs["night"], kwargs["petal"], kwargs["tileid"]
         test_obj = DesiPk1dForest(**kwargs)
         test_obj.rebin()
 
         kwargs = kwargs_desi_pk1d_forest_rebin.copy()
         kwargs["night"] = []
         kwargs["petal"] = []
-        kwargs["tile"] = []
+        kwargs["tileid"] = []
         self.assert_forest_object(test_obj, kwargs)
 
         # create a DesiForest with missing DesiPk1dForest variables
