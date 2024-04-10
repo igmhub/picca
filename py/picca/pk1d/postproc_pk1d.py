@@ -227,23 +227,7 @@ def compute_mean_pk1d(
     if "sub_forest_id" in p1d_table_cols:
         p1d_table_cols.remove("sub_forest_id")
 
-    if "Delta_k_real" in p1d_table_cols:
-        p1d_table_cols.remove("Delta_k_real")
-
-    if "Delta_k_imag" in p1d_table_cols:
-        p1d_table_cols.remove("Delta_k_imag")
-
-    if "Delta_noise_k_real" in p1d_table_cols:
-        p1d_table_cols.remove("Delta_noise_k_real")
-
-    if "Delta_noise_k_imag" in p1d_table_cols:
-        p1d_table_cols.remove("Delta_noise_k_imag")
-
-    if "Delta_diff_k_real" in p1d_table_cols:
-        p1d_table_cols.remove("Delta_diff_k_real")
-
-    if "Delta_diff_k_imag" in p1d_table_cols:
-        p1d_table_cols.remove("Delta_diff_k_imag")
+    p1d_table_cols = [ col for col in p1d_table_cols if "Delta_" not in col ]
 
     # Convert data into velocity units
     if velunits:
