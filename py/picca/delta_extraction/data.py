@@ -600,3 +600,21 @@ class Data:
             self.rejection_log.add_to_rejection_log(forest, "accepted")
 
         self.rejection_log.save_rejection_log()
+
+    def return_coadded_forests(self):
+        """In case the forest are not coadd, return the coadd."""
+        los_id_list = np.array([forest.los_id for forest in self.forests])
+        unique_los_id_list = np.unique(los_id_list)
+        if unique_los_id_list.size == los_id_list.size:
+            return self.forests
+        else:
+            coadded_forests = []
+            for los_id in unique_los_id_list:
+                forest_list_to_coadd = np.array(self.forests)[los_id_list == los_id]
+                first_forest = forest_list_to_coadd[0]
+                for forest_coadd in forest_list_to_coadd[1:]:
+                    first_forest.coadd(forest_coadd)
+                coadded_forests.append(first_forest)
+            for forest in self.forests:
+                forest.rebin()
+            return coadded_forests
