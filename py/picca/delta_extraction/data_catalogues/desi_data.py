@@ -35,14 +35,40 @@ defaults = update_default_options(defaults, {
 defaults = update_default_options(defaults, defaults_quasar_catalogue)
 
 def verify_exposures_shape(forests_by_targetid):
-    print(forests_by_targetid)
-    test_key = list(forests_by_targetid.keys())[0]
-    if type(test_key) == int:
-        raise ValueError("The key of this dictionnary should be str"
-                         "in order to verify if exposures have "
-                         "different shapes")
-    unique_los_id = np.unique([int(key.split("_")[1]) for key in forests_by_targetid.keys()])
-    print(unique_los_id)
+    """Verify that the exposures have the same shape. 
+    If not, it removes them from the dictionnary of forests by targetid.
+    Only works for use_non_coadded_spectra and keep_single_exposures options.
+
+    Arguments
+    ---------
+    forests_by_targetid: dict
+    Dictionary were forests are stored. Its content is modified by this
+    function.
+
+    """
+    full_los_ids = np.array(list(forests_by_targetid.keys()))
+    if type(full_los_ids[0]) == int:
+        raise ValueError(
+            "The key of this dictionnary should be str"
+            "in order to verify if exposures have "
+            "different shapes"
+        )
+    los_ids = [int(key.split("_")[1]) for key in full_los_ids]
+    unique_los_ids = np.unique(los_ids)
+    full_los_ids_to_remove = []
+    for los_id in unique_los_ids:
+        select_forest = full_los_ids[los_ids == los_id]
+        size_forests = np.unique(
+            [forests_by_targetid[key].flux.size for key in select_forest]
+        )
+        if len(np.delete(size_forests, 0)) > 1:
+            full_los_ids_to_remove.append(select_forest)
+
+    if len(full_los_ids_to_remove) != 0:
+        full_los_ids_to_remove = np.concatenate(full_los_ids_to_remove, axis=0)
+        for los_id in full_los_ids_to_remove:
+            forests_by_targetid.pop(los_id)
+    return forests_by_targetid
 
 
 def merge_new_forest(forests_by_targetid, new_forests_by_targetid):
@@ -371,7 +397,7 @@ class DesiDataFileHandler():
                     # One exposure case
                     if len(flux.shape) != 2:
                         flux , ivar = np.array([flux]), np.array([ivar])
-                    for i, flux_i in enumerate(flux):
+                    for i, (flux_i,ivar_i) in enumerate(zip(flux,ivar)):
                         forests_by_targetid, num_data = self.update_forest_dictionary(
                                 forests_by_targetid,
                                 f"{targetid}_{i}",
