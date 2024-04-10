@@ -61,7 +61,7 @@ def verify_exposures_shape(forests_by_targetid):
         size_forests = np.unique(
             [forests_by_targetid[key].flux.size for key in select_forest]
         )
-        if len(np.delete(size_forests, 0)) > 1:
+        if len(size_forests) > 1:
             full_los_ids_to_remove.append(select_forest)
 
     if len(full_los_ids_to_remove) != 0:
