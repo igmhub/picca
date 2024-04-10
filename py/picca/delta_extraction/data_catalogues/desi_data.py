@@ -47,7 +47,7 @@ def verify_exposures_shape(forests_by_targetid):
 
     """
     full_los_ids = np.array(list(forests_by_targetid.keys()))
-    if type(full_los_ids[0]) == int:
+    if isinstance(full_los_ids[0],int):
         raise ValueError(
             "The key of this dictionnary should be str"
             "in order to verify if exposures have "
@@ -405,7 +405,7 @@ class DesiDataFileHandler():
                                 spec,
                                 row,
                                 flux_i,
-                                ivar[i],
+                                ivar_i,
                                 w_t,
                                 reso_from_truth,
                                 num_data)

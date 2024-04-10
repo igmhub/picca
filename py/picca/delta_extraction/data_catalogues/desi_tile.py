@@ -132,7 +132,7 @@ class DesiTile(DesiData):
 
         if self.use_non_coadded_spectra & self.keep_single_exposures:
             verify_exposures_shape(forests_by_targetid)
-            
+
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")
 
