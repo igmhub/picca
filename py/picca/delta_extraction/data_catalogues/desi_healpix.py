@@ -152,7 +152,7 @@ class DesiHealpix(DesiData):
                 self.logger.progress(f"Read {index} of {len(arguments)}. "
                                      f"num_data: {num_data}")
         if self.use_non_coadded_spectra & self.keep_single_exposures:
-            verify_exposures_shape(forests_by_targetid)
+            forests_by_targetid = verify_exposures_shape(forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
             raise DataError("No quasars found, stopping here")
