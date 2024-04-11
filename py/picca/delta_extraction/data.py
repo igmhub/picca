@@ -263,6 +263,46 @@ def _save_deltas_one_healpix(out_dir, healpix, forests, save_format):
                     f" Found: {save_format}")
 
 
+def _coadd_exposures(forests):
+    """
+    Takes a list of forest objects and coadds them together.
+
+    Arguments
+    ---------
+    forests: List of Forests
+    List of forests to coadd.
+
+    Returns:
+    ---------
+    coadded_forest: Forest coadded
+    """
+    coadded_forest = forests[0]
+    if len(forests) == 1:
+        coadded_forest.rebin()
+    else:
+        for forest_coadd in forests[1:]:
+            coadded_forest.coadd(forest_coadd)
+    return coadded_forest
+
+
+def _rebin_forest(forest):
+    """
+    Rebin a Forest to match coadd gridding.
+
+    Arguments
+    ---------
+    forest: Forest object
+    Forest to rebin.
+
+    Returns:
+    ---------
+    None
+    """
+    forest.rebin()
+    forest.rebinned = True
+    return forest
+
+
 class Data:
     """Abstract class from which all classes loading data must inherit.
     Classes that inherit from this should be initialized using
@@ -602,18 +642,31 @@ class Data:
         self.rejection_log.save_rejection_log()
 
     def return_coadded_forests(self):
-        """In case the forest are not coadd, return the coadd."""
+        """In case the forest are not coadded, return the coadd."""
         los_id_list = np.array([forest.los_id for forest in self.forests])
         unique_los_id_list = np.unique(los_id_list)
         if unique_los_id_list.size != los_id_list.size:
-            coadded_forests = []
+            # Coadd all the exposures of the same quasar for continuum fitting
+            forest_list_to_coadd = []
             for los_id in unique_los_id_list:
-                forest_list_to_coadd = np.array(self.forests)[los_id_list == los_id]
-                first_forest = forest_list_to_coadd[0]
-                for forest_coadd in forest_list_to_coadd[1:]:
-                    first_forest.coadd(forest_coadd)
-                coadded_forests.append(first_forest)
-            for forest in self.forests:
-                forest.rebin()
+                forest_list_to_coadd.append(np.array(self.forests)[los_id_list == los_id])
+
+            if self.num_processors > 1:
+                with multiprocessing.Pool(processes=self.num_processors) as pool:
+                    coadded_forests = pool.map(_coadd_exposures,forest_list_to_coadd)
+            else:
+                coadded_forests = []
+                for forest_list in forest_list_to_coadd:
+                    coadded_forests.append(_coadd_exposures(forest_list))
+
+            # Rebin all individual forests to have the same wavelength gridding than coadd
+            if self.num_processors > 1:
+                with multiprocessing.Pool(processes=self.num_processors) as pool:
+                    forests_rebinned = pool.map(_rebin_forest,self.forests)
+                self.forests = forests_rebinned
+            else:
+                for forest in self.forests:
+                    _rebin_forest(forest)
             return coadded_forests
+
         return self.forests
