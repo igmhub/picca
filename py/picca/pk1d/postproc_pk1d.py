@@ -73,12 +73,9 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
                 "Pk_diff",
                 "cor_reso",
                 "Pk_noise_miss",
-                "Delta_k_real",
-                "Delta_k_imag",
-                "Delta_noise_k_real",
-                "Delta_noise_k_imag",
-                "Delta_diff_k_real",
-                "Delta_diff_k_imag",
+                "Delta_k",
+                "Delta_noise_k",
+                "Delta_diff_k",
             ]:
                 try:
                     chunk_table.rename_column(colname.upper(), colname)

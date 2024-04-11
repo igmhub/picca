@@ -55,7 +55,7 @@ def treat_pk_file(out_dir, filename):
 
             index = np.concatenate(index, axis=0)
 
-            len_delta_list = [fft_delta_list[i].fft_delta_real.size for i in index]
+            len_delta_list = [fft_delta_list[i].fft_delta.size for i in index]
             if len(np.unique(len_delta_list)) != 1:
                 userprint(
                     f"""The exposures of the sub-forest with LOS_ID {los_id}, and CHUNK_ID {chunk_id}"""
@@ -77,34 +77,24 @@ def treat_pk_file(out_dir, filename):
                 [fft_delta_list[i].mean_snr for i in index]
             )
             mean_reso = np.mean([fft_delta_list[i].mean_reso for i in index])
-            fft_delta_real = np.array([fft_delta_list[i].fft_delta_real for i in index])
-            fft_delta_imag = np.array([fft_delta_list[i].fft_delta_imag for i in index])
+            fft_delta = np.array([fft_delta_list[i].fft_delta for i in index])
 
             pk_raw_cross_exposure = compute_pk_cross_exposure(
-                fft_delta_real,
-                fft_delta_imag,
-                fft_delta_real,
-                fft_delta_imag,
+                fft_delta,
+                fft_delta,
             )
 
             # Computation of the noise term with decomposition delta_F = delta_lya + delta_n
-            fft_delta_noise_real = np.array(
-                [fft_delta_list[i].fft_delta_noise_real for i in index]
-            )
-            fft_delta_noise_imag = np.array(
-                [fft_delta_list[i].fft_delta_noise_imag for i in index]
+            fft_delta_noise = np.array(
+                [fft_delta_list[i].fft_delta_noise for i in index]
             )
             pk_noise_cross_exposure_auto = compute_pk_cross_exposure(
-                fft_delta_noise_real,
-                fft_delta_noise_imag,
-                fft_delta_noise_real,
-                fft_delta_noise_imag,
+                fft_delta_noise,
+                fft_delta_noise,
             )
             pk_noise_cross_exposure_cross = compute_pk_cross_exposure(
-                fft_delta_real,
-                fft_delta_imag,
-                fft_delta_noise_real,
-                fft_delta_noise_imag,
+                fft_delta,
+                fft_delta_noise,
             )
 
             pk_noise_cross_exposure = (
@@ -120,26 +110,17 @@ def treat_pk_file(out_dir, filename):
             )
 
             # Computing pk by taking exposure dependent resolution correction
-            fft_delta_real_resocorr = np.array(
+            fft_delta_resocorr = np.array(
                 [
-                    fft_delta_list[i].fft_delta_real
-                    / np.sqrt(fft_delta_list[i].correction_reso)
-                    for i in index
-                ]
-            )
-            fft_delta_imag_resocorr = np.array(
-                [
-                    fft_delta_list[i].fft_delta_imag
+                    fft_delta_list[i].fft_delta
                     / np.sqrt(fft_delta_list[i].correction_reso)
                     for i in index
                 ]
             )
 
             pk_cross_exposure = compute_pk_cross_exposure(
-                fft_delta_real_resocorr,
-                fft_delta_imag_resocorr,
-                fft_delta_real_resocorr,
-                fft_delta_imag_resocorr,
+                fft_delta_resocorr,
+                fft_delta_resocorr,
             )
 
             pk1d_class = Pk1D(

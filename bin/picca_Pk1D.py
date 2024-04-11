@@ -175,9 +175,6 @@ def process_all_files(index_file_args):
             k, fft_delta, pk_raw = compute_pk_raw(pixel_step,
                                                   delta_new,
                                                   linear_binning=linear_binning)
-            fft_delta_real = fft_delta.real
-            fft_delta_imag = fft_delta.imag
-
 
             # Compute pk_noise
             if (args.noise_estimate == 'pipeline')|(args.noise_estimate == 'mean_pipeline'):
@@ -193,16 +190,10 @@ def process_all_files(index_file_args):
                     linear_binning=linear_binning,
                     num_noise_exposures=args.num_noise_exp,
                 )
-                fft_delta_noise_real = fft_delta_noise.real
-                fft_delta_noise_imag = fft_delta_noise.imag
-                fft_delta_diff_real = fft_delta_diff.real
-                fft_delta_diff_imag = fft_delta_diff.imag
             else:
                 pk_noise=pk_diff=np.zeros(pk_raw.shape)
-                fft_delta_noise_real = np.zeros(pk_raw.shape)
-                fft_delta_noise_imag = np.zeros(pk_raw.shape)
-                fft_delta_diff_real = np.zeros(pk_raw.shape)
-                fft_delta_diff_imag = np.zeros(pk_raw.shape)
+                fft_delta_noise = np.zeros(pk_raw.shape,dtype=np.complex_)
+                fft_delta_diff = np.zeros(pk_raw.shape,dtype=np.complex_)
 
             # Compute resolution correction, needs uniform binning
             if not running_on_raw_transmission:
@@ -281,12 +272,9 @@ def process_all_files(index_file_args):
                     pk_diff=pk_diff,
                     correction_reso=correction_reso,
                     pk=pk,
-                    fft_delta_real=fft_delta_real,
-                    fft_delta_imag=fft_delta_imag,
-                    fft_delta_noise_real = fft_delta_noise_real,
-                    fft_delta_noise_imag = fft_delta_noise_imag,
-                    fft_delta_diff_real = fft_delta_diff_real,
-                    fft_delta_diff_imag = fft_delta_diff_imag,
+                    fft_delta=fft_delta,
+                    fft_delta_noise = fft_delta_noise,
+                    fft_delta_diff = fft_delta_diff,
                 )
                 
                 if file_out is None:
