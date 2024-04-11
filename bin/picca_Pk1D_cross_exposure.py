@@ -36,18 +36,10 @@ def treat_pk_file(out_dir, filename):
     file_number = filename.split("-")[-1].split(".fits.gz")[0]
     with fitsio.FITS(filename, "r") as hdus:
         for _, hdu in enumerate(hdus[1:]):
-            fft_delta = Pk1D.from_fitsio(hdu)
-            if len(fft_delta.los_id.split("_")) < 2:
-                raise ValueError(
-                    "The format of targetid is not adapted to cross exposure estimate"
-                    "Please use use non-coadded spectra and keep single exposures at the"
-                    "delta extraction stage to separate exposures"
-                )
-
-            fft_delta_list.append(fft_delta)
+            fft_delta_list.append(Pk1D.from_fitsio(hdu))
 
     targetid_list = np.array(
-        [fft_delta_list[i].los_id.split("_")[0] for i in range(len(fft_delta_list))]
+        [fft_delta_list[i].los_id for i in range(len(fft_delta_list))]
     )
     chunkid_list = np.array(
         [fft_delta_list[i].chunk_id for i in range(len(fft_delta_list))]
