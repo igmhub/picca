@@ -37,7 +37,6 @@ accepted_options = [
     "rejection log file",
     "save format",
     "num processors",
-    "coadd before delta extraction",
 ]
 
 defaults = {
@@ -52,8 +51,6 @@ defaults = {
     "save format": "ImageHDU",
     "minimal snr pk1d": 1,
     "minimal snr bao3d": 0,
-    "coadd before delta extraction" : False,
-
 }
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
@@ -533,7 +530,6 @@ class Data:
                 "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
                 "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
                 "required by Data")
-        self.coadd_before_delta_extraction = config.getboolean("coadd before delta extraction")
 
     def filter_bad_cont_forests(self):
         """Remove forests where continuum could not be computed"""
@@ -645,33 +641,32 @@ class Data:
 
         self.rejection_log.save_rejection_log()
 
-    def return_forests(self):
+    def return_coadded_forests(self):
         """In case the forest are not coadded, return the coadd."""
-        if self.coadd_before_delta_extraction:
-            los_id_list = np.array([forest.los_id for forest in self.forests])
-            unique_los_id_list = np.unique(los_id_list)
-            if unique_los_id_list.size != los_id_list.size:
-                # Coadd all the exposures of the same quasar for continuum fitting
-                forest_list_to_coadd = []
-                for los_id in unique_los_id_list:
-                    forest_list_to_coadd.append(np.array(self.forests)[los_id_list == los_id])
+        los_id_list = np.array([forest.los_id for forest in self.forests])
+        unique_los_id_list = np.unique(los_id_list)
+        if unique_los_id_list.size != los_id_list.size:
+            # Coadd all the exposures of the same quasar for continuum fitting
+            forest_list_to_coadd = []
+            for los_id in unique_los_id_list:
+                forest_list_to_coadd.append(np.array(self.forests)[los_id_list == los_id])
 
-                if self.num_processors > 1:
-                    with multiprocessing.Pool(processes=self.num_processors) as pool:
-                        coadded_forests = pool.map(_coadd_exposures,forest_list_to_coadd)
-                else:
-                    coadded_forests = []
-                    for forest_list in forest_list_to_coadd:
-                        coadded_forests.append(_coadd_exposures(forest_list))
+            if self.num_processors > 1:
+                with multiprocessing.Pool(processes=self.num_processors) as pool:
+                    coadded_forests = pool.map(_coadd_exposures,forest_list_to_coadd)
+            else:
+                coadded_forests = []
+                for forest_list in forest_list_to_coadd:
+                    coadded_forests.append(_coadd_exposures(forest_list))
 
-                # Rebin all individual forests to have the same wavelength gridding than coadd
-                if self.num_processors > 1:
-                    with multiprocessing.Pool(processes=self.num_processors) as pool:
-                        forests_rebinned = pool.map(_rebin_forest,self.forests)
-                    self.forests = forests_rebinned
-                else:
-                    for forest in self.forests:
-                        _rebin_forest(forest)
-                return coadded_forests
+            # Rebin all individual forests to have the same wavelength gridding than coadd
+            if self.num_processors > 1:
+                with multiprocessing.Pool(processes=self.num_processors) as pool:
+                    forests_rebinned = pool.map(_rebin_forest,self.forests)
+                self.forests = forests_rebinned
+            else:
+                for forest in self.forests:
+                    _rebin_forest(forest)
+            return coadded_forests
 
         return self.forests

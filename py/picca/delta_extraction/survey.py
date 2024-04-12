@@ -162,8 +162,8 @@ class Survey:
         ExpectedFluxType = self.config.expected_flux[0]
         expected_flux_arguments = self.config.expected_flux[1]
         self.expected_flux = ExpectedFluxType(expected_flux_arguments)
-        forests = self.data.return_forests()
-        self.expected_flux.compute_expected_flux(forests)
+        forest_list = self.data.return_coadded_forests()
+        self.expected_flux.compute_expected_flux(forest_list)
         t1 = time.time()
         self.logger.info(f"Time spent computing the mean expected flux: {t1-t0}")
 
