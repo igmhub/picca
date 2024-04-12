@@ -613,6 +613,11 @@ class Data:
 
     def save_deltas(self):
         """Save the deltas."""
+
+        if isinstance(self.forests[0].los_id, str):
+            for forest in self.forests:
+                forest.los_id = np.int64(forest.los_id.split("_")[0])
+
         healpixs = np.array([forest.healpix for forest in self.forests])
         unique_healpixs = np.unique(healpixs)
 
@@ -641,32 +646,14 @@ class Data:
 
         self.rejection_log.save_rejection_log()
 
-    def return_coadded_forests(self):
-        """In case the forest are not coadded, return the coadd."""
+    def rename_exposures(self):
+        """In case there are not coadded forest, rename them to make independent the delta extraction"""
         los_id_list = np.array([forest.los_id for forest in self.forests])
         unique_los_id_list = np.unique(los_id_list)
         if unique_los_id_list.size != los_id_list.size:
             # Coadd all the exposures of the same quasar for continuum fitting
-            forest_list_to_coadd = []
+            new_los_id_list = []
             for los_id in unique_los_id_list:
-                forest_list_to_coadd.append(np.array(self.forests)[los_id_list == los_id])
-
-            if self.num_processors > 1:
-                with multiprocessing.Pool(processes=self.num_processors) as pool:
-                    coadded_forests = pool.map(_coadd_exposures,forest_list_to_coadd)
-            else:
-                coadded_forests = []
-                for forest_list in forest_list_to_coadd:
-                    coadded_forests.append(_coadd_exposures(forest_list))
-
-            # Rebin all individual forests to have the same wavelength gridding than coadd
-            if self.num_processors > 1:
-                with multiprocessing.Pool(processes=self.num_processors) as pool:
-                    forests_rebinned = pool.map(_rebin_forest,self.forests)
-                self.forests = forests_rebinned
-            else:
-                for forest in self.forests:
-                    _rebin_forest(forest)
-            return coadded_forests
-
-        return self.forests
+                new_los_id_list += [f"{los_id}_{i}" for i in range(len(los_id_list[los_id_list == los_id]))]
+            for i, forest in enumerate(self.forests):
+                forest.los_id = new_los_id_list[i]
