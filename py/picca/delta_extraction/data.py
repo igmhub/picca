@@ -647,13 +647,17 @@ class Data:
         self.rejection_log.save_rejection_log()
 
     def rename_exposures(self):
-        """In case there are not coadded forest, rename them to make independent the delta extraction"""
+        """In case there are not coadded forest, """
+        """rename them to make independent the delta extraction"""
         los_id_list = np.array([forest.los_id for forest in self.forests])
         unique_los_id_list = np.unique(los_id_list)
         if unique_los_id_list.size != los_id_list.size:
-            # Coadd all the exposures of the same quasar for continuum fitting
+            # Coadd all the exposures of the same quasar for continuum fitting
             new_los_id_list = []
             for los_id in unique_los_id_list:
-                new_los_id_list += [f"{los_id}_{i}" for i in range(len(los_id_list[los_id_list == los_id]))]
+                new_los_id_list += [
+                    f"{los_id}_{i}"
+                    for i in range(len(los_id_list[los_id_list == los_id]))
+                ]
             for i, forest in enumerate(self.forests):
                 forest.los_id = new_los_id_list[i]
