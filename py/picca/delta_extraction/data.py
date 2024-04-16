@@ -647,17 +647,61 @@ class Data:
         self.rejection_log.save_rejection_log()
 
     def rename_exposures(self):
-        """In case there are not coadded forest, """
+        """In case there are not coadded forest,"""
         """rename them to make independent the delta extraction"""
         los_id_list = np.array([forest.los_id for forest in self.forests])
         unique_los_id_list = np.unique(los_id_list)
         if unique_los_id_list.size != los_id_list.size:
-            # Coadd all the exposures of the same quasar for continuum fitting
-            new_los_id_list = []
             for los_id in unique_los_id_list:
-                new_los_id_list += [
-                    f"{los_id}_{i}"
-                    for i in range(len(los_id_list[los_id_list == los_id]))
-                ]
-            for i, forest in enumerate(self.forests):
-                forest.los_id = new_los_id_list[i]
+                for i, forest in enumerate(
+                    np.array(self.forests)[los_id_list == los_id]
+                ):
+                    forest.los_id = f"{los_id}_{i}"
+
+
+    def select_best_exposures(self):
+        """In case there are not coadded forest,"""
+        """select the less noisy forest for delta extraction"""
+        los_id_list = np.array([forest.los_id for forest in self.forests])
+        unique_los_id_list = np.unique(los_id_list)
+        if unique_los_id_list.size != los_id_list.size:
+            mean_snr = np.array([forest.mean_snr for forest in self.forests])
+            all_forests = np.array(self.forests)
+            forests = []
+            for los_id in unique_los_id_list:
+                mask_los_id = los_id_list == los_id
+                arg_best_exposure = np.argmax(mean_snr[mask_los_id])
+                forests.append(all_forests[mask_los_id][arg_best_exposure])
+            return forests
+        return self.forests
+
+
+    def return_coadded_forests(self):
+        """In case the forest are not coadded, return the coadd."""
+        los_id_list = np.array([forest.los_id for forest in self.forests])
+        unique_los_id_list = np.unique(los_id_list)
+        if unique_los_id_list.size != los_id_list.size:
+            # Coadd all the exposures of the same quasar for continuum fitting
+            forest_list_to_coadd = []
+            for los_id in unique_los_id_list:
+                forest_list_to_coadd.append(np.array(self.forests)[los_id_list == los_id])
+
+            if self.num_processors > 1:
+                with multiprocessing.Pool(processes=self.num_processors) as pool:
+                    coadded_forests = pool.map(_coadd_exposures,forest_list_to_coadd)
+            else:
+                coadded_forests = []
+                for forest_list in forest_list_to_coadd:
+                    coadded_forests.append(_coadd_exposures(forest_list))
+
+            # Rebin all individual forests to have the same wavelength gridding than coadd
+            if self.num_processors > 1:
+                with multiprocessing.Pool(processes=self.num_processors) as pool:
+                    forests_rebinned = pool.map(_rebin_forest,self.forests)
+                self.forests = forests_rebinned
+            else:
+                for forest in self.forests:
+                    _rebin_forest(forest)
+            return coadded_forests
+
+        return self.forests
