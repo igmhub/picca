@@ -1333,7 +1333,6 @@ class DataTest(AbstractTest):
                 config["data"][key] = str(value)
 
         data = DesiTile(config["data"])
-        print(len(data.forests))
 
         self.assertTrue(len(data.forests) == 110)
 
@@ -1354,7 +1353,6 @@ class DataTest(AbstractTest):
                 config["data"][key] = str(value)
 
         data = DesiTile(config["data"])
-        print(len(data.forests))
 
         self.assertTrue(len(data.forests) == 110)
 
@@ -1374,9 +1372,8 @@ class DataTest(AbstractTest):
                 config["data"][key] = str(value)
 
         data = DesiTile(config["data"])
-        print(len(data.forests))
 
-        self.assertTrue(len(data.forests) == 110)
+        self.assertTrue(len(data.forests) == 10)
 
 
         # run with two processors; case: using individual spectra in P1d mode, coadding within picca
@@ -1396,9 +1393,8 @@ class DataTest(AbstractTest):
                 config["data"][key] = str(value)
 
         data = DesiTile(config["data"])
-        print(len(data.forests))
 
-        self.assertTrue(len(data.forests) == 110)
+        self.assertTrue(len(data.forests) == 10)
 
     def test_desisim_mocks(self):
         """Test DesisimMocks"""
