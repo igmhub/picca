@@ -1316,6 +1316,26 @@ class DataTest(AbstractTest):
 
         self.assertTrue(len(data.forests) == 10)
 
+
+        # run with one processor; case: using individual spectra, not coadding
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": True,
+            "keep single exposures": True,
+            "num processors": 1,
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+        print(len(data.forests))
+
+        self.assertTrue(len(data.forests) == 110)
+
     def test_desisim_mocks(self):
         """Test DesisimMocks"""
         # case: BAO 3D
