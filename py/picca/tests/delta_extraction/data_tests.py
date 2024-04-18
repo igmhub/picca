@@ -1317,7 +1317,7 @@ class DataTest(AbstractTest):
         self.assertTrue(len(data.forests) == 10)
 
 
-        # run with one processor; case: using individual spectra, not coadding
+        # run with one processor; case: using individual spectra in P1d mode, not coadding
         config = ConfigParser()
         config.read_dict({"data": {
             "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
@@ -1326,6 +1326,70 @@ class DataTest(AbstractTest):
             "use non-coadded spectra": True,
             "keep single exposures": True,
             "num processors": 1,
+            "analysis type": "PK 1D"
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+        print(len(data.forests))
+
+        self.assertTrue(len(data.forests) == 110)
+
+
+        # run with two processors; case: using individual spectra in P1d mode, not coadding
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": True,
+            "keep single exposures": True,
+            "num processors": 2,
+            "analysis type": "PK 1D"
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+        print(len(data.forests))
+
+        self.assertTrue(len(data.forests) == 110)
+
+        # run with one processor; case: using individual spectra in P1d mode, coadding within picca
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": True,
+            "keep single exposures": False,
+            "num processors": 1,
+            "analysis type": "PK 1D"
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+        print(len(data.forests))
+
+        self.assertTrue(len(data.forests) == 110)
+
+
+        # run with two processors; case: using individual spectra in P1d mode, coadding within picca
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": True,
+            "keep single exposures": False,
+            "num processors": 2,
+            "analysis type": "PK 1D"
+            ""
         }})
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:
