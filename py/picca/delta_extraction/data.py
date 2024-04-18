@@ -647,7 +647,9 @@ class Data:
         self.rejection_log.save_rejection_log()
 
     def rename_exposures(self):
-        """In case there are not coadded forest, rename them to make independent the delta extraction"""
+        """In case there are not coadded forest, rename them to make independent the delta 
+        extraction
+        """
         los_id_list = np.array([forest.los_id for forest in self.forests])
         unique_los_id_list = np.unique(los_id_list)
         if unique_los_id_list.size != los_id_list.size:
