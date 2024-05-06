@@ -253,7 +253,7 @@ def main(cmdargs):
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
 
     # read blinding keyword
-    blinding = io.read_blinding(args.in_dir)
+    blinding = io.read_blinding(args.in_dir, args.lambda_abs, args.lambda_abs_obj)
 
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,

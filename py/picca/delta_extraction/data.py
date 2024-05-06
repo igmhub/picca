@@ -92,6 +92,17 @@ def _save_deltas_one_healpix_image(out_dir, healpix, forests):
         "value": Forest.wave_solution,
         "comment": "chosen wavelength solution",
     })
+    hdr.add_record({
+        "name": "MIN_RF_WAVE",
+        "value": 10**Forest.log_lambda_rest_frame_grid[0],
+        "comment": "minimum rest-frame wavelength",
+    })
+    hdr.add_record({
+        "name": "MAX_RF_WAVE",
+        "value": 10**Forest.log_lambda_rest_frame_grid[-1],
+        "comment": "maximum rest-frame wavelength",
+    })
+
     if Forest.wave_solution == "log":
         hdr.add_record({
             "name": "DELTA_LOG_LAMBDA",
@@ -219,6 +230,18 @@ def _save_deltas_one_healpix_table(out_dir, healpix, forests):
 
     for forest in forests:
         header = forest.get_header()
+        header += [
+            {
+                'name': 'MIN_RF_WAVE',
+                'value': 10**Forest.log_lambda_rest_frame_grid[0],
+                'comment': "minimum rest-frame wavelength",
+            },
+            {
+                'name': 'MAX_RF_WAVE',
+                'value': 10**Forest.log_lambda_rest_frame_grid[-1],
+                'comment': "maximum rest-frame wavelength",
+            },
+        ]
         cols, names, units, comments = forest.get_data()
         results.write(cols,
                       names=names,
