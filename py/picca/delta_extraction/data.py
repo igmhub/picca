@@ -661,23 +661,6 @@ class Data:
         los_id_list = np.array([forest.los_id for forest in self.forests])
 
 
-    def select_best_exposures(self):
-        """In case there are not coadded forest,
-        select the less noisy forest for delta extraction"""
-        los_id_list = np.array([forest.los_id for forest in self.forests])
-        unique_los_id_list = np.unique(los_id_list)
-        if unique_los_id_list.size != los_id_list.size:
-            mean_snr = np.array([forest.mean_snr for forest in self.forests])
-            all_forests = np.array(self.forests)
-            forests = []
-            for los_id in unique_los_id_list:
-                mask_los_id = los_id_list == los_id
-                arg_best_exposure = np.argmax(mean_snr[mask_los_id])
-                forests.append(all_forests[mask_los_id][arg_best_exposure])
-            return forests
-        return self.forests
-
-
     def return_coadded_forests(self):
         """In case the forest are not coadded,
         return the coadd."""
