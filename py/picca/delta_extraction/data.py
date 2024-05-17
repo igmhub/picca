@@ -37,6 +37,7 @@ accepted_options = [
     "rejection log file",
     "save format",
     "num processors",
+    "delta extraction single exposure",
 ]
 
 defaults = {
@@ -51,6 +52,7 @@ defaults = {
     "save format": "ImageHDU",
     "minimal snr pk1d": 1,
     "minimal snr bao3d": 0,
+    "delta extraction single exposure" : "None",
 }
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
@@ -529,6 +531,7 @@ class Data:
                 "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
                 "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
                 "required by Data")
+        self.delta_extraction_single_exposure = config.get("delta extraction single exposure")
 
     def filter_bad_cont_forests(self):
         """Remove forests where continuum could not be computed"""
@@ -645,20 +648,37 @@ class Data:
 
         self.rejection_log.save_rejection_log()
 
+
+    def select_forests_expected_flux_estimation(self):
+        """In case there are not coadded forest,
+        chose the way continuum fitting is computed.
+        If individual exposures are present and no option is chosen,
+        return an error."""
+        if self.delta_extraction_single_exposure == "None":
+            return self.forests
+        elif self.delta_extraction_single_exposure == "indiv":
+            self.rename_exposures()
+            return self.forests
+        elif self.delta_extraction_single_exposure == "coadd":
+            return self.return_coadded_forests()
+        else:
+            raise ValueError("""Wrong method chosen for fitting the continuum of """
+                             """individual exposure, please chose between indiv or coadd """
+                             """for the "delta extraction single exposure" variable""")
+
+
     def rename_exposures(self):
         """In case there are not coadded forest,
         rename them to make independent the delta extraction"""
         los_id_list = np.array([forest.los_id for forest in self.forests])
         unique_los_id_list = np.unique(los_id_list)
-        if unique_los_id_list.size != los_id_list.size:
-            new_forest_id_list = np.zeros(los_id_list.shape).astype(str)
-            for los_id in unique_los_id_list:
-                mask_los_id = los_id_list == los_id
-                new_forest_id = [f"{los_id}_{i}" for i in range(len(los_id_list[mask_los_id]))]
-                new_forest_id_list[mask_los_id] = new_forest_id
-            for i, forest in enumerate(self.forests):
-                forest.los_id = new_forest_id_list[i]
-        los_id_list = np.array([forest.los_id for forest in self.forests])
+        new_forest_id_list = np.zeros(los_id_list.shape).astype(str)
+        for los_id in unique_los_id_list:
+            mask_los_id = los_id_list == los_id
+            new_forest_id = [f"{los_id}_{i}" for i in range(len(los_id_list[mask_los_id]))]
+            new_forest_id_list[mask_los_id] = new_forest_id
+        for i, forest in enumerate(self.forests):
+            forest.los_id = new_forest_id_list[i]
 
 
     def return_coadded_forests(self):
@@ -666,30 +686,28 @@ class Data:
         return the coadd."""
         los_id_list = np.array([forest.los_id for forest in self.forests])
         unique_los_id_list = np.unique(los_id_list)
-        if unique_los_id_list.size != los_id_list.size:
-            # Coadd all the exposures of the same quasar for continuum fitting
-            all_forests = np.array(self.forests)
-            forest_list_to_coadd = []
-            for los_id in unique_los_id_list:
-                mask_los_id = los_id_list == los_id
-                forest_list_to_coadd.append(all_forests[mask_los_id])
 
-            if self.num_processors > 1:
-                with multiprocessing.Pool(processes=self.num_processors) as pool:
-                    coadded_forests = pool.map(_coadd_exposures,forest_list_to_coadd)
-            else:
-                coadded_forests = []
-                for forest_list in forest_list_to_coadd:
-                    coadded_forests.append(_coadd_exposures(forest_list))
+        # Coadd all the exposures of the same quasar for continuum fitting
+        all_forests = np.array(self.forests)
+        forest_list_to_coadd = []
+        for los_id in unique_los_id_list:
+            mask_los_id = los_id_list == los_id
+            forest_list_to_coadd.append(all_forests[mask_los_id])
 
-            # Rebin all individual forests to have the same wavelength gridding than coadd
-            if self.num_processors > 1:
-                with multiprocessing.Pool(processes=self.num_processors) as pool:
-                    forests_rebinned = pool.map(_rebin_forest,self.forests)
-                self.forests = forests_rebinned
-            else:
-                for forest in self.forests:
-                    _rebin_forest(forest)
-            return coadded_forests
+        if self.num_processors > 1:
+            with multiprocessing.Pool(processes=self.num_processors) as pool:
+                coadded_forests = pool.map(_coadd_exposures,forest_list_to_coadd)
+        else:
+            coadded_forests = []
+            for forest_list in forest_list_to_coadd:
+                coadded_forests.append(_coadd_exposures(forest_list))
 
-        return self.forests
+        # Rebin all individual forests to have the same wavelength gridding than coadd
+        if self.num_processors > 1:
+            with multiprocessing.Pool(processes=self.num_processors) as pool:
+                forests_rebinned = pool.map(_rebin_forest,self.forests)
+            self.forests = forests_rebinned
+        else:
+            for forest in self.forests:
+                _rebin_forest(forest)
+        return coadded_forests

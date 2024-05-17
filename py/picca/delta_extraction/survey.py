@@ -162,7 +162,7 @@ class Survey:
         ExpectedFluxType = self.config.expected_flux[0]
         expected_flux_arguments = self.config.expected_flux[1]
         self.expected_flux = ExpectedFluxType(expected_flux_arguments)
-        forests = self.data.select_best_exposures()
+        forests = self.data.select_forests_expected_flux_estimation()
         self.expected_flux.compute_expected_flux(forests)
         t1 = time.time()
         self.logger.info(f"Time spent computing the mean expected flux: {t1-t0}")
