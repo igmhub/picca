@@ -733,7 +733,8 @@ def compute_average_pk_redshift(
                 data_snr[mask_nan_p1d_values],
                 p1d_values[mask_nan_p1d_values],
             )
-
+            if len(p1d_values) == 0:
+                continue
             standard_dev, _, _ = binned_statistic(
                 data_snr, p1d_values, statistic="std", bins=snr_bin_edges
             )
