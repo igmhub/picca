@@ -650,19 +650,18 @@ class Data:
 
 
     def select_forests_expected_flux_estimation(self):
-        """In case there are not coadded forest,
+        """In case we are using non-coadded forests,
         chose the way continuum fitting is computed.
         If individual exposures are present and no option is chosen,
         return an error."""
         if self.delta_extraction_single_exposure == "None":
             return self.forests
-        elif self.delta_extraction_single_exposure == "indiv":
+        if self.delta_extraction_single_exposure == "indiv":
             self.rename_exposures()
             return self.forests
-        elif self.delta_extraction_single_exposure == "coadd":
+        if self.delta_extraction_single_exposure == "coadd":
             return self.return_coadded_forests()
-        else:
-            raise ValueError("""Wrong method chosen for fitting the continuum of """
+        raise ValueError("""Wrong method chosen for fitting the continuum of """
                              """individual exposure, please chose between indiv or coadd """
                              """for the "delta extraction single exposure" variable""")
 
