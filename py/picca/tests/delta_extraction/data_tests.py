@@ -79,6 +79,7 @@ class DataTest(AbstractTest):
         with self.assertRaises(DataError) as context_manager:
             reader = DesiHealpixFileHandler(data.analysis_type,
                                             data.use_non_coadded_spectra,
+                                            data.uniquify_night_targetid,
                                             data.keep_single_exposures,
                                             data.logger)
 
@@ -1324,6 +1325,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/tile/cumulative",
             "out dir": f"{THIS_DIR}/results/",
             "use non-coadded spectra": True,
+            "uniquify night targetid": True,
             "keep single exposures": True,
             "num processors": 1,
             "analysis type": "PK 1D"
@@ -1344,6 +1346,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/tile/cumulative",
             "out dir": f"{THIS_DIR}/results/",
             "use non-coadded spectra": True,
+            "uniquify night targetid": True,
             "keep single exposures": True,
             "num processors": 2,
             "analysis type": "PK 1D"
@@ -1363,6 +1366,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/tile/cumulative",
             "out dir": f"{THIS_DIR}/results/",
             "use non-coadded spectra": True,
+            "uniquify night targetid": True,
             "keep single exposures": False,
             "num processors": 1,
             "analysis type": "PK 1D"
@@ -1383,6 +1387,7 @@ class DataTest(AbstractTest):
             "input directory": f"{THIS_DIR}/data/tile/cumulative",
             "out dir": f"{THIS_DIR}/results/",
             "use non-coadded spectra": True,
+            "uniquify night targetid": True,
             "keep single exposures": False,
             "num processors": 2,
             "analysis type": "PK 1D"

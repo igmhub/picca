@@ -121,6 +121,7 @@ class DesiHealpix(DesiData):
                 imap_it = pool.imap(
                     DesiHealpixFileHandler(self.analysis_type,
                                            self.use_non_coadded_spectra,
+                                           self.uniquify_night_targetid,
                                            self.keep_single_exposures,
                                            self.logger), arguments)
                 for index, output_imap in enumerate(imap_it):
@@ -137,6 +138,7 @@ class DesiHealpix(DesiData):
         else:
             reader = DesiHealpixFileHandler(self.analysis_type,
                                             self.use_non_coadded_spectra,
+                                            self.uniquify_night_targetid,
                                             self.keep_single_exposures,
                                             self.logger)
             num_data = 0
@@ -206,6 +208,12 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
+
+        index_unique = np.full(fibermap.shape,True)
+        if self.uniquify_night_targetid:
+            if "NIGHT" in fibermap.dtype.names:
+                _, index_unique = np.unique(np.vstack([fibermap["TARGETID"],fibermap["NIGHT"]]),axis=1,return_index=True)
+
         # First read all wavelength, flux, ivar, mask, and resolution
         # from this file
         spectrographs_data = {}
@@ -246,15 +254,15 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             spec = {}
             try:
                 spec["WAVELENGTH"] = hdul[f"{color}_WAVELENGTH"].read()
-                spec["FLUX"] = hdul[f"{color}_FLUX"].read()
+                spec["FLUX"] = hdul[f"{color}_FLUX"].read()[index_unique]
                 spec["IVAR"] = (hdul[f"{color}_IVAR"].read() *
-                                (hdul[f"{color}_MASK"].read() == 0))
+                                (hdul[f"{color}_MASK"].read() == 0))[index_unique]
                 w = np.isnan(spec["FLUX"]) | np.isnan(spec["IVAR"])
                 for key in ["FLUX", "IVAR"]:
                     spec[key][w] = 0.
 
                 if self.analysis_type == "PK 1D":
-                    spec["RESO"] = _read_resolution(color)
+                    spec["RESO"] = _read_resolution(color)[index_unique]
 
                 spectrographs_data[color] = spec
             except OSError:
@@ -268,7 +276,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
         forests_by_targetid, num_data = self.format_data(
             catalogue,
             spectrographs_data,
-            fibermap["TARGETID"],
+            fibermap["TARGETID"][index_unique],
             reso_from_truth=reso_from_truth)
 
         return forests_by_targetid, num_data

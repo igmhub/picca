@@ -53,6 +53,10 @@ class DesisimMocks(DesiHealpix):
             self.logger.warning(
                 'the "keep_single_exposures" option was set, '
                 'but has no effect on Mocks, will proceed as normal')
+        if self.uniquify_night_targetid:
+            self.logger.warning(
+                'the "uniquify_night_targetid" option was set, '
+                'but has no effect on Mocks, will proceed as normal')
 
     def get_filename(self, survey, healpix):
         """Get the name of the file to read

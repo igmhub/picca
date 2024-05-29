@@ -23,12 +23,13 @@ from picca.delta_extraction.utils import (
 accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(
     accepted_options,
-    ["use non-coadded spectra", "keep single exposures", "wave solution"])
+    ["use non-coadded spectra", "uniquify night targetid", "keep single exposures", "wave solution"])
 
 defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
     "use non-coadded spectra": False,
+    "uniquify night targetid": False,
     "keep single exposures": False,
     "wave solution": "lin",
 })
@@ -127,6 +128,9 @@ class DesiData(Data):
     If True, load data from non-coadded spectra. Otherwise,
     load coadded data
 
+    uniquify_night_targetid: bool
+    If True, remove the quasars taken on the same night.
+
     keep_single_exposures: bool
     If True, the date loadded from non-coadded spectra are not coadded. 
     Otherwise, coadd the spectra here.
@@ -147,6 +151,7 @@ class DesiData(Data):
 
         # load variables from config
         self.keep_single_exposures = None
+        self.uniquify_night_targetid = None
         self.use_non_coadded_spectra = None
         self.__parse_config(config)
 
@@ -186,6 +191,13 @@ class DesiData(Data):
         if self.keep_single_exposures is None:
             raise DataError(
                 "Missing argument 'keep single exposures' required by DesiData"
+            )
+
+        self.uniquify_night_targetid = config.getboolean(
+            "uniquify night targetid")
+        if self.uniquify_night_targetid is None:
+            raise DataError(
+                "Missing argument 'uniquify night targetid' required by DesiData"
             )
 
         self.use_non_coadded_spectra = config.getboolean(
@@ -280,12 +292,15 @@ class DesiDataFileHandler():
     If True, load data from non-coadded spectra. Otherwise,
     load coadded data
 
+    uniquify_night_targetid: bool
+    If True, remove the quasars taken on the same night.
+
     keep_single_exposures: bool
     If True, the date loadded from non-coadded spectra are not coadded. 
     Otherwise, coadd the spectra here.
     """
 
-    def __init__(self, analysis_type, use_non_coadded_spectra, keep_single_exposures, logger):
+    def __init__(self, analysis_type, use_non_coadded_spectra, uniquify_night_targetid, keep_single_exposures, logger):
         """Initialize file handler
 
         Arguments
@@ -297,7 +312,10 @@ class DesiDataFileHandler():
         keep_single_exposures: bool
         If True, the date loadded from non-coadded spectra are not coadded. 
         Otherwise, coadd the spectra here.
-        
+
+        uniquify_night_targetid: bool
+        If True, remove the quasars taken on the same night.
+
         use_non_coadded_spectra: bool
         If True, load data from non-coadded spectra. Otherwise,
         load coadded data
@@ -311,6 +329,7 @@ class DesiDataFileHandler():
         self.logger = logger
         self.analysis_type = analysis_type
         self.keep_single_exposures = keep_single_exposures
+        self.uniquify_night_targetid = uniquify_night_targetid
         self.use_non_coadded_spectra = use_non_coadded_spectra
 
     def __call__(self, args):
