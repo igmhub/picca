@@ -198,7 +198,7 @@ class DesiData(Data):
             raise DataError(
                 "Missing argument 'use non-coadded spectra' required by DesiData"
             )
-        
+
         self.uniquify_night_targetid = config.getboolean(
             "uniquify night targetid")
         if self.uniquify_night_targetid is None:
