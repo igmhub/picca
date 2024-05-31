@@ -152,9 +152,6 @@ class DesiData(Data):
         super().__init__(config)
 
         # load variables from config
-        self.keep_single_exposures = None
-        self.uniquify_night_targetid = None
-        self.use_non_coadded_spectra = None
         self.__parse_config(config)
 
         # load z_truth catalogue
@@ -195,18 +192,18 @@ class DesiData(Data):
                 "Missing argument 'keep single exposures' required by DesiData"
             )
 
-        self.uniquify_night_targetid = config.getboolean(
-            "uniquify night targetid")
-        if self.uniquify_night_targetid is None:
-            raise DataError(
-                "Missing argument 'uniquify night targetid' required by DesiData"
-            )
-
         self.use_non_coadded_spectra = config.getboolean(
             "use non-coadded spectra")
         if self.use_non_coadded_spectra is None:
             raise DataError(
                 "Missing argument 'use non-coadded spectra' required by DesiData"
+            )
+        
+        self.uniquify_night_targetid = config.getboolean(
+            "uniquify night targetid")
+        if self.uniquify_night_targetid is None:
+            raise DataError(
+                "Missing argument 'uniquify night targetid' required by DesiData"
             )
 
 

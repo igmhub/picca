@@ -240,9 +240,9 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
                 hdul_truth = fitsio.FITS(filename_truth)
                 reso_from_truth = True
 
-        def _read_resolution(color):
+        def _read_resolution(color, indices):
             if f"{color}_RESOLUTION" in hdul:
-                return hdul[f"{color}_RESOLUTION"].read()
+                return hdul[f"{color}_RESOLUTION"].read()[indices]
             if hdul_truth is not None:
                 return hdul_truth[f"{color}_RESOLUTION"].read()
 
@@ -264,7 +264,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
                     spec[key][w] = 0.
 
                 if self.analysis_type == "PK 1D":
-                    spec["RESO"] = _read_resolution(color)[index_unique]
+                    spec["RESO"] = _read_resolution(color,index_unique)
 
                 spectrographs_data[color] = spec
             except OSError:
