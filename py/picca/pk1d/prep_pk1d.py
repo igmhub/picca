@@ -179,7 +179,7 @@ def exp_diff_desi(
         alpha = 2 * np.sqrt(
             (time_odd * time_even) / (time_exp * (time_odd + time_even))
         )
-    
+
     else:
         raise ValueError(f"Unknown method_alpha: {method_alpha}")
 
