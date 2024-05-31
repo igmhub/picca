@@ -656,10 +656,10 @@ class Data:
         return an error."""
         if self.delta_extraction_single_exposure == "None":
             return self.forests
-        if self.delta_extraction_single_exposure == "indiv":
+        if self.delta_extraction_single_exposure.startswith("indiv"):
             self.rename_exposures()
             return self.forests
-        if self.delta_extraction_single_exposure == "coadd":
+        if self.delta_extraction_single_exposure.startswith("coadd"):
             return self.return_coadded_forests()
         raise ValueError("""Wrong method chosen for fitting the continuum of """
                              """individual exposure, please chose between indiv or coadd """
