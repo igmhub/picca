@@ -21,9 +21,11 @@ from picca.delta_extraction.utils import (
     ABSORBER_IGM, update_accepted_options, update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
-accepted_options = update_accepted_options(
-    accepted_options,
-    ["use non-coadded spectra", "uniquify night targetid", "keep single exposures", "wave solution"])
+accepted_options = update_accepted_options(accepted_options,
+    ["use non-coadded spectra",
+     "uniquify night targetid",
+     "keep single exposures", 
+     "wave solution"])
 
 defaults = update_default_options(defaults, {
     "delta lambda": 0.8,
@@ -300,7 +302,12 @@ class DesiDataFileHandler():
     Otherwise, coadd the spectra here.
     """
 
-    def __init__(self, analysis_type, use_non_coadded_spectra, uniquify_night_targetid, keep_single_exposures, logger):
+    def __init__(self,
+                 analysis_type,
+                 use_non_coadded_spectra,
+                 uniquify_night_targetid,
+                 keep_single_exposures,
+                 logger):
         """Initialize file handler
 
         Arguments

@@ -212,7 +212,9 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
         index_unique = np.full(fibermap.shape,True)
         if self.uniquify_night_targetid:
             if "NIGHT" in fibermap.dtype.names:
-                _, index_unique = np.unique(np.vstack([fibermap["TARGETID"],fibermap["NIGHT"]]),axis=1,return_index=True)
+                _, index_unique = np.unique(
+                    np.vstack([fibermap["TARGETID"],fibermap["NIGHT"]]),axis=1,return_index=True
+                    )
 
         # First read all wavelength, flux, ivar, mask, and resolution
         # from this file

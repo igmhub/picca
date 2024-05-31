@@ -158,7 +158,12 @@ class DesiTileFileHandler(DesiDataFileHandler):
     (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
     """
 
-    def __init__(self, analysis_type, use_non_coadded_spectra, uniquify_night_targetid, keep_single_exposures, logger,
+    def __init__(self,
+                 analysis_type,
+                 use_non_coadded_spectra,
+                 uniquify_night_targetid,
+                 keep_single_exposures,
+                 logger,
                  input_directory):
         """Initialize file handler
 
@@ -186,7 +191,11 @@ class DesiTileFileHandler(DesiDataFileHandler):
         Directory where input data is stored.
         """
         self.input_directory = input_directory
-        super().__init__(analysis_type, use_non_coadded_spectra, uniquify_night_targetid, keep_single_exposures, logger)
+        super().__init__(analysis_type,
+                         use_non_coadded_spectra,
+                         uniquify_night_targetid,
+                         keep_single_exposures,
+                         logger)
 
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
