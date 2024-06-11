@@ -134,11 +134,21 @@ def process_all_files(index_file_args):
         first_pixel_index = (np.argmax(selected_pixels) if
                              np.any(selected_pixels) else len(selected_pixels))
 
-        # minimum number of pixel in forest
-        min_num_pixels = args.nb_pixel_min
-        if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
-            continue
 
+        max_length_forest_theoretical=((1050-1180)*(delta.z_qso+1)/0.8)
+        # minimum number of pixel in forest
+        if args.nb_pixel_min is not None:
+            min_num_pixels = args.nb_pixel_min
+        else:
+            min_num_pixels = args.nb_pixel_frac_min*max_length_forest_theoretical     #this is currently just hardcoding values so that spectra have a minimum length changing with z
+        if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
+                continue
+        
+        if (args.nb_pixel_masked_max is not None):
+            max_num_masked_pixels = args.nb_pixel_masked_max
+        else:
+            max_num_masked_pixels = args.nb_pixel_masked_frac_max*max_length_forest_theoretical/3.
+        
         # Split the forest in n parts
         max_num_parts = (len(delta.log_lambda) -
                          first_pixel_index) // min_num_pixels
@@ -199,7 +209,8 @@ def process_all_files(index_file_args):
                      pixel_step, log_lambda_array[part_index],
                      delta_array[part_index], exposures_diff_array[part_index],
                      ivar_array[part_index], args.no_apply_filling)
-            if num_masked_pixels > args.nb_pixel_masked_max:
+                
+            if num_masked_pixels > max_num_masked_pixels:
                 continue
 
             # Compute pk_raw, needs uniform binning
@@ -449,16 +460,30 @@ def main(cmdargs):
 
     parser.add_argument('--nb-pixel-min',
                         type=int,
-                        default=75,
+                        default=None,
                         required=False,
                         help='Minimal number of pixels in a part of forest')
+    
+
+    parser.add_argument('--nb-pixel-frac-min',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Minimal number of pixels in a part of forest (default is assuming ~577 pixels for a z=2.5 QSO in the forest of 1050-1180A and masking up to 75)')
 
     parser.add_argument(
         '--nb-pixel-masked-max',
         type=int,
-        default=40,
+        default=None,#40,
         required=False,
         help='Maximal number of masked pixels in a part of forest')
+    
+    parser.add_argument(
+        '--nb-pixel-masked-frac-max',
+        type=int,
+        default=None,
+        required=False,
+        help='Maximal number of masked pixels in a part of forest (default is 21% of the forest length, i.e. similar to the previous value at z=2.5 for a 3 chunk spectrum and 1050-1180A)')
 
     parser.add_argument('--no-apply-filling',
                         action='store_true',
@@ -572,6 +597,22 @@ def main(cmdargs):
     args.len_files = len(files)
     #create output dir if it does not exist
     os.makedirs(args.out_dir, exist_ok=True)
+
+    if args.nb_pixel_min is None and args.nb_pixel_frac_min is None:
+            args.nb_pixel_frac_min = 0.13
+            # args.nb_pixel_min = 75    #this is the previous default
+    elif not (args.nb_pixel_frac_min is None or args.nb_pixel_min is None):
+        print("both nb_pixel_frac_min and nb_pixel_min were set, using the latter")
+        args.nb_pixel_frac_min=None
+
+    if args.nb_pixel_masked_frac_max is None and args.nb_pixel_masked_max is None:
+            # could make this, i.e. 10% of the estimated forest length the new default
+            args.nb_pixel_masked_frac_max = 0.21
+            # args.nb_pixel_min = 40  #this is the previous default
+    elif not (args.nb_pixel_masked_frac_max is None or args.nb_pixel_masked_max is None):
+        print("both nb_pixel_masked_frac_max and nb_pixel_masked_max were set, using the latter")
+        args.nb_pixel_masked_frac_max=None
+
 
     print([[i, f] for i, f in enumerate(files)])
     if args.num_processors > 1:
