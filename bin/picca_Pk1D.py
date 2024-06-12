@@ -135,19 +135,22 @@ def process_all_files(index_file_args):
                              np.any(selected_pixels) else len(selected_pixels))
 
 
-        max_length_forest_theoretical=((1050-1180)*(delta.z_qso+1)/0.8)
+        if linear_binning:
+            max_num_pixels_forest_theoretical=(1180-1050)*(delta.z_qso+1)/pixel_step  #currently no min/max restframe values defined, so hard coding for the moment
+        else:
+            max_num_pixels_forest_theoretical=(np.log(1180)-np.log10(1050))/pixel_step
         # minimum number of pixel in forest
         if args.nb_pixel_min is not None:
             min_num_pixels = args.nb_pixel_min
         else:
-            min_num_pixels = int(args.nb_pixel_frac_min*max_length_forest_theoretical)     #this is currently just hardcoding values so that spectra have a minimum length changing with z
+            min_num_pixels = int(args.nb_pixel_frac_min*max_num_pixels_forest_theoretical)     #this is currently just hardcoding values so that spectra have a minimum length changing with z
         if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
                 continue
         
         if (args.nb_pixel_masked_max is not None):
             max_num_masked_pixels = args.nb_pixel_masked_max
         else:
-            max_num_masked_pixels = int(args.nb_pixel_masked_frac_max*max_length_forest_theoretical/3.)
+            max_num_masked_pixels = int(args.nb_pixel_masked_frac_max*max_num_pixels_forest_theoretical/3.)
         
         # Split the forest in n parts
         max_num_parts = (len(delta.log_lambda) -
