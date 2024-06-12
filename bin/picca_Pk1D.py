@@ -116,11 +116,6 @@ def process_all_files(index_file_args):
         if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
                 continue
         
-        if (args.nb_pixel_masked_max is not None):
-            max_num_masked_pixels = args.nb_pixel_masked_max
-        else:
-            max_num_masked_pixels = int(args.nb_pixel_masked_frac_max*max_num_pixels_forest_theoretical/3.)
-        
         # Split the forest in n parts
         max_num_parts = (len(delta.log_lambda) -
                          first_pixel_index) // min_num_pixels
@@ -181,7 +176,14 @@ def process_all_files(index_file_args):
                      pixel_step, log_lambda_array[part_index],
                      delta_array[part_index], exposures_diff_array[part_index],
                      ivar_array[part_index], args.no_apply_filling)
-                
+            
+            if (args.nb_pixel_masked_max is not None):
+                max_num_masked_pixels = args.nb_pixel_masked_max
+            elif linear_binning:
+                max_num_masked_pixels = int(args.nb_pixel_masked_frac_max*(np.max(lambda_new)-np.min(lambda_new))/pixel_step)           #this only accounts for masking inside the spectrum, not at the adges
+            else:
+                max_num_masked_pixels = int(args.nb_pixel_masked_frac_max*(np.max(log_lambda_new)-np.min(log_lambda_new))/pixel_step)
+                            
             if num_masked_pixels > max_num_masked_pixels:
                 continue
 
