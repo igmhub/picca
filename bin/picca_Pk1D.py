@@ -112,7 +112,7 @@ def process_all_files(index_file_args):
         if args.nb_pixel_min is not None:
             min_num_pixels = args.nb_pixel_min
         else:
-            min_num_pixels = int(args.nb_pixel_frac_min*max_num_pixels_forest_theoretical)     #this is currently just hardcoding values so that spectra have a minimum length changing with z
+            min_num_pixels = int(args.nb_pixel_frac_min*max_num_pixels_forest_theoretical)     #this is currently just hardcoding values so that spectra have a minimum length changing with z; but might be problematic for SBs
         if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
                 continue
         
@@ -495,8 +495,9 @@ def main(cmdargs):
     os.makedirs(args.out_dir, exist_ok=True)
 
     if args.nb_pixel_min is None and args.nb_pixel_frac_min is None:
-            args.nb_pixel_frac_min = 0.13
-            # args.nb_pixel_min = 75    #this is the previous default
+            # could make this fraction a new default, but that would probably cause trouble for SBs
+            # args.nb_pixel_frac_min = 0.13
+            args.nb_pixel_min = 75    #this is the previous default
     elif not (args.nb_pixel_frac_min is None or args.nb_pixel_min is None):
         print("both nb_pixel_frac_min and nb_pixel_min were set, using the latter")
         args.nb_pixel_frac_min=None
