@@ -372,7 +372,7 @@ def main(cmdargs):
     
 
     parser.add_argument('--nb-pixel-frac-min',
-                        type=int,
+                        type=float,
                         default=None,
                         required=False,
                         help='Minimal number of pixels in a part of forest (default is assuming ~577 pixels for a z=2.5 QSO in the forest of 1050-1180A and masking up to 75)')
@@ -386,7 +386,7 @@ def main(cmdargs):
     
     parser.add_argument(
         '--nb-pixel-masked-frac-max',
-        type=int,
+        type=float,
         default=None,
         required=False,
         help='Maximal number of masked pixels in a part of forest (default is 21% of the forest length, i.e. similar to the previous value at z=2.5 for a 3 chunk spectrum and 1050-1180A)')
@@ -505,7 +505,7 @@ def main(cmdargs):
     if args.nb_pixel_masked_frac_max is None and args.nb_pixel_masked_max is None:
             # could make this, i.e. 10% of the estimated forest length the new default
             args.nb_pixel_masked_frac_max = 0.21
-            # args.nb_pixel_min = 40  #this is the previous default
+            # args.nb_pixel_masked_max = 40  #this is the previous default
     elif not (args.nb_pixel_masked_frac_max is None or args.nb_pixel_masked_max is None):
         print("both nb_pixel_masked_frac_max and nb_pixel_masked_max were set, using the latter")
         args.nb_pixel_masked_frac_max=None
