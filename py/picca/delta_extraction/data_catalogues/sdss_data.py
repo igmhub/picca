@@ -186,7 +186,8 @@ class SdssData(Data):
                         "reso_pix": wdisp
                     })
             else:
-                raise DataError(f"analysis_type = {self.analysis_type}")
+                raise DataError("An unknown analysis_type was specified,"
+                                " currently PK 1D and BAO 3D are supported.")
 
             forest.rebin()
             if thingid in forests_by_thingid:
@@ -271,6 +272,9 @@ class SdssData(Data):
                             "exposures_diff": exposures_diff,
                             "reso": reso
                         })
+                else:
+                    raise DataError("An unknown analysis_type was specified,"
+                                    " currently PK 1D and BAO 3D are supported.")
 
                 # rebin arrays
                 # this needs to happen after all arrays are initialized by

@@ -79,6 +79,8 @@ class DataTest(AbstractTest):
         with self.assertRaises(DataError) as context_manager:
             reader = DesiHealpixFileHandler(data.analysis_type,
                                             data.use_non_coadded_spectra,
+                                            data.uniquify_night_targetid,
+                                            data.keep_single_exposures,
                                             data.logger)
 
             reader((filename, catalogue))
@@ -749,7 +751,7 @@ class DataTest(AbstractTest):
 
         # run __parse_config with missing 'use_non_coadded_spectra'
         config = ConfigParser()
-        config.read_dict({"data": {
+        config.read_dict({"data": {"keep single exposures": False,
                         }})
         expected_message = (
             "Missing argument 'use non-coadded spectra' required by DesiData"
@@ -1306,6 +1308,90 @@ class DataTest(AbstractTest):
             "out dir": f"{THIS_DIR}/results/",
             "use non-coadded spectra": False,
             "num processors": 2,
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 10)
+
+
+        # run with one processor; case: using individual spectra in P1d mode, not coadding
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": True,
+            "uniquify night targetid": True,
+            "keep single exposures": True,
+            "num processors": 1,
+            "analysis type": "PK 1D"
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 110)
+
+
+        # run with two processors; case: using individual spectra in P1d mode, not coadding
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": True,
+            "uniquify night targetid": True,
+            "keep single exposures": True,
+            "num processors": 2,
+            "analysis type": "PK 1D"
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 110)
+
+        # run with one processor; case: using individual spectra in P1d mode, coadding within picca
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": True,
+            "uniquify night targetid": True,
+            "keep single exposures": False,
+            "num processors": 1,
+            "analysis type": "PK 1D"
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 10)
+
+
+        # run with two processors; case: using individual spectra in P1d mode, coadding within picca
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": True,
+            "uniquify night targetid": True,
+            "keep single exposures": False,
+            "num processors": 2,
+            "analysis type": "PK 1D"
+            ""
         }})
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:

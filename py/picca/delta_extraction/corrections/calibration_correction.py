@@ -46,6 +46,8 @@ class CalibrationCorrection(Correction):
             raise CorrectionError(
                 "Missing argument 'filename' required by SdssCalibrationCorrection"
             )
+        stack_log_lambda = None
+        stack_lambda = None
         try:
             hdu = fitsio.FITS(filename)["STACK_DELTAS"]
             if "LOGLAM" in [name.upper() for name in hdu.get_colnames()]:
