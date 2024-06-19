@@ -490,18 +490,18 @@ def main(cmdargs):
         seed=args.seed
     # Read deltas
     if args.in_format == 'fits':
-        files = sorted(glob.glob(args.in_dir + "/*.fits.gz"))
+        files = sorted(glob.glob(args.in_dir + "/*.fits.gz") +
+                       glob.glob(args.in_dir + "/*.fits"))
     elif args.in_format == 'ascii':
         files = sorted(glob.glob(args.in_dir + "/*.txt"))
 
     # initialize randoms
     np.random.seed(seed)
-    userprint(f"Computing Pk1d for {args.in_dir}")
+    userprint(f"Computing Pk1d for {args.in_dir} ({len(files)} files to process)")
     args.len_files = len(files)
     #create output dir if it does not exist
     os.makedirs(args.out_dir, exist_ok=True)
 
-    print([[i, f] for i, f in enumerate(files)])
     if args.num_processors > 1:
         pool = Pool(args.num_processors)
         index_file_args = [(i, f, args) for i, f in enumerate(files)]
