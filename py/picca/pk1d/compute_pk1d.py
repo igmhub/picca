@@ -144,6 +144,62 @@ def split_forest(
     return out
 
 
+def split_forest_in_z_parts(z_grid,
+                            log_lambda,
+                            delta,
+                            exposures_diff,
+                            ivar,
+                            min_num_pixels=None,
+                            reso_matrix=None,
+                            linear_binning=False):
+    """ Split forest in N parts divided in observed wavelength,
+        according to a given grid in redshift. See split_forest.
+    """
+    loglam_min_grid = np.log10(constants.ABSORBER_IGM['LYA']*(1+z_grid[:-1]))
+    loglam_max_grid = np.log10(constants.ABSORBER_IGM['LYA']*(1+z_grid[1:]))
+
+    num_parts = 0
+    mean_z_array, log_lambda_array, delta_array, ivar_array = [], [], [], []
+    exposures_diff_array = []
+    if reso_matrix is not None:
+        reso_matrix_array = []
+    if linear_binning:
+        lambda_array = []
+
+    for loglam_min_chunk, loglam_max_chunk in zip(loglam_min_grid, loglam_max_grid):
+        selection = (
+            (delta.log_lambda >= loglam_min_chunk) &
+            (delta.log_lambda < loglam_max_chunk))
+        if min_num_pixels is not None and np.sum(selection) < min_num_pixels:
+            continue
+        selection_below_part = (log_lambda <= loglam_min_chunk)
+        selection_above_part = (log_lambda >= loglam_max_chunk)
+        if np.sum(selection_below_part)==0 or np.sum(selection_above_part)==0:
+            # Strict criterium: the deltas are kept only if they span over the whole redshift part
+            continue
+        num_parts += 1
+        log_lambda_part = log_lambda[selection].copy()
+        log_lambda_array.append(log_lambda_part)
+        delta_array.append(delta[selection].copy())
+        ivar_array.append(ivar[selection].copy())
+        exposures_diff_array.append(exposures_diff[selection].copy())
+        mean_z_array.append(
+            np.mean(10**log_lambda_part) / constants.ABSORBER_IGM['LYA'] - 1.0)
+        if reso_matrix is not None:
+            reso_matrix_array.append(reso_matrix[:, selection].copy())
+        if linear_binning:
+            lambda_array.append(10**log_lambda_part)
+
+    if linear_binning:
+        out = [mean_z_array, lambda_array, delta_array, exposures_diff_array, ivar_array]
+    else:
+        out = [mean_z_array, log_lambda_array, delta_array, exposures_diff_array, ivar_array]
+    if reso_matrix is not None:
+        out.append(reso_matrix_array)
+
+    return out
+
+
 def rebin_diff_noise(pixel_step, lambda_or_log_lambda, exposures_diff):
     """Rebin the semidifference between two customized coadded spectra to
     construct the noise array

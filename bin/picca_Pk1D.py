@@ -14,7 +14,8 @@ from picca.data import Delta
 from picca.pk1d.compute_pk1d import (compute_correction_reso,
                         compute_correction_reso_matrix, compute_pk_noise,
                         compute_pk_raw, fill_masked_pixels, rebin_diff_noise,
-                        split_forest, check_linear_binning, Pk1D)
+                        split_forest, split_forest_in_z_parts,
+                        check_linear_binning, Pk1D)
 from picca.utils import userprint
 from multiprocessing import Pool
 
@@ -96,48 +97,72 @@ def process_all_files(index_file_args):
             if np.sum(delta.exposures_diff)==0:
                 continue
 
-        # first pixel in forest
-        selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
-        #this works as selected_pixels returns a bool and argmax points
-        #towards the first occurance for equal values
-        first_pixel_index = (np.argmax(selected_pixels) if
-                             np.any(selected_pixels) else len(selected_pixels))
-
-        # minimum number of pixel in forest
-        min_num_pixels = args.nb_pixel_min
-        if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
-            continue
-
-        # Split the forest in n parts
-        max_num_parts = (len(delta.log_lambda) -
-                         first_pixel_index) // min_num_pixels
-        num_parts = min(args.nb_part, max_num_parts)
-
-        #the split_forest function works with either binning, but needs to be uniform
-        if linear_binning:
-            split_array = split_forest(
-                num_parts,
-                pixel_step,
-                10**delta.log_lambda,
-                delta.delta,
-                delta.exposures_diff,
-                delta.ivar,
-                first_pixel_index,
-                reso_matrix=(delta.resolution_matrix
-                             if reso_correction == 'matrix' else None),
-                linear_binning=True)
+        if args.parts_in_redshift:
+            # define chunks on a fixed redshift grid
+            z_grid = np.array(args.z_parts)
+            split_array = split_forest_in_z_parts(z_grid,
+                            delta.log_lambda,
+                            delta.delta,
+                            delta.exposures_diff,
+                            delta.ivar,
+                            min_num_pixels=args.nb_pixel_min,
+                            reso_matrix=(delta.resolution_matrix
+                                 if reso_correction == 'matrix' else None),
+                            linear_binning=linear_binning)
             if reso_correction == 'matrix':
                 (mean_z_array, lambda_array, delta_array, exposures_diff_array,
-                 ivar_array, reso_matrix_array) = split_array
+                ivar_array, reso_matrix_array) = split_array
             else:
                 (mean_z_array, lambda_array, delta_array, exposures_diff_array,
-                 ivar_array) = split_array
+                    ivar_array) = split_array
+            if not linear_binning:
+                log_lambda_array = lambda_array
+
         else:
-            (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
-             ivar_array) = split_forest(num_parts, pixel_step,
-                                        delta.log_lambda, delta.delta,
-                                        delta.exposures_diff, delta.ivar,
-                                        first_pixel_index)
+            # define chunks in the forest rest-frame
+
+            # first pixel in forest
+            selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
+            #this works as selected_pixels returns a bool and argmax points
+            #towards the first occurance for equal values
+            first_pixel_index = (np.argmax(selected_pixels) if
+                                np.any(selected_pixels) else len(selected_pixels))
+
+            # minimum number of pixel in forest
+            min_num_pixels = args.nb_pixel_min
+            if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
+                continue
+
+            # Split the forest in n parts
+            max_num_parts = (len(delta.log_lambda) -
+                            first_pixel_index) // min_num_pixels
+            num_parts = min(args.nb_part, max_num_parts)
+
+            #the split_forest function works with either binning, but needs to be uniform
+            if linear_binning:
+                split_array = split_forest(
+                    num_parts,
+                    pixel_step,
+                    10**delta.log_lambda,
+                    delta.delta,
+                    delta.exposures_diff,
+                    delta.ivar,
+                    first_pixel_index,
+                    reso_matrix=(delta.resolution_matrix
+                                if reso_correction == 'matrix' else None),
+                    linear_binning=True)
+                if reso_correction == 'matrix':
+                    (mean_z_array, lambda_array, delta_array, exposures_diff_array,
+                    ivar_array, reso_matrix_array) = split_array
+                else:
+                    (mean_z_array, lambda_array, delta_array, exposures_diff_array,
+                    ivar_array) = split_array
+            else:
+                (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
+                ivar_array) = split_forest(num_parts, pixel_step,
+                                            delta.log_lambda, delta.delta,
+                                            delta.exposures_diff, delta.ivar,
+                                            first_pixel_index)
 
         #the rebin_diff_noise function works with either binning, but needs to be uniform
         for part_index in range(num_parts):
@@ -346,7 +371,19 @@ def main(cmdargs):
                         type=int,
                         default=3,
                         required=False,
-                        help='Number of parts in forest')
+                        help='Number of parts (chunks) in forest')
+
+    parser.add_argument('--parts-in-redshift',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Define forest parts (chunks) as a function of redshift (observer frame) instead of rest frame')
+
+    parser.add_argument('--z-parts',
+                        nargs='+', type=float,
+                        default=[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0]),
+                        required=False,
+                        help='Redshift bins for forest parts (chunks) when parts-in-redshift is set')
 
     parser.add_argument('--nb-pixel-min',
                         type=int,
