@@ -30,7 +30,7 @@ from picca.utils import userprint
 from picca.pk1d.utils import MEANPK_FITRANGE_SNR, fitfunc_variance_pk1d
 
 
-def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
+def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matrices=None):
     """Read Pk1D data from a single file.
 
     Arguments
@@ -49,6 +49,12 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     Required if len(snrcut)>1. List of redshifts
     associated to the list of snr cuts.
 
+    skymask_matrices: list or None
+    if not None, computes a correction associated to skyline masking, for the Pk_raw
+    and Pk_noise vectors. This correction makes use of a matrix operation.
+    The corrected powers are stored into "Pk_raw_skycorr" and "Pk_noise_skycorr".
+    Note that this correction makes sense only after the Pks have been averaged over sightlines.
+
     Return
     ------
     p1d_table: Table
@@ -60,6 +66,8 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     """
     p1d_table = []
     z_array = []
+    if skymask_matrices is not None:
+        meanz_skymatrices = np.array([x[0] for x in skymask_matrices])
     with fitsio.FITS(filename, "r") as hdus:
         for i, hdu in enumerate(hdus[1:]):
             data = hdu.read()
@@ -86,6 +94,20 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
                 chunk_table["Pk"] = (
                     chunk_table["Pk_raw"] - chunk_table["Pk_noise"]
                 ) / chunk_table["cor_reso"]
+
+            if skymask_matrices is not None:
+                chunk_table["Pk_raw_skycorr"] = chunk_table["Pk_raw"]
+                chunk_table["Pk_noise_skycorr"] = chunk_table["Pk_noise"]
+                w, = np.where(np.isclose(meanz_skymatrices, chunk_header["MEANZ"], atol=1.e-3))
+                if len(w)!=1:
+                    userprint(f"file {filename} hdu {i+1}: MEANZ does not match skymatrices.")
+                else:
+                    correction_matrix = skymask_matrices[w[0]][1]
+                    if len(chunk_table["Pk_raw"])!=correction_matrix.shape[0]:
+                        userprint(f"file {filename} hdu {i+1}: Pk_raw doesnt match shape of skymatrix.")
+                    else:
+                        chunk_table["Pk_raw_skycorr"] = correction_matrix @ chunk_table["Pk_raw"]
+                        chunk_table["Pk_noise_skycorr"] = correction_matrix @ chunk_table["Pk_noise"]
 
             chunk_table["forest_z"] = float(chunk_header["MEANZ"])
             chunk_table["forest_snr"] = float(chunk_header["MEANSNR"])
@@ -1087,6 +1109,7 @@ def run_postproc_pk1d(
     weight_method="no_weights",
     apply_z_weights=False,
     snrcut=None,
+    skymask_matrices=None,
     zbins_snrcut=None,
     output_snrfit=None,
     nomedians=False,
@@ -1125,7 +1148,7 @@ def run_postproc_pk1d(
 
     with Pool(ncpu) as pool:
         output_readpk1d = pool.starmap(
-            read_pk1d, [[f, kbin_edges, snrcut, zbins_snrcut] for f in files]
+            read_pk1d, [[f, kbin_edges, snrcut, zbins_snrcut, skymask_matrices] for f in files]
         )
 
     output_readpk1d = [x for x in output_readpk1d if x is not None]
