@@ -172,9 +172,7 @@ def split_forest_in_z_parts(z_grid,
             (delta.log_lambda < loglam_max_chunk))
         if min_num_pixels is not None and np.sum(selection) < min_num_pixels:
             continue
-        selection_below_part = (log_lambda <= loglam_min_chunk)
-        selection_above_part = (log_lambda >= loglam_max_chunk)
-        if np.sum(selection_below_part)==0 or np.sum(selection_above_part)==0:
+        if np.sum(log_lambda <= loglam_min_chunk)==0 or np.sum(log_lambda >= loglam_max_chunk)==0:
             # Strict criterium: the deltas are kept only if they span over the whole redshift part
             continue
         num_parts += 1
