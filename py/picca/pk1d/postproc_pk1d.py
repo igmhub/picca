@@ -21,11 +21,12 @@ import fitsio
 import numpy as np
 from astropy.stats import bootstrap
 from astropy.table import Table, vstack
+from scipy.optimize import curve_fit
+from scipy.stats import binned_statistic
 from picca.constants import ABSORBER_IGM, SPEED_LIGHT
 from picca.pk1d.utils import MEANPK_FITRANGE_SNR, fitfunc_variance_pk1d
 from picca.utils import userprint
-from scipy.optimize import curve_fit
-from scipy.stats import binned_statistic
+
 
 
 def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
@@ -392,77 +393,18 @@ def compute_mean_pk1d(
                 ]
             )
 
-    if compute_covariance:
-        userprint("Computation of covariance matrix")
-
-        func = partial(
-            compute_cov,
-            weight_method,
-            mean_p1d_table,
-            nbins_k,
-        )
-        if number_worker == 1:
-            output_cov = [func(*p1d_group) for p1d_group in p1d_groups]
-        else:
-            with Pool(number_worker) as pool:
-                output_cov = pool.starmap(func, p1d_groups)
-
-        for izbin in range(nbins_z):
-            covariance_array = output_cov[izbin]
-            i_min = izbin * nbins_k * nbins_k
-            i_max = (izbin + 1) * nbins_k * nbins_k
-            cov_table["covariance"][i_min:i_max] = covariance_array
-
-    if compute_bootstrap:
-        userprint("Computing covariance matrix with bootstrap method")
-        p1d_groups_bootstrap = []
-        for izbin in range(nbins_z):
-            number_sub_forests = len(p1d_groups[izbin][1])
-            if number_sub_forests > 0:
-                bootid = np.array(
-                    bootstrap(np.arange(number_sub_forests), number_bootstrap)
-                ).astype(int)
-            else:
-                bootid = np.full(number_bootstrap, None)
-
-            for iboot in range(number_bootstrap):
-                if bootid[iboot] is None:
-                    p1d_weights_z, covariance_weights_z, p1d_groups_z = [], [], []
-                else:
-                    p1d_weights_z = p1d_groups[izbin][1][bootid[iboot]]
-                    covariance_weights_z = p1d_groups[izbin][2][bootid[iboot]]
-                    p1d_groups_z = p1d_groups[izbin][3][bootid[iboot]]
-                p1d_groups_bootstrap.append(
-                    [
-                        izbin,
-                        p1d_weights_z,
-                        covariance_weights_z,
-                        p1d_groups_z,
-                    ]
-                )
-
-        func = partial(
-            compute_cov,
-            weight_method,
-            mean_p1d_table,
-            nbins_k,
-        )
-        if number_worker == 1:
-            output_cov = [func(*p) for p in p1d_groups_bootstrap]
-        else:
-            with Pool(number_worker) as pool:
-                output_cov = pool.starmap(func, p1d_groups_bootstrap)
-
-        for izbin in range(nbins_z):
-            boot_cov = []
-            for iboot in range(number_bootstrap):
-                covariance_array = (output_cov[izbin * number_bootstrap + iboot],)
-                boot_cov.append(covariance_array)
-
-            i_min = izbin * nbins_k * nbins_k
-            i_max = (izbin + 1) * nbins_k * nbins_k
-            cov_table["boot_covariance"][i_min:i_max] = np.mean(boot_cov, axis=0)
-            cov_table["error_boot_covariance"][i_min:i_max] = np.std(boot_cov, axis=0)
+    compute_and_fill_covariance(
+        compute_covariance,
+        compute_bootstrap,
+        weight_method,
+        mean_p1d_table,
+        nbins_k,
+        nbins_z,
+        p1d_groups,
+        number_worker,
+        number_bootstrap,
+        cov_table,
+    )
 
     if output_snrfit is not None:
         np.savetxt(
@@ -475,6 +417,8 @@ def compute_mean_pk1d(
         )
 
     return mean_p1d_table, metadata_table, cov_table
+
+
 
 
 def fill_average_pk(
@@ -874,6 +818,134 @@ def compute_average_pk_redshift(
     )
 
 
+def compute_and_fill_covariance(
+    compute_covariance,
+    compute_bootstrap,
+    weight_method,
+    mean_p1d_table,
+    nbins_k,
+    nbins_z,
+    p1d_groups,
+    number_worker,
+    number_bootstrap,
+    cov_table,
+):
+    """Compute the covariance and bootstrap covariance and fill the corresponding
+    cov_table variable
+
+    compute_covariance: Bool
+    If True, compute statistical covariance matrix of the mean P1D.
+    Requires  p1d_table to contain 'sub_forest_id', since correlations are computed
+    within individual forests.
+
+    compute_bootstrap: Bool
+    If True, compute statistical covariance using a simple bootstrap method.
+
+    weight_method: str,
+    Method to weight the data.
+
+    mean_p1d_table (array-like):
+    Table of mean 1D power spectra, with column 'meanPk'.
+
+    nbins_k (int):
+    Number of k bins.
+
+    nbins_z (int):
+    Number of z bins.
+
+    p1d_groups (array-like):
+    Individual p1d pixels grouped in the same wavenumber binning for all subforest
+
+    number_worker: int
+    Calculations of mean P1Ds and covariances are run parallel over redshift bins.
+
+    number_bootstrap: int
+    Number of bootstrap samples used if compute_bootstrap is True.
+
+    cov_table (array-like):
+    Covariance table to fill.
+
+    Return
+    ------
+    None
+    """
+
+
+    if compute_covariance:
+        userprint("Computation of covariance matrix")
+
+        func = partial(
+            compute_cov,
+            weight_method,
+            mean_p1d_table,
+            nbins_k,
+        )
+        if number_worker == 1:
+            output_cov = [func(*p1d_group) for p1d_group in p1d_groups]
+        else:
+            with Pool(number_worker) as pool:
+                output_cov = pool.starmap(func, p1d_groups)
+
+        for izbin in range(nbins_z):
+            covariance_array = output_cov[izbin]
+            i_min = izbin * nbins_k * nbins_k
+            i_max = (izbin + 1) * nbins_k * nbins_k
+            cov_table["covariance"][i_min:i_max] = covariance_array
+
+    if compute_bootstrap:
+        userprint("Computing covariance matrix with bootstrap method")
+        p1d_groups_bootstrap = []
+        for izbin in range(nbins_z):
+            number_sub_forests = len(p1d_groups[izbin][1])
+            if number_sub_forests > 0:
+                bootid = np.array(
+                    bootstrap(np.arange(number_sub_forests), number_bootstrap)
+                ).astype(int)
+            else:
+                bootid = np.full(number_bootstrap, None)
+
+            for iboot in range(number_bootstrap):
+                if bootid[iboot] is None:
+                    p1d_weights_z, covariance_weights_z, p1d_groups_z = [], [], []
+                else:
+                    p1d_weights_z = p1d_groups[izbin][1][bootid[iboot]]
+                    covariance_weights_z = p1d_groups[izbin][2][bootid[iboot]]
+                    p1d_groups_z = p1d_groups[izbin][3][bootid[iboot]]
+                p1d_groups_bootstrap.append(
+                    [
+                        izbin,
+                        p1d_weights_z,
+                        covariance_weights_z,
+                        p1d_groups_z,
+                    ]
+                )
+
+        func = partial(
+            compute_cov,
+            weight_method,
+            mean_p1d_table,
+            nbins_k,
+        )
+        if number_worker == 1:
+            output_cov = [func(*p) for p in p1d_groups_bootstrap]
+        else:
+            with Pool(number_worker) as pool:
+                output_cov = pool.starmap(func, p1d_groups_bootstrap)
+
+        for izbin in range(nbins_z):
+            boot_cov = []
+            for iboot in range(number_bootstrap):
+                covariance_array = (output_cov[izbin * number_bootstrap + iboot],)
+                boot_cov.append(covariance_array)
+
+            i_min = izbin * nbins_k * nbins_k
+            i_max = (izbin + 1) * nbins_k * nbins_k
+            cov_table["boot_covariance"][i_min:i_max] = np.mean(boot_cov, axis=0)
+            cov_table["error_boot_covariance"][i_min:i_max] = np.std(boot_cov, axis=0)
+
+
+
+
 def compute_p1d_groups(
     weight_method,
     nbins_k,
@@ -1039,11 +1111,14 @@ def compute_cov(
     izbin (int):
     Current redshift bin being considered.
 
-    p1d_weights (array-like):
+    p1d_weights  (array-like):
+    Weights associated with p1d pixels for all subforest, used in the calculation of covariance.
 
     covariance_weights (array-like):
+    Weights for all subforest used inside the main covariance sum.
 
     p1d_groups (array-like):
+    Individual p1d pixels grouped in the same wavenumber binning for all subforest
 
     Return
     ------
