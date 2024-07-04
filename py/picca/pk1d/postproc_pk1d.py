@@ -915,12 +915,14 @@ def compute_p1d_groups(
 
     Return
     ------
-    p1d_weights_z  (array-like):
+    p1d_weights  (array-like):
+    Weights associated with p1d pixels for all subforest, used in the calculation of covariance.
 
-    covariance_weights_z (array-like):
+    covariance_weights (array-like):
+    Weights for all subforest used inside the main covariance sum.
 
-    p1d_groups_z (array-like):
-
+    p1d_groups (array-like):
+    Individual p1d pixels grouped in the same wavenumber binning for all subforest
     """
 
     select_z = (p1d_table["forest_z"] < zbin_edges[izbin + 1]) & (
@@ -965,26 +967,51 @@ def compute_p1d_groups(
 
     del p1d_los_table
 
-    return output_cov[:, 0, :], output_cov[:, 1, :], output_cov[:, 2, :]
+    p1d_weights, covariance_weights, p1d_groups = (
+        output_cov[:, 0, :],
+        output_cov[:, 1, :],
+        output_cov[:, 2, :],
+    )
+    return p1d_weights, covariance_weights, p1d_groups
 
 
 def compute_groups(nbins_k, p1d_los):
+    """Compute the P1D groups for one subforest.
 
-    p1d_weights = np.zeros(nbins_k)
-    covariance_weights = np.zeros(nbins_k)
-    p1d_groups = np.zeros(nbins_k)
+    Arguments
+    ---------
+    nbins_k (int):
+    Number of k bins.
+
+    p1d_los (array-like):
+    Table containing all p1d pixels unordered for one subforest
+
+    Return
+    ------
+    p1d_weights_id  (array-like):
+    Weights associated with p1d pixels for one subforest, used in the calculation of covariance.
+
+    covariance_weights_id (array-like):
+    Weights for one subforest used inside the main covariance sum.
+
+    p1d_groups_id (array-like):
+    Individual p1d pixels grouped in the same wavenumber binning for one subforest
+    """
+    p1d_weights_id = np.zeros(nbins_k)
+    covariance_weights_id = np.zeros(nbins_k)
+    p1d_groups_id = np.zeros(nbins_k)
 
     for ikbin in range(nbins_k):
         mask_ikbin = p1d_los["k_index"] == ikbin
         number_in_bins = len(mask_ikbin[mask_ikbin])
         if number_in_bins != 0:
             weight = p1d_los["weight"][mask_ikbin][0]
-            p1d_weights[ikbin] = weight
-            covariance_weights[ikbin] = np.sqrt(weight / number_in_bins)
-            p1d_groups[ikbin] = np.nansum(
-                p1d_los["pk"][mask_ikbin] * covariance_weights[ikbin]
+            p1d_weights_id[ikbin] = weight
+            covariance_weights_id[ikbin] = np.sqrt(weight / number_in_bins)
+            p1d_groups_id[ikbin] = np.nansum(
+                p1d_los["pk"][mask_ikbin] * covariance_weights_id[ikbin]
             )
-    return p1d_weights, covariance_weights, p1d_groups
+    return p1d_weights_id, covariance_weights_id, p1d_groups_id
 
 
 def compute_cov(
@@ -1000,50 +1027,26 @@ def compute_cov(
 
     Arguments
     ---------
-    p1d_table (array-like):
-    Table of 1D power spectra, with columns 'Pk' and 'sub_forest_id'.
+    weight_method: str,
+    Method to weight the data.
 
     mean_p1d_table (array-like):
     Table of mean 1D power spectra, with column 'meanPk'.
 
-    zbin_centers (array-like):
-    Array of bin centers for redshift.
-
-    n_chunks (array-like):
-    Array of the number of chunks in each redshift bin.
-
-    k_index (array-like):
-    Array of indices for k-values, with -1 indicating values outside of the k bins.
-
     nbins_k (int):
     Number of k bins.
-
-    weight_method: str,
-    Method to weight the data.
-
-    snrfit_table: numpy ndarray,
-    Table containing SNR fit infos
 
     izbin (int):
     Current redshift bin being considered.
 
-    select_z (array-like):
-    Boolean array for selecting data points based on redshift.
+    p1d_weights (array-like):
 
-    sub_forest_ids (array-like):
-    Array of chunk ids.
+    covariance_weights (array-like):
+
+    p1d_groups (array-like):
 
     Return
     ------
-    zbin_array (array-like):
-    Array of redshift bin centers for each covariance coefficient.
-
-    index_zbin_array (array-like):
-    Array of redshift bin indices for each covariance coefficient.
-
-    n_array (array-like):
-    Array of the number of power spectra used to compute each covariance coefficient.
-
     covariance_array (array-like):
     Array of covariance coefficients.
     """
@@ -1061,9 +1064,9 @@ def compute_cov(
     covariance_weights_product_sum = np.zeros((nbins_k, nbins_k))
     weights_product_sum = np.zeros((nbins_k, nbins_k))
 
-    for i in range(len(p1d_groups)):
+    for i, p1d_group in enumerate(p1d_groups):
         p1d_groups_product_sum = np.nansum(
-            [p1d_groups_product_sum, np.outer(p1d_groups[i], p1d_groups[i])], axis=0
+            [p1d_groups_product_sum, np.outer(p1d_group, p1d_group)], axis=0
         )
         covariance_weights_product_sum = np.nansum(
             [
@@ -1148,15 +1151,6 @@ def compute_cov_not_vectorized(
 
     Return
     ------
-    zbin_array (array-like):
-    Array of redshift bin centers for each covariance coefficient.
-
-    index_zbin_array (array-like):
-    Array of redshift bin indices for each covariance coefficient.
-
-    n_array (array-like):
-    Array of the number of power spectra used to compute each covariance coefficient.
-
     covariance_array (array-like):
     Array of covariance coefficients.
     """
