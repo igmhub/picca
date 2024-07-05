@@ -28,7 +28,6 @@ from picca.pk1d.utils import MEANPK_FITRANGE_SNR, fitfunc_variance_pk1d
 from picca.utils import userprint
 
 
-
 def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     """Read Pk1D data from a single file.
 
@@ -137,6 +136,13 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
     z_array = np.array(z_array)
 
     return p1d_table, z_array
+
+
+def mean_p1d_table_regular_slice(izbin, nbins_k):
+    return izbin * nbins_k, (izbin + 1) * nbins_k
+
+def cov_table_regular_slice(izbin, nbins_k):
+    return izbin * nbins_k * nbins_k, (izbin + 1) * nbins_k * nbins_k
 
 
 def compute_mean_pk1d(
@@ -357,19 +363,19 @@ def compute_mean_pk1d(
             k1_array, k2_array = np.meshgrid(kbin_centers, kbin_centers, indexing="ij")
             k1_array = np.ravel(k1_array)
             k2_array = np.ravel(k2_array)
+            select = mean_p1d_table["index_zbin"] == izbin
             n_array = np.ravel(
-                np.outer(
-                    mean_p1d_table["N"][(nbins_k * izbin) : (nbins_k * (izbin + 1))],
-                    mean_p1d_table["N"][(nbins_k * izbin) : (nbins_k * (izbin + 1))],
-                )
+                np.outer(mean_p1d_table["N"][select], mean_p1d_table["N"][select])
             )
-            i_min = izbin * nbins_k * nbins_k
-            i_max = (izbin + 1) * nbins_k * nbins_k
-            cov_table["zbin"][i_min:i_max] = zbin_array
-            cov_table["index_zbin"][i_min:i_max] = index_zbin_array
-            cov_table["k1"][i_min:i_max] = k1_array
-            cov_table["k2"][i_min:i_max] = k2_array
-            cov_table["N"][i_min:i_max] = n_array
+            index_cov = cov_table_regular_slice(izbin, nbins_k)
+            cov_table["zbin"][index_cov[0]:index_cov[1]] = zbin_array
+            cov_table["index_zbin"][index_cov[0]:index_cov[1]] = index_zbin_array
+            cov_table["k1"][index_cov[0]:index_cov[1]] = k1_array
+            cov_table["k2"][index_cov[0]:index_cov[1]] = k2_array
+            cov_table["N"][index_cov[0]:index_cov[1]] = n_array
+            index_mean = mean_p1d_table_regular_slice(izbin, nbins_k)
+            mean_pk = mean_p1d_table["meanPk"][index_mean[0] : index_mean[1]]
+            error_pk = mean_p1d_table["errorPk"][index_mean[0] : index_mean[1]]
 
             if n_chunks[izbin] == 0:
                 p1d_weights_z, covariance_weights_z, p1d_groups_z = [], [], []
@@ -384,9 +390,11 @@ def compute_mean_pk1d(
                     snrfit_table,
                     number_worker,
                 )
+
             p1d_groups.append(
                 [
-                    izbin,
+                    mean_pk,
+                    error_pk,
                     p1d_weights_z,
                     covariance_weights_z,
                     p1d_groups_z,
@@ -397,7 +405,6 @@ def compute_mean_pk1d(
             compute_covariance,
             compute_bootstrap,
             weight_method,
-            mean_p1d_table,
             nbins_k,
             nbins_z,
             p1d_groups,
@@ -417,8 +424,6 @@ def compute_mean_pk1d(
         )
 
     return mean_p1d_table, metadata_table, cov_table
-
-
 
 
 def fill_average_pk(
@@ -478,21 +483,20 @@ def fill_average_pk(
             median_array,
             snrfit_array,
         ) = (*output_mean[izbin],)
-        i_min = izbin * nbins_k
-        i_max = (izbin + 1) * nbins_k
+        index_mean = mean_p1d_table_regular_slice(izbin,nbins_k)
 
-        mean_p1d_table["zbin"][i_min:i_max] = zbin_array
-        mean_p1d_table["index_zbin"][i_min:i_max] = index_zbin_array
-        mean_p1d_table["N"][i_min:i_max] = n_array
+        mean_p1d_table["zbin"][index_mean[0]:index_mean[1]] = zbin_array
+        mean_p1d_table["index_zbin"][index_mean[0]:index_mean[1]] = index_zbin_array
+        mean_p1d_table["N"][index_mean[0]:index_mean[1]] = n_array
         for icol, col in enumerate(p1d_table_cols):
-            mean_p1d_table["mean" + col][i_min:i_max] = mean_array[icol]
-            mean_p1d_table["error" + col][i_min:i_max] = error_array[icol]
-            mean_p1d_table["min" + col][i_min:i_max] = min_array[icol]
-            mean_p1d_table["max" + col][i_min:i_max] = max_array[icol]
+            mean_p1d_table["mean" + col][index_mean[0]:index_mean[1]] = mean_array[icol]
+            mean_p1d_table["error" + col][index_mean[0]:index_mean[1]] = error_array[icol]
+            mean_p1d_table["min" + col][index_mean[0]:index_mean[1]] = min_array[icol]
+            mean_p1d_table["max" + col][index_mean[0]:index_mean[1]] = max_array[icol]
             if not nomedians:
-                mean_p1d_table["median" + col][i_min:i_max] = median_array[icol]
+                mean_p1d_table["median" + col][index_mean[0]:index_mean[1]] = median_array[icol]
         if weight_method == "fit_snr":
-            snrfit_table[i_min:i_max, :] = snrfit_array
+            snrfit_table[index_mean[0]:index_mean[1], :] = snrfit_array
 
 
 def compute_average_pk_redshift(
@@ -822,7 +826,6 @@ def compute_and_fill_covariance(
     compute_covariance,
     compute_bootstrap,
     weight_method,
-    mean_p1d_table,
     nbins_k,
     nbins_z,
     p1d_groups,
@@ -843,9 +846,6 @@ def compute_and_fill_covariance(
 
     weight_method: str,
     Method to weight the data.
-
-    mean_p1d_table (array-like):
-    Table of mean 1D power spectra, with column 'meanPk'.
 
     nbins_k (int):
     Number of k bins.
@@ -870,14 +870,12 @@ def compute_and_fill_covariance(
     None
     """
 
-
     if compute_covariance:
         userprint("Computation of covariance matrix")
 
         func = partial(
             compute_cov,
             weight_method,
-            mean_p1d_table,
             nbins_k,
         )
         if number_worker == 1:
@@ -888,9 +886,8 @@ def compute_and_fill_covariance(
 
         for izbin in range(nbins_z):
             covariance_array = output_cov[izbin]
-            i_min = izbin * nbins_k * nbins_k
-            i_max = (izbin + 1) * nbins_k * nbins_k
-            cov_table["covariance"][i_min:i_max] = covariance_array
+            index_cov = cov_table_regular_slice(izbin, nbins_k)
+            cov_table["covariance"][index_cov[0]:index_cov[1]] = covariance_array
 
     if compute_bootstrap:
         userprint("Computing covariance matrix with bootstrap method")
@@ -906,14 +903,23 @@ def compute_and_fill_covariance(
 
             for iboot in range(number_bootstrap):
                 if bootid[iboot] is None:
-                    p1d_weights_z, covariance_weights_z, p1d_groups_z = [], [], []
+                    (
+                        mean_pk,
+                        error_pk,
+                        p1d_weights_z,
+                        covariance_weights_z,
+                        p1d_groups_z,
+                    ) = ([], [], [], [], [])
                 else:
-                    p1d_weights_z = p1d_groups[izbin][1][bootid[iboot]]
-                    covariance_weights_z = p1d_groups[izbin][2][bootid[iboot]]
-                    p1d_groups_z = p1d_groups[izbin][3][bootid[iboot]]
+                    mean_pk = p1d_groups[izbin][0][bootid[iboot]]
+                    error_pk = p1d_groups[izbin][1][bootid[iboot]]
+                    p1d_weights_z = p1d_groups[izbin][2][bootid[iboot]]
+                    covariance_weights_z = p1d_groups[izbin][3][bootid[iboot]]
+                    p1d_groups_z = p1d_groups[izbin][4][bootid[iboot]]
                 p1d_groups_bootstrap.append(
                     [
-                        izbin,
+                        mean_pk,
+                        error_pk,
                         p1d_weights_z,
                         covariance_weights_z,
                         p1d_groups_z,
@@ -923,7 +929,6 @@ def compute_and_fill_covariance(
         func = partial(
             compute_cov,
             weight_method,
-            mean_p1d_table,
             nbins_k,
         )
         if number_worker == 1:
@@ -938,12 +943,9 @@ def compute_and_fill_covariance(
                 covariance_array = (output_cov[izbin * number_bootstrap + iboot],)
                 boot_cov.append(covariance_array)
 
-            i_min = izbin * nbins_k * nbins_k
-            i_max = (izbin + 1) * nbins_k * nbins_k
-            cov_table["boot_covariance"][i_min:i_max] = np.mean(boot_cov, axis=0)
-            cov_table["error_boot_covariance"][i_min:i_max] = np.std(boot_cov, axis=0)
-
-
+            index_cov = cov_table_regular_slice(izbin, nbins_k)
+            cov_table["boot_covariance"][index_cov[0]:index_cov[1]] = np.mean(boot_cov, axis=0)
+            cov_table["error_boot_covariance"][index_cov[0]:index_cov[1]] = np.std(boot_cov, axis=0)
 
 
 def compute_p1d_groups(
@@ -1009,7 +1011,8 @@ def compute_p1d_groups(
         names=("sub_forest_id", "k_index", "pk"),
     )
     if weight_method == "fit_snr":
-        snrfit_z = snrfit_table[izbin * nbins_k : (izbin + 1) * nbins_k, :]
+        index_slice = mean_p1d_table_regular_slice(izbin, nbins_k)
+        snrfit_z = snrfit_table[index_slice[0] : index_slice[1], :]
         p1d_sub_table["weight"] = 1 / fitfunc_variance_pk1d(
             p1d_table["forest_snr"][select_z],
             snrfit_z[k_index[select_z], 2],
@@ -1028,7 +1031,7 @@ def compute_p1d_groups(
     del grouped_table
 
     func = partial(
-        compute_groups,
+        compute_groups_for_one_forest,
         nbins_k,
     )
     if number_worker == 1:
@@ -1047,7 +1050,7 @@ def compute_p1d_groups(
     return p1d_weights, covariance_weights, p1d_groups
 
 
-def compute_groups(nbins_k, p1d_los):
+def compute_groups_for_one_forest(nbins_k, p1d_los):
     """Compute the P1D groups for one subforest.
 
     Arguments
@@ -1088,28 +1091,32 @@ def compute_groups(nbins_k, p1d_los):
 
 def compute_cov(
     weight_method,
-    mean_p1d_table,
     nbins_k,
-    izbin,
+    mean_pk,
+    error_pk,
     p1d_weights,
     covariance_weights,
     p1d_groups,
 ):
     """Compute the covariance of a set of 1D power spectra.
+    This is a new version of the covariance calculation.
+    It needs that the input data are expressed on the same
+    wavenumber grid. The calculation is then performed in
+    an entire vectorized way.
 
     Arguments
     ---------
     weight_method: str,
     Method to weight the data.
 
-    mean_p1d_table (array-like):
-    Table of mean 1D power spectra, with column 'meanPk'.
-
     nbins_k (int):
     Number of k bins.
 
-    izbin (int):
-    Current redshift bin being considered.
+    mean_pk (array-like):
+    Mean 1D power spectra, for the considered redshift bin.
+
+    error_pk (array-like):
+    Standard deviation of the 1D power spectra, for the considered redshift bin.
 
     p1d_weights  (array-like):
     Weights associated with p1d pixels for all subforest, used in the calculation of covariance.
@@ -1129,35 +1136,34 @@ def compute_cov(
     if len(p1d_groups) == 0:
         return np.full(nbins_k * nbins_k, np.nan)
 
-    mean_pk = mean_p1d_table["meanPk"][(nbins_k * izbin) : (nbins_k * (izbin + 1))]
     mean_pk_product = np.outer(mean_pk, mean_pk)
 
     sum_p1d_weights = np.nansum(p1d_weights, axis=0)
-    weights_sum_product = np.outer(sum_p1d_weights, sum_p1d_weights)
+    weights_sum_of_product = np.outer(sum_p1d_weights, sum_p1d_weights)
 
     p1d_groups_product_sum = np.zeros((nbins_k, nbins_k))
-    covariance_weights_product_sum = np.zeros((nbins_k, nbins_k))
-    weights_product_sum = np.zeros((nbins_k, nbins_k))
+    covariance_weights_product_of_sum = np.zeros((nbins_k, nbins_k))
+    weights_product_of_sum = np.zeros((nbins_k, nbins_k))
 
     for i, p1d_group in enumerate(p1d_groups):
         p1d_groups_product_sum = np.nansum(
             [p1d_groups_product_sum, np.outer(p1d_group, p1d_group)], axis=0
         )
-        covariance_weights_product_sum = np.nansum(
+        covariance_weights_product_of_sum = np.nansum(
             [
-                covariance_weights_product_sum,
+                covariance_weights_product_of_sum,
                 np.outer(covariance_weights[i], covariance_weights[i]),
             ],
             axis=0,
         )
-        weights_product_sum = np.nansum(
-            [weights_product_sum, np.outer(p1d_weights[i], p1d_weights[i])], axis=0
+        weights_product_of_sum = np.nansum(
+            [weights_product_of_sum, np.outer(p1d_weights[i], p1d_weights[i])], axis=0
         )
 
     del p1d_groups, covariance_weights, p1d_weights
 
-    covariance_matrix = (weights_product_sum / weights_sum_product) * (
-        (p1d_groups_product_sum / covariance_weights_product_sum) - mean_pk_product
+    covariance_matrix = (weights_product_of_sum / weights_sum_of_product) * (
+        (p1d_groups_product_sum / covariance_weights_product_of_sum) - mean_pk_product
     )
 
     # For fit_snr method, due to the SNR fitting scheme used for weighting,
@@ -1165,11 +1171,10 @@ def compute_cov(
     # to the error in mean P1D. This is tested on Ohio mocks and data.
     # We choose to renormalize the whole covariance matrix.
     if weight_method == "fit_snr":
-        std_pk = mean_p1d_table["errorPk"][(nbins_k * izbin) : (nbins_k * (izbin + 1))]
         covariance_diag = np.diag(covariance_matrix)
         covariance_matrix = (
             covariance_matrix
-            * np.outer(std_pk, std_pk)
+            * np.outer(error_pk, error_pk)
             / np.sqrt(np.outer(covariance_diag, covariance_diag))
         )
 
@@ -1191,6 +1196,8 @@ def compute_cov_not_vectorized(
     sub_forest_ids,
 ):
     """Compute the covariance of a set of 1D power spectra.
+    This is an old implementation which is summing up each individual mode every time.
+    This is very slow for large data samples.
 
     Arguments
     ---------
@@ -1251,7 +1258,8 @@ def compute_cov_not_vectorized(
             # adapted with weights w_i = np.sqrt(w_ipk * w_ipk2) for covariance
             # to obtain the right definition of variance on the diagonal
             selected_snr = p1d_table["forest_snr"][select_id]
-            snrfit_z = snrfit_table[izbin * nbins_k : (izbin + 1) * nbins_k, :]
+            index_slice = mean_p1d_table_regular_slice(izbin, nbins_k)
+            snrfit_z = snrfit_table[index_slice[0] : index_slice[1], :]
             selected_variance_estimated = fitfunc_variance_pk1d(
                 selected_snr, snrfit_z[selected_ikbin, 2], snrfit_z[selected_ikbin, 3]
             )
