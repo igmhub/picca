@@ -139,9 +139,39 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None):
 
 
 def mean_p1d_table_regular_slice(izbin, nbins_k):
+    """Return the arguments of a slice of mean P1D table for a given redshift.
+
+    Arguments
+    ---------
+    izbin (int):
+    Current redshift bin being considered.
+
+    nbins_k (int):
+    Number of k bins.
+
+    Return
+    ------
+    Arguments of a slice of mean P1D table.
+    """
     return izbin * nbins_k, (izbin + 1) * nbins_k
 
+
+
 def cov_table_regular_slice(izbin, nbins_k):
+    """Return the arguments of a slice of covariance table for a given redshift.
+
+    Arguments
+    ---------
+    izbin (int):
+    Current redshift bin being considered.
+
+    nbins_k (int):
+    Number of k bins.
+
+    Return
+    ------
+    Arguments of a slice of covariance table.
+    """
     return izbin * nbins_k * nbins_k, (izbin + 1) * nbins_k * nbins_k
 
 
