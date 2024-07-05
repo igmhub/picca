@@ -393,18 +393,18 @@ def compute_mean_pk1d(
                 ]
             )
 
-    compute_and_fill_covariance(
-        compute_covariance,
-        compute_bootstrap,
-        weight_method,
-        mean_p1d_table,
-        nbins_k,
-        nbins_z,
-        p1d_groups,
-        number_worker,
-        number_bootstrap,
-        cov_table,
-    )
+        compute_and_fill_covariance(
+            compute_covariance,
+            compute_bootstrap,
+            weight_method,
+            mean_p1d_table,
+            nbins_k,
+            nbins_z,
+            p1d_groups,
+            number_worker,
+            number_bootstrap,
+            cov_table,
+        )
 
     if output_snrfit is not None:
         np.savetxt(
