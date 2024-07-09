@@ -40,12 +40,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install wheel pytest pytest-cov coveralls
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    # TODO: the section below can be removed if the compile step is fixed otherwise
-    - name: Reinstall fitsio to ensure the numpy version during compilation matches the one at runtime
-      run: |
-        pip uninstall fitsio -y
-        pip cache purge
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Install picca
       run: pip install -e .
     - name: Test with pytest
