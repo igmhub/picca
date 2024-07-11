@@ -70,7 +70,7 @@ class DesisimMocksFast(DesiHealpixFast):
             f"{self.in_nside}-{healpix}.fits")
         return filename
 
-    def read_data(self):
+    def read_data(self, is_mock=True):
         """Read the data.
 
         Method used to read healpix-based survey data.
@@ -84,4 +84,4 @@ class DesisimMocksFast(DesiHealpixFast):
         -----
         DataError if no quasars were found
         """
-        return super().read_data(is_mock=True)
+        return super().read_data(is_mock=is_mock)

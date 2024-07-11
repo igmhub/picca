@@ -2,8 +2,8 @@
 """
 import logging
 import multiprocessing
-import os
 import time
+import itertools
 
 import fitsio
 import numpy as np
@@ -227,8 +227,8 @@ class DesiHealpixFileHandler():
                 self.logger.warning(
                     f"Error reading {targetid}. Ignoring object")
                 continue
-            else:
-                w_t = w_t[0]
+
+            w_t = w_t[0]
             # Construct DesiForest instance
             # Fluxes from the different spectrographs will be coadded
             flux = np.hstack([item[w_t] for item in flux_colors.values()])
@@ -250,10 +250,18 @@ class DesiHealpixFileHandler():
         return forests
 
 
-
-
-
-import itertools
 def combine_results(lists):
+    """Combine the content of all the lists into a single one
+
+    Arguments
+    ---------
+    lists: list of lists
+    The content to be merged
+
+    Return
+    ------
+    combined_list: list
+    The combined list
+    """
     # Combine a list of lists into a single list
     return list(itertools.chain(*lists))
