@@ -2,19 +2,25 @@
 
 import glob
 import git
+from git import InvalidGitRepositoryError
 
 from setuptools import find_namespace_packages, setup
 from pathlib import Path
 
 scripts = sorted(glob.glob('bin/picca*'))
 
-description = (f"Package for Igm Cosmological-Correlations Analyses\n"
-               f"commit hash: {git.Repo('.').head.object.hexsha}")
+exec(open('py/picca/_version.py').read())
+version = __version__
+
+try:
+    description = (f"Package for Igm Cosmological-Correlations Analyses\n"
+                   f"commit hash: {git.Repo('.').head.object.hexsha}")
+except InvalidGitRepositoryError:
+    description = (f"Package for Igm Cosmological-Correlations Analyses\n"
+                   f"version: {version}")
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
-exec(open('py/picca/_version.py').read())
-version = __version__
 
 setup(name="picca",
     version = version,
