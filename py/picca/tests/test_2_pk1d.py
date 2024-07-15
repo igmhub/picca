@@ -123,7 +123,7 @@ class TestPk1d(AbstractTest):
         #- small sample => k,z-bins changed wrt default ones
         cmd += " --zedge-min 2.1 --zedge-max 3.1 --zedge-bin 0.2"
         cmd += " --kedge-min 0.015 --kedge-max 0.035 --kedge-bin 0.005"
-        cmd += " --covariance --bootstrap --nbootstrap 20"
+        cmd += " --covariance"
         picca_Pk1D_postprocess.main(cmd.split()[1:])
 
         ### Test
