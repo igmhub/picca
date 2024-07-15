@@ -1051,6 +1051,7 @@ def compute_p1d_groups(
     else:
         p1d_sub_table["weight"] = 1
 
+    # Remove bins that are not associated with any wavenumber bin.
     p1d_sub_table = p1d_sub_table[p1d_sub_table["k_index"] >= 0]
 
     grouped_table = p1d_sub_table.group_by("sub_forest_id")
@@ -1176,6 +1177,9 @@ def compute_cov(
     weights_product_of_sum = np.zeros((nbins_k, nbins_k))
 
     for i, p1d_group in enumerate(p1d_groups):
+        # The summation is done with np.nansum instead of simple addition to not
+        # include the NaN that are present in the individual p1d.
+        # The summation is not done at the end, to prevent memory overhead.
         p1d_groups_product_sum = np.nansum(
             [p1d_groups_product_sum, np.outer(p1d_group, p1d_group)], axis=0
         )
