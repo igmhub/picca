@@ -217,8 +217,8 @@ def process_all_files(index_file_args):
                 )
             else:
                 pk_noise=pk_diff=np.zeros(pk_raw.shape)
-                fft_delta_noise = np.zeros(pk_raw.shape,dtype=np.complex_)
-                fft_delta_diff = np.zeros(pk_raw.shape,dtype=np.complex_)
+                fft_delta_noise = np.zeros(pk_raw.shape,dtype=np.complex128)
+                fft_delta_diff = np.zeros(pk_raw.shape,dtype=np.complex128)
 
             # Compute resolution correction, needs uniform binning
             if not running_on_raw_transmission:

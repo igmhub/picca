@@ -8,6 +8,7 @@ import multiprocessing
 import fitsio
 import numpy as np
 
+from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
 from picca.delta_extraction.data_catalogues.desi_data import (
     DesiData, DesiDataFileHandler, merge_new_forest, verify_exposures_shape)
 from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
@@ -45,6 +46,10 @@ class DesiTile(DesiData):
         """
         self.logger = logging.getLogger(__name__)
         super().__init__(config)
+
+        if self.analysis_type == "PK 1D":
+            DesiPk1dForest.update_class_variables()
+
 
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
