@@ -99,9 +99,25 @@ class ScriptsTest(AbstractTest):
 
         self.run_delta_extraction(config_file, out_dir, test_dir)
 
+    def test_delta_lin_fast(self):
+        """End-to-end test using 'LYA' setup with  a linear wavelenth solution"""
+        config_file = "{}/data/delta_lin_fast.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_lin".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_lin".format(THIS_DIR)
+
+        self.run_delta_extraction(config_file, out_dir, test_dir)
+
     def test_delta_lin_image(self):
         """End-to-end test using 'LYA' linear setup storing data as image"""
         config_file = "{}/data/delta_lin_image.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_lin_image".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_lin_image".format(THIS_DIR)
+
+        self.run_delta_extraction(config_file, out_dir, test_dir)
+
+    def test_delta_lin_image_fast(self):
+        """End-to-end test using 'LYA' linear setup storing data as image"""
+        config_file = "{}/data/delta_lin_image_fast.ini".format(THIS_DIR)
         out_dir = "{}/results/delta_extraction_lin_image".format(THIS_DIR)
         test_dir = "{}/data/delta_extraction_lin_image".format(THIS_DIR)
 
@@ -136,6 +152,15 @@ class ScriptsTest(AbstractTest):
         """End-to-end test using 'LYA' setup without corrections or masking,
         for desi mocks"""
         config_file = "{}/data/delta_lya_desi_mocks.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_lya_desi_mocks".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_lya_desi_mocks".format(THIS_DIR)
+
+        self.run_delta_extraction(config_file, out_dir, test_dir)
+
+    def test_delta_lya_desi_mocks_fast(self):
+        """End-to-end test using 'LYA' setup without corrections or masking,
+        for desi mocks"""
+        config_file = "{}/data/delta_lya_desi_mocks_fast.ini".format(THIS_DIR)
         out_dir = "{}/results/delta_extraction_lya_desi_mocks".format(THIS_DIR)
         test_dir = "{}/data/delta_extraction_lya_desi_mocks".format(THIS_DIR)
 
