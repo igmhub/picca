@@ -116,11 +116,6 @@ class DesiHealpixFast(DesiData):
 
 
                 self.forests = combine_results(imap_it)
-                print("###################")
-                print(self.forests[0].los_id)
-                print("###################")
-                #for output_imap in imap_it:
-                #    self.forests += output_imap
                 t1 = time.time()
                 self.logger.progress(f"Time spent meerging threads: {t1-t0}")
 
