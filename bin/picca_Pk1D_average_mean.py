@@ -19,7 +19,7 @@ def main(cmdargs):
         "--in-dir",
         type=str,
         default=None,
-        required=True,
+        required=False,
         help="String to glob all mean p1d to average",
     )
 
@@ -27,7 +27,7 @@ def main(cmdargs):
         "--in-filenames",
         type=str,
         default=None,
-        required=True,
+        required=False,
         help="String of all mean p1d to average",
     )
 
@@ -41,10 +41,9 @@ def main(cmdargs):
 
     parser.add_argument(
         "--weighted-mean",
-        type=bool,
+        action="store_true",
         default=False,
         required=False,
-        help="Mean weighted by error",
     )
 
     args = parser.parse_args(cmdargs)
