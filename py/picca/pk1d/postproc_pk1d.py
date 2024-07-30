@@ -1471,11 +1471,275 @@ def run_postproc_pk1d(
         number_worker=ncpu,
     )
 
+    metadata_header = {
+        "VELUNITS": velunits,
+        "NQSO": len(np.unique(p1d_table["forest_id"])),
+    }
+
+    write_mean_pk1d(
+        output_file,
+        mean_p1d_table,
+        metadata_table,
+        metadata_header,
+        cov_table,
+    )
+
+
+def check_mean_pk1d_compatibility(
+    mean_p1d_tables, 
+    metadata_tables, 
+    metadata_headers, 
+    cov_tables,
+):
+    """
+    Check the compatibility between different average p1d
+
+    Arguments
+    ---------
+    mean_p1d_tables: array-like
+    List of p1d tables to average
+
+    metadata_tables: array-like
+    List of metadata table of each mean p1d
+
+    metadata_headers: array-like
+    List of metadata header of each mean p1d
+
+    mean_p1d_tables: array-like
+    List of covariance tables to average
+    """
+
+    if len(mean_p1d_tables) <= 1:
+        raise ValueError(
+            """Not enough mean p1d data to coadd (0 or 1),"""
+            """ Please check the input data"""
+        )
+    elif (len(mean_p1d_tables) != len(metadata_tables)) | (
+        len(mean_p1d_tables) != len(metadata_headers)
+    ):
+        raise ValueError(
+            """The number of mean p1d data to coadd is different,"""
+            """ Please check the input data"""
+        )
+    elif (len(mean_p1d_tables) != len(cov_tables)) & (len(cov_tables) != 0):
+        raise ValueError(
+            """The input mean p1d data does not all contains covariance,"""
+            """ Please check the input data"""
+        )
+
+    z_min = metadata_tables[-1]["z_min"]
+    z_max = metadata_tables[-1]["z_max"]
+    k_min = metadata_tables[-1]["k_min"]
+    k_max = metadata_tables[-1]["k_max"]
+    k_bin_size = len(mean_p1d_tables[-1]["meank"])
+    for i, metadata in enumerate(metadata_tables[:-1]):
+        test = np.all(metadata["z_min"] == z_min)
+        test &= np.all(metadata["z_max"] == z_max)
+        test &= np.all(metadata["k_min"] == k_min)
+        test &= np.all(metadata["k_max"] == k_max)
+        test &= len(mean_p1d_tables[i]["meank"]) == k_bin_size
+
+        if not (test):
+            raise ValueError(
+                """The input mean p1d data does not have the same k and z binning,"""
+                """ Please check the input data"""
+            )
+
+    velunits = metadata_headers[-1]["VELUNITS"]
+    for _, header in enumerate(metadata_headers[:-1]):
+        if header["VELUNITS"] != velunits:
+            raise ValueError(
+                """The input mean p1d data are not expressed in the same units,"""
+                """ Please check the input data"""
+            )
+
+    mean_p1d_table_colnames = mean_p1d_tables[-1].colnames
+    for i, table in enumerate(mean_p1d_tables[:-1]):
+        if not (np.all(table.colnames == mean_p1d_table_colnames)):
+            raise ValueError(
+                """The mean p1d tables does not have the same column names,"""
+                """ Please check the input data"""
+            )
+    cov_table_colnames = cov_tables[-1].colnames
+    for i, table in enumerate(cov_tables[:-1]):
+        if not (np.all(table.colnames == cov_table_colnames)):
+            raise ValueError(
+                """The covariance tables does not have the same column names,"""
+                """ Please check the input data"""
+            )
+
+
+def average_mean_pk1d_files(
+    mean_p1d_names,
+    output_path,
+    weighted_mean=False,
+):
+    """
+    Compute and write the average of mean p1d
+
+    Arguments
+    ---------
+    mean_p1d_names: array-like
+    List of the name of p1d means to average
+
+    output_path: str
+    Output path where to write
+
+    weighted_mean: bool
+    If True, compute the weighted average using the errors as weights.
+    """
+
+
+    mean_p1d_tables, metadata_tables, metadata_headers, cov_tables = (
+        [],
+        [],
+        [],
+        [],
+    )
+
+    for mean_p1d_name in mean_p1d_names:
+        hdus = fitsio.FITS(mean_p1d_name)
+        metadata_tables.append(Table(hdus[2].read()))
+        metadata_headers.append(hdus[2].read_header())
+        mean_p1d_tables.append(Table(hdus[1].read()))
+        if len(hdus) > 3:
+            cov_tables.append(Table(hdus[3].read()))
+
+    check_mean_pk1d_compatibility(
+        mean_p1d_tables, metadata_tables, metadata_headers, cov_tables
+    )
+
+    combination_metadata_header = {
+        "VELUNITS": metadata_headers[0]["VELUNITS"],
+        "NQSO": np.sum([header["NQSO"] for header in metadata_headers]),
+    }
+
+    combination_metadata_table = metadata_tables[0][
+        ["z_min", "z_max", "k_min", "k_max"]
+    ]
+    combination_metadata_table["N_chunks"] = np.sum(
+        np.array([metadata["N_chunks"] for metadata in metadata_tables]), axis=0
+    )
+
+    combination_mean_p1d_table = mean_p1d_tables[0][["zbin", "index_zbin"]]
+    combination_mean_p1d_table["N"] = np.sum(
+        np.array([mean_p1d_table["N"] for mean_p1d_table in mean_p1d_tables]), axis=0
+    )
+    for colname in mean_p1d_tables[0].colnames:
+        all_mean_p1d_colname = np.array(
+            [mean_p1d[colname] for mean_p1d in mean_p1d_tables]
+        )
+        masked_all_mean_p1d_colname = np.ma.masked_array(
+            all_mean_p1d_colname, np.isnan(all_mean_p1d_colname)
+        )
+        if ("mean" in colname) | ("median" in colname):
+            if weighted_mean:
+                weight_colname = (
+                    colname.replace("mean", "error")
+                    if "mean" in colname
+                    else colname.replace("median", "error")
+                )
+                weights = (
+                    1
+                    / (
+                        np.array(
+                            [mean_p1d[weight_colname] for mean_p1d in mean_p1d_tables]
+                        )
+                    )
+                    ** 2
+                )
+                new_mean_p1d_colname = np.ma.average(
+                    masked_all_mean_p1d_colname, axis=0, weights=weights
+                ).filled(np.nan)
+            else:
+                new_mean_p1d_colname = np.ma.average(
+                    masked_all_mean_p1d_colname, axis=0
+                ).filled(np.nan)
+        elif "error" in colname:
+            new_mean_p1d_colname = np.ma.average(
+                masked_all_mean_p1d_colname, axis=0
+            ).filled(np.nan) / np.sqrt(len(mean_p1d_tables))
+        elif "min" in colname:
+            new_mean_p1d_colname = np.ma.min(
+                masked_all_mean_p1d_colname, axis=0
+            ).filled(np.nan)
+        elif "max" in colname:
+            new_mean_p1d_colname = np.ma.max(
+                masked_all_mean_p1d_colname, axis=0
+            ).filled(np.nan)
+        else:
+            continue
+        combination_mean_p1d_table[colname] = new_mean_p1d_colname
+
+    combination_cov_table = cov_tables[0][["zbin", "index_zbin"]]
+    combination_cov_table["N"] = np.sum(
+        np.array([cov_table["N"] for cov_table in cov_tables]),
+        axis=0,
+    )
+
+    if len(cov_tables) == 0:
+        combination_cov_table = None
+    else:
+        all_covariance = np.array([cov_table["covariance"] for cov_table in cov_tables])
+        masked_all_covariance = np.ma.masked_array(
+            all_covariance, np.isnan(all_covariance)
+        )
+        combination_cov_table["covariance"] = np.ma.average(
+            masked_all_covariance, axis=0
+        ).filled(np.nan)
+        combination_cov_table["k1"] = cov_tables[0]["k1"]
+        combination_cov_table["k2"] = cov_tables[0]["k2"]
+
+        if "boot_covariance" in cov_tables[0].colnames:
+            all_boot_covariance = np.array(
+                [cov_table["boot_covariance"] for cov_table in cov_tables]
+            )
+            all_error_boot_covariance = np.array(
+                [cov_table["error_boot_covariance"] for cov_table in cov_tables]
+            )
+
+            masked_all_boot_covariance = np.ma.masked_array(
+                all_boot_covariance, np.isnan(all_boot_covariance)
+            )
+            masked_all_error_boot_covariance = np.ma.masked_array(
+                all_error_boot_covariance, np.isnan(all_error_boot_covariance)
+            )
+
+            if weighted_mean:
+                weights = 1 / masked_all_error_boot_covariance**2
+                combination_cov_table["boot_covariance"] = np.ma.average(
+                    masked_all_boot_covariance, axis=0, weights=weights
+                ).filled(np.nan)
+            else:
+                combination_cov_table["boot_covariance"] = np.ma.average(
+                    masked_all_boot_covariance, axis=0
+                ).filled(np.nan)
+            combination_cov_table["error_boot_covariance"] = np.ma.average(
+                masked_all_error_boot_covariance, axis=0
+            ).filled(np.nan) / np.sqrt(len(cov_tables))
+
+    output_file = os.path.join(output_path, mean_p1d_names[0].split["/"][-1])
+    write_mean_pk1d(
+        output_file,
+        combination_mean_p1d_table,
+        combination_metadata_table,
+        combination_metadata_header,
+        combination_cov_table,
+    )
+
+
+def write_mean_pk1d(
+    output_file,
+    mean_p1d_table,
+    metadata_table,
+    metadata_header,
+    cov_table,
+):
     result = fitsio.FITS(output_file, "rw", clobber=True)
     result.write(mean_p1d_table.as_array())
     result.write(
         metadata_table.as_array(),
-        header={"VELUNITS": velunits, "NQSO": len(np.unique(p1d_table["forest_id"]))},
+        header=metadata_header,
     )
     if cov_table is not None:
         result.write(cov_table.as_array())
