@@ -923,7 +923,7 @@ def compute_and_fill_covariance(
         userprint("Computing covariance matrix with bootstrap method")
         p1d_groups_bootstrap = []
         for izbin in range(nbins_z):
-            number_sub_forests = len(p1d_groups[izbin][1])
+            number_sub_forests = len(p1d_groups[izbin][2])
             if number_sub_forests > 0:
                 bootid = np.array(
                     bootstrap(np.arange(number_sub_forests), number_bootstrap)
@@ -941,8 +941,8 @@ def compute_and_fill_covariance(
                         p1d_groups_z,
                     ) = ([], [], [], [], [])
                 else:
-                    mean_pk = p1d_groups[izbin][0][bootid[iboot]]
-                    error_pk = p1d_groups[izbin][1][bootid[iboot]]
+                    mean_pk = p1d_groups[izbin][0]
+                    error_pk = p1d_groups[izbin][1]
                     p1d_weights_z = p1d_groups[izbin][2][bootid[iboot]]
                     covariance_weights_z = p1d_groups[izbin][3][bootid[iboot]]
                     p1d_groups_z = p1d_groups[izbin][4][bootid[iboot]]
