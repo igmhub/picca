@@ -1716,7 +1716,7 @@ def average_mean_pk1d_files(
                 masked_all_error_boot_covariance, axis=0
             ).filled(np.nan) / np.sqrt(len(cov_tables))
 
-    output_file = os.path.join(output_path, mean_p1d_names[0].split["/"][-1])
+    output_file = os.path.join(output_path, mean_p1d_names[0].split("/")[-1])
     write_mean_pk1d(
         output_file,
         combination_mean_p1d_table,
