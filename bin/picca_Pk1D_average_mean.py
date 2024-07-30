@@ -32,7 +32,11 @@ def main(cmdargs):
     )
 
     parser.add_argument(
-        "--output-path", type=str, default=None, required=False, help="Output path"
+        "--output-path",
+        type=str,
+        default=None,
+        required=False,
+        help="Output path",
     )
 
     parser.add_argument(

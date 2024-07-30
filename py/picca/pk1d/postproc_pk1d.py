@@ -156,7 +156,6 @@ def mean_p1d_table_regular_slice(izbin, nbins_k):
     return izbin * nbins_k, (izbin + 1) * nbins_k
 
 
-
 def cov_table_regular_slice(izbin, nbins_k):
     """Return the arguments of a slice of covariance table for a given redshift.
 
@@ -1486,9 +1485,9 @@ def run_postproc_pk1d(
 
 
 def check_mean_pk1d_compatibility(
-    mean_p1d_tables, 
-    metadata_tables, 
-    metadata_headers, 
+    mean_p1d_tables,
+    metadata_tables,
+    metadata_headers,
     cov_tables,
 ):
     """
@@ -1588,7 +1587,6 @@ def average_mean_pk1d_files(
     weighted_mean: bool
     If True, compute the weighted average using the errors as weights.
     """
-
 
     mean_p1d_tables, metadata_tables, metadata_headers, cov_tables = (
         [],
