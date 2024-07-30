@@ -1513,14 +1513,14 @@ def check_mean_pk1d_compatibility(
             """Not enough mean p1d data to coadd (0 or 1),"""
             """ Please check the input data"""
         )
-    elif (len(mean_p1d_tables) != len(metadata_tables)) | (
+    if (len(mean_p1d_tables) != len(metadata_tables)) | (
         len(mean_p1d_tables) != len(metadata_headers)
     ):
         raise ValueError(
             """The number of mean p1d data to coadd is different,"""
             """ Please check the input data"""
         )
-    elif (len(mean_p1d_tables) != len(cov_tables)) & (len(cov_tables) != 0):
+    if (len(mean_p1d_tables) != len(cov_tables)) & (len(cov_tables) != 0):
         raise ValueError(
             """The input mean p1d data does not all contains covariance,"""
             """ Please check the input data"""
@@ -1538,7 +1538,7 @@ def check_mean_pk1d_compatibility(
         test &= np.all(metadata["k_max"] == k_max)
         test &= len(mean_p1d_tables[i]["meank"]) == k_bin_size
 
-        if not (test):
+        if not test:
             raise ValueError(
                 """The input mean p1d data does not have the same k and z binning,"""
                 """ Please check the input data"""
@@ -1554,14 +1554,14 @@ def check_mean_pk1d_compatibility(
 
     mean_p1d_table_colnames = mean_p1d_tables[-1].colnames
     for i, table in enumerate(mean_p1d_tables[:-1]):
-        if not (np.all(table.colnames == mean_p1d_table_colnames)):
+        if not np.all(table.colnames == mean_p1d_table_colnames):
             raise ValueError(
                 """The mean p1d tables does not have the same column names,"""
                 """ Please check the input data"""
             )
     cov_table_colnames = cov_tables[-1].colnames
     for i, table in enumerate(cov_tables[:-1]):
-        if not (np.all(table.colnames == cov_table_colnames)):
+        if not np.all(table.colnames == cov_table_colnames):
             raise ValueError(
                 """The covariance tables does not have the same column names,"""
                 """ Please check the input data"""
@@ -1733,6 +1733,26 @@ def write_mean_pk1d(
     metadata_header,
     cov_table,
 ):
+    """
+    Write a mean p1d file
+
+    Arguments
+    ---------
+    output_file: string
+    Output file name
+
+    mean_p1d_table: Table
+    Table containing the mean p1d properties
+
+    metadata_table: Table
+    Table containing the metadata
+
+    metadata_header: Table
+    Table containing the metadata header to write
+
+    cov_table: Table
+    Table containing the covariance of the mean p1d
+    """
     result = fitsio.FITS(output_file, "rw", clobber=True)
     result.write(mean_p1d_table.as_array())
     result.write(
