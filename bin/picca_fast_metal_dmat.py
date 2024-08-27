@@ -58,6 +58,16 @@ def calc_fast_metal_dmat(in_lambda_abs_1,
         Note the global picca.cf contains the cosmology and the rp grid
     """
 
+    # stack_table_1 and _2 are the results of the function
+    # picca.delta_extraction.expected_flux.get_stack_delta,
+    # called in picca.delta_extraction.expected_flux.hdu_stack_deltas
+    # It is the stack of weights =
+    # picca.delta_extraction.expected_flux.compute_forest_weights(forest, forest.continuum).
+    # This function is implemented dr16_expected_flux.Dr16ExpectedFlux.compute_forest_weights
+    # and contains the terms  eta * var_pipe + self.var_lss_mod*var_lss + fudge / var_pipe
+    # some being set at 0 or 1 depending on the configuration.
+    # It does NOT contain the term of redshift evolution (1+z)^(apha-1).
+
     loglam1 = stack_table_1["LOGLAM"]
     weight1 = stack_table_1["WEIGHT"]
     loglam2 = stack_table_2["LOGLAM"]
@@ -147,7 +157,9 @@ def calc_fast_metal_dmat(in_lambda_abs_1,
     delta_rt    = np.linspace(-rt_bin_half_size,rt_bin_half_size*(1-2./oversample),oversample)[None,:] # the -2/oversample term is needed to get a even-spaced grid
     rt_1d_dmat  = np.zeros((cf.num_bins_r_trans,cf.num_bins_r_trans))
     for i,rt in enumerate(rt_bin_centers) :
-        rt_1d_dmat[:,i],_ = np.histogram((distance_ratios[:,None]*(rt+delta_rt)).ravel(),bins=rtbins,weights=(distance_ratio_weights[:,None]*np.ones(delta_rt.shape)).ravel())
+        # the weight is proportional to rt to get the correct solid angle effect (it's almost a negligible effect)
+        rt_1d_dmat[:,i],_ = np.histogram((distance_ratios[:,None]*(rt+delta_rt)[None,:]).ravel(),bins=rtbins,weights=(distance_ratio_weights[:,None]*(rt+delta_rt)[None,:]).ravel())
+
     # normalize
     sum_rt_1d_dmat = np.sum(rt_1d_dmat,axis=0)
     rt_1d_dmat    /= (sum_rt_1d_dmat+(sum_rt_1d_dmat==0))
