@@ -151,7 +151,10 @@ def calc_fast_metal_dmat(in_lambda_abs_1,
     # solid angle contibuting for each distance propto theta_max**2 = (r_trans_max/dist)**2 propto 1/dist**2
     # we weight the distances with this additional factor
     # using the input or the output distance in the solid angle weight gives virtually the same result
-    distance_ratio_weights,distance_ratio_bins = np.histogram(output_dist/input_dist,bins=4*rtbins.size,weights=weights/input_dist**2)
+    #distance_ratio_weights,distance_ratio_bins = np.histogram(output_dist/input_dist,bins=4*rtbins.size,weights=weights/input_dist**2*(input_rp<cf.r_par_max)*(input_rp>cf.r_par_min))
+    # we also select only distance ratio for which the input_rp (that of the true separation of the absorbers) is small, so that this
+    # fast matrix calculation is accurate where it matters the most
+    distance_ratio_weights,distance_ratio_bins = np.histogram(output_dist/input_dist,bins=4*rtbins.size,weights=weights/input_dist**2*(np.abs(input_rp)<20.))
     distance_ratios=(distance_ratio_bins[1:]+distance_ratio_bins[:-1])/2.
 
     # now we need to scan as a function of separation angles, or equivalently rt.
