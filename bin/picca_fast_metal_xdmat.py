@@ -122,7 +122,12 @@ def calc_fast_metal_dmat(in_lambda_abs,
     # we don't need to store the absolute comoving distances but the ratio between output and input.
     # we rebin that to compute the rest faster.
     # histogram of distance scaling with proper weights:
-    distance_ratio_weights,distance_ratio_bins = np.histogram(output_dist/input_dist,bins=4*rtbins.size,weights=weights)
+    # dist*theta = r_trans
+    # theta_max  = r_trans_max/dist
+    # solid angle contibuting for each distance propto theta_max**2 = (r_trans_max/dist)**2 propto 1/dist**2
+    # we weight the distances with this additional factor
+    # using the input or the output distance in the solid angle weight gives virtually the same result
+    distance_ratio_weights,distance_ratio_bins = np.histogram(output_dist/input_dist,bins=4*rtbins.size,weights=weights/input_dist**2)
     distance_ratios=(distance_ratio_bins[1:]+distance_ratio_bins[:-1])/2.
 
     # now we need to scan as a function of separation angles, or equivalently rt.
