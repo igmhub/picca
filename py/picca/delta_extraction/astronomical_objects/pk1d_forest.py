@@ -154,7 +154,7 @@ class Pk1dForest(Forest):
         """Get the data to be saved in a fits file.
 
         Extends the get_data method of Forest to also include data for
-        exposures_diff.
+        exposures_diff and resolution estimates.
 
         Return
         ------
