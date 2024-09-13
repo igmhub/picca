@@ -638,12 +638,13 @@ class AstronomicalObjectTest(AbstractTest):
             comments[3] == ("Quasar continuum. "
                             "Check input spectra for units"))
 
+        self.assertTrue(names[4] == "IVAR")
+        self.assertTrue(np.allclose(cols[4], test_obj.ivar))
+        self.assertTrue(units[4] == "(Flux units)^-1")
+        self.assertTrue(
+            comments[4] == "Inverse variance. Check input spectra for units")
+        
         if isinstance(test_obj, Pk1dForest):
-            self.assertTrue(names[4] == "IVAR")
-            self.assertTrue(np.allclose(cols[4], test_obj.ivar))
-            self.assertTrue(units[4] == "(Flux units)^-1")
-            self.assertTrue(
-                comments[4] == "Inverse variance. Check input spectra for units")
 
             self.assertTrue(names[5] == "DIFF")
             self.assertTrue(np.allclose(cols[5], test_obj.exposures_diff))
