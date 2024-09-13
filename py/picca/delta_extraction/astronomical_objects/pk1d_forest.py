@@ -179,7 +179,7 @@ class Pk1dForest(Forest):
             "Resolution estimate (FWHM) for each pixel in units of km/s"
             "Resolution estimate (sigma) for each pixel in units of pixel size"
         ]
-        units += [f"({Forest.flux_units})^-1", Forest.flux_units, "", ""]
+        units += [Forest.flux_units, "", ""]
 
         return cols, names, units, comments
 

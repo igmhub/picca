@@ -544,7 +544,7 @@ class Forest(AstronomicalObject):
         names += ["IVAR"]
         comments += ["Inverse variance. Check input "
                      "spectra for units"]
-        units += [Forest.flux_units]
+        units += [f"({Forest.flux_units})^-1"]
 
         return cols, names, units, comments
 
