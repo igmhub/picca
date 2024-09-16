@@ -380,7 +380,7 @@ class TestCor(AbstractTest):
         userprint("\n")
         ### Send
         cmd = "picca_fast_metal_dmat.py"
-        cmd += " --in-attributes " + self._masterFiles + "../delta_extraction/data/delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/fast_metal_dmat.fits.gz"
         cmd += r" --abs-igm SiIII(1207)"
         cmd += " --rp-min +0.0"
@@ -552,8 +552,8 @@ class TestCor(AbstractTest):
         userprint("\n")
         ### Send
         cmd = "picca_fast_metal_dmat.py"
-        cmd += " --in-attributes " + self._masterFiles + "../delta_extraction/data/delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
-        cmd += " --in-attributes " + self._masterFiles + "../delta_extraction/data/delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/fast_metal_dmat_cross.fits.gz"
         cmd += r" --abs-igm SiIII(1207)"
@@ -714,7 +714,7 @@ class TestCor(AbstractTest):
         userprint("\n")
         ### Send
         cmd = "picca_fast_metal_xdmat.py"
-        cmd += " --in-attributes " + self._masterFiles + "../delta_extraction/data/delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/fast_metal_xdmat.fits.gz"
         cmd += r" --abs-igm SiIII(1207)"
@@ -935,7 +935,7 @@ class TestCor(AbstractTest):
         userprint("\n")
         ### Send
         cmd = "picca_metal_dmat.py"
-        cmd += " --in-attributes " + self._masterFiles + "../delta_extraction/data/delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/fast_metal_dmat_zcuts.fits.gz"
         cmd += r" --abs-igm SiIII(1207)"
         cmd += " --rp-min +0.0"
@@ -1112,8 +1112,8 @@ class TestCor(AbstractTest):
         userprint("\n")
         ### Send
         cmd = "picca_fast_metal_dmat.py"
-        cmd += " --in-attributes " + self._masterFiles + "../delta_extraction/data/delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
-        cmd += " --in-attributes2 " + self._masterFiles + "../delta_extraction/data/delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --in-attributes2 " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/fast_metal_dmat_cross_zcuts.fits.gz"
         cmd += r" --abs-igm SiIII(1207)"
