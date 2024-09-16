@@ -76,6 +76,7 @@ def calc_fast_metal_dmat(in_lambda_abs,
     input_rp = (
         input_rf[:, None] -
         r_qso[None, :]).ravel()  # same sign as line 528 of xcf.py (forest-qso)
+    input_dist  = ((input_rf[:, None]+r_qso[None, :])/2).ravel()
 
     # output
     output_zf = (10**loglam) / constants.ABSORBER_IGM[out_lambda_abs] - 1.
@@ -85,6 +86,7 @@ def calc_fast_metal_dmat(in_lambda_abs,
     output_rp = (
         output_rf[:, None] -
         r_qso[None, :]).ravel()  # same sign as line 528 of xcf.py (forest-qso)
+    output_dist = ((output_rf[:, None]+r_qso[None, :])/2).ravel()
 
     # weights
     # alpha_in: in (1+z)^(alpha_in-1) is a scaling used to model how the metal contribution
@@ -100,21 +102,62 @@ def calc_fast_metal_dmat(in_lambda_abs,
                 ((1 + input_zf)**(alpha_in + alpha_out - 2)))[:, None] *
                weight_qso[None, :]).ravel()
 
-    # distortion matrix
+    # r_par distortion matrix
     rpbins = xcf.r_par_min + (
         xcf.r_par_max -
         xcf.r_par_min) / xcf.num_bins_r_par * np.arange(xcf.num_bins_r_par + 1)
 
     # I checked the orientation of the matrix
-    dmat, _, _ = np.histogram2d(output_rp,
+    rp_1d_dmat, _, _ = np.histogram2d(output_rp,
                                 input_rp,
                                 bins=(rpbins, rpbins),
                                 weights=weights)
+    # normalize
+    sum_rp_1d_dmat = np.sum(rp_1d_dmat,axis=0)
+    rp_1d_dmat    /= (sum_rp_1d_dmat+(sum_rp_1d_dmat==0))
 
-    # normalize (sum of weight should be one for each input rp,rt)
-    sum_in_weight, _ = np.histogram(input_rp, bins=rpbins, weights=weights)
-    dmat *= ((sum_in_weight > 0) / (sum_in_weight +
-                                    (sum_in_weight == 0)))[None, :]
+    # independently, we compute the r_trans distortion matrix
+    rtbins   = xcf.r_trans_max/xcf.num_bins_r_trans*np.arange(xcf.num_bins_r_trans+1)
+    # we have input_dist , output_dist and weight.
+    # we don't need to store the absolute comoving distances but the ratio between output and input.
+    # we rebin that to compute the rest faster.
+    # histogram of distance scaling with proper weights:
+    # dist*theta = r_trans
+    # theta_max  = r_trans_max/dist
+    # solid angle contibuting for each distance propto theta_max**2 = (r_trans_max/dist)**2 propto 1/dist**2
+    # we weight the distances with this additional factor
+    # using the input or the output distance in the solid angle weight gives virtually the same result
+    # we also select only distance ratio for which the input_rp (that of the true separation of the absorbers) is small, so that this
+    # fast matrix calculation is accurate where it matters the most
+    distance_ratio_weights,distance_ratio_bins = np.histogram(output_dist/input_dist,bins=4*rtbins.size,weights=weights/input_dist**2*(np.abs(input_rp)<20.))
+    distance_ratios=(distance_ratio_bins[1:]+distance_ratio_bins[:-1])/2.
+
+    # now we need to scan as a function of separation angles, or equivalently rt.
+    rt_bin_centers = (rtbins[:-1]+rtbins[1:])/2.
+    rt_bin_half_size = (rtbins[1]-rtbins[0])/2.
+    # we are oversampling the correlation function rt grid to correctly compute bin migration.
+    oversample  = 7
+    delta_rt    = np.linspace(-rt_bin_half_size,rt_bin_half_size*(1-2./oversample),oversample)[None,:] # the -2/oversample term is needed to get a even-spaced grid
+    rt_1d_dmat  = np.zeros((xcf.num_bins_r_trans,xcf.num_bins_r_trans))
+    for i,rt in enumerate(rt_bin_centers) :
+        # the weight is proportional to rt to get the correct solid angle effect (it's almost a negligible effect)
+        rt_1d_dmat[:,i],_ = np.histogram((distance_ratios[:,None]*(rt+delta_rt)[None,:]).ravel(),bins=rtbins,weights=(distance_ratio_weights[:,None]*(rt+delta_rt)[None,:]).ravel())
+
+    # normalize
+    sum_rt_1d_dmat = np.sum(rt_1d_dmat,axis=0)
+    rt_1d_dmat    /= (sum_rt_1d_dmat+(sum_rt_1d_dmat==0))
+
+    # now that we have both distortion along r_par and r_trans, we have to combine them
+    # we just multiply the two matrices, with indices splitted for rt and rp
+    # full_index = rt_index + xcf.num_bins_r_trans * rp_index
+    # rt_index   = full_index%xcf.num_bins_r_trans
+    # rp_index  = full_index//xcf.num_bins_r_trans
+    num_bins_total = xcf.num_bins_r_par * xcf.num_bins_r_trans
+    dmat = np.zeros((num_bins_total,num_bins_total))
+    pp   = np.arange(num_bins_total,dtype=int)
+    for k in range(num_bins_total) :
+        dmat[k,pp] = rt_1d_dmat[k%xcf.num_bins_r_trans,pp%xcf.num_bins_r_trans] * rp_1d_dmat[k//xcf.num_bins_r_trans,pp//xcf.num_bins_r_trans]
+
 
     # mean outputs
     sum_out_weight, _ = np.histogram(output_rp, bins=rpbins, weights=weights)
@@ -130,34 +173,27 @@ def calc_fast_metal_dmat(in_lambda_abs,
         bins=rpbins,
         weights=weights *
         (((input_zf[:, None] + z_qso[None, :]) / 2.).ravel()))
-    r_par_eff = sum_out_weight_rp / (sum_out_weight + (sum_out_weight == 0))
-    z_eff = sum_out_weight_z / (sum_out_weight + (sum_out_weight == 0))
 
-    # we could return the quantities computed as a function of rp only (and not rt):
-    # return dmat, r_par_eff, r_trans_eff, z_eff
-    # but for now we will return the full dmat to be consistent with the other computation
-    # it consists in duplicating the result found to all rt, with output_rt = input_rt
-    num_bins_total = xcf.num_bins_r_par * xcf.num_bins_r_trans
+    r_par_eff_1d = sum_out_weight_rp / (sum_out_weight + (sum_out_weight == 0))
+    z_eff_1d     = sum_out_weight_z / (sum_out_weight + (sum_out_weight == 0))
 
-    full_dmat = np.zeros((num_bins_total, num_bins_total))
-    full_r_par_eff = np.zeros(num_bins_total)
-    full_r_trans_eff = np.zeros(num_bins_total)
-    full_z_eff = np.zeros(num_bins_total)
-    r_par_indices = np.arange(xcf.num_bins_r_par)
-    r_trans = (0.5 + np.arange(
-        xcf.num_bins_r_trans)) * xcf.r_trans_max / xcf.num_bins_r_trans
-    for j in range(xcf.num_bins_r_trans):
-        indices = j + xcf.num_bins_r_trans * r_par_indices
-        for k, i in zip(indices, r_par_indices):
-            full_dmat[indices, k] = dmat[r_par_indices, i]
-        full_r_par_eff[indices] = r_par_eff
-        full_z_eff[indices] = z_eff
-        full_r_trans_eff[indices] = r_trans[j]
+    # r_trans has no weights here
+    r1 = np.arange(xcf.num_bins_r_trans)     * xcf.r_trans_max / xcf.num_bins_r_trans
+    r2 = (1+np.arange(xcf.num_bins_r_trans)) * xcf.r_trans_max / xcf.num_bins_r_trans
+    r_trans_eff_1d = (2*(r2**3-r1**3))/(3*(r2**2-r1**2)) # this is to account for the solid angle effect on the mean
 
-    return full_dmat, full_r_par_eff, full_r_trans_eff, full_z_eff
+    full_index = np.arange(num_bins_total)
+    rt_index   = full_index%xcf.num_bins_r_trans
+    rp_index   = full_index//xcf.num_bins_r_trans
+
+    r_par_eff_2d   = r_par_eff_1d[rp_index]
+    z_eff_2d       = z_eff_1d[rp_index]
+    r_trans_eff_2d = r_trans_eff_1d[rt_index]
+
+    return dmat, r_par_eff_2d, r_trans_eff_2d, z_eff_2d
 
 
-def main():
+def main(cmdargs):
     """Compute the metal matrix of the cross-correlation delta x object for
      a list of IGM absorption."""
     parser = argparse.ArgumentParser(
@@ -372,7 +408,7 @@ def main():
                         required=False,
                         help='Bins for the distribution of QSO redshifts')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     # setup variables in module xcf
     xcf.r_par_max = args.rp_max
@@ -579,4 +615,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(cmdargs)
