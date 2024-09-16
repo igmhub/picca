@@ -217,7 +217,7 @@ def calc_fast_metal_dmat(in_lambda_abs_1,
     return dmat, r_par_eff_2d, r_trans_eff_2d, z_eff_2d
 
 
-def main():
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Compute the auto and cross-correlation of delta fields for a list of IGM
     absorption."""
@@ -433,7 +433,7 @@ def main():
                     help='compute only the metal correlations used by Vega'
                        'i.e. 4 LyaxSi matrices and CIVxCIV')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     # setup variables in module cf
     cf.r_par_max = args.rp_max
@@ -668,4 +668,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

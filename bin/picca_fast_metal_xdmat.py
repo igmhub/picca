@@ -193,7 +193,7 @@ def calc_fast_metal_dmat(in_lambda_abs,
     return dmat, r_par_eff_2d, r_trans_eff_2d, z_eff_2d
 
 
-def main():
+def main(cmdargs):
     """Compute the metal matrix of the cross-correlation delta x object for
      a list of IGM absorption."""
     parser = argparse.ArgumentParser(
@@ -408,7 +408,7 @@ def main():
                         required=False,
                         help='Bins for the distribution of QSO redshifts')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     # setup variables in module xcf
     xcf.r_par_max = args.rp_max
@@ -615,4 +615,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(cmdargs)
