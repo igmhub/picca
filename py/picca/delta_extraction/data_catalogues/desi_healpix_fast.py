@@ -53,8 +53,12 @@ class DesiHealpixFast(DesiData):
         Parsed options to initialize class
         """
         self.logger = logging.getLogger(__name__)
-
+            
         super().__init__(config)
+
+        #TODO: remove exception when this is implemented
+        if self.analysis_type == "PK 1D":
+            raise NotImplementedError("fast healpix reading is not yet implemented for PK 1D analyses")
 
     def get_filename(self, survey, healpix, coadd_name):
         """Get the name of the file to read
