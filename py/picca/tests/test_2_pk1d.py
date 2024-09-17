@@ -103,5 +103,36 @@ class TestPk1d(AbstractTest):
             self.compare_fits(path1, path2, "picca_Pk1D_postprocess.py")
 
 
+    def test_meanPk1D_covariance(self):
+        """
+            Runs a covariance test of Pk1d postprocessing
+        """
+        import picca.bin.picca_Pk1D_postprocess as picca_Pk1D_postprocess
+
+        self._test = True
+        userprint("\n")
+        ### Send
+        #- picca_Pk1D_postprocess.py takes all Pk1D*.fits.gz files in in-dir
+        #  => copy a single file
+        shutil.copy(self._masterFiles + "/test_Pk1D/Pk1D.fits.gz",
+                    self._branchFiles + "/Products/meanPk1D")
+        print(os.listdir(self._branchFiles + "/Products/meanPk1D"))
+        cmd = "picca_Pk1D_postprocess.py "
+        cmd += " --in-dir " + self._branchFiles + "/Products/meanPk1D"
+        cmd += " --output-file " + self._branchFiles + "/Products/meanPk1D/meanPk1D_covariance.fits.gz"
+        #- small sample => k,z-bins changed wrt default ones
+        cmd += " --zedge-min 2.1 --zedge-max 3.1 --zedge-bin 0.2"
+        cmd += " --kedge-min 0.015 --kedge-max 0.035 --kedge-bin 0.005"
+        cmd += " --covariance"
+        picca_Pk1D_postprocess.main(cmd.split()[1:])
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_Pk1D/meanPk1D_covariance.fits.gz"
+            path2 = self._branchFiles + "/Products/meanPk1D/meanPk1D_covariance.fits.gz"
+            self.compare_fits(path1, path2, "picca_Pk1D_postprocess.py")
+
+
+
 if __name__ == '__main__':
     unittest.main()
