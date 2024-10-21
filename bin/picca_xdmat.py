@@ -261,6 +261,7 @@ def main(cmdargs):
     xcf.nside = args.nside
     xcf.z_ref = args.z_ref
     xcf.alpha = args.z_evol_del
+    xcf.alpha_obj = args.z_evol_obj
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.reject = args.rej
 
