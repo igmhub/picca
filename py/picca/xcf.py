@@ -414,9 +414,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
             #-- Fill effective quantities (r_par, r_trans, z_eff, weight_eff)
             r_par_eff[model_bins] += weights12 * r_par
             r_trans_eff[model_bins] += weights12 * r_trans
-            # now it is z_ref and not the z value of the pair
-            # because of the 'zfac' term added to the eta terms
-            z_eff[model_bins] += weights12 * z_ref
+            z_eff[model_bins] += weights12 * z
             weight_eff[model_bins] += weights12
             weights_dmat[bins] += weights12
 
