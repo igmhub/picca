@@ -273,7 +273,7 @@ def main(cmdargs):
     # this value has no effect because it scales the weights that are both at the numerator and denominator of the estimator
     # it is also used as a TEMPORARY VARIABLE to compute the distortion matrix scaling
     # but this is rescaled to the actual effective redshift of the data (zeff) in the following
-    xcf.z_ref = 12.
+    xcf.z_ref = 2.25
 
     xcf.alpha = args.z_evol_del
     xcf.alpha_obj = args.z_evol_obj

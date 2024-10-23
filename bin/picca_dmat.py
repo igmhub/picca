@@ -275,7 +275,7 @@ def main(cmdargs):
     # this value has no effect because it scales the weights that are both at the numerator and denominator of the estimator
     # it is also used as a TEMPORARY VARIABLE to compute the distortion matrix scaling
     # but this is rescaled to the actual effective redshift of the data (zeff) in the following
-    cf.z_ref = 12.
+    cf.z_ref = 2.25
 
     cf.alpha  = args.z_evol
     # by default, for autocorrelations, we are setting cf.alpha2 to the same value
