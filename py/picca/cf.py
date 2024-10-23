@@ -57,6 +57,9 @@ x_correlation = False
 ang_correlation = False
 remove_same_half_plate_close_pairs = False
 
+# variables for distortion matrix
+redshift_evolution_in_distortion_matrix = True
+
 # variables used in the 1D correlation function analysis
 num_pixels = None
 log_lambda_min = None
@@ -463,7 +466,10 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             # and cf.alpha2 = args.z_evol2 = 2.9 for cross-correlation with other deltas
             # this scale factor applies to all of the eta terms
             # it depends on i and j so it cannot be factored out
-            zfac = (((1+z1[i])/(1+z_ref))**(alpha-1))*(((1+z2[j])/(1+z_ref))**(alpha2-1))
+            if redshift_evolution_in_distortion_matrix :
+                zfac = (((1+z1[i])/(1+z_ref))**(alpha-1))*(((1+z2[j])/(1+z_ref))**(alpha2-1))
+            else :
+                zfac = 1.
 
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
@@ -570,7 +576,10 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
         # and cf.alpha2 = args.z_evol2 = 2.9 for cross-correlation with other deltas
         # this scale factor was applied to all of the eta terms above
         # but not yet to the first term
-        zfac = (((1+z1[i])/(1+z_ref))**(alpha-1))*(((1+z2[j])/(1+z_ref))**(alpha2-1))
+        if redshift_evolution_in_distortion_matrix :
+            zfac = (((1+z1[i])/(1+z_ref))**(alpha-1))*(((1+z2[j])/(1+z_ref))**(alpha2-1))
+        else :
+            zfac = 1
         dmat[dmat_bin] += weights12 * zfac
 
         # rest of the terms

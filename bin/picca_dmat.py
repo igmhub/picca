@@ -245,6 +245,9 @@ def main(cmdargs):
                         help='Rebin factor for deltas. If not None, deltas will '
                              'be rebinned by that factor')
 
+    parser.add_argument('--no-redshift-evolution',
+                        action='store_true',
+                        help='Ignore redshift evolution when computing distortion matrix')
 
     args = parser.parse_args(cmdargs)
 
@@ -265,6 +268,9 @@ def main(cmdargs):
     cf.num_model_bins_r_trans = args.nt * args.coef_binning_model
     cf.nside = args.nside
 
+    if args.no_redshift_evolution :
+        cf.redshift_evolution_in_distortion_matrix = False
+        userprint("ignore redshift evolution in the distortion matrix")
 
     # this value has no effect because it scales the weights that are both at the numerator and denominator of the estimator
     # it is also used as a TEMPORARY VARIABLE to compute the distortion matrix scaling
@@ -389,12 +395,13 @@ def main(cmdargs):
     w = weights_dmat > 0
     dmat[w] /= weights_dmat[w, None]
 
-    # now that we have the effective redshift of the input model considered
-    # for the distortion matrix, we do rescale the whole matrix
-    # we first consider the same effective redshift for all the model bins
-    zeff[:]   = mean_zeff
-    zfac = ((1+cf.z_ref)/(1+mean_zeff))**((cf.alpha-1)+(cf.alpha2-1))
-    dmat *= zfac
+    if cf.redshift_evolution_in_distortion_matrix :
+        # now that we have the effective redshift of the input model considered
+        # for the distortion matrix, we do rescale the whole matrix
+        # we first consider the same effective redshift for all the model bins
+        zeff[:]   = mean_zeff
+        zfac = ((1+cf.z_ref)/(1+mean_zeff))**((cf.alpha-1)+(cf.alpha2-1))
+        dmat *= zfac
 
     # save results
     results = fitsio.FITS(args.out, 'rw', clobber=True)

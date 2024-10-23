@@ -328,6 +328,8 @@ class TestCor(AbstractTest):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += ' --no-redshift-evolution'
+
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
 
@@ -497,6 +499,8 @@ class TestCor(AbstractTest):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
+        cmd += ' --no-redshift-evolution'
+
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
 
@@ -542,7 +546,7 @@ class TestCor(AbstractTest):
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
 
         return
-    
+
     def test_fast_metal_dmat_cross(self):
         """
             Test metal cross distortion matrix
@@ -666,6 +670,7 @@ class TestCor(AbstractTest):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         cmd += " --z-evol-obj 1."
+        cmd += ' --no-redshift-evolution'
         print(repr(cmd))
         picca.bin.picca_xdmat.main(cmd.split()[1:])
 
@@ -880,6 +885,8 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
+        cmd += ' --no-redshift-evolution'
+
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
 
@@ -957,7 +964,7 @@ class TestCor(AbstractTest):
             self.compare_fits(path1, path2, "picca_fast_metal_dmat.py")
 
         return
-    
+
     def test_wick_zcuts(self):
         """
             Test wick covariances
@@ -1053,6 +1060,8 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
+        cmd += ' --no-redshift-evolution'
+
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
 
@@ -1102,7 +1111,7 @@ class TestCor(AbstractTest):
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
 
         return
-    
+
     def test_fast_metal_dmat_cross_zcuts(self):
         """
             Test metal cross distortion matrix
@@ -1225,6 +1234,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
+        cmd += ' --no-redshift-evolution'
         print(repr(cmd))
         picca.bin.picca_xdmat.main(cmd.split()[1:])
 

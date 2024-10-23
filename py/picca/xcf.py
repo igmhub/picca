@@ -52,6 +52,9 @@ lock = None
 cosmo = None
 ang_correlation = False
 
+# variables for distortion matrix
+redshift_evolution_in_distortion_matrix = True
+
 # variables used in the wick covariance matrix computation
 get_variance_1d = {}
 xi_1d = {}
@@ -390,7 +393,10 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
             # it depends on i and j so it cannot be factored out
             # HERE WE ARE ASSUMING THAT ALPHA_OBJ IS FOR Z2 AND NOT Z1
             # (see call in xcf.compute_dmat)
-            zfac = (((1+z1[i])/(1+z_ref))**(alpha-1)) * (((1+z2[j])/(1+z_ref))**(alpha_obj-1))
+            if redshift_evolution_in_distortion_matrix :
+                zfac = (((1+z1[i])/(1+z_ref))**(alpha-1)) * (((1+z2[j])/(1+z_ref))**(alpha_obj-1))
+            else :
+                zfac = 1
 
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
@@ -453,7 +459,10 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
         # but not yet to the first term
         # HERE WE ARE ASSUMING THAT ALPHA_OBJ IS FOR Z2 AND NOT Z1
         # (see call in xcf.compute_dmat)
-        zfac = (((1+z1[i])/(1+z_ref))**(alpha-1)) * (((1+z2[j])/(1+z_ref))**(alpha_obj-1))
+        if redshift_evolution_in_distortion_matrix :
+            zfac = (((1+z1[i])/(1+z_ref))**(alpha-1)) * (((1+z2[j])/(1+z_ref))**(alpha_obj-1))
+        else :
+            zfac = 1
         dmat[dmat_bin] +=  zfac *weights12
         # rest of the terms
         for k in unique_bins_model:
