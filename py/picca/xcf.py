@@ -52,6 +52,9 @@ lock = None
 cosmo = None
 ang_correlation = False
 
+# variables for distortion matrix
+redshift_evolution_in_distortion_matrix = True
+
 # variables used in the wick covariance matrix computation
 get_variance_1d = {}
 xi_1d = {}
@@ -386,6 +389,15 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
             weights12 = weights1[i] * weights2[j]
             z = (z1[i] + z2[j]) / 2
 
+            # this scale factor applies to all of the eta terms
+            # it depends on i and j so it cannot be factored out
+            # HERE WE ARE ASSUMING THAT ALPHA_OBJ IS FOR Z2 AND NOT Z1
+            # (see call in xcf.compute_dmat)
+            if redshift_evolution_in_distortion_matrix :
+                zfac = (((1+z1[i])/(1+z_ref))**(alpha-1)) * (((1+z2[j])/(1+z_ref))**(alpha_obj-1))
+            else :
+                zfac = 1
+
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
             bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
@@ -419,14 +431,14 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
 
             # first eta, second term: weight/sum(weights)
             # second eta, first term: kronecker delta
-            eta2[j + num_pixels2 * model_bins] += weights1[i] / sum_weights1
+            eta2[j + num_pixels2 * model_bins] +=  zfac *weights1[i] / sum_weights1
 
             if order1 == 1:
                 # first eta, third term: (non-zero only for order=1)
                 #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
                 #   sum(weight*(Lambda-bar(Lambda)**2))
                 # second eta, first term: kronecker delta
-                eta4[j + num_pixels2 * model_bins] += (
+                eta4[j + num_pixels2 * model_bins] +=  zfac *(
                     weights1[i] * log_lambda_minus_mean1[i] /
                     sum_weights_square_log_lambda_minus_mean1)
 
@@ -441,7 +453,17 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
         # first eta, first term: kronecker delta
         # second eta, first term: kronecker delta
         dmat_bin = model_bins + num_model_bins_r_par * num_model_bins_r_trans * bins
-        dmat[dmat_bin] += weights12
+
+
+        # this scale factor was applied to all of the eta terms above
+        # but not yet to the first term
+        # HERE WE ARE ASSUMING THAT ALPHA_OBJ IS FOR Z2 AND NOT Z1
+        # (see call in xcf.compute_dmat)
+        if redshift_evolution_in_distortion_matrix :
+            zfac = (((1+z1[i])/(1+z_ref))**(alpha-1)) * (((1+z2[j])/(1+z_ref))**(alpha_obj-1))
+        else :
+            zfac = 1
+        dmat[dmat_bin] +=  zfac *weights12
         # rest of the terms
         for k in unique_bins_model:
             dmat_bin = k + num_model_bins_r_par * num_model_bins_r_trans * bins
