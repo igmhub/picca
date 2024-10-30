@@ -199,6 +199,11 @@ class DlaMask(Mask):
                 z_colname = hdul_colnames.intersection(accepted_zcolnames)
                 if not z_colname:
                     raise ValueError(f"Z colname has to be one of {', '.join(accepted_zcolnames)}")
+                if len(z_colname)>1 :
+                    raise ValueError(
+                        "Not clear which column should be used for the DLA redshift among "
+                        f"{z_colname}. Please remove or rename one of the columns from the DLA "
+                        "fits file.")
                 z_colname = z_colname.pop()
                 columns_list = [los_id_name, z_colname, "NHI"]
                 cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
