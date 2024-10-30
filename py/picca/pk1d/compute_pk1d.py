@@ -168,8 +168,8 @@ def split_forest_in_z_parts(z_grid,
 
     for loglam_min_chunk, loglam_max_chunk in zip(loglam_min_grid, loglam_max_grid):
         selection = (
-            (delta.log_lambda >= loglam_min_chunk) &
-            (delta.log_lambda < loglam_max_chunk))
+            (log_lambda >= loglam_min_chunk) &
+            (log_lambda < loglam_max_chunk))
         if min_num_pixels is not None and np.sum(selection) < min_num_pixels:
             continue
         if np.sum(log_lambda <= loglam_min_chunk)==0 or np.sum(log_lambda >= loglam_max_chunk)==0:

@@ -109,6 +109,7 @@ def process_all_files(index_file_args):
                             reso_matrix=(delta.resolution_matrix
                                  if reso_correction == 'matrix' else None),
                             linear_binning=linear_binning)
+            num_parts = len(split_array[0])
             if reso_correction == 'matrix':
                 (mean_z_array, lambda_array, delta_array, exposures_diff_array,
                 ivar_array, reso_matrix_array) = split_array
@@ -381,9 +382,9 @@ def main(cmdargs):
 
     parser.add_argument('--z-parts',
                         nargs='+', type=float,
-                        default=[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0]),
+                        default=[2.1, 2.3, 2.5, 2.7, 2.9, 3.1, 3.3, 3.5, 3.7, 3.9, 4.1],
                         required=False,
-                        help='Redshift bins for forest parts (chunks) when parts-in-redshift is set')
+                        help='Redshift bin edges for forest parts (chunks) when parts-in-redshift is set')
 
     parser.add_argument('--nb-pixel-min',
                         type=int,

@@ -153,6 +153,24 @@ def main(cmdargs):
                              'compute the deltas. If set, a correction for this mask will be computed,'
                              'with "*_skycorr" columns in the output.')
 
+    parser.add_argument('--minwave-skymask',
+                        type=float,
+                        default=utils.DEFAULT_MINWAVE_SKYMASK,
+                        help='Parameter for the wavelength grid used for the skymask,'
+                             'if --skymask-file is set.')
+
+    parser.add_argument('--maxwave-skymask',
+                        type=float,
+                        default=utils.DEFAULT_MAXWAVE_SKYMASK,
+                        help='Parameter for the wavelength grid used for the skymask,'
+                             'if --skymask-file is set.')
+
+    parser.add_argument('--dwave-skymask',
+                        type=float,
+                        default=utils.DEFAULT_DWAVE_SKYMASK,
+                        help='Parameter for the wavelength grid used for the skymask,'
+                             'if --skymask-file is set.')
+
     parser.add_argument('--overwrite',
                         action='store_true',
                         default=False,
@@ -237,7 +255,10 @@ def main(cmdargs):
         output_file = args.output_file
 
     if args.skymask_file is not None:
-        skymask_matrices = utils.skyline_mask_matrices_desi(z_edges, args.skymask-file)
+        skymask_matrices = utils.skyline_mask_matrices_desi(z_edges, args.skymask_file,
+                                minwave=args.minwave_skymask,
+                                maxwave=args.maxwave_skymask,
+                                dwave=args.dwave_skymask)
     else:
         skymask_matrices = None
 

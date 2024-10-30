@@ -98,16 +98,19 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matr
             if skymask_matrices is not None:
                 chunk_table["Pk_raw_skycorr"] = chunk_table["Pk_raw"]
                 chunk_table["Pk_noise_skycorr"] = chunk_table["Pk_noise"]
-                w, = np.where(np.isclose(meanz_skymatrices, chunk_header["MEANZ"], atol=1.e-3))
-                if len(w)!=1:
-                    userprint(f"file {filename} hdu {i+1}: MEANZ does not match skymatrices.")
-                else:
+                w, = np.where(np.isclose(meanz_skymatrices, chunk_header["MEANZ"], atol=1.e-2))
+                if len(w)==1:
                     correction_matrix = skymask_matrices[w[0]][1]
+                    ll = len(chunk_table["Pk_raw"])
+                    correction_matrix = np.copy(correction_matrix[0:ll, 0:ll])
                     if len(chunk_table["Pk_raw"])!=correction_matrix.shape[0]:
                         userprint(f"file {filename} hdu {i+1}: Pk_raw doesnt match shape of skymatrix.")
                     else:
                         chunk_table["Pk_raw_skycorr"] = correction_matrix @ chunk_table["Pk_raw"]
                         chunk_table["Pk_noise_skycorr"] = correction_matrix @ chunk_table["Pk_noise"]
+                chunk_table["Pk_skycorr"] = (
+                        chunk_table["Pk_raw_skycorr"] - chunk_table["Pk_noise_skycorr"]
+                    ) / chunk_table["cor_reso"]
 
             chunk_table["forest_z"] = float(chunk_header["MEANZ"])
             chunk_table["forest_snr"] = float(chunk_header["MEANSNR"])
@@ -151,6 +154,8 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matr
     p1d_table["Pk_norescor"] = p1d_table["Pk_raw"] - p1d_table["Pk_noise"]
     p1d_table["Pk_nonoise"] = p1d_table["Pk_raw"] / p1d_table["cor_reso"]
     p1d_table["Pk_noraw"] = p1d_table["Pk_noise"] / p1d_table["cor_reso"]
+    if skymask_matrices is not None:
+        p1d_table["Delta2_skycorr"] = p1d_table["k"] * p1d_table["Pk_skycorr"] / np.pi
     try:
         p1d_table["Pk_noraw_miss"] = p1d_table["Pk_noise_miss"] / p1d_table["cor_reso"]
     except KeyError:
