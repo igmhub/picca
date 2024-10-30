@@ -62,7 +62,7 @@ def process_all_files(index_file_args):
     delta = deltas[0]
     linear_binning, pixel_step = check_linear_binning(delta)
     if linear_binning:
-        userprint("\n\nUsing linear binning, results will have units of AA")
+        #userprint("\n\nUsing linear binning, results will have units of AA")
         if (args.disable_reso_matrix or not hasattr(delta, 'resolution_matrix')
                 or delta.resolution_matrix is None):
             userprint(
@@ -70,12 +70,12 @@ def process_all_files(index_file_args):
             )
             reso_correction = "Gaussian"
         else:
-            userprint("Using Resolution matrix for resolution correction\n")
+            #userprint("Using Resolution matrix for resolution correction\n")
             reso_correction = "matrix"
     else:
-        userprint("\n\nUsing log binning, results will have units of km/s")
+        #userprint("\n\nUsing log binning, results will have units of km/s")
         reso_correction = "Gaussian"
-        userprint("Using Gaussian resolution correction\n")
+        #userprint("Using Gaussian resolution correction\n")
 
     use_exp_diff_cut=False
     #add check if diff has ever been set
@@ -86,7 +86,7 @@ def process_all_files(index_file_args):
             break
 
     num_data += len(deltas)
-    userprint("\n ndata =  ", num_data)
+    #userprint("\n ndata =  ", num_data)
     file_out = None
 
     for delta in deltas:
