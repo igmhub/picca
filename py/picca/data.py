@@ -432,7 +432,10 @@ class Delta(QSO):
             weights = None
             cont = None
         else:
-            ivar = None
+            if 'IVAR' in hdu:
+                ivar = hdu['IVAR'][:].astype(float)
+            else:
+                ivar = None
             exposures_diff = None
             mean_snr = None
             mean_reso = None
@@ -556,7 +559,10 @@ class Delta(QSO):
         else:
             raise KeyError("Did not find LOGLAM or LAMBDA in delta file")
 
-        ivar = Nones
+        if 'IVAR' in hdul:
+            ivar = hdul["IVAR"][:].astype(float)
+        else:
+            ivar = Nones
         exposures_diff = Nones
         mean_snr = Nones
         mean_reso = Nones
