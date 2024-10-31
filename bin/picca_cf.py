@@ -231,6 +231,14 @@ def main(cmdargs):
                         help='Rebin factor for deltas. If not None, deltas will '
                              'be rebinned by that factor')
 
+    parser.add_argument('--varlss-mod-factor', type=float, default=None,
+                        help='Modifies weights with this factor. Requires '
+                             'IVAR column to be present in deltas and an input'
+                             ' attributes file.')
+    parser.add_argument('--attributes', type=str, default=None,
+                        help='Attributes file with VAR_FUNC extension with '
+                             'lambda, eta, var_lss columns.')
+
     args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
@@ -276,6 +284,12 @@ def main(cmdargs):
                                                   rebin_factor=args.rebin_factor,
                                                   z_min_qso=args.z_min_sources,
                                                   z_max_qso=args.z_max_sources,)
+
+    if args.varlss_mod_factor is not None:
+        assert args.attributes
+        utils.modify_weights_with_varlss_factor(
+            data, args.attributes, args.varlss_mod_factor)
+
     del z_max
     cf.data = data
     cf.num_data = num_data
