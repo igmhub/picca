@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12"]
 #    env:
 #      OMP_NUM_THREADS: 1
 #      MKL_NUM_THREADS: 1
@@ -39,12 +39,6 @@ jobs:
         sudo apt-get -y install libbz2-dev
         python -m pip install --upgrade pip
         pip install wheel pytest pytest-cov coveralls
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    # TODO: the section below can be removed if the compile step is fixed otherwise
-    - name: Reinstall fitsio to ensure the numpy version during compilation matches the one at runtime
-      run: |
-        pip uninstall fitsio -y
-        pip cache purge
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Install picca
       run: pip install -e .
@@ -63,7 +57,7 @@ jobs:
     # the following bit will save results tests as an artifact if [ci save] has been in the commit msg
     - name: Archive test results
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: test-results_v${{ matrix.python-version }}
         path: /tmp/last_run_picca_test
@@ -71,7 +65,7 @@ jobs:
 
     - name: Archive test results delta_extraction
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: test-results-de_v${{ matrix.python-version }}
         path: /home/runner/work/picca/picca/py/picca/tests/delta_extraction/results

@@ -145,8 +145,8 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
     def get_data(self):
         """Get the data to be saved in a fits file.
 
-        Extends the get_data method of Forest to also include data for
-        ivar and exposures_diff.
+        Extends the get_data method of Pk1dForest to also include data for
+        the resolution matrix.
 
         Return
         ------
