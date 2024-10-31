@@ -81,7 +81,7 @@ def skyline_mask_matrices_desi(z_parts, skyline_mask_file,
     for iz in range(num_parts):
         lmin = constants.ABSORBER_IGM['LYA'] * (1+z_parts[iz])
         lmax = constants.ABSORBER_IGM['LYA'] * (1+z_parts[iz+1])
-        #- the following selection is identical to compute_pk1d.split_forest_in_z_parts:
+        # - the following selection is identical to compute_pk1d.split_forest_in_z_parts:
         wave = ref_wavegrid[ (ref_wavegrid>=lmin) & (ref_wavegrid<lmax) ]
         npts = len(wave)
         skymask = np.ones(npts)
@@ -94,15 +94,20 @@ def skyline_mask_matrices_desi(z_parts, skyline_mask_file,
         for j in range(npts):
             for l in range(npts):
                 index_mask = j-l if j>=l else j-l+npts
-                mask_matrix[j,l] = skymask_tilde[index_mask].real**2 + skymask_tilde[index_mask].imag**2
+                mask_matrix[j, l] = (
+                    skymask_tilde[index_mask].real ** 2
+                    + skymask_tilde[index_mask].imag ** 2
+                )
         try:
             inv_matrix = np.linalg.inv(mask_matrix)
         except np.linalg.LinAlgError:
-            userprint(f"Warning: cannot invert sky mask matrix for z bin {z_parts[iz]} - {z_parts[iz+1]}")
+            userprint(
+                """Warning: cannot invert sky mask matrix """
+                f"""for z bin {z_parts[iz]} - {z_parts[iz+1]}"""
+            )
             userprint("No correction will be applied for this bin")
             inv_matrix = np.eye(npts)
         meanz = (z_parts[iz]+z_parts[iz+1])/2
         out.append([meanz, inv_matrix])
 
     return out
-

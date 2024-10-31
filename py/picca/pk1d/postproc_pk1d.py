@@ -102,13 +102,16 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matr
                     ll = len(chunk_table["Pk_raw"])
                     correction_matrix = np.copy(correction_matrix[0:ll, 0:ll])
                     if len(chunk_table["Pk_raw"])!=correction_matrix.shape[0]:
-                        userprint(f"file {filename} hdu {i+1}: Pk_raw doesnt match shape of skymatrix.")
+                        userprint(f"""file {filename} hdu {i+1}:"""
+                                  """Pk_raw doesnt match shape of skymatrix.""")
                     else:
                         chunk_table["Pk_raw_skycorr"] = correction_matrix @ chunk_table["Pk_raw"]
-                        chunk_table["Pk_noise_skycorr"] = correction_matrix @ chunk_table["Pk_noise"]
+                        chunk_table["Pk_noise_skycorr"] = (
+                            correction_matrix @ chunk_table["Pk_noise"]
+                        )
                 chunk_table["Pk_skycorr"] = (
-                        chunk_table["Pk_raw_skycorr"] - chunk_table["Pk_noise_skycorr"]
-                    ) / chunk_table["cor_reso"]
+                    chunk_table["Pk_raw_skycorr"] - chunk_table["Pk_noise_skycorr"]
+                ) / chunk_table["cor_reso"]
 
             chunk_table["forest_z"] = float(chunk_header["MEANZ"])
             chunk_table["forest_snr"] = float(chunk_header["MEANSNR"])
