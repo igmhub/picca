@@ -13,8 +13,9 @@ See the respective docstrings for more details
 import sys
 import numpy as np
 import fitsio
-import scipy.interpolate as interpolate
 import iminuit
+
+from scipy import interpolate
 
 
 def userprint(*args, **kwds):
@@ -491,3 +492,32 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     corr = 1. / (10.**(0.4 * curve))
 
     return corr
+
+
+def modify_weights_with_varlss_factor(data, attributes, varlss_mod_factor):
+    """Recalculates the weights using eta and var_lss from attributes file.
+    Multiplies var_lss with varlss_mod_factor.
+
+    Args:
+        data: dict(Delta)
+            A dictionary with the data. Changes in place. Keys are the healpix
+            numbers of each spectrum. Values are lists of delta instances.
+        attributes: str
+            Path to attributes file.
+        varlss_mod_factor: float
+            Multiplicative factor for var_lss
+    """
+    varfunc = fitsio.read(attributes, ext="VAR_FUNC")
+    varfunc['lambda'] = np.log10(varfunc['lambda'])
+    interp_eta = interpolate.interp1d(
+        varfunc['lambda'], varfunc['eta'], kind='cubic')
+    interp_varlss = interpolate.interp1d(
+        varfunc['lambda'], varfunc['var_lss'], kind='cubic')
+
+    for delta_list in data.values():
+        for delta in delta_list:
+            if delta.ivar is None:
+                raise Exception("Need IVAR in deltas")
+            eta = interp_eta(delta.log_lambda)
+            var_lss = interp_varlss(delta.log_lambda)
+            delta.weights = delta.ivar / (eta + delta.ivar * varlss_mod_factor * var_lss)
