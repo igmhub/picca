@@ -510,9 +510,9 @@ def modify_weights_with_varlss_factor(data, attributes, varlss_mod_factor):
     varfunc = fitsio.read(attributes, ext="VAR_FUNC")
     varfunc['lambda'] = np.log10(varfunc['lambda'])
     interp_eta = interpolate.interp1d(
-        varfunc['lambda'], varfunc['eta'], kind='cubic')
+        varfunc['lambda'], varfunc['eta'], fill_value='extrapolate', kind='cubic')
     interp_varlss = interpolate.interp1d(
-        varfunc['lambda'], varfunc['var_lss'], kind='cubic')
+        varfunc['lambda'], varfunc['var_lss'], fill_value='extrapolate', kind='cubic')
 
     for delta in data:
         if delta.ivar is None:
