@@ -21,7 +21,7 @@ from astropy.table import Table
 import warnings
 from multiprocessing import Pool
 
-from .utils import userprint
+from .utils import userprint, modify_weights_with_varlss_factor
 from .data import Delta, QSO
 from .pk1d.prep_pk1d import exp_diff, spectral_resolution
 from .pk1d.prep_pk1d import spectral_resolution_desi
@@ -245,7 +245,7 @@ def read_blinding(in_dir):
     return blinding
 
 
-def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
+def read_delta_file(filename, z_min_qso=0, z_max_qso=10):
     """Extracts deltas from a single file.
     Args:
         filename: str
@@ -254,8 +254,6 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
             Specifies the minimum redshift for QSOs
         z_max_qso: float - default: 10
             Specifies the maximum redshift for QSOs
-        rebin_factor: int - default: None
-            Factor to rebin the lambda grid by. If None, no rebinning is done.
     Returns:
         deltas:
             A dictionary with the data. Keys are the healpix numbers of each
@@ -269,39 +267,16 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
     else:
         deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:] if z_min_qso<hdu.read_header()['Z']<z_max_qso]
 
-# Rebin
-    if rebin_factor is not None:
-        if 'LAMBDA' in hdul:
-            card = 'LAMBDA'
-        else:
-            card = 1
-
-        if hdul[card].read_header()['WAVE_SOLUTION'] != 'lin':
-            raise ValueError('Delta rebinning only implemented for linear \
-                    lambda bins')
-        
-        dwave = hdul[card].read_header()['DELTA_LAMBDA']
-            
-        for i in range(len(deltas)):
-            deltas[i].rebin(rebin_factor, dwave=dwave)
-            
     hdul.close()
 
     return deltas
 
 
-def read_deltas(in_dir,
-                nside,
-                lambda_abs,
-                alpha,
-                z_ref,
-                cosmo,
-                max_num_spec=None,
-                no_project=False,
-                nproc=None,
-                rebin_factor=None,
-                z_min_qso=0,
-                z_max_qso=10):
+def read_deltas(
+        in_dir, nside, lambda_abs, alpha, z_ref, cosmo, max_num_spec=None,
+        no_project=False, nproc=None, rebin_factor=None,
+        z_min_qso=0, z_max_qso=10, varlss_mod_factor=None, attributes=None
+):
     """Reads deltas and computes their redshifts.
 
     Fills the fields delta.z and multiplies the weights by
@@ -336,6 +311,12 @@ def read_deltas(in_dir,
             Specifies the minimum redshift for QSOs
         z_max_qso: float - default: 10
             Specifies the maximum redshift for QSOs
+        varlss_mod_factor: float - default: None
+            Modifies weights with this factor. Requires IVAR column to be
+            present in deltas and an input attributes file.
+        attributes: str - default: None
+            Attributes file with VAR_FUNC extension with lambda, eta, var_lss
+            columns.
 
     Returns:
         The following variables:
@@ -356,14 +337,11 @@ def read_deltas(in_dir,
     elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
         files += sorted(glob.glob(in_dir))
     else:
-        files += sorted(glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
-                                                            '/*.fits.gz'))
+        files += sorted(
+            glob.glob(in_dir + '/*.fits') + glob.glob(in_dir + '/*.fits.gz'))
     files = sorted(files)
 
-    if rebin_factor is not None:
-        userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
-
-    arguments = [(f, z_min_qso, z_max_qso, rebin_factor) for f in files]
+    arguments = [(f, z_min_qso, z_max_qso) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
     pool.close()
@@ -383,6 +361,19 @@ def read_deltas(in_dir,
         num_data = len(deltas)
 
     userprint("\n")
+
+    # Recalculate weights
+    if varlss_mod_factor is not None:
+        userprint(f"Recalculating weights with eta_lss={varlss_mod_factor}\n")
+        if not attributes:
+            raise ValueError('Recalculating weights require an attributes file.')
+        modify_weights_with_varlss_factor(deltas, attributes, varlss_mod_factor)
+
+    # Rebin
+    if rebin_factor is not None:
+        userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
+        for delta_ in deltas:
+            delta_.rebin(rebin_factor)
 
     # compute healpix numbers
     phi = [delta.ra for delta in deltas]
