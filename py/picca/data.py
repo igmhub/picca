@@ -649,16 +649,20 @@ class Delta(QSO):
 
         self.delta -= mean_delta + res
 
-    def rebin(self, factor, dwave=0.8):
+    def rebin(self, factor):
         """Rebin deltas by an integer factor
 
         Args:
             factor: int
                 Factor to rebin deltas (new_bin_size = factor * old_bin_size)
-            dwave: float
-                Delta lambda of original deltas
         """
         wave = 10**np.array(self.log_lambda)
+        dwaves = np.round(np.diff(wave), decimals=3)
+        dwave = np.min(dwaves)
+
+        # This check would not work if there are gaps.
+        # if not np.allclose(dwave, dwaves):
+        #     raise ValueError('Delta rebinning only implemented for linear lambda bins')
 
         start = wave.min() - dwave / 2
         num_bins = np.ceil(((wave[-1] - wave[0]) / dwave + 1) / factor)
