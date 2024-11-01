@@ -272,24 +272,12 @@ def main(cmdargs):
 
     ### Read data 1
     print('z_min_sources', args.z_min_sources)
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  cf.nside,
-                                                  cf.lambda_abs,
-                                                  cf.alpha,
-                                                  cf.z_ref,
-                                                  cosmo,
-                                                  max_num_spec=args.nspec,
-                                                  no_project=args.no_project,
-                                                  nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor,
-                                                  z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources,)
-
-    if args.varlss_mod_factor is not None:
-        assert args.attributes
-        utils.modify_weights_with_varlss_factor(
-            data, args.attributes, args.varlss_mod_factor)
-
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.z_ref, cosmo,
+        max_num_spec=args.nspec, no_project=args.no_project, nproc=args.nproc,
+        rebin_factor=args.rebin_factor, z_min_qso=args.z_min_sources,
+        z_max_qso=args.z_max_sources, varlss_mod_factor=args.varlss_mod_factor,
+        attributes=args.attributes)
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -321,7 +309,9 @@ def main(cmdargs):
             nproc=args.nproc,
             rebin_factor=args.rebin_factor,
             z_min_qso=args.z_min_sources,
-            z_max_qso=args.z_max_sources,)
+            z_max_qso=args.z_max_sources,
+            varlss_mod_factor=args.varlss_mod_factor,
+            attributes=args.attributes)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2

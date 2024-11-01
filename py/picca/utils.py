@@ -499,7 +499,7 @@ def modify_weights_with_varlss_factor(data, attributes, varlss_mod_factor):
     Multiplies var_lss with varlss_mod_factor.
 
     Args:
-        data: dict(Delta)
+        data: list(Delta)
             A dictionary with the data. Changes in place. Keys are the healpix
             numbers of each spectrum. Values are lists of delta instances.
         attributes: str
@@ -514,10 +514,9 @@ def modify_weights_with_varlss_factor(data, attributes, varlss_mod_factor):
     interp_varlss = interpolate.interp1d(
         varfunc['lambda'], varfunc['var_lss'], kind='cubic')
 
-    for delta_list in data.values():
-        for delta in delta_list:
-            if delta.ivar is None:
-                raise Exception("Need IVAR in deltas")
-            eta = interp_eta(delta.log_lambda)
-            var_lss = interp_varlss(delta.log_lambda)
-            delta.weights = delta.ivar / (eta + delta.ivar * varlss_mod_factor * var_lss)
+    for delta in data:
+        if delta.ivar is None:
+            raise Exception("Need IVAR in deltas")
+        eta = interp_eta(delta.log_lambda)
+        var_lss = varlss_mod_factor * interp_varlss(delta.log_lambda)
+        delta.weights = delta.ivar / (eta + delta.ivar * var_lss)
