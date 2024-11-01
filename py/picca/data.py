@@ -432,7 +432,7 @@ class Delta(QSO):
             weights = None
             cont = None
         else:
-            if 'IVAR' in hdu:
+            if 'IVAR' in hdu.get_colnames():
                 ivar = hdu['IVAR'][:].astype(float)
             else:
                 ivar = None
