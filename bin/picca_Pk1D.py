@@ -14,7 +14,8 @@ from picca.data import Delta
 from picca.pk1d.compute_pk1d import (compute_correction_reso,
                         compute_correction_reso_matrix, compute_pk_noise,
                         compute_pk_raw, fill_masked_pixels, rebin_diff_noise,
-                        split_forest, check_linear_binning, Pk1D)
+                        split_forest, split_forest_in_z_parts,
+                        check_linear_binning, Pk1D)
 from picca.utils import userprint
 from multiprocessing import Pool
 
@@ -61,7 +62,7 @@ def process_all_files(index_file_args):
     delta = deltas[0]
     linear_binning, pixel_step = check_linear_binning(delta)
     if linear_binning:
-        userprint("\n\nUsing linear binning, results will have units of AA")
+        #userprint("\n\nUsing linear binning, results will have units of AA")
         if (args.disable_reso_matrix or not hasattr(delta, 'resolution_matrix')
                 or delta.resolution_matrix is None):
             userprint(
@@ -69,12 +70,12 @@ def process_all_files(index_file_args):
             )
             reso_correction = "Gaussian"
         else:
-            userprint("Using Resolution matrix for resolution correction\n")
+            #userprint("Using Resolution matrix for resolution correction\n")
             reso_correction = "matrix"
     else:
-        userprint("\n\nUsing log binning, results will have units of km/s")
+        #userprint("\n\nUsing log binning, results will have units of km/s")
         reso_correction = "Gaussian"
-        userprint("Using Gaussian resolution correction\n")
+        #userprint("Using Gaussian resolution correction\n")
 
     use_exp_diff_cut=False
     #add check if diff has ever been set
@@ -85,7 +86,7 @@ def process_all_files(index_file_args):
             break
 
     num_data += len(deltas)
-    userprint("\n ndata =  ", num_data)
+    #userprint("\n ndata =  ", num_data)
     file_out = None
 
     for delta in deltas:
@@ -96,14 +97,6 @@ def process_all_files(index_file_args):
             if np.sum(delta.exposures_diff)==0:
                 continue
 
-        # first pixel in forest
-        selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
-        #this works as selected_pixels returns a bool and argmax points
-        #towards the first occurance for equal values
-        first_pixel_index = (np.argmax(selected_pixels) if
-                             np.any(selected_pixels) else len(selected_pixels))
-
-
         if linear_binning:
             max_num_pixels_forest_theoretical=(1180-1050)*(delta.z_qso+1)/pixel_step  #currently no min/max restframe values defined, so hard coding for the moment
         else:
@@ -113,39 +106,75 @@ def process_all_files(index_file_args):
             min_num_pixels = args.nb_pixel_min
         else:
             min_num_pixels = int(args.nb_pixel_frac_min*max_num_pixels_forest_theoretical)     #this is currently just hardcoding values so that spectra have a minimum length changing with z; but might be problematic for SBs
-        if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
-                continue
         
-        # Split the forest in n parts
-        max_num_parts = (len(delta.log_lambda) -
-                         first_pixel_index) // min_num_pixels
-        num_parts = min(args.nb_part, max_num_parts)
+        if args.parts_in_redshift:
+            # define chunks on a fixed redshift grid
+            z_grid = np.array(args.z_parts)
+            split_array = split_forest_in_z_parts(z_grid,
+                            delta.log_lambda,
+                            delta.delta,
+                            delta.exposures_diff,
+                            delta.ivar,
+                            min_num_pixels=min_num_pixels,
+                            reso_matrix=(delta.resolution_matrix
+                                 if reso_correction == 'matrix' else None),
+                            linear_binning=linear_binning)
+            num_parts = len(split_array[0])
 
-        #the split_forest function works with either binning, but needs to be uniform
-        if linear_binning:
-            split_array = split_forest(
-                num_parts,
-                pixel_step,
-                10**delta.log_lambda,
-                delta.delta,
-                delta.exposures_diff,
-                delta.ivar,
-                first_pixel_index,
-                reso_matrix=(delta.resolution_matrix
-                             if reso_correction == 'matrix' else None),
-                linear_binning=True)
             if reso_correction == 'matrix':
                 (mean_z_array, lambda_array, delta_array, exposures_diff_array,
-                 ivar_array, reso_matrix_array) = split_array
+                ivar_array, reso_matrix_array) = split_array
             else:
                 (mean_z_array, lambda_array, delta_array, exposures_diff_array,
-                 ivar_array) = split_array
+                    ivar_array) = split_array
+            if not linear_binning:
+                log_lambda_array = lambda_array
+
         else:
-            (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
-             ivar_array) = split_forest(num_parts, pixel_step,
-                                        delta.log_lambda, delta.delta,
-                                        delta.exposures_diff, delta.ivar,
-                                        first_pixel_index)
+            # define chunks in the forest rest-frame
+
+            # first pixel in forest
+            selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
+            #this works as selected_pixels returns a bool and argmax points
+            #towards the first occurance for equal values
+            first_pixel_index = (np.argmax(selected_pixels) if
+                                np.any(selected_pixels) else len(selected_pixels))
+
+            # minimum number of pixel in forest
+            min_num_pixels = args.nb_pixel_min
+            if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
+                continue
+
+            # Split the forest in n parts
+            max_num_parts = (len(delta.log_lambda) -
+                            first_pixel_index) // min_num_pixels
+            num_parts = min(args.nb_part, max_num_parts)
+
+            #the split_forest function works with either binning, but needs to be uniform
+            if linear_binning:
+                split_array = split_forest(
+                    num_parts,
+                    pixel_step,
+                    10**delta.log_lambda,
+                    delta.delta,
+                    delta.exposures_diff,
+                    delta.ivar,
+                    first_pixel_index,
+                    reso_matrix=(delta.resolution_matrix
+                                if reso_correction == 'matrix' else None),
+                    linear_binning=True)
+                if reso_correction == 'matrix':
+                    (mean_z_array, lambda_array, delta_array, exposures_diff_array,
+                    ivar_array, reso_matrix_array) = split_array
+                else:
+                    (mean_z_array, lambda_array, delta_array, exposures_diff_array,
+                    ivar_array) = split_array
+            else:
+                (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
+                ivar_array) = split_forest(num_parts, pixel_step,
+                                            delta.log_lambda, delta.delta,
+                                            delta.exposures_diff, delta.ivar,
+                                            first_pixel_index)
 
         #the rebin_diff_noise function works with either binning, but needs to be uniform
         for part_index in range(num_parts):
@@ -208,8 +237,8 @@ def process_all_files(index_file_args):
                 )
             else:
                 pk_noise=pk_diff=np.zeros(pk_raw.shape)
-                fft_delta_noise = np.zeros(pk_raw.shape,dtype=np.complex_)
-                fft_delta_diff = np.zeros(pk_raw.shape,dtype=np.complex_)
+                fft_delta_noise = np.zeros(pk_raw.shape,dtype=np.complex128)
+                fft_delta_diff = np.zeros(pk_raw.shape,dtype=np.complex128)
 
             # Compute resolution correction, needs uniform binning
             if not running_on_raw_transmission:
@@ -362,7 +391,19 @@ def main(cmdargs):
                         type=int,
                         default=3,
                         required=False,
-                        help='Number of parts in forest')
+                        help='Number of parts (chunks) in forest')
+
+    parser.add_argument('--parts-in-redshift',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Define forest parts (chunks) as a function of redshift (observer frame) instead of rest frame')
+
+    parser.add_argument('--z-parts',
+                        nargs='+', type=float,
+                        default=[2.1, 2.3, 2.5, 2.7, 2.9, 3.1, 3.3, 3.5, 3.7, 3.9, 4.1],
+                        required=False,
+                        help='Redshift bin edges for forest parts (chunks) when parts-in-redshift is set')
 
     parser.add_argument('--nb-pixel-min',
                         type=int,
@@ -483,20 +524,21 @@ def main(cmdargs):
         seed=args.seed
     # Read deltas
     if args.in_format == 'fits':
-        files = sorted(glob.glob(args.in_dir + "/*.fits.gz"))
+        files = sorted(glob.glob(args.in_dir + "/*.fits.gz") +
+                       glob.glob(args.in_dir + "/*.fits"))
     elif args.in_format == 'ascii':
         files = sorted(glob.glob(args.in_dir + "/*.txt"))
 
     # initialize randoms
     np.random.seed(seed)
-    userprint(f"Computing Pk1d for {args.in_dir}")
+    userprint(f"Computing Pk1d for {args.in_dir} ({len(files)} files to process)")
     args.len_files = len(files)
     #create output dir if it does not exist
     os.makedirs(args.out_dir, exist_ok=True)
 
     if args.nb_pixel_min is None and args.nb_pixel_frac_min is None:
             # could make this fraction a new default, but that would probably cause trouble for SBs
-            # args.nb_pixel_frac_min = 0.13
+            # args.nb_pixel_frac_min = 0.13  #this is a suggestion for a new default
             args.nb_pixel_min = 75    #this is the previous default
     elif not (args.nb_pixel_frac_min is None or args.nb_pixel_min is None):
         print("both nb_pixel_frac_min and nb_pixel_min were set, using the latter")
@@ -504,14 +546,15 @@ def main(cmdargs):
 
     if args.nb_pixel_masked_frac_max is None and args.nb_pixel_masked_max is None:
             # could make this, i.e. 10% of the estimated forest length the new default
-            args.nb_pixel_masked_frac_max = 0.21
-            # args.nb_pixel_masked_max = 40  #this is the previous default
+            # args.nb_pixel_masked_frac_max = 0.21  #this is a suggestion for a new default
+            args.nb_pixel_masked_max = 40  #this is the previous default
     elif not (args.nb_pixel_masked_frac_max is None or args.nb_pixel_masked_max is None):
         print("both nb_pixel_masked_frac_max and nb_pixel_masked_max were set, using the latter")
         args.nb_pixel_masked_frac_max=None
 
 
     print([[i, f] for i, f in enumerate(files)])
+
     if args.num_processors > 1:
         pool = Pool(args.num_processors)
         index_file_args = [(i, f, args) for i, f in enumerate(files)]

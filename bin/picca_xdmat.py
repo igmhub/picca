@@ -163,11 +163,13 @@ def main(cmdargs):
         help=('Name of the absorption in picca.constants defining the redshift '
               'of the delta'))
 
-    parser.add_argument('--z-ref',
-                        type=float,
-                        default=2.25,
-                        required=False,
-                        help='Reference redshift')
+    # remove this option because it has no effect on the output
+    # and hence can lead to confusions
+    # parser.add_argument('--z-ref',
+    #                    type=float,
+    #                    default=2.25,
+    #                    required=False,
+    #                    help='Reference redshift')
 
     parser.add_argument(
         '--z-evol-del',
@@ -242,6 +244,10 @@ def main(cmdargs):
                         help='Rebin factor for deltas. If not None, deltas will '
                              'be rebinned by that factor')
 
+    parser.add_argument('--no-redshift-evolution',
+                        action='store_true',
+                        help='Ignore redshift evolution when computing distortion matrix')
+
     args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -259,8 +265,18 @@ def main(cmdargs):
     xcf.num_model_bins_r_par = args.np * args.coef_binning_model
     xcf.num_model_bins_r_trans = args.nt * args.coef_binning_model
     xcf.nside = args.nside
-    xcf.z_ref = args.z_ref
+
+    if args.no_redshift_evolution :
+        xcf.redshift_evolution_in_distortion_matrix = False
+        userprint("ignore redshift evolution in the distortion matrix")
+
+    # this value has no effect because it scales the weights that are both at the numerator and denominator of the estimator
+    # it is also used as a TEMPORARY VARIABLE to compute the distortion matrix scaling
+    # but this is rescaled to the actual effective redshift of the data (zeff) in the following
+    xcf.z_ref = 2.25
+
     xcf.alpha = args.z_evol_del
+    xcf.alpha_obj = args.z_evol_obj
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.reject = args.rej
 
@@ -281,7 +297,7 @@ def main(cmdargs):
                                                   args.nside,
                                                   xcf.lambda_abs,
                                                   args.z_evol_del,
-                                                  args.z_ref,
+                                                  xcf.z_ref,
                                                   cosmo=cosmo,
                                                   max_num_spec=args.nspec,
                                                   nproc=args.nproc,
@@ -307,7 +323,7 @@ def main(cmdargs):
 
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
-                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
+                                   args.z_max_obj, args.z_evol_obj, xcf.z_ref,
                                    cosmo, mode=args.mode)
     userprint("\n")
     xcf.objs = objs
@@ -346,7 +362,7 @@ def main(cmdargs):
     dmat = np.array([item[1] for item in dmat_data]).sum(axis=0)
     r_par = np.array([item[2] for item in dmat_data]).sum(axis=0)
     r_trans = np.array([item[3] for item in dmat_data]).sum(axis=0)
-    z = np.array([item[4] for item in dmat_data]).sum(axis=0)
+    zeff = np.array([item[4] for item in dmat_data]).sum(axis=0)
     weights = np.array([item[5] for item in dmat_data]).sum(axis=0)
     num_pairs = np.array([item[6] for item in dmat_data]).sum(axis=0)
     num_pairs_used = np.array([item[7] for item in dmat_data]).sum(axis=0)
@@ -355,9 +371,20 @@ def main(cmdargs):
     w = weights > 0.
     r_par[w] /= weights[w]
     r_trans[w] /= weights[w]
-    z[w] /= weights[w]
+    zeff[w] /= weights[w]
+    mean_zeff = np.mean(zeff[w])
+
     w = weights_dmat > 0.
     dmat[w, :] /= weights_dmat[w, None]
+
+
+    if xcf.redshift_evolution_in_distortion_matrix :
+        # now that we have the effective redshift of the input model considered
+        # for the distortion matrix, we do rescale the whole matrix
+        # we first consider the same effective redshift for all the model bins
+        zeff[:]   = mean_zeff
+        zfac = ((1+xcf.z_ref)/(1+mean_zeff))**((xcf.alpha-1)+(xcf.alpha_obj-1))
+        dmat *= zfac
 
     # save results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
@@ -447,7 +474,7 @@ def main(cmdargs):
                   units=['', ''],
                   header=header,
                   extname='DMAT')
-    results.write([r_par, r_trans, z],
+    results.write([r_par, r_trans, zeff],
                   names=['RP', 'RT', 'Z'],
                   comment=['R-parallel', 'R-transverse', 'Redshift'],
                   units=['h^-1 Mpc', 'h^-1 Mpc', ''],

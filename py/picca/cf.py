@@ -57,6 +57,9 @@ x_correlation = False
 ang_correlation = False
 remove_same_half_plate_close_pairs = False
 
+# variables for distortion matrix
+redshift_evolution_in_distortion_matrix = True
+
 # variables used in the 1D correlation function analysis
 num_pixels = None
 log_lambda_min = None
@@ -458,6 +461,15 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
 
             weights12 = weights1[i] * weights2[j]
             z = (z1[i] + z2[j]) / 2
+            # default cf.alpha = args.z_evol = 2.9
+            # cf.alpha2 = cf.alpha for auto-correlation
+            # and cf.alpha2 = args.z_evol2 = 2.9 for cross-correlation with other deltas
+            # this scale factor applies to all of the eta terms
+            # it depends on i and j so it cannot be factored out
+            if redshift_evolution_in_distortion_matrix :
+                zfac = (((1+z1[i])/(1+z_ref))**(alpha-1))*(((1+z2[j])/(1+z_ref))**(alpha2-1))
+            else :
+                zfac = 1.
 
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
@@ -492,15 +504,15 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
 
             # first eta, first term: kronecker delta
             # second eta, second term: weight/sum(weights)
-            eta1[i + num_pixels1 * model_bins] += weights2[j] / sum_weights2
+            eta1[i + num_pixels1 * model_bins] += zfac *weights2[j] / sum_weights2
 
             # first eta, second term: weight/sum(weights)
             # second eta, first term: kronecker delta
-            eta2[j + num_pixels2 * model_bins] += weights1[i] / sum_weights1
+            eta2[j + num_pixels2 * model_bins] += zfac *weights1[i] / sum_weights1
 
             # first eta, second term: weight/sum(weights)
             # second eta, second term: weight/sum(weights)
-            eta5[model_bins] += weights12 / sum_weights1 / sum_weights2
+            eta5[model_bins] += zfac * weights12 / sum_weights1 / sum_weights2
 
             if order2 == 1:
                 # first eta, first term: kronecker delta
@@ -508,7 +520,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                 #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
                 #   sum(weight*(Lambda-bar(Lambda)**2))
                 eta3[i + num_pixels1 * model_bins] += (
-                    weights2[j] * log_lambda_minus_mean2[j] /
+                    zfac * weights2[j] * log_lambda_minus_mean2[j] /
                     sum_weights_square_log_lambda_minus_mean2)
 
                 # first eta, second term: weight/sum(weights)
@@ -516,7 +528,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                 #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
                 #   sum(weight*(Lambda-bar(Lambda)**2))
                 eta6[model_bins] += (
-                    weights1[i] / sum_weights1 *
+                    zfac * weights1[i] / sum_weights1 *
                     (weights2[j] * log_lambda_minus_mean2[j] /
                      sum_weights_square_log_lambda_minus_mean2))
             if order1 == 1:
@@ -525,14 +537,14 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                 #   sum(weight*(Lambda-bar(Lambda)**2))
                 # second eta, first term: kronecker delta
                 eta4[j + num_pixels2 * model_bins] += (
-                    weights1[i] * log_lambda_minus_mean1[i] /
+                    zfac * weights1[i] * log_lambda_minus_mean1[i] /
                     sum_weights_square_log_lambda_minus_mean1)
                 # first eta, third term: (non-zero only for order=1)
                 #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
                 #   sum(weight*(Lambda-bar(Lambda)**2))
                 # second eta, second term: weight/sum(weights)
                 eta7[model_bins] += (
-                    weights2[j] / sum_weights2 *
+                    zfac * weights2[j] / sum_weights2 *
                     (weights1[i] * log_lambda_minus_mean1[i] /
                      sum_weights_square_log_lambda_minus_mean1))
                 if order2 == 1:
@@ -543,7 +555,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                     #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
                     #   sum(weight*(Lambda-bar(Lambda)**2)
                     eta8[model_bins] += (
-                        weights1[i] * log_lambda_minus_mean1[i] * weights2[j] *
+                        zfac * weights1[i] * log_lambda_minus_mean1[i] * weights2[j] *
                         log_lambda_minus_mean2[j] /
                         sum_weights_square_log_lambda_minus_mean1 /
                         sum_weights_square_log_lambda_minus_mean2)
@@ -559,7 +571,17 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
         # first eta, first term: kronecker delta
         # second eta, first term: kronecker delta
         dmat_bin = model_bins + num_model_bins_r_par * num_model_bins_r_trans * bins
-        dmat[dmat_bin] += weights12
+        # default cf.alpha = args.z_evol = 2.9
+        # cf.alpha2 = cf.alpha for auto-correlation
+        # and cf.alpha2 = args.z_evol2 = 2.9 for cross-correlation with other deltas
+        # this scale factor was applied to all of the eta terms above
+        # but not yet to the first term
+        if redshift_evolution_in_distortion_matrix :
+            zfac = (((1+z1[i])/(1+z_ref))**(alpha-1))*(((1+z2[j])/(1+z_ref))**(alpha2-1))
+        else :
+            zfac = 1
+        dmat[dmat_bin] += weights12 * zfac
+
         # rest of the terms
         for k in unique_bins_model:
             dmat_bin = k + num_model_bins_r_par * num_model_bins_r_trans * bins

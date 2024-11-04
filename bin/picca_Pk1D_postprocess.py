@@ -146,6 +146,31 @@ def main(cmdargs):
                         default=None,
                         help='Value of the SNR cut if snr-cut-scheme=fixed')
 
+    parser.add_argument('--skymask-file',
+                        type=str,
+                        default=None,
+                        help='Name of the ASCII file containing skyline masks, which was used to'
+                             'compute the deltas. If set, a correction for this mask will be computed,'
+                             'with "*_skycorr" columns in the output.')
+
+    parser.add_argument('--minwave-skymask',
+                        type=float,
+                        default=utils.DEFAULT_MINWAVE_SKYMASK,
+                        help='Parameter for the wavelength grid used for the skymask,'
+                             'if --skymask-file is set.')
+
+    parser.add_argument('--maxwave-skymask',
+                        type=float,
+                        default=utils.DEFAULT_MAXWAVE_SKYMASK,
+                        help='Parameter for the wavelength grid used for the skymask,'
+                             'if --skymask-file is set.')
+
+    parser.add_argument('--dwave-skymask',
+                        type=float,
+                        default=utils.DEFAULT_DWAVE_SKYMASK,
+                        help='Parameter for the wavelength grid used for the skymask,'
+                             'if --skymask-file is set.')
+
     parser.add_argument('--overwrite',
                         action='store_true',
                         default=False,
@@ -229,6 +254,14 @@ def main(cmdargs):
     else:
         output_file = args.output_file
 
+    if args.skymask_file is not None:
+        skymask_matrices = utils.skyline_mask_matrices_desi(z_edges, args.skymask_file,
+                                minwave=args.minwave_skymask,
+                                maxwave=args.maxwave_skymask,
+                                dwave=args.dwave_skymask)
+    else:
+        skymask_matrices = None
+
     postproc_pk1d.run_postproc_pk1d(args.in_dir, output_file,
                                     z_edges,
                                     k_edges,
@@ -236,6 +269,7 @@ def main(cmdargs):
                                     apply_z_weights=args.apply_z_weights,
                                     output_snrfit=args.output_snrfit,
                                     snrcut=snrcut,
+                                    skymask_matrices=skymask_matrices,
                                     zbins_snrcut=zbins_snrcut,
                                     nomedians=args.no_median,
                                     velunits=args.velunits,
