@@ -238,6 +238,8 @@ def main(cmdargs):
     parser.add_argument('--attributes', type=str, default=None,
                         help='Attributes file with VAR_FUNC extension with '
                              'lambda, eta, var_lss columns.')
+    parser.add_argument('--renormalize-deltas', action="store_true",
+                        help="Stacks deltas and renormalizes deltas.")
 
     args = parser.parse_args(cmdargs)
 
@@ -277,7 +279,7 @@ def main(cmdargs):
         max_num_spec=args.nspec, no_project=args.no_project, nproc=args.nproc,
         rebin_factor=args.rebin_factor, z_min_qso=args.z_min_sources,
         z_max_qso=args.z_max_sources, varlss_mod_factor=args.varlss_mod_factor,
-        attributes=args.attributes)
+        attributes=args.attributes, renormalize_deltas=args.renormalize_deltas)
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -311,7 +313,8 @@ def main(cmdargs):
             z_min_qso=args.z_min_sources,
             z_max_qso=args.z_max_sources,
             varlss_mod_factor=args.varlss_mod_factor,
-            attributes=args.attributes)
+            attributes=args.attributes,
+            renormalize_deltas=args.renormalize_deltas)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2

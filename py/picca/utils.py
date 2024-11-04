@@ -520,3 +520,28 @@ def modify_weights_with_varlss_factor(data, attributes, varlss_mod_factor):
         eta = interp_eta(delta.log_lambda)
         var_lss = varlss_mod_factor * interp_varlss(delta.log_lambda)
         delta.weights = delta.ivar / (eta + delta.ivar * var_lss)
+
+
+def stack_flux_and_normalize(data, l1, l2, dlambda):
+    n = round((l2 - l1) / dlambda + 1.1)
+    stack_delta = np.zeros(n)
+    stack_weight = np.zeros(n)
+
+    for delta in data:
+        wave = 10**delta.log_lambda
+        bins = ((wave - l1) / dlambda + 0.5).astype(np.int64)
+        stack_delta += np.bincount(
+            bins, weights=delta.delta * delta.weights, minlength=n)
+        stack_weight += np.bincount(bins, weights=delta.weights, minlength=n)
+
+    w = stack_weight != 0
+    stack_delta = stack_delta[w]
+    stack_weight = stack_weight[w]
+    stack_delta /= stack_weight
+    wave = np.linspace(l1, l2, n)[w]
+    spl = interpolate.interp1d(
+        wave, stack_delta + 1, fill_value='extrapolate', kind='nearest')
+
+    for delta in data:
+        wave = 10**delta.log_lambda
+        delta.delta = (1 + delta.delta) / spl(wave) - 1

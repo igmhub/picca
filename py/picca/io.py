@@ -21,7 +21,8 @@ from astropy.table import Table
 import warnings
 from multiprocessing import Pool
 
-from .utils import userprint, modify_weights_with_varlss_factor
+from .utils import (
+    userprint, modify_weights_with_varlss_factor, stack_flux_and_normalize)
 from .data import Delta, QSO
 from .pk1d.prep_pk1d import exp_diff, spectral_resolution
 from .pk1d.prep_pk1d import spectral_resolution_desi
@@ -275,7 +276,8 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10):
 def read_deltas(
         in_dir, nside, lambda_abs, alpha, z_ref, cosmo, max_num_spec=None,
         no_project=False, nproc=None, rebin_factor=None,
-        z_min_qso=0, z_max_qso=10, varlss_mod_factor=None, attributes=None
+        z_min_qso=0, z_max_qso=10, varlss_mod_factor=None, attributes=None,
+        renormalize_deltas=False
 ):
     """Reads deltas and computes their redshifts.
 
@@ -317,6 +319,8 @@ def read_deltas(
         attributes: str - default: None
             Attributes file with VAR_FUNC extension with lambda, eta, var_lss
             columns.
+        renormalize_deltas: bool - default: False
+            If True, stack 1 + delta and renormalize after rebinning.
 
     Returns:
         The following variables:
@@ -401,6 +405,11 @@ def read_deltas(
         if not healpix in data:
             data[healpix] = []
         data[healpix].append(delta)
+
+    if renormalize_deltas:
+        stack_flux_and_normalize(
+            deltas, lambda_abs * (1 + z_min) + 4.0, lambda_abs * (1 + z_max) - 4.0,
+            dlambda=8.0)
 
     return data, num_data, z_min, z_max
 
