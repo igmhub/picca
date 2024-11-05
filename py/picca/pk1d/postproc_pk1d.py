@@ -1199,11 +1199,11 @@ def compute_cov(
     mean_pk_product = np.outer(mean_pk, mean_pk)
 
     sum_p1d_weights = np.nansum(p1d_weights, axis=0)
-    weights_sum_of_product = np.outer(sum_p1d_weights, sum_p1d_weights)
+    weights_sum_product = np.outer(sum_p1d_weights, sum_p1d_weights)
 
     p1d_groups_product_sum = np.zeros((nbins_k, nbins_k))
-    covariance_weights_product_of_sum = np.zeros((nbins_k, nbins_k))
-    weights_product_of_sum = np.zeros((nbins_k, nbins_k))
+    covariance_weights_product_sum = np.zeros((nbins_k, nbins_k))
+    weights_product_sum = np.zeros((nbins_k, nbins_k))
 
     for i, p1d_group in enumerate(p1d_groups):
         # The summation is done with np.nansum instead of simple addition to not
@@ -1212,21 +1212,21 @@ def compute_cov(
         p1d_groups_product_sum = np.nansum(
             [p1d_groups_product_sum, np.outer(p1d_group, p1d_group)], axis=0
         )
-        covariance_weights_product_of_sum = np.nansum(
+        covariance_weights_product_sum = np.nansum(
             [
-                covariance_weights_product_of_sum,
+                covariance_weights_product_sum,
                 np.outer(covariance_weights[i], covariance_weights[i]),
             ],
             axis=0,
         )
-        weights_product_of_sum = np.nansum(
-            [weights_product_of_sum, np.outer(p1d_weights[i], p1d_weights[i])], axis=0
+        weights_product_sum = np.nansum(
+            [weights_product_sum, np.outer(p1d_weights[i], p1d_weights[i])], axis=0
         )
 
     del p1d_groups, covariance_weights, p1d_weights
 
-    covariance_matrix = (weights_product_of_sum / weights_sum_of_product) * (
-        (p1d_groups_product_sum / covariance_weights_product_of_sum) - mean_pk_product
+    covariance_matrix = (weights_product_sum / weights_sum_product) * (
+        (p1d_groups_product_sum / covariance_weights_product_sum) - mean_pk_product
     )
 
     # For fit_snr method, due to the SNR fitting scheme used for weighting,
