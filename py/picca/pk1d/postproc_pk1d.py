@@ -797,7 +797,11 @@ def compute_average_pk_redshift(
                 snr_bins = (snr_bin_edges[:-1] + snr_bin_edges[1:]) / 2
 
                 data_values = p1d_table[col][select]
-                data_values = data_values[mask_nan_p1d_values]
+                data_snr = p1d_table["forest_snr"][select]
+                data_snr, data_values = (
+                    data_snr[mask_nan_p1d_values],
+                    data_values[mask_nan_p1d_values],
+                )
                 # Fit function to observed dispersion in col:
                 standard_dev_col, _, _ = binned_statistic(
                     data_snr, data_values, statistic="std", bins=snr_bin_edges
