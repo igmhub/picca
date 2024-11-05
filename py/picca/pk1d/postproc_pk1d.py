@@ -824,8 +824,9 @@ def compute_average_pk_redshift(
                 variance_estimated_col = fitfunc_variance_pk1d(data_snr, *coef_col)
                 weights_col = 1.0 / variance_estimated_col
                 if apply_z_weights:
-                    weights *= redshift_weights
-                mean = np.average(data_values, weights=weights)
+                    mean = np.average(data_values, weights=weights * redshift_weights)
+                else:
+                    mean = np.average(data_values, weights=weights)
                 if apply_z_weights:
                     # Analytic expression for the re-weighted average:
                     error = np.sqrt(np.sum(weights_col * redshift_weights)) / np.sum(
