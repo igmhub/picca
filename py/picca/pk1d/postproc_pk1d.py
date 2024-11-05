@@ -834,6 +834,10 @@ def compute_average_pk_redshift(
                     )
                 else:
                     error = np.sqrt(1.0 / np.sum(weights_col))
+                    # Variance estimator derived by Jean-Marc, we keep the estimated one.
+                    # error = np.sqrt(((np.sum(weights)**2 / np.sum(weights**2)) - 1 )**(-1) * (
+                    # ( np.sum(weights**2 * data_values**2) / np.sum(weights**2) ) - (
+                    # np.sum(weights * data_values)/ np.sum(weights) )**2 ))
                 if col == "Pk":
                     standard_dev = np.concatenate(
                         [
@@ -1147,7 +1151,7 @@ def compute_groups_for_one_forest(nbins_k, p1d_los):
         if number_in_bins != 0:
             weight = p1d_los["weight"][mask_ikbin][0]
             p1d_weights_id[ikbin] = weight
-            covariance_weights_id[ikbin] = np.sqrt(weight / number_in_bins)
+            covariance_weights_id[ikbin] = weight / number_in_bins
             p1d_groups_id[ikbin] = np.nansum(
                 p1d_los["pk"][mask_ikbin] * covariance_weights_id[ikbin]
             )
@@ -1230,7 +1234,7 @@ def compute_cov(
 
     del p1d_groups, covariance_weights, p1d_weights
 
-    covariance_matrix = (weights_product_sum / weights_sum_product) * (
+    covariance_matrix = ((weights_sum_product /weights_product_sum) - 1)**(-1) * (
         (p1d_groups_product_sum / covariance_weights_product_sum) - mean_pk_product
     )
 
