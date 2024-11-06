@@ -14,9 +14,9 @@ jobs:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
       
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.x"
 
@@ -37,7 +37,8 @@ jobs:
     - name: Publish distribution 📦 to Test PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        repository-url: https://test.pypi.org/legacy/
+        repository_url: https://test.pypi.org/legacy/
+        attestations: false
         
     - name: Publish distribution 📦 to PyPI
       if: startsWith(github.ref, 'refs/tags')
