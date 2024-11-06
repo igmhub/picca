@@ -8,8 +8,9 @@ import multiprocessing
 import fitsio
 import numpy as np
 
+from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
 from picca.delta_extraction.data_catalogues.desi_data import (
-    DesiData, DesiDataFileHandler, merge_new_forest)
+    DesiData, DesiDataFileHandler, merge_new_forest, verify_exposures_shape)
 from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
     defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
@@ -45,6 +46,10 @@ class DesiTile(DesiData):
         """
         self.logger = logging.getLogger(__name__)
         super().__init__(config)
+
+        if self.analysis_type == "PK 1D":
+            DesiPk1dForest.update_class_variables()
+
 
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
@@ -96,9 +101,17 @@ class DesiTile(DesiData):
                 imap_it = pool.imap(
                     DesiTileFileHandler(self.analysis_type,
                                         self.use_non_coadded_spectra,
+                                        self.uniquify_night_targetid,
+                                        self.keep_single_exposures,
                                         self.logger, self.input_directory),
                     arguments)
-                for forests_by_targetid_aux, _ in imap_it:
+                for index, output_imap in enumerate(imap_it):
+                    forests_by_targetid_aux = output_imap[0]
+                    if self.use_non_coadded_spectra & self.keep_single_exposures:
+                        # Change the dictionary key to prevent coadding.
+                        # exposures on different files.
+                        forests_by_targetid_aux= {f"{index}_{key}": items
+                                                  for key, items in forests_by_targetid_aux.items()}
                     # Merge each dict to master forests_by_targetid
                     merge_new_forest(forests_by_targetid,
                                      forests_by_targetid_aux)
@@ -106,16 +119,26 @@ class DesiTile(DesiData):
             num_data = 0
             reader = DesiTileFileHandler(self.analysis_type,
                                          self.use_non_coadded_spectra,
+                                         self.uniquify_night_targetid,
+                                         self.keep_single_exposures,
                                          self.logger, self.input_directory)
             for index, filename in enumerate(filenames):
                 forests_by_targetid_aux, num_data_aux = reader(
                     (filename, self.catalogue))
+                if self.use_non_coadded_spectra & self.keep_single_exposures:
+                    # Change the dictionary key to prevent coadding.
+                    # exposures on different files.
+                    forests_by_targetid_aux= {f"{index}_{key}": items
+                                              for key, items in forests_by_targetid_aux.items()}
                 merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
                 num_data += num_data_aux
                 self.logger.progress(
                     f"read tile {index} of {len(filename)}. ndata: {num_data}")
 
                 self.logger.progress(f"Found {num_data} quasars in input files")
+
+        if self.use_non_coadded_spectra & self.keep_single_exposures:
+            verify_exposures_shape(forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")
@@ -140,7 +163,12 @@ class DesiTileFileHandler(DesiDataFileHandler):
     (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
     """
 
-    def __init__(self, analysis_type, use_non_coadded_spectra, logger,
+    def __init__(self,
+                 analysis_type,
+                 use_non_coadded_spectra,
+                 uniquify_night_targetid,
+                 keep_single_exposures,
+                 logger,
                  input_directory):
         """Initialize file handler
 
@@ -151,8 +179,15 @@ class DesiTileFileHandler(DesiDataFileHandler):
         for details
 
         use_non_coadded_spectra: bool
-        If True, load data from non-coadded spectra and coadd them here. Otherwise,
+        If True, load data from non-coadded spectra. Otherwise,
         load coadded data
+
+        uniquify_night_targetid: bool
+        If True, remove the quasars taken on the same night.
+
+        keep_single_exposures: bool
+        If True, the date loadded from non-coadded spectra are not coadded. 
+        Otherwise, coadd the spectra here.
 
         logger: logging.Logger
         Logger object
@@ -161,7 +196,11 @@ class DesiTileFileHandler(DesiDataFileHandler):
         Directory where input data is stored.
         """
         self.input_directory = input_directory
-        super().__init__(analysis_type, use_non_coadded_spectra, logger)
+        super().__init__(analysis_type,
+                         use_non_coadded_spectra,
+                         uniquify_night_targetid,
+                         keep_single_exposures,
+                         logger)
 
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.

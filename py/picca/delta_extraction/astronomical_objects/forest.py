@@ -537,6 +537,15 @@ class Forest(AstronomicalObject):
                      "spectra for units"]
         units += [Forest.flux_units]
 
+        if self.ivar is None:
+            cols += [np.zeros(array_size, dtype=float)]
+        else:
+            cols += [self.ivar]
+        names += ["IVAR"]
+        comments += ["Inverse variance. Check input "
+                     "spectra for units"]
+        units += [f"({Forest.flux_units})^-1"]
+
         return cols, names, units, comments
 
     def get_header(self):

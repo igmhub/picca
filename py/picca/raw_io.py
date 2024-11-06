@@ -217,6 +217,7 @@ def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out
         header['FIBERID'] = delta.fiberid
         header['ORDER'] = delta.order
         header['WAVE_SOLUTION'] = 'lin' if lin_spaced else 'log'
+        header['DELTA_LAMBDA'] = delta_x
 
         cols = [
             delta.log_lambda, delta.delta, delta.weights,
@@ -481,8 +482,8 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     header['L_MAX'] = lambda_max
     header['LR_MIN'] = lambda_min_rest_frame
     header['LR_MAX'] = lambda_max_rest_frame
-    header['DEL_LL'] = delta_log_lambda
-    header['DEL_L'] = delta_lambda
+    header['DEL_LL'] = delta_x if not lin_spaced else None
+    header['DEL_L'] = delta_x if lin_spaced else None
     header['LINEAR'] = lin_spaced
     results.write(cols, names=names, header=header, extname='STATS')
     results.close()

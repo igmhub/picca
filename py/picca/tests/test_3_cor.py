@@ -25,8 +25,11 @@ import picca.bin.picca_xcf
 import picca.bin.picca_xcf_angl
 import picca.bin.picca_dmat
 import picca.bin.picca_xdmat
+
 import picca.bin.picca_metal_dmat
 import picca.bin.picca_metal_xdmat
+import picca.bin.picca_fast_metal_dmat
+import picca.bin.picca_fast_metal_xdmat
 import picca.bin.picca_export
 import picca.bin.picca_export_cross_covariance
 import picca.bin.picca_export_co
@@ -325,6 +328,8 @@ class TestCor(AbstractTest):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += ' --no-redshift-evolution'
+
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
 
@@ -364,6 +369,35 @@ class TestCor(AbstractTest):
             path1 = self._masterFiles + "/test_cor/metal_dmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
+
+        return
+
+
+    def test_fast_metal_dmat(self):
+        """
+            Test metal distortion matrix
+        """
+        importlib.reload(picca.cf)
+
+        userprint("\n")
+        ### Send
+        cmd = "picca_fast_metal_dmat.py"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/fast_metal_dmat.fits.gz"
+        cmd += r" --abs-igm SiIII(1207)"
+        cmd += " --rp-min +0.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        print(repr(cmd))
+        picca.bin.picca_fast_metal_dmat.main(cmd.split()[1:])
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/fast_metal_dmat.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/fast_metal_dmat.fits.gz"
+            self.compare_fits(path1, path2, "picca_fast_metal_dmat.py")
 
         return
 
@@ -465,6 +499,8 @@ class TestCor(AbstractTest):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
+        cmd += ' --no-redshift-evolution'
+
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
 
@@ -508,6 +544,38 @@ class TestCor(AbstractTest):
             path1 = self._masterFiles + "/test_cor/metal_dmat_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
+
+        return
+
+    def test_fast_metal_dmat_cross(self):
+        """
+            Test metal cross distortion matrix
+        """
+        importlib.reload(picca.cf)
+
+        userprint("\n")
+        ### Send
+        cmd = "picca_fast_metal_dmat.py"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --out " + self._branchFiles + \
+            "/Products/Correlations/fast_metal_dmat_cross.fits.gz"
+        cmd += r" --abs-igm SiIII(1207)"
+        cmd += r" --abs-igm2 SiIII(1207)"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
+        cmd += " --unfold-cf"
+        print(repr(cmd))
+        picca.bin.picca_fast_metal_dmat.main(cmd.split()[1:])
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/fast_metal_dmat_cross.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/fast_metal_dmat_cross.fits.gz"
+            self.compare_fits(path1, path2, "picca_fast_metal_dmat.py")
 
         return
 
@@ -602,6 +670,7 @@ class TestCor(AbstractTest):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         cmd += " --z-evol-obj 1."
+        cmd += ' --no-redshift-evolution'
         print(repr(cmd))
         picca.bin.picca_xdmat.main(cmd.split()[1:])
 
@@ -640,6 +709,34 @@ class TestCor(AbstractTest):
             path1 = self._masterFiles + "/test_cor/metal_xdmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_xdmat.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_xdmat.py")
+
+        return
+
+    def test_fast_metal_xdmat(self):
+        """
+            Test metal cross distortion matrix
+        """
+        userprint("\n")
+        ### Send
+        cmd = "picca_fast_metal_xdmat.py"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/fast_metal_xdmat.fits.gz"
+        cmd += r" --abs-igm SiIII(1207)"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
+        cmd += " --z-evol-obj 1."
+        print(repr(cmd))
+        picca.bin.picca_fast_metal_xdmat.main(cmd.split()[1:])
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/fast_metal_xdmat.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/fast_metal_xdmat.fits.gz"
+            self.compare_fits(path1, path2, "picca_fast_metal_xdmat.py")
 
         return
 
@@ -788,6 +885,8 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
+        cmd += ' --no-redshift-evolution'
+
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
 
@@ -831,6 +930,38 @@ class TestCor(AbstractTest):
             path1 = self._masterFiles + "/test_cor/metal_dmat_zcuts.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
+
+        return
+
+    def test_fast_metal_dmat_zcuts(self):
+        """
+            Test metal distortion matrix
+        """
+        importlib.reload(picca.cf)
+
+        userprint("\n")
+        ### Send
+        cmd = "picca_metal_dmat.py"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/fast_metal_dmat_zcuts.fits.gz"
+        cmd += r" --abs-igm SiIII(1207)"
+        cmd += " --rp-min +0.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --z-cut-min 2.25"
+        cmd += " --z-cut-max 2.3"
+        cmd += " --z-min-sources 2.3"
+        cmd += " --z-max-sources 2.5"
+        print(repr(cmd))
+        picca.bin.picca_fast_metal_dmat.main(cmd.split()[1:])
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/fast_metal_dmat_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/fast_metal_dmat_zcuts.fits.gz"
+            self.compare_fits(path1, path2, "picca_fast_metal_dmat.py")
 
         return
 
@@ -929,6 +1060,8 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
+        cmd += ' --no-redshift-evolution'
+
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
 
@@ -976,6 +1109,42 @@ class TestCor(AbstractTest):
             path1 = self._masterFiles + "/test_cor/metal_dmat_cross_zcuts.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross_zcuts.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
+
+        return
+
+    def test_fast_metal_dmat_cross_zcuts(self):
+        """
+            Test metal cross distortion matrix
+        """
+        importlib.reload(picca.cf)
+
+        userprint("\n")
+        ### Send
+        cmd = "picca_fast_metal_dmat.py"
+        cmd += " --in-attributes " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --in-attributes2 " + self._masterFiles + "/test_cor/input_from_delta_extraction_lya_nodla/Log/delta_attributes.fits.gz"
+        cmd += " --out " + self._branchFiles + \
+            "/Products/Correlations/fast_metal_dmat_cross_zcuts.fits.gz"
+        cmd += r" --abs-igm SiIII(1207)"
+        cmd += r" --abs-igm2 SiIII(1207)"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
+        cmd += " --unfold-cf"
+        cmd += " --z-cut-min 2.25"
+        cmd += " --z-cut-max 2.3"
+        cmd += " --z-min-sources 2.3"
+        cmd += " --z-max-sources 2.5"
+        print(repr(cmd))
+        picca.bin.picca_fast_metal_dmat.main(cmd.split()[1:])
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/fast_metal_dmat_cross_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/fast_metal_dmat_cross_zcuts.fits.gz"
+            self.compare_fits(path1, path2, "picca_fast_metal_dmat.py")
 
         return
 
@@ -1065,6 +1234,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
+        cmd += ' --no-redshift-evolution'
         print(repr(cmd))
         picca.bin.picca_xdmat.main(cmd.split()[1:])
 

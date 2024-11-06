@@ -147,14 +147,13 @@ def exp_diff_desi(
     mask_even = ivar_tot_even > 0
     flux_tot_even[mask_even] /= ivar_tot_even[mask_even]
 
+    alpha = 1
     if method_alpha == "eboss":
-        alpha = 1
         if num_exp % 2 == 1:
             n_even = num_exp // 2
             alpha = np.sqrt(4.0 * n_even * (n_even + 1)) / num_exp
 
     elif method_alpha == "eboss_corr":
-        alpha = 1
         if num_exp % 2 == 1:
             n_even = num_exp // 2
             alpha = np.sqrt((2 * n_even) / (num_exp))
@@ -180,6 +179,9 @@ def exp_diff_desi(
         alpha = 2 * np.sqrt(
             (time_odd * time_even) / (time_exp * (time_odd + time_even))
         )
+
+    else:
+        raise ValueError(f"Unknown method_alpha: {method_alpha}")
 
     diff = 0.5 * (flux_tot_even - flux_tot_odd) * alpha
     return diff

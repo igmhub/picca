@@ -160,7 +160,7 @@ class Cosmo(object):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,blinding=False):
+    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,blinding=False,verbose=True):
         """Initializes the methods for this instance
 
         Args:
@@ -184,12 +184,14 @@ class Cosmo(object):
 
         # Blind data
         if blinding == "none":
-            userprint("ATTENTION: Analysis is not blinded!")
+            if verbose:
+                userprint("ATTENTION: Analysis is not blinded!")
         else:
             userprint(f"ATTENTION: Analysis is blinded with strategy {blinding}")
 
         if blinding not in  ["strategyB", "strategyBC"]:
-            userprint(f"Om={Om}, Or={Or}, wl={wl}")
+            if verbose:
+                userprint(f"Om={Om}, Or={Or}, wl={wl}")
         else:
             userprint("The specified cosmology is "
                       f"not used: Om={Om}, Or={Or}, wl={wl}")

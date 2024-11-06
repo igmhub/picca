@@ -12,6 +12,9 @@ import os.path
 from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
 
+# TODO: add tags here when we are allowed to unblind them
+UNBLINDABLE_STRATEGIES = ["none", "desi_m2", "desi_y1"]
+
 
 def main(cmdargs):
     """Export auto and cross-correlation for the fitter."""
@@ -220,8 +223,7 @@ def main(cmdargs):
         'name': "BLINDING",
         'value': blinding,
         'comment': 'String specifying the blinding strategy'
-    },
-    {
+    }, {
         'name': 'RPMIN',
         'value': r_par_min,
         'comment': 'Minimum r-parallel'
@@ -264,14 +266,17 @@ def main(cmdargs):
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
     ]
 
+    # Check if we need to unblind
+    if blinding in UNBLINDABLE_STRATEGIES:
+        userprint(f"'{blinding}' correlations are not blinded.")
+        blinding = 'none'
+        data_name = 'DA'
+        dmat_name = 'DM'
+
     # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
         blinding_dir = '/global/cfs/projectdirs/desi/science/lya/y1-kp6/blinding/'
-        blinding_templates = {'desi_m2': {'standard': 'm2_blinding_v1.2_standard_29_03_2022.h5',
-                                          'grid': 'm2_blinding_v1.2_regular_grid_29_03_2022.h5'},
-                              'desi_y1': {'standard': 'y1_blinding_v2_standard_17_12_2022.h5',
-                                          'grid': 'y1_blinding_v2_regular_grid_17_12_2022.h5'},
-                              'desi_y3': {'standard': 'y3_blinding_v3_standard_18_12_2022.h5',
+        blinding_templates = {'desi_y3': {'standard': 'y3_blinding_v3_standard_18_12_2022.h5',
                                           'grid': 'y3_blinding_v3_regular_grid_18_12_2022.h5'}}
 
         if blinding in blinding_templates:

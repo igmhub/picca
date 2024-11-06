@@ -5,7 +5,14 @@ import logging
 from astropy.table import Table
 import fitsio
 import numpy as np
-from scipy.constants import speed_of_light as SPEED_LIGHT
+from scipy.constants import (
+    speed_of_light as SPEED_LIGHT,
+    e as ELEMENTARY_CHARGE,
+    epsilon_0 as EPSILON_0,
+    m_p as PROTON_MASS,
+    m_e as ELECTRON_MASS,
+    k as BOLTZMAN_CONSTANT_K,
+)
 from scipy.special import voigt_profile
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -52,11 +59,6 @@ def dla_profile(lambda_, z_abs, nhi):
     return transmission
 
 # constants to compute the optical depth of the DLA absoprtion
-ELEMENTARY_CHARGE = 1.6021e-19  # C
-EPSILON_0 = 8.8541e-12  # C^2.s^2.kg^-1.m^-3
-PROTON_MASS = 1.6726e-27  # kg
-ELECTRON_MASS = 9.109e-31  # kg
-BOLTZMAN_CONSTANT_K = 1.3806e-23  # m^2.kg.s^-2.K-1
 GAS_TEMP = 5 * 1e4  # K
 
 # precomputed factors to save time
@@ -197,6 +199,11 @@ class DlaMask(Mask):
                 z_colname = hdul_colnames.intersection(accepted_zcolnames)
                 if not z_colname:
                     raise ValueError(f"Z colname has to be one of {', '.join(accepted_zcolnames)}")
+                if len(z_colname)>1 :
+                    raise ValueError(
+                        "Not clear which column should be used for the DLA redshift among "
+                        f"{z_colname}. Please remove or rename one of the columns from the DLA "
+                        "fits file.")
                 z_colname = z_colname.pop()
                 columns_list = [los_id_name, z_colname, "NHI"]
                 cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
