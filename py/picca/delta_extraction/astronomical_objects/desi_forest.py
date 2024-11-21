@@ -192,7 +192,7 @@ class DesiForest(Forest):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('TARGETID', int), ('NIGHT', 'S12'), ('PETAL', 'S12'), ('TILE', 'S12')]
+        dtype += [('TARGETID', int), ('NIGHT', 'S50'), ('PETAL', 'S50'), ('TILE', 'S50'), ('EXPID', 'S50'),('FIBER', 'S50')]   #need to figure out realistic length for these strings
         return dtype
 
     @classmethod
@@ -206,5 +206,5 @@ class DesiForest(Forest):
         A list with the units of the line-of-sight data
         """
         units = super().get_metadata_units()
-        units += ["", "", "", ""]
+        units += ["", "", "", "", "", ""]
         return units
