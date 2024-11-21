@@ -122,6 +122,8 @@ class DesiHealpixFast(DesiData):
                 self.forests = combine_results(imap_it)
                 t1 = time.time()
                 self.logger.progress(f"Time spent meerging threads: {t1-t0}")
+        else:
+            raise NotImplementedError('fast healpix reading is not implemented for analyses with "num processors=1"')
 
         if len(self.forests) == 0:
             raise DataError("No quasars found, stopping here")
@@ -228,7 +230,7 @@ class DesiHealpixFileHandler():
                 self.logger.warning(
                     f"Error reading {targetid}. Ignoring object")
                 continue
-            
+
             nights="-".join(str(e) for e in exp_fibermap["NIGHT"][w_t_exp])
             petals="-".join(str(e) for e in exp_fibermap["PETAL_LOC"][w_t_exp])
             fibers="-".join(str(e) for e in exp_fibermap["FIBER"][w_t_exp])
