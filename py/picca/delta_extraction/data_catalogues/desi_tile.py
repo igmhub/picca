@@ -253,14 +253,33 @@ class DesiTileFileHandler(DesiDataFileHandler):
 
         petal_spec = fibermap['PETAL_LOC'][0]
 
-        exp_targetid = exp_fibermap['TARGETID']
-        exp_expid = exp_fibermap['EXPID']
-        exp_petal = exp_fibermap['PETAL_LOC']
-        exp_fiber = exp_fibermap['FIBER']
-        exp_night = exp_fibermap['NIGHT']
-        exp_tile = exp_fibermap['TILEID']
+        if "coadd" in filename:
+            exp_targetid = exp_fibermap['TARGETID']
+            exp_expid = exp_fibermap['EXPID']
+            exp_petal = exp_fibermap['PETAL_LOC']
+            exp_fiber = exp_fibermap['FIBER']
+            exp_night = exp_fibermap['NIGHT']
+            exp_tile = exp_fibermap['TILEID']
+            metadata_dict = {'EXP_PETAL': exp_petal,
+                            'EXP_TILE': exp_tile,
+                            'EXP_NIGHT': exp_night,
+                            'EXP_EXPID': exp_expid,
+                            'EXP_FIBER': exp_fiber,
+                            'EXP_TARGETID': exp_targetid}
+        elif "spectra" in filename:
+            expid = fibermap['EXPID']
+            petal = fibermap['PETAL_LOC']
+            fiber = fibermap['FIBER']
+            night = fibermap['NIGHT']
+            tile = fibermap['TILEID']
 
-
+            metadata_dict = {'PETAL': petal,
+                            'TILE': tile,
+                            'NIGHT': night,
+                            'EXPID': expid,
+                            'FIBER': fiber}
+        else:
+            metadata_dict=None
 
 
         spectrographs_data = {}
@@ -306,12 +325,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
             catalogue[select],
             spectrographs_data,
             fibermap["TARGETID"],
-            metadata_dict={'EXP_PETAL': exp_petal,
-                           'EXP_TILE': exp_tile,
-                           'EXP_NIGHT': exp_night,
-                           'EXP_EXPID': exp_expid,
-                           'EXP_FIBER': exp_fiber,
-                           'EXP_TARGETID':exp_targetid}
+            metadata_dict=metadata_dict
         )
 
         return forests_by_targetid, num_data
