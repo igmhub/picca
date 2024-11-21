@@ -192,7 +192,7 @@ class DesiForest(Forest):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('TARGETID', int), ('NIGHT', 'S50'), ('PETAL', 'S50'), ('TILE', 'S50'), ('EXPID', 'S50'),('FIBER', 'S50')]   #need to figure out realistic length for these strings
+        dtype += [('TARGETID', int), ('NIGHT', 'S150'), ('PETAL', 'S150'), ('TILE', 'S150'), ('EXPID', 'S150'),('FIBER', 'S150')]   #need to figure out realistic length for these strings
         return dtype
 
     @classmethod
