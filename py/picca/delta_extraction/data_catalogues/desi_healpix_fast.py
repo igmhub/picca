@@ -198,6 +198,7 @@ class DesiHealpixFileHandler():
             return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
+        exp_fibermap = hdul['EXP_FIBERMAP'].read()
 
         colors = ["B", "R"]
         if "Z_FLUX" in hdul:
@@ -222,10 +223,17 @@ class DesiHealpixFileHandler():
             # It should be there by construction
             targetid = row["TARGETID"]
             w_t = np.where(fibermap["TARGETID"] == targetid)[0]
+            w_t_exp = np.where(exp_fibermap["TARGETID"] == targetid)[0]
             if len(w_t) == 0:
                 self.logger.warning(
                     f"Error reading {targetid}. Ignoring object")
                 continue
+            
+            nights="-".join(str(e) for e in exp_fibermap["NIGHT"][w_t_exp])
+            petals="-".join(str(e) for e in exp_fibermap["PETAL_LOC"][w_t_exp])
+            fibers="-".join(str(e) for e in exp_fibermap["FIBER"][w_t_exp])
+            tileids="-".join(str(e) for e in exp_fibermap["TILEID"][w_t_exp])
+            expids="-".join(str(e) for e in exp_fibermap["EXPID"][w_t_exp])
 
             w_t = w_t[0]
             # Construct DesiForest instance
@@ -241,6 +249,11 @@ class DesiHealpixFileHandler():
                 "dec": row['DEC'],
                 "z": row['Z'],
                 "log_lambda": log_lambda,
+                "night": nights,
+                "petal": petals,
+                "fiber": fibers,
+                "tileid": tileids,
+                "expid": expids,
             }
             forest = DesiForest(**args)
             forest.rebin()

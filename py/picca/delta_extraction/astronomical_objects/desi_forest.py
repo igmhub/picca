@@ -69,9 +69,19 @@ class DesiForest(Forest):
         del kwargs["targetid"]
 
         self.tile = []
-        if kwargs.get("tile") is not None:
-            self.tile.append(kwargs.get("tile"))
-            del kwargs["tile"]
+        if kwargs.get("tileid") is not None:
+            self.tile.append(kwargs.get("tileid"))
+            del kwargs["tileid"]
+
+        self.fiber = []
+        if kwargs.get("fiber") is not None:
+            self.fiber.append(kwargs.get("fiber"))
+            del kwargs["fiber"]
+
+        self.expid = []
+        if kwargs.get("expid") is not None:
+            self.expid.append(kwargs.get("expid"))
+            del kwargs["expid"]
 
         # call parent constructor
         kwargs["los_id"] = self.targetid
@@ -99,6 +109,8 @@ class DesiForest(Forest):
         self.night += other.night
         self.petal += other.petal
         self.tile += other.tile
+        self.expid += other.expid
+        self.fiber += other.fiber
         super().coadd(other)
 
     def get_header(self):
@@ -133,6 +145,16 @@ class DesiForest(Forest):
                 'value': "-".join(str(tile) for tile in self.tile),
                 'comment': 'Observation tile(s)'
             },
+            {
+                'name': 'EXPID',
+                'value': "-".join(str(expid) for expid in self.expid),
+                'comment': 'Observation expid(s)'
+            },            
+            {
+                'name': 'FIBER',
+                'value': "-".join(str(fiber) for fiber in self.fiber),
+                'comment': 'Observation fiber(s)'
+            },
         ]
 
         return header
@@ -153,6 +175,8 @@ class DesiForest(Forest):
             "-".join(str(night) for night in self.night),
             "-".join(str(petal) for petal in self.petal),
             "-".join(str(tile) for tile in self.tile),
+            "-".join(str(expid) for expid in self.expid),
+            "-".join(str(fiber) for fiber in self.fiber),
         ]
         return metadata
 
