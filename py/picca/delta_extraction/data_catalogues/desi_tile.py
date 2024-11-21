@@ -232,6 +232,8 @@ class DesiTileFileHandler(DesiDataFileHandler):
             return {}, 0
 
         fibermap = hdul['FIBERMAP'].read()
+        exp_fibermap = hdul['EXP_FIBERMAP'].read()
+
 
         ra = fibermap['TARGET_RA']
         dec = fibermap['TARGET_DEC']
@@ -250,6 +252,16 @@ class DesiTileFileHandler(DesiDataFileHandler):
         dec = np.radians(dec)
 
         petal_spec = fibermap['PETAL_LOC'][0]
+
+        exp_targetid = exp_fibermap['TARGETID']
+        exp_expid = exp_fibermap['EXPID']
+        exp_petal = exp_fibermap['PETAL_LOC']
+        exp_fiber = exp_fibermap['FIBER']
+        exp_night = exp_fibermap['NIGHT']
+        exp_tile = exp_fibermap['TILEID']
+
+
+
 
         spectrographs_data = {}
         for color in colors:
@@ -294,6 +306,12 @@ class DesiTileFileHandler(DesiDataFileHandler):
             catalogue[select],
             spectrographs_data,
             fibermap["TARGETID"],
+            metadata_dict={'EXP_PETAL': exp_petal,
+                           'EXP_TILE': exp_tile,
+                           'EXP_NIGHT': exp_night,
+                           'EXP_EXPID': exp_expid,
+                           'EXP_FIBER': exp_fiber,
+                           'EXP_TARGETID':exp_targetid}
         )
 
         return forests_by_targetid, num_data
