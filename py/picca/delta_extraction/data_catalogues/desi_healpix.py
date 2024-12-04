@@ -208,6 +208,8 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
+        if not self.use_non_coadded_spectra:
+            exp_fibermap = hdul['EXP_FIBERMAP'].read()
 
         index_unique = np.full(fibermap.shape,True)
         if self.uniquify_night_targetid:
@@ -275,10 +277,39 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
         if hdul_truth is not None:
             hdul_truth.close()
 
+        
+        if not self.use_non_coadded_spectra:
+            exp_targetid = exp_fibermap['TARGETID']
+            exp_expid = exp_fibermap['EXPID']
+            exp_petal = exp_fibermap['PETAL_LOC']
+            exp_fiber = exp_fibermap['FIBER']
+            exp_night = exp_fibermap['NIGHT']
+            exp_tileid = exp_fibermap['TILEID']
+            metadata_dict = {'EXP_PETAL': exp_petal,
+                            'EXP_TILEID': exp_tileid,
+                            'EXP_NIGHT': exp_night,
+                            'EXP_EXPID': exp_expid,
+                            'EXP_FIBER': exp_fiber,
+                            'EXP_TARGETID': exp_targetid}
+        else:
+            #the indexing in this case is because the targetid is indexed the same way below
+            expid = fibermap['EXPID'][index_unique]
+            petal = fibermap['PETAL_LOC'][index_unique]
+            fiber = fibermap['FIBER'][index_unique]
+            night = fibermap['NIGHT'][index_unique]
+            tileid = fibermap['TILEID'][index_unique]
+
+            metadata_dict = {'PETAL': petal,
+                            'TILEID': tileid,
+                            'NIGHT': night,
+                            'EXPID': expid,
+                            'FIBER': fiber}
+        
         forests_by_targetid, num_data = self.format_data(
             catalogue,
             spectrographs_data,
             fibermap["TARGETID"][index_unique],
-            reso_from_truth=reso_from_truth)
+            reso_from_truth=reso_from_truth,
+            metadata_dict=metadata_dict)
 
         return forests_by_targetid, num_data

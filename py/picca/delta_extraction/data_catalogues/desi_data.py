@@ -352,7 +352,8 @@ class DesiDataFileHandler():
                     catalogue,
                     spectrographs_data,
                     targetid_spec,
-                    reso_from_truth=False):
+                    reso_from_truth=False,
+                    metadata_dict=None):
         """After data has been read, format it into DesiForest instances
 
         Instances will be DesiForest or DesiPk1dForest depending on analysis_type
@@ -399,6 +400,52 @@ class DesiDataFileHandler():
                         f"for {targetid}")
             else:
                 w_t = w_t[0]
+            if metadata_dict is not None and not self.use_non_coadded_spectra:
+                exp_w_t = np.where(metadata_dict["EXP_TARGETID"] == targetid)[0]
+                
+                expid = metadata_dict["EXP_EXPID"][exp_w_t]
+                night = metadata_dict["EXP_NIGHT"][exp_w_t]
+                petal = metadata_dict["EXP_PETAL"][exp_w_t]
+                tileid = metadata_dict["EXP_TILEID"][exp_w_t]
+                fiber = metadata_dict["EXP_FIBER"][exp_w_t]
+                metadata_dict_targetid = {'expid': expid,
+                                          'night': night,
+                                          'petal': petal,
+                                          'fiber': fiber,
+                                          'tileid': tileid}
+            elif metadata_dict is not None and self.use_non_coadded_spectra:
+                try:
+                    len(metadata_dict["EXPID"][w_t])
+                    expid = metadata_dict["EXPID"][w_t]
+                except TypeError:
+                    expid = [metadata_dict["EXPID"][w_t]]
+                try:
+                    len(metadata_dict["NIGHT"][w_t])
+                    night = metadata_dict["NIGHT"][w_t]
+                except TypeError:
+                    night = [metadata_dict["NIGHT"][w_t]]
+                try:
+                    len(metadata_dict["PETAL"][w_t])
+                    petal = metadata_dict["PETAL"][w_t]
+                except TypeError:
+                    petal = [metadata_dict["PETAL"][w_t]]
+                try:
+                    len(metadata_dict["FIBER"][w_t])
+                    fiber = metadata_dict["FIBER"][w_t]
+                except TypeError:
+                    fiber = [metadata_dict["FIBER"][w_t]]
+                try:
+                    len(metadata_dict["TILEID"][w_t])
+                    tileid = metadata_dict["TILEID"][w_t]
+                except TypeError:
+                    tileid = [metadata_dict["TILEID"][w_t]]
+                metadata_dict_targetid = {'expid': expid,
+                                          'night': night,
+                                          'petal': petal,
+                                          'fiber': fiber,
+                                          'tileid': tileid}
+            else:
+                metadata_dict_targetid = None
             # Construct DesiForest instance
             # Fluxes from the different spectrographs will be coadded
             for spec in spectrographs_data.values():
@@ -431,7 +478,8 @@ class DesiDataFileHandler():
                                 ivar_i,
                                 w_t,
                                 reso_from_truth,
-                                num_data)
+                                num_data,
+                                metadata_dict=metadata_dict_targetid)
                 else:
                     forests_by_targetid, num_data  = self.update_forest_dictionary(
                             forests_by_targetid,
@@ -443,7 +491,8 @@ class DesiDataFileHandler():
                             ivar,
                             w_t,
                             reso_from_truth,
-                            num_data)
+                            num_data,
+                            metadata_dict=metadata_dict_targetid)
         return forests_by_targetid, num_data
 
     def update_forest_dictionary(self,
@@ -456,7 +505,8 @@ class DesiDataFileHandler():
                                  ivar,
                                  w_t,
                                  reso_from_truth,
-                                 num_data):
+                                 num_data,
+                                 metadata_dict=None):
         """Add new forests to the current forest dictonary
 
         Arguments
@@ -508,6 +558,8 @@ class DesiDataFileHandler():
             "dec": row['DEC'],
             "z": row['Z'],
         }
+        if metadata_dict is not None:
+            args.update(metadata_dict)
         args["log_lambda"] = np.log10(spec['WAVELENGTH'])
 
 

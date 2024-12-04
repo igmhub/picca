@@ -122,6 +122,8 @@ class DesiHealpixFast(DesiData):
                 self.forests = combine_results(imap_it)
                 t1 = time.time()
                 self.logger.progress(f"Time spent meerging threads: {t1-t0}")
+        else:
+            raise NotImplementedError('fast healpix reading is not implemented for analyses with "num processors=1"')
 
         if len(self.forests) == 0:
             raise DataError("No quasars found, stopping here")
@@ -198,6 +200,7 @@ class DesiHealpixFileHandler():
             return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
+        exp_fibermap = hdul['EXP_FIBERMAP'].read()
 
         colors = ["B", "R"]
         if "Z_FLUX" in hdul:
@@ -222,10 +225,17 @@ class DesiHealpixFileHandler():
             # It should be there by construction
             targetid = row["TARGETID"]
             w_t = np.where(fibermap["TARGETID"] == targetid)[0]
+            w_t_exp = np.where(exp_fibermap["TARGETID"] == targetid)[0]
             if len(w_t) == 0:
                 self.logger.warning(
                     f"Error reading {targetid}. Ignoring object")
                 continue
+
+            nights=exp_fibermap["NIGHT"][w_t_exp]
+            petals=exp_fibermap["PETAL_LOC"][w_t_exp]
+            fibers=exp_fibermap["FIBER"][w_t_exp]
+            tileids=exp_fibermap["TILEID"][w_t_exp]
+            expids=exp_fibermap["EXPID"][w_t_exp]
 
             w_t = w_t[0]
             # Construct DesiForest instance
@@ -241,6 +251,11 @@ class DesiHealpixFileHandler():
                 "dec": row['DEC'],
                 "z": row['Z'],
                 "log_lambda": log_lambda,
+                "night": nights,
+                "petal": petals,
+                "fiber": fibers,
+                "tileid": tileids,
+                "expid": expids,
             }
             forest = DesiForest(**args)
             forest.rebin()
