@@ -106,12 +106,11 @@ class DesiForest(Forest):
             raise AstronomicalObjectError("Error coadding DesiForest. Expected "
                                           "DesiForest instance in other. Found: "
                                           f"{type(other).__name__}")
-        if not any((other.expid==e).all() for e in self.expid): #check if the same set of expids is already in the list
-            self.night += other.night
-            self.petal += other.petal
-            self.tileid += other.tileid
-            self.expid += other.expid
-            self.fiber += other.fiber
+        self.night += other.night
+        self.petal += other.petal
+        self.tileid += other.tileid
+        self.expid += other.expid
+        self.fiber += other.fiber
         super().coadd(other)
 
     def get_header(self):
