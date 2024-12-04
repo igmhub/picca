@@ -402,6 +402,7 @@ class DesiDataFileHandler():
                 w_t = w_t[0]
             if metadata_dict is not None and not self.use_non_coadded_spectra:
                 exp_w_t = np.where(metadata_dict["EXP_TARGETID"] == targetid)[0]
+                
                 expid = "-".join(str(e) for e in metadata_dict["EXP_EXPID"][exp_w_t])
                 night = "-".join(str(e) for e in metadata_dict["EXP_NIGHT"][exp_w_t])
                 petal = "-".join(str(e) for e in metadata_dict["EXP_PETAL"][exp_w_t])
@@ -413,11 +414,26 @@ class DesiDataFileHandler():
                                           'fiber': fiber,
                                           'tile': tile}
             elif metadata_dict is not None and self.use_non_coadded_spectra:
-                expid = "-".join(str(e) for e in metadata_dict["EXPID"][w_t])
-                night = "-".join(str(e) for e in metadata_dict["NIGHT"][w_t])
-                petal = "-".join(str(e) for e in metadata_dict["PETAL"][w_t])
-                fiber = "-".join(str(e) for e in metadata_dict["FIBER"][w_t])
-                tile = "-".join(str(e) for e in metadata_dict["TILE"][w_t])
+                try:
+                    expid = "-".join(str(e) for e in metadata_dict["EXPID"][w_t])
+                except TypeError:
+                    expid = str(metadata_dict["EXPID"][w_t])
+                try:
+                    night = "-".join(str(e) for e in metadata_dict["NIGHT"][w_t])
+                except TypeError:
+                    night = str(metadata_dict["NIGHT"][w_t])
+                try:
+                    petal = "-".join(str(e) for e in metadata_dict["PETAL"][w_t])
+                except TypeError:
+                    petal = str(metadata_dict["PETAL"][w_t])
+                try:
+                    fiber = "-".join(str(e) for e in metadata_dict["FIBER"][w_t])
+                except TypeError:
+                    fiber = str(metadata_dict["FIBER"][w_t])
+                try:
+                    tile = "-".join(str(e) for e in metadata_dict["TILE"][w_t])
+                except TypeError:
+                    tile = str(metadata_dict["TILE"][w_t])
                 metadata_dict_targetid = {'expid': expid,
                                           'night': night,
                                           'petal': petal,
