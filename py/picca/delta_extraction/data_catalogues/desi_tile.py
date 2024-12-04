@@ -232,7 +232,8 @@ class DesiTileFileHandler(DesiDataFileHandler):
             return {}, 0
 
         fibermap = hdul['FIBERMAP'].read()
-        exp_fibermap = hdul['EXP_FIBERMAP'].read()
+        if not self.use_non_coadded_spectra:
+            exp_fibermap = hdul['EXP_FIBERMAP'].read()
 
 
         ra = fibermap['TARGET_RA']
@@ -253,7 +254,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
 
         petal_spec = fibermap['PETAL_LOC'][0]
 
-        if "coadd" in filename:
+        if not self.use_non_coadded_spectra:
             exp_targetid = exp_fibermap['TARGETID']
             exp_expid = exp_fibermap['EXPID']
             exp_petal = exp_fibermap['PETAL_LOC']
@@ -266,7 +267,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
                             'EXP_EXPID': exp_expid,
                             'EXP_FIBER': exp_fiber,
                             'EXP_TARGETID': exp_targetid}
-        elif "spectra" in filename:
+        else:
             expid = fibermap['EXPID']
             petal = fibermap['PETAL_LOC']
             fiber = fibermap['FIBER']
@@ -278,8 +279,6 @@ class DesiTileFileHandler(DesiDataFileHandler):
                             'NIGHT': night,
                             'EXPID': expid,
                             'FIBER': fiber}
-        else:
-            metadata_dict=None
 
 
         spectrographs_data = {}

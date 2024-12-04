@@ -208,7 +208,8 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
-        exp_fibermap = hdul['EXP_FIBERMAP'].read()
+        if not self.use_non_coadded_spectra:
+            exp_fibermap = hdul['EXP_FIBERMAP'].read()
 
         index_unique = np.full(fibermap.shape,True)
         if self.uniquify_night_targetid:
@@ -277,7 +278,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             hdul_truth.close()
 
         
-        if "coadd" in filename:
+        if not self.use_non_coadded_spectra:
             exp_targetid = exp_fibermap['TARGETID']
             exp_expid = exp_fibermap['EXPID']
             exp_petal = exp_fibermap['PETAL_LOC']
@@ -290,7 +291,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
                             'EXP_EXPID': exp_expid,
                             'EXP_FIBER': exp_fiber,
                             'EXP_TARGETID': exp_targetid}
-        elif "spectra" in filename:
+        else:
             #the indexing in this case is because the targetid is indexed the same way below
             expid = fibermap['EXPID'][index_unique]
             petal = fibermap['PETAL_LOC'][index_unique]
@@ -303,9 +304,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
                             'NIGHT': night,
                             'EXPID': expid,
                             'FIBER': fiber}
-        else:
-            metadata_dict=None
-
+        
         forests_by_targetid, num_data = self.format_data(
             catalogue,
             spectrographs_data,
