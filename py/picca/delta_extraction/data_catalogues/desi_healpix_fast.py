@@ -231,11 +231,11 @@ class DesiHealpixFileHandler():
                     f"Error reading {targetid}. Ignoring object")
                 continue
 
-            nights="-".join(str(e) for e in exp_fibermap["NIGHT"][w_t_exp])
-            petals="-".join(str(e) for e in exp_fibermap["PETAL_LOC"][w_t_exp])
-            fibers="-".join(str(e) for e in exp_fibermap["FIBER"][w_t_exp])
-            tileids="-".join(str(e) for e in exp_fibermap["TILEID"][w_t_exp])
-            expids="-".join(str(e) for e in exp_fibermap["EXPID"][w_t_exp])
+            nights=exp_fibermap["NIGHT"][w_t_exp]
+            petals=exp_fibermap["PETAL_LOC"][w_t_exp]
+            fibers=exp_fibermap["FIBER"][w_t_exp]
+            tileids=exp_fibermap["TILEID"][w_t_exp]
+            expids=exp_fibermap["EXPID"][w_t_exp]
 
             w_t = w_t[0]
             # Construct DesiForest instance

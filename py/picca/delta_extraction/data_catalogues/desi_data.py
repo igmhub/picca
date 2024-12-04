@@ -403,11 +403,11 @@ class DesiDataFileHandler():
             if metadata_dict is not None and not self.use_non_coadded_spectra:
                 exp_w_t = np.where(metadata_dict["EXP_TARGETID"] == targetid)[0]
                 
-                expid = "-".join(str(e) for e in metadata_dict["EXP_EXPID"][exp_w_t])
-                night = "-".join(str(e) for e in metadata_dict["EXP_NIGHT"][exp_w_t])
-                petal = "-".join(str(e) for e in metadata_dict["EXP_PETAL"][exp_w_t])
-                fiber = "-".join(str(e) for e in metadata_dict["EXP_FIBER"][exp_w_t])
-                tileid = "-".join(str(e) for e in metadata_dict["EXP_TILEID"][exp_w_t])
+                expid = metadata_dict["EXP_EXPID"][exp_w_t]
+                night = metadata_dict["EXP_NIGHT"][exp_w_t]
+                petal = metadata_dict["EXP_PETAL"][exp_w_t]
+                tileid = metadata_dict["EXP_TILEID"][exp_w_t]
+                fiber = metadata_dict["EXP_FIBER"][exp_w_t]
                 metadata_dict_targetid = {'expid': expid,
                                           'night': night,
                                           'petal': petal,
@@ -415,25 +415,30 @@ class DesiDataFileHandler():
                                           'tileid': tileid}
             elif metadata_dict is not None and self.use_non_coadded_spectra:
                 try:
-                    expid = "-".join(str(e) for e in metadata_dict["EXPID"][w_t])
+                    len(metadata_dict["EXPID"][w_t])
+                    expid = metadata_dict["EXPID"][w_t]
                 except TypeError:
-                    expid = str(metadata_dict["EXPID"][w_t])
+                    expid = [metadata_dict["EXPID"][w_t]]
                 try:
-                    night = "-".join(str(e) for e in metadata_dict["NIGHT"][w_t])
+                    len(metadata_dict["NIGHT"][w_t])
+                    night = metadata_dict["NIGHT"][w_t]
                 except TypeError:
-                    night = str(metadata_dict["NIGHT"][w_t])
+                    night = [metadata_dict["NIGHT"][w_t]]
                 try:
-                    petal = "-".join(str(e) for e in metadata_dict["PETAL"][w_t])
+                    len(metadata_dict["PETAL"][w_t])
+                    petal = metadata_dict["PETAL"][w_t]
                 except TypeError:
-                    petal = str(metadata_dict["PETAL"][w_t])
+                    petal = [metadata_dict["PETAL"][w_t]]
                 try:
-                    fiber = "-".join(str(e) for e in metadata_dict["FIBER"][w_t])
+                    len(metadata_dict["FIBER"][w_t])
+                    fiber = metadata_dict["FIBER"][w_t]
                 except TypeError:
-                    fiber = str(metadata_dict["FIBER"][w_t])
+                    fiber = [metadata_dict["FIBER"][w_t]]
                 try:
-                    tileid = "-".join(str(e) for e in metadata_dict["TILEID"][w_t])
+                    len(metadata_dict["TILEID"][w_t])
+                    tileid = metadata_dict["TILEID"][w_t]
                 except TypeError:
-                    tileid = str(metadata_dict["TILEID"][w_t])
+                    tileid = [metadata_dict["TILEID"][w_t]]
                 metadata_dict_targetid = {'expid': expid,
                                           'night': night,
                                           'petal': petal,
