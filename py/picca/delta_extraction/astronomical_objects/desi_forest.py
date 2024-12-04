@@ -106,11 +106,11 @@ class DesiForest(Forest):
             raise AstronomicalObjectError("Error coadding DesiForest. Expected "
                                           "DesiForest instance in other. Found: "
                                           f"{type(other).__name__}")
-        self.night.extend(*other.night)
-        self.petal.extend(*other.petal)
-        self.tileid.extend(*other.tileid)
-        self.expid.extend(*other.expid)
-        self.fiber.extend(*other.fiber)
+        self.night += other.night
+        self.petal += other.petal
+        self.tileid += other.tileid
+        self.expid += other.expid
+        self.fiber += other.fiber
         super().coadd(other)
 
     def get_header(self):
@@ -172,11 +172,11 @@ class DesiForest(Forest):
         metadata = super().get_metadata()
         metadata += [
             self.targetid,
-            "-".join(str(night) for night in self.night),
-            "-".join(str(petal) for petal in self.petal),
-            "-".join(str(tileid) for tileid in self.tileid),
-            "-".join(str(expid) for expid in self.expid),
-            "-".join(str(fiber) for fiber in self.fiber),
+            "-".join(str(n) for night in self.night for n in night),
+            "-".join(str(p) for petal in self.petal for p in petal),
+            "-".join(str(t) for tileid in self.tileid for t in tileid),
+            "-".join(str(e) for expid in self.expid for e in expid),
+            "-".join(str(f) for fiber in self.fiber for f in fiber),
         ]
         return metadata
 
