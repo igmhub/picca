@@ -37,7 +37,7 @@ class DesiForest(Forest):
     targetid: int
     Targetid of the object
 
-    tile: list of int
+    tileid: list of int
     Identifier of the tile used in the observation. None for no info
     """
     def __init__(self, **kwargs):
@@ -68,9 +68,9 @@ class DesiForest(Forest):
                                           "Missing variable 'targetid'")
         del kwargs["targetid"]
 
-        self.tile = []
+        self.tileid = []
         if kwargs.get("tileid") is not None:
-            self.tile.append(kwargs.get("tileid"))
+            self.tileid.append(kwargs.get("tileid"))
             del kwargs["tileid"]
 
         self.fiber = []
@@ -108,7 +108,7 @@ class DesiForest(Forest):
                                           f"{type(other).__name__}")
         self.night += other.night
         self.petal += other.petal
-        self.tile += other.tile
+        self.tileid += other.tileid
         self.expid += other.expid
         self.fiber += other.fiber
         super().coadd(other)
@@ -141,8 +141,8 @@ class DesiForest(Forest):
                 'comment': 'Observation petal(s)'
             },
             {
-                'name': 'TILE',
-                'value': "-".join(str(tile) for tile in self.tile),
+                'name': 'TILEID',
+                'value': "-".join(str(tileid) for tileid in self.tileid),
                 'comment': 'Observation tile(s)'
             },
             {
@@ -174,7 +174,7 @@ class DesiForest(Forest):
             self.targetid,
             "-".join(str(night) for night in self.night),
             "-".join(str(petal) for petal in self.petal),
-            "-".join(str(tile) for tile in self.tile),
+            "-".join(str(tileid) for tileid in self.tileid),
             "-".join(str(expid) for expid in self.expid),
             "-".join(str(fiber) for fiber in self.fiber),
         ]

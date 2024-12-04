@@ -407,12 +407,12 @@ class DesiDataFileHandler():
                 night = "-".join(str(e) for e in metadata_dict["EXP_NIGHT"][exp_w_t])
                 petal = "-".join(str(e) for e in metadata_dict["EXP_PETAL"][exp_w_t])
                 fiber = "-".join(str(e) for e in metadata_dict["EXP_FIBER"][exp_w_t])
-                tile = "-".join(str(e) for e in metadata_dict["EXP_TILE"][exp_w_t])
+                tileid = "-".join(str(e) for e in metadata_dict["EXP_TILEID"][exp_w_t])
                 metadata_dict_targetid = {'expid': expid,
                                           'night': night,
                                           'petal': petal,
                                           'fiber': fiber,
-                                          'tile': tile}
+                                          'tileid': tileid}
             elif metadata_dict is not None and self.use_non_coadded_spectra:
                 try:
                     expid = "-".join(str(e) for e in metadata_dict["EXPID"][w_t])
@@ -431,14 +431,14 @@ class DesiDataFileHandler():
                 except TypeError:
                     fiber = str(metadata_dict["FIBER"][w_t])
                 try:
-                    tile = "-".join(str(e) for e in metadata_dict["TILE"][w_t])
+                    tileid = "-".join(str(e) for e in metadata_dict["TILEID"][w_t])
                 except TypeError:
-                    tile = str(metadata_dict["TILE"][w_t])
+                    tileid = str(metadata_dict["TILEID"][w_t])
                 metadata_dict_targetid = {'expid': expid,
                                           'night': night,
                                           'petal': petal,
                                           'fiber': fiber,
-                                          'tile': tile}
+                                          'tileid': tileid}
             else:
                 metadata_dict_targetid = None
             # Construct DesiForest instance

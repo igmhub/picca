@@ -284,9 +284,9 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             exp_petal = exp_fibermap['PETAL_LOC']
             exp_fiber = exp_fibermap['FIBER']
             exp_night = exp_fibermap['NIGHT']
-            exp_tile = exp_fibermap['TILEID']
+            exp_tileid = exp_fibermap['TILEID']
             metadata_dict = {'EXP_PETAL': exp_petal,
-                            'EXP_TILE': exp_tile,
+                            'EXP_TILEID': exp_tileid,
                             'EXP_NIGHT': exp_night,
                             'EXP_EXPID': exp_expid,
                             'EXP_FIBER': exp_fiber,
@@ -297,10 +297,10 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             petal = fibermap['PETAL_LOC'][index_unique]
             fiber = fibermap['FIBER'][index_unique]
             night = fibermap['NIGHT'][index_unique]
-            tile = fibermap['TILEID'][index_unique]
+            tileid = fibermap['TILEID'][index_unique]
 
             metadata_dict = {'PETAL': petal,
-                            'TILE': tile,
+                            'TILEID': tileid,
                             'NIGHT': night,
                             'EXPID': expid,
                             'FIBER': fiber}
