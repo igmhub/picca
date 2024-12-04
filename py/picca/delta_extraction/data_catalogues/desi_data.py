@@ -413,11 +413,11 @@ class DesiDataFileHandler():
                                           'fiber': fiber,
                                           'tile': tile}
             elif metadata_dict is not None and self.use_non_coadded_spectra:
-                expid = str(metadata_dict["EXPID"][w_t])
-                night = str(metadata_dict["NIGHT"][w_t])
-                petal = str(metadata_dict["PETAL"][w_t])
-                fiber = str(metadata_dict["FIBER"][w_t])
-                tile = str(metadata_dict["TILE"][w_t])
+                expid = "-".join(str(e) for e in metadata_dict["EXPID"][w_t])
+                night = "-".join(str(e) for e in metadata_dict["NIGHT"][w_t])
+                petal = "-".join(str(e) for e in metadata_dict["PETAL"][w_t])
+                fiber = "-".join(str(e) for e in metadata_dict["FIBER"][w_t])
+                tile = "-".join(str(e) for e in metadata_dict["TILE"][w_t])
                 metadata_dict_targetid = {'expid': expid,
                                           'night': night,
                                           'petal': petal,
