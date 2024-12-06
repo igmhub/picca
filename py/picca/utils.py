@@ -491,3 +491,33 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     corr = 1. / (10.**(0.4 * curve))
 
     return corr
+
+
+def get_qso_weights(z_qso_cat, z_ref, z_evol, zbins=1000):
+    """Computes the stacked QSO weights for the fast metal matrix computation
+
+    Parameters
+    ----------
+    z_qso_cat : array
+        Array of quasar redshifts read from the QSO catalog
+    z_ref : float
+        Reference redshift
+    z_evol : float
+        Redshift evolution parameter
+    zbins : int, optional
+        Number of bins in the histogram, by default 1000
+
+    Returns
+    -------
+    (array, array)
+        QSO redshift bins and their corresponding weights
+    """
+    weights_qso_cat = ((1. + z_qso_cat) / (1. + z_ref))**(z_evol - 1.)
+
+    histo_w, zbins = np.histogram(z_qso_cat, bins=zbins, weights=weights_qso_cat)
+    histo_wz, _ = np.histogram(z_qso_cat, bins=zbins, weights=weights_qso_cat*z_qso_cat)
+    selection = histo_w > 0
+    z_qso = histo_wz[selection] / histo_w[selection]  # weighted mean in bins
+    weights_qso = histo_w[selection]
+
+    return z_qso, weights_qso

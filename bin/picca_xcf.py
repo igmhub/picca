@@ -15,7 +15,7 @@ import fitsio
 
 from picca import constants, xcf, io, prep_del, utils
 from picca.data import Forest
-from picca.utils import userprint
+from picca.utils import userprint, get_qso_weights
 
 
 def corr_func(healpixs):
@@ -389,6 +389,10 @@ def main(cmdargs):
     z[w] /= weights_list.sum(axis=0)[w]
     num_pairs = num_pairs_list.sum(axis=0)
 
+    # Get stacked QSO weights for metal matrix computations
+    z_qso_cat = np.array([qso.z for qso in healpix for healpix in xcf.objs.values()])
+    z_qso, weights_qso = get_qso_weights(z_qso_cat, args.z_ref, args.z_evol_obj)
+
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [{
         'name': 'RPMIN',
@@ -465,6 +469,13 @@ def main(cmdargs):
                   comment=['Healpix index', 'Sum of weight', 'Correlation'],
                   header=header2,
                   extname='COR')
+
+    header3 = [{}]
+    results.write([z_qso, weights_qso],
+                  names=['Z_BIN', 'QSO_WEIGHTS'],
+                  comment=['Redshift', 'QSO weights'],
+                  header=header3,
+                  extname='QSO_WEIGHTS')
 
     results.close()
 
