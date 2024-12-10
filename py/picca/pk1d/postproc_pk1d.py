@@ -21,10 +21,16 @@ import fitsio
 import numpy as np
 from astropy.stats import bootstrap
 from astropy.table import Table, vstack
+from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
+from scipy.signal import savgol_filter
 from scipy.stats import binned_statistic
+
 from picca.constants import ABSORBER_IGM, SPEED_LIGHT
-from picca.pk1d.utils import MEANPK_FITRANGE_SNR, fitfunc_variance_pk1d
+from picca.pk1d.utils import (
+    MEANPK_FITRANGE_SNR,
+    fitfunc_variance_pk1d,
+)
 from picca.utils import userprint
 
 
@@ -432,14 +438,11 @@ def compute_mean_pk1d(
             cov_table["k1"][index_cov[0]:index_cov[1]] = k1_array
             cov_table["k2"][index_cov[0]:index_cov[1]] = k2_array
             cov_table["N"][index_cov[0]:index_cov[1]] = n_array
-            index_mean = mean_p1d_table_regular_slice(izbin, nbins_k)
-            mean_pk = mean_p1d_table["meanPk"][index_mean[0] : index_mean[1]]
-            error_pk = mean_p1d_table["errorPk"][index_mean[0] : index_mean[1]]
 
             if n_chunks[izbin] == 0:
-                p1d_weights_z, covariance_weights_z, p1d_groups_z = [], [], []
+                p1d_weights_z, p1d_groups_z = [], []
             else:
-                p1d_weights_z, covariance_weights_z, p1d_groups_z = compute_p1d_groups(
+                p1d_weights_z, p1d_groups_z = compute_p1d_groups(
                     weight_method,
                     nbins_k,
                     zbin_edges,
@@ -452,10 +455,7 @@ def compute_mean_pk1d(
 
             p1d_groups.append(
                 [
-                    mean_pk,
-                    error_pk,
                     p1d_weights_z,
-                    covariance_weights_z,
                     p1d_groups_z,
                 ]
             )
@@ -463,7 +463,6 @@ def compute_mean_pk1d(
         compute_and_fill_covariance(
             compute_covariance,
             compute_bootstrap,
-            weight_method,
             nbins_k,
             nbins_z,
             p1d_groups,
@@ -536,7 +535,7 @@ def fill_average_pk(
             index_zbin_array,
             n_array,
             mean_array,
-            error_array,
+            variance_array,
             min_array,
             max_array,
             median_array,
@@ -549,7 +548,7 @@ def fill_average_pk(
         mean_p1d_table["N"][index_mean[0]:index_mean[1]] = n_array
         for icol, col in enumerate(p1d_table_cols):
             mean_p1d_table["mean" + col][index_mean[0]:index_mean[1]] = mean_array[icol]
-            mean_p1d_table["error" + col][index_mean[0]:index_mean[1]] = error_array[icol]
+            mean_p1d_table["error" + col][index_mean[0]:index_mean[1]] = np.sqrt(variance_array[icol])
             mean_p1d_table["min" + col][index_mean[0]:index_mean[1]] = min_array[icol]
             mean_p1d_table["max" + col][index_mean[0]:index_mean[1]] = max_array[icol]
             if not nomedians:
@@ -624,7 +623,7 @@ def compute_average_pk_redshift(
     index_zbin_array
     n_array
     mean_array
-    error_array
+    variance_array
     min_array
     max_array
     median_array
@@ -634,7 +633,7 @@ def compute_average_pk_redshift(
     zbin_array = np.zeros(nbins_k)
     index_zbin_array = np.zeros(nbins_k, dtype=int)
     mean_array = []
-    error_array = []
+    variance_array = []
     min_array = []
     max_array = []
     if not nomedians:
@@ -648,7 +647,7 @@ def compute_average_pk_redshift(
 
     for col in p1d_table_cols:
         mean_array.append(np.zeros(nbins_k))
-        error_array.append(np.zeros(nbins_k))
+        variance_array.append(np.zeros(nbins_k))
         min_array.append(np.zeros(nbins_k))
         max_array.append(np.zeros(nbins_k))
         if not nomedians:
@@ -660,7 +659,7 @@ def compute_average_pk_redshift(
         n_array[:] = 0
         for icol, col in enumerate(p1d_table_cols):
             mean_array[icol][:] = np.nan
-            error_array[icol][:] = np.nan
+            variance_array[icol][:] = np.nan
             min_array[icol][:] = np.nan
             max_array[icol][:] = np.nan
             if not nomedians:
@@ -673,7 +672,7 @@ def compute_average_pk_redshift(
             index_zbin_array,
             n_array,
             mean_array,
-            error_array,
+            variance_array,
             min_array,
             max_array,
             median_array,
@@ -829,15 +828,12 @@ def compute_average_pk_redshift(
                     mean = np.average(data_values, weights=weights)
                 if apply_z_weights:
                     # Analytic expression for the re-weighted average:
-                    error = np.sqrt(np.sum(weights_col * redshift_weights)) / np.sum(
-                        weights_col
+                    variance = (
+                        np.sum(weights_col * redshift_weights)
+                        / np.sum(weights_col) ** 2
                     )
                 else:
-                    error = np.sqrt(1.0 / np.sum(weights_col))
-                    # Variance estimator derived by Jean-Marc, we keep the estimated one.
-                    # error = np.sqrt(((np.sum(weights)**2 / np.sum(weights**2)) - 1 )**(-1) * (
-                    # ( np.sum(weights**2 * data_values**2) / np.sum(weights**2) ) - (
-                    # np.sum(weights * data_values)/ np.sum(weights) )**2 ))
+                    variance = 1 / np.sum(weights_col)
                 if col == "Pk":
                     standard_dev = np.concatenate(
                         [
@@ -857,13 +853,13 @@ def compute_average_pk_redshift(
                 if apply_z_weights:
                     mean = np.average(p1d_table[col][select], weights=redshift_weights)
                     # simple analytic expression:
-                    error = np.std(p1d_table[col][select]) * (
+                    variance = (np.std(p1d_table[col][select]) * (
                         np.sqrt(np.sum(redshift_weights**2)) / np.sum(redshift_weights)
-                    )
+                    ))**2
                 else:
                     mean = np.mean(p1d_table[col][select])
                     # unbiased estimate: num_chunks-1
-                    error = np.std(p1d_table[col][select]) / np.sqrt(num_chunks - 1)
+                    variance = (np.std(p1d_table[col][select]) / np.sqrt(num_chunks - 1))**2
 
             else:
                 raise ValueError("Option for 'weight_method' argument not found")
@@ -871,7 +867,7 @@ def compute_average_pk_redshift(
             minimum = np.min((p1d_table[col][select]))
             maximum = np.max((p1d_table[col][select]))
             mean_array[icol][ikbin] = mean
-            error_array[icol][ikbin] = error
+            variance_array[icol][ikbin] = variance
             min_array[icol][ikbin] = minimum
             max_array[icol][ikbin] = maximum
             if not nomedians:
@@ -882,7 +878,7 @@ def compute_average_pk_redshift(
         index_zbin_array,
         n_array,
         mean_array,
-        error_array,
+        variance_array,
         min_array,
         max_array,
         median_array,
@@ -893,7 +889,6 @@ def compute_average_pk_redshift(
 def compute_and_fill_covariance(
     compute_covariance,
     compute_bootstrap,
-    weight_method,
     nbins_k,
     nbins_z,
     p1d_groups,
@@ -911,9 +906,6 @@ def compute_and_fill_covariance(
 
     compute_bootstrap: Bool
     If True, compute statistical covariance using a simple bootstrap method.
-
-    weight_method: str,
-    Method to weight the data.
 
     nbins_k (int):
     Number of k bins.
@@ -943,7 +935,6 @@ def compute_and_fill_covariance(
 
         func = partial(
             compute_cov,
-            weight_method,
             nbins_k,
         )
         if number_worker == 1:
@@ -961,7 +952,7 @@ def compute_and_fill_covariance(
         userprint("Computing covariance matrix with bootstrap method")
         p1d_groups_bootstrap = []
         for izbin in range(nbins_z):
-            number_sub_forests = len(p1d_groups[izbin][2])
+            number_sub_forests = len(p1d_groups[izbin][0])
             if number_sub_forests > 0:
                 bootid = np.array(
                     bootstrap(np.arange(number_sub_forests), number_bootstrap)
@@ -972,31 +963,21 @@ def compute_and_fill_covariance(
             for iboot in range(number_bootstrap):
                 if bootid[iboot] is None:
                     (
-                        mean_pk,
-                        error_pk,
                         p1d_weights_z,
-                        covariance_weights_z,
                         p1d_groups_z,
-                    ) = ([], [], [], [], [])
+                    ) = ([], [])
                 else:
-                    mean_pk = p1d_groups[izbin][0]
-                    error_pk = p1d_groups[izbin][1]
-                    p1d_weights_z = p1d_groups[izbin][2][bootid[iboot]]
-                    covariance_weights_z = p1d_groups[izbin][3][bootid[iboot]]
-                    p1d_groups_z = p1d_groups[izbin][4][bootid[iboot]]
+                    p1d_weights_z = p1d_groups[izbin][0][bootid[iboot]]
+                    p1d_groups_z = p1d_groups[izbin][1][bootid[iboot]]
                 p1d_groups_bootstrap.append(
                     [
-                        mean_pk,
-                        error_pk,
                         p1d_weights_z,
-                        covariance_weights_z,
                         p1d_groups_z,
                     ]
                 )
 
         func = partial(
             compute_cov,
-            weight_method,
             nbins_k,
         )
         if number_worker == 1:
@@ -1012,8 +993,8 @@ def compute_and_fill_covariance(
                 boot_cov.append(covariance_array)
 
             index_cov = cov_table_regular_slice(izbin, nbins_k)
-            cov_table["boot_covariance"][index_cov[0]:index_cov[1]] = np.mean(boot_cov, axis=0)
-            cov_table["error_boot_covariance"][index_cov[0]:index_cov[1]] = np.std(boot_cov, axis=0)
+            cov_table["boot_covariance"][index_cov[0]:index_cov[1]] = np.nanmean(boot_cov, axis=0)
+            cov_table["error_boot_covariance"][index_cov[0]:index_cov[1]] = np.nanstd(boot_cov, axis=0)
 
 
 def compute_p1d_groups(
@@ -1060,9 +1041,6 @@ def compute_p1d_groups(
     p1d_weights  (array-like):
     Weights associated with p1d pixels for all subforest, used in the calculation of covariance.
 
-    covariance_weights (array-like):
-    Weights for all subforest used inside the main covariance sum.
-
     p1d_groups (array-like):
     Individual p1d pixels grouped in the same wavenumber binning for all subforest
     """
@@ -1104,23 +1082,24 @@ def compute_p1d_groups(
         nbins_k,
     )
     if number_worker == 1:
-        output_cov = [func(*p1d_los) for p1d_los in p1d_los_table]
+        output_group = np.array([func(p1d_los) for p1d_los in p1d_los_table])
     else:
         with Pool(number_worker) as pool:
-            output_cov = np.array(pool.map(func, p1d_los_table))
+            output_group = np.array(pool.map(func, p1d_los_table))
 
     del p1d_los_table
 
-    p1d_weights, covariance_weights, p1d_groups = (
-        output_cov[:, 0, :],
-        output_cov[:, 1, :],
-        output_cov[:, 2, :],
+    p1d_weights, p1d_groups = (
+        output_group[:, 0, :],
+        output_group[:, 1, :],
     )
-    return p1d_weights, covariance_weights, p1d_groups
+    return p1d_weights, p1d_groups
 
 
 def compute_groups_for_one_forest(nbins_k, p1d_los):
     """Compute the P1D groups for one subforest.
+    Since all the P1D have the same weight for sub-forest and k bin,
+    the weigths are equal, but we keep the general shape of the group computation.
 
     Arguments
     ---------
@@ -1135,36 +1114,29 @@ def compute_groups_for_one_forest(nbins_k, p1d_los):
     p1d_weights_id  (array-like):
     Weights associated with p1d pixels for one subforest, used in the calculation of covariance.
 
-    covariance_weights_id (array-like):
-    Weights for one subforest used inside the main covariance sum.
-
     p1d_groups_id (array-like):
     Individual p1d pixels grouped in the same wavenumber binning for one subforest
     """
-    p1d_weights_id = np.zeros(nbins_k)
-    covariance_weights_id = np.zeros(nbins_k)
+    p1d_groups_weights_id = np.zeros(nbins_k)
     p1d_groups_id = np.zeros(nbins_k)
 
+    mask_finite = np.isfinite(p1d_los["pk"])
     for ikbin in range(nbins_k):
-        mask_ikbin = p1d_los["k_index"] == ikbin
+        mask_ikbin = mask_finite & (p1d_los["k_index"] == ikbin)
         number_in_bins = len(mask_ikbin[mask_ikbin])
         if number_in_bins != 0:
-            weight = p1d_los["weight"][mask_ikbin][0]
-            p1d_weights_id[ikbin] = weight
-            covariance_weights_id[ikbin] = weight / number_in_bins
-            p1d_groups_id[ikbin] = np.nansum(
-                p1d_los["pk"][mask_ikbin] * covariance_weights_id[ikbin]
+            weights = p1d_los["weight"][mask_ikbin]
+            pk = p1d_los["pk"][mask_ikbin]
+            p1d_groups_weights_id[ikbin] = np.nansum(weights)
+            p1d_groups_id[ikbin] = np.nansum(weights * pk) / (
+                p1d_groups_weights_id[ikbin]
             )
-    return p1d_weights_id, covariance_weights_id, p1d_groups_id
+    return p1d_groups_weights_id, p1d_groups_id
 
 
 def compute_cov(
-    weight_method,
     nbins_k,
-    mean_pk,
-    error_pk,
     p1d_weights,
-    covariance_weights,
     p1d_groups,
 ):
     """Compute the covariance of a set of 1D power spectra.
@@ -1175,23 +1147,12 @@ def compute_cov(
 
     Arguments
     ---------
-    weight_method: str,
-    Method to weight the data.
 
     nbins_k (int):
     Number of k bins.
 
-    mean_pk (array-like):
-    Mean 1D power spectra, for the considered redshift bin.
-
-    error_pk (array-like):
-    Standard deviation of the 1D power spectra, for the considered redshift bin.
-
     p1d_weights  (array-like):
     Weights associated with p1d pixels for all subforest, used in the calculation of covariance.
-
-    covariance_weights (array-like):
-    Weights for all subforest used inside the main covariance sum.
 
     p1d_groups (array-like):
     Individual p1d pixels grouped in the same wavenumber binning for all subforest
@@ -1205,26 +1166,23 @@ def compute_cov(
     if len(p1d_groups) == 0:
         return np.full(nbins_k * nbins_k, np.nan)
 
-    mean_pk_product = np.outer(mean_pk, mean_pk)
+    mean_pk_from_groups = np.nansum(p1d_weights * p1d_groups, axis=0)/np.nansum(p1d_weights, axis=0)
+    mean_pk_groups_product = np.outer(mean_pk_from_groups, mean_pk_from_groups)
 
     sum_p1d_weights = np.nansum(p1d_weights, axis=0)
     weights_sum_product = np.outer(sum_p1d_weights, sum_p1d_weights)
 
     p1d_groups_product_sum = np.zeros((nbins_k, nbins_k))
-    covariance_weights_product_sum = np.zeros((nbins_k, nbins_k))
     weights_product_sum = np.zeros((nbins_k, nbins_k))
 
     for i, p1d_group in enumerate(p1d_groups):
-        # The summation is done with np.nansum instead of simple addition to not
+        # The summation is done with np.nansum instead of simple addition to not
         # include the NaN that are present in the individual p1d.
         # The summation is not done at the end, to prevent memory overhead.
         p1d_groups_product_sum = np.nansum(
-            [p1d_groups_product_sum, np.outer(p1d_group, p1d_group)], axis=0
-        )
-        covariance_weights_product_sum = np.nansum(
             [
-                covariance_weights_product_sum,
-                np.outer(covariance_weights[i], covariance_weights[i]),
+                p1d_groups_product_sum,
+                np.outer(p1d_weights[i] * p1d_group, p1d_weights[i] * p1d_group),
             ],
             axis=0,
         )
@@ -1232,23 +1190,11 @@ def compute_cov(
             [weights_product_sum, np.outer(p1d_weights[i], p1d_weights[i])], axis=0
         )
 
-    del p1d_groups, covariance_weights, p1d_weights
+    del p1d_groups, p1d_weights
 
     covariance_matrix = ((weights_sum_product /weights_product_sum) - 1)**(-1) * (
-        (p1d_groups_product_sum / covariance_weights_product_sum) - mean_pk_product
+        (p1d_groups_product_sum / weights_product_sum) - mean_pk_groups_product
     )
-
-    # For fit_snr method, due to the SNR fitting scheme used for weighting,
-    # the diagonal of the weigthed sample covariance matrix is not equal
-    # to the error in mean P1D. This is tested on Ohio mocks and data.
-    # We choose to renormalize the whole covariance matrix.
-    if weight_method == "fit_snr":
-        covariance_diag = np.diag(covariance_matrix)
-        covariance_matrix = (
-            covariance_matrix
-            * np.outer(error_pk, error_pk)
-            / np.sqrt(np.outer(covariance_diag, covariance_diag))
-        )
 
     covariance_array = np.ravel(covariance_matrix)
 
