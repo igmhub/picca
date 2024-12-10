@@ -968,12 +968,12 @@ def compute_and_fill_covariance(
                         p1d_weights_z,
                         covariance_weights_z,
                         p1d_groups_z,
-                    ) = ([], [], [], [], [])
+                    ) = ([], [], [], [])
                 else:
                     mean_pk = p1d_groups[izbin][0]
-                    p1d_weights_z = p1d_groups[izbin][2][bootid[iboot]]
-                    covariance_weights_z = p1d_groups[izbin][3][bootid[iboot]]
-                    p1d_groups_z = p1d_groups[izbin][4][bootid[iboot]]
+                    p1d_weights_z = p1d_groups[izbin][1][bootid[iboot]]
+                    covariance_weights_z = p1d_groups[izbin][2][bootid[iboot]]
+                    p1d_groups_z = p1d_groups[izbin][3][bootid[iboot]]
                 p1d_groups_bootstrap.append(
                     [
                         mean_pk,
