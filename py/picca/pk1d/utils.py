@@ -24,6 +24,10 @@ DEFAULT_MAXWAVE_SKYMASK = 9824.0
 DEFAULT_DWAVE_SKYMASK = 0.8
 
 
+# Default values for the smoothing of the error bar
+DEFAULT_ERROR_SMOOTHING_WINDOW = 50
+DEFAULT_ERROR_SMOOTHING_POLYNOMIAL = 5
+
 def fitfunc_variance_pk1d(snr, amp, zero_point):
     """Compute variance
 

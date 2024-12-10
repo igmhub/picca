@@ -212,7 +212,12 @@ def main(cmdargs):
                         default=20,
                         required=False,
                         help='Number of bootstrap iteration used')
-
+    
+    parser.add_argument('--smooth-error',
+                        action='store_true',
+                        default=True,
+                        required=False,
+                        help='Apply a smoothing to the p1d error and covariance diagonal')
 
     args = parser.parse_args(cmdargs)
 
@@ -278,7 +283,8 @@ def main(cmdargs):
                                     ncpu = args.ncpu,
                                     compute_covariance=args.covariance,
                                     compute_bootstrap=args.bootstrap,
-                                    number_bootstrap=args.nbootstrap)
+                                    number_bootstrap=args.nbootstrap,
+                                    smooth_error=args.smooth_error)
 
 
 if __name__ == '__main__':

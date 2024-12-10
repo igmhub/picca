@@ -21,12 +21,21 @@ import fitsio
 import numpy as np
 from astropy.stats import bootstrap
 from astropy.table import Table, vstack
+from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 from scipy.stats import binned_statistic
+from scipy.signal import savgol_filter
 from picca.constants import ABSORBER_IGM, SPEED_LIGHT
-from picca.pk1d.utils import MEANPK_FITRANGE_SNR, fitfunc_variance_pk1d
+from picca.pk1d.utils import (
+    MEANPK_FITRANGE_SNR,
+    fitfunc_variance_pk1d,
+    DEFAULT_ERROR_SMOOTHING_WINDOW,
+    DEFAULT_ERROR_SMOOTHING_POLYNOMIAL,
+)
 from picca.utils import userprint
 
+DEFAULT_ERROR_SMOOTHING_WINDOW = 50
+DEFAULT_ERROR_SMOOTHING_POLYNOMIAL = 5
 
 def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matrices=None):
     """Read Pk1D data from a single file.
@@ -218,6 +227,7 @@ def compute_mean_pk1d(
     compute_bootstrap=False,
     number_bootstrap=50,
     number_worker=8,
+    smooth_error=True,
 ):
     """Compute mean P1D in a set of given (z,k) bins, from individual chunks P1Ds.
 
@@ -268,6 +278,9 @@ def compute_mean_pk1d(
 
     number_worker: int
     Calculations of mean P1Ds and covariances are run parallel over redshift bins.
+
+    smooth_error: Bool
+    Smooth the mean P1D error bar and the diagonal covariance.
 
     Return
     ------
@@ -408,6 +421,7 @@ def compute_mean_pk1d(
         weight_method,
         snrfit_table,
         nomedians,
+        smooth_error,
     )
 
     if compute_covariance or compute_bootstrap:
@@ -491,6 +505,7 @@ def fill_average_pk(
     weight_method,
     snrfit_table,
     nomedians,
+    smooth_error,
 ):
     """Fill the average P1D table for all redshift and k bins.
 
@@ -522,6 +537,9 @@ def fill_average_pk(
     nomedians: bool,
     If True, do not use median values in the fit to the SNR.
 
+    smooth_error: Bool
+    Smooth the mean P1D error bar and the diagonal covariance.
+
     Return
     ------
     None
@@ -533,7 +551,7 @@ def fill_average_pk(
             index_zbin_array,
             n_array,
             mean_array,
-            error_array,
+            variance_array,
             min_array,
             max_array,
             median_array,
@@ -546,7 +564,39 @@ def fill_average_pk(
         mean_p1d_table["N"][index_mean[0]:index_mean[1]] = n_array
         for icol, col in enumerate(p1d_table_cols):
             mean_p1d_table["mean" + col][index_mean[0]:index_mean[1]] = mean_array[icol]
-            mean_p1d_table["error" + col][index_mean[0]:index_mean[1]] = error_array[icol]
+
+            variance_col = variance_array[icol]
+            
+            all_zero_array = len(variance_col) == len(variance_col[variance_col==0.0])
+            all_nan_array = len(variance_col) == len(variance_col[np.isnan(variance_col)])
+            if all_zero_array | all_nan_array:
+                error_col = np.sqrt(variance_col)
+            else:
+                mask_negative_variance = variance_col < 0.0
+                variance_indices = np.arange(len(variance_col))
+                interp_func = interp1d(
+                    variance_indices[~mask_negative_variance],
+                    variance_col[~mask_negative_variance],
+                    kind="linear",
+                    fill_value="extrapolate",
+                )
+                variance_col_filled = interp_func(variance_indices)
+
+                if smooth_error:
+                    # Savgol filter in the log variance.
+                    error_col = np.sqrt(
+                        np.exp(
+                            savgol_filter(
+                                np.log(variance_col_filled),
+                                DEFAULT_ERROR_SMOOTHING_WINDOW,
+                                DEFAULT_ERROR_SMOOTHING_POLYNOMIAL,
+                            )
+                        )
+                    )
+                else:
+                    error_col = np.sqrt(variance_col_filled)
+
+            mean_p1d_table["error" + col][index_mean[0]:index_mean[1]] = error_col
             mean_p1d_table["min" + col][index_mean[0]:index_mean[1]] = min_array[icol]
             mean_p1d_table["max" + col][index_mean[0]:index_mean[1]] = max_array[icol]
             if not nomedians:
@@ -621,7 +671,7 @@ def compute_average_pk_redshift(
     index_zbin_array
     n_array
     mean_array
-    error_array
+    variance_array
     min_array
     max_array
     median_array
@@ -631,7 +681,7 @@ def compute_average_pk_redshift(
     zbin_array = np.zeros(nbins_k)
     index_zbin_array = np.zeros(nbins_k, dtype=int)
     mean_array = []
-    error_array = []
+    variance_array = []
     min_array = []
     max_array = []
     if not nomedians:
@@ -645,7 +695,7 @@ def compute_average_pk_redshift(
 
     for col in p1d_table_cols:
         mean_array.append(np.zeros(nbins_k))
-        error_array.append(np.zeros(nbins_k))
+        variance_array.append(np.zeros(nbins_k))
         min_array.append(np.zeros(nbins_k))
         max_array.append(np.zeros(nbins_k))
         if not nomedians:
@@ -657,7 +707,7 @@ def compute_average_pk_redshift(
         n_array[:] = 0
         for icol, col in enumerate(p1d_table_cols):
             mean_array[icol][:] = np.nan
-            error_array[icol][:] = np.nan
+            variance_array[icol][:] = np.nan
             min_array[icol][:] = np.nan
             max_array[icol][:] = np.nan
             if not nomedians:
@@ -670,7 +720,7 @@ def compute_average_pk_redshift(
             index_zbin_array,
             n_array,
             mean_array,
-            error_array,
+            variance_array,
             min_array,
             max_array,
             median_array,
@@ -826,15 +876,17 @@ def compute_average_pk_redshift(
                     mean = np.average(data_values, weights=weights)
                 if apply_z_weights:
                     # Analytic expression for the re-weighted average:
-                    error = np.sqrt(np.sum(weights_col * redshift_weights)) / np.sum(
-                        weights_col
+                    variance = (
+                        np.sum(weights_col * redshift_weights)
+                        / np.sum(weights_col) ** 2
                     )
                 else:
-                    error = np.sqrt(1.0 / np.sum(weights_col))
-                    # Variance estimator derived by Jean-Marc, we keep the estimated one.
-                    # error = np.sqrt(((np.sum(weights)**2 / np.sum(weights**2)) - 1 )**(-1) * (
-                    # ( np.sum(weights**2 * data_values**2) / np.sum(weights**2) ) - (
-                    # np.sum(weights * data_values)/ np.sum(weights) )**2 ))
+                    variance = ((np.sum(weights) ** 2 / np.sum(weights**2)) - 1) ** (
+                        -1
+                    ) * (
+                        (np.sum(weights**2 * data_values**2) / np.sum(weights**2))
+                        - (np.sum(weights * data_values) / np.sum(weights)) ** 2
+                    )
                 if col == "Pk":
                     standard_dev = np.concatenate(
                         [
@@ -854,13 +906,13 @@ def compute_average_pk_redshift(
                 if apply_z_weights:
                     mean = np.average(p1d_table[col][select], weights=redshift_weights)
                     # simple analytic expression:
-                    error = np.std(p1d_table[col][select]) * (
+                    variance = (np.std(p1d_table[col][select]) * (
                         np.sqrt(np.sum(redshift_weights**2)) / np.sum(redshift_weights)
-                    )
+                    ))**2
                 else:
                     mean = np.mean(p1d_table[col][select])
                     # unbiased estimate: num_chunks-1
-                    error = np.std(p1d_table[col][select]) / np.sqrt(num_chunks - 1)
+                    variance = (np.std(p1d_table[col][select]) / np.sqrt(num_chunks - 1))**2
 
             else:
                 raise ValueError("Option for 'weight_method' argument not found")
@@ -868,7 +920,7 @@ def compute_average_pk_redshift(
             minimum = np.min((p1d_table[col][select]))
             maximum = np.max((p1d_table[col][select]))
             mean_array[icol][ikbin] = mean
-            error_array[icol][ikbin] = error
+            variance_array[icol][ikbin] = variance
             min_array[icol][ikbin] = minimum
             max_array[icol][ikbin] = maximum
             if not nomedians:
@@ -879,7 +931,7 @@ def compute_average_pk_redshift(
         index_zbin_array,
         n_array,
         mean_array,
-        error_array,
+        variance_array,
         min_array,
         max_array,
         median_array,
@@ -1423,6 +1475,7 @@ def run_postproc_pk1d(
     compute_covariance=False,
     compute_bootstrap=False,
     number_bootstrap=50,
+    smooth_error=True,
 ):
     """
     Read individual Pk1D data from a set of files and compute P1D statistics.
@@ -1477,6 +1530,7 @@ def run_postproc_pk1d(
         compute_bootstrap=compute_bootstrap,
         number_bootstrap=number_bootstrap,
         number_worker=ncpu,
+        smooth_error=smooth_error
     )
 
     metadata_header = {
