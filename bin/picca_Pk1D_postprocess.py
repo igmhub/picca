@@ -249,8 +249,9 @@ def main(cmdargs):
         med_ext = "" if args.no_median else "_medians"
         snr_ext = "_snr_cut" if snrcut is not None else ""
         vel_ext = "_vel" if args.velunits else ""
+        rebin_ext = f"_rebin{args.rebinfac}" if args.rebinfac is not None else ""
         output_file = os.path.join(args.in_dir,
-                f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}.fits.gz')
+                f'mean_Pk1d_{args.weight_method}{med_ext}{snr_ext}{vel_ext}{rebin_ext}.fits.gz')
     else:
         output_file = args.output_file
 
