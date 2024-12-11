@@ -223,7 +223,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
             Pixel weights for forest 1
         delta1: array of float
             Delta field for forest 1
-        z_qso_1: array of float
+        z_qso_1: float
             Redshift of QSO 1
         z2: array of float
             Redshift of pixel 2
@@ -235,9 +235,9 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
             Pixel weights for forest 2
         delta2: array of float
             Delta field for forest 2
-        z_qso_2: array of float
+        z_qso_2: float
             Redshift of QSO 2
-        ang: array of float
+        ang: float
             Angular separation between pixels in forests 1 and 2
         same_half_plate: bool
             Flag to determine if the two forests are on the same half plate
@@ -258,16 +258,27 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
             continue
 
         if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
-            continue
-
-        for j in range(z2.size): #@ This is where I want to add something.
-            if weights2[j] == 0:
+            # mean redshift of quasar-pixel pair
+            z_qF = 0.5 * (z1[i] + z_qso_2)
+            # velocity separation between pixel 1 and backgroud quasar 2
+            dv_kms = np.abs(z1[i] - z_qso_2)/(1 + z_qF)
+            dv_kms *= constants.SPEED_LIGHT
+            if dv_kms < zerr_cut_kms:
                 continue
 
-            if zerr_cut_kms is not None:
-                if (np.abs(z1[i] - z_qso_2) < zerr_cut_kms) or (np.abs(z2[j] - z_qso_1) < zerr_cut_kms):
+        for j in range(z2.size): 
+            if weights2[j] == 0:
+                continue
+            
+            if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
+                # mean redshift of quasar-pixel pair
+                z_qF = 0.5 * (z2[j] + z_qso_1)
+                # velocity separation between pixel 1 and backgroud quasar 2
+                dv_kms = np.abs(z2[j] - z_qso_1)/(1 + z_qF)
+                dv_kms *= constants.SPEED_LIGHT
+                if dv_kms < zerr_cut_kms:
                     continue
-
+            
             if ang_correlation:
                 r_par = r_comov1[i] / r_comov2[j]
                 if not x_correlation and r_par < 1.:
@@ -400,6 +411,8 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
     for i in range(z1.size):
         if weights1[i] == 0:
             continue
+
+        raise ValueError("CRASH (UPDATE THIS)")
 
         if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
             continue
