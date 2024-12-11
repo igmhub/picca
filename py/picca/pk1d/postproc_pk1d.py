@@ -34,8 +34,6 @@ from picca.pk1d.utils import (
 )
 from picca.utils import userprint
 
-DEFAULT_ERROR_SMOOTHING_WINDOW = 50
-DEFAULT_ERROR_SMOOTHING_POLYNOMIAL = 5
 
 def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matrices=None):
     """Read Pk1D data from a single file.
@@ -448,6 +446,7 @@ def compute_mean_pk1d(
             cov_table["N"][index_cov[0]:index_cov[1]] = n_array
             index_mean = mean_p1d_table_regular_slice(izbin, nbins_k)
             mean_pk = mean_p1d_table["meanPk"][index_mean[0] : index_mean[1]]
+            error_pk = mean_p1d_table["errorPk"][index_mean[0] : index_mean[1]]
 
             if n_chunks[izbin] == 0:
                 p1d_weights_z, covariance_weights_z, p1d_groups_z = [], [], []
@@ -466,6 +465,7 @@ def compute_mean_pk1d(
             p1d_groups.append(
                 [
                     mean_pk,
+                    error_pk,
                     p1d_weights_z,
                     covariance_weights_z,
                     p1d_groups_z,
@@ -1017,18 +1017,21 @@ def compute_and_fill_covariance(
                 if bootid[iboot] is None:
                     (
                         mean_pk,
+                        error_pk,
                         p1d_weights_z,
                         covariance_weights_z,
                         p1d_groups_z,
-                    ) = ([], [], [], [])
+                    ) = ([], [], [], [], [])
                 else:
                     mean_pk = p1d_groups[izbin][0]
-                    p1d_weights_z = p1d_groups[izbin][1][bootid[iboot]]
-                    covariance_weights_z = p1d_groups[izbin][2][bootid[iboot]]
-                    p1d_groups_z = p1d_groups[izbin][3][bootid[iboot]]
+                    error_pk = p1d_groups[izbin][1]
+                    p1d_weights_z = p1d_groups[izbin][2][bootid[iboot]]
+                    covariance_weights_z = p1d_groups[izbin][3][bootid[iboot]]
+                    p1d_groups_z = p1d_groups[izbin][4][bootid[iboot]]
                 p1d_groups_bootstrap.append(
                     [
                         mean_pk,
+                        error_pk,
                         p1d_weights_z,
                         covariance_weights_z,
                         p1d_groups_z,
@@ -1201,6 +1204,7 @@ def compute_groups_for_one_forest(nbins_k, p1d_los):
 def compute_cov(
     nbins_k,
     mean_pk,
+    error_pk,
     p1d_weights,
     covariance_weights,
     p1d_groups,
@@ -1270,6 +1274,9 @@ def compute_cov(
     covariance_matrix = ((weights_sum_product /weights_product_sum) - 1)**(-1) * (
         (p1d_groups_product_sum / covariance_weights_product_sum) - mean_pk_product
     )
+
+    # Force the diagonal to be equal to the variance, including smoothing.
+    np.fill_diagonal(covariance_matrix, error_pk**2)
 
     covariance_array = np.ravel(covariance_matrix)
 
