@@ -1144,17 +1144,17 @@ def compute_p1d_groups(
         nbins_k,
     )
     if number_worker == 1:
-        output_cov = [func(*p1d_los) for p1d_los in p1d_los_table]
+        output_group = np.array([func(p1d_los) for p1d_los in p1d_los_table])
     else:
         with Pool(number_worker) as pool:
-            output_cov = np.array(pool.map(func, p1d_los_table))
+            output_group = np.array(pool.map(func, p1d_los_table))
 
     del p1d_los_table
 
     p1d_weights, covariance_weights, p1d_groups = (
-        output_cov[:, 0, :],
-        output_cov[:, 1, :],
-        output_cov[:, 2, :],
+        output_group[:, 0, :],
+        output_group[:, 1, :],
+        output_group[:, 2, :],
     )
     return p1d_weights, covariance_weights, p1d_groups
 
