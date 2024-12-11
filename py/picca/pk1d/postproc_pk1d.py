@@ -565,36 +565,37 @@ def fill_average_pk(
         for icol, col in enumerate(p1d_table_cols):
             mean_p1d_table["mean" + col][index_mean[0]:index_mean[1]] = mean_array[icol]
 
-            variance_col = variance_array[icol]
-            
-            all_zero_array = len(variance_col) == len(variance_col[variance_col==0.0])
-            all_nan_array = len(variance_col) == len(variance_col[np.isnan(variance_col)])
-            if all_zero_array | all_nan_array:
-                error_col = np.sqrt(variance_col)
-            else:
-                mask_negative_variance = variance_col < 0.0
-                variance_indices = np.arange(len(variance_col))
-                interp_func = interp1d(
-                    variance_indices[~mask_negative_variance],
-                    variance_col[~mask_negative_variance],
-                    kind="linear",
-                    fill_value="extrapolate",
-                )
-                variance_col_filled = interp_func(variance_indices)
+            if col == "Pk":
+                variance_col = variance_array[icol]
+                if len(variance_col) == len(variance_col[np.isnan(variance_col)]):
+                    error_col = np.sqrt(variance_col)
+                else:
+                    mask_negative_variance = variance_col < 0.0
+                    variance_indices = np.arange(len(variance_col))
+                    interp_func = interp1d(
+                        variance_indices[~mask_negative_variance],
+                        variance_col[~mask_negative_variance],
+                        kind="linear",
+                        fill_value="extrapolate",
+                    )
+                    variance_col_filled = interp_func(variance_indices)
 
-                if smooth_error:
-                    # Savgol filter in the log variance.
-                    error_col = np.sqrt(
-                        np.exp(
-                            savgol_filter(
-                                np.log(variance_col_filled),
-                                DEFAULT_ERROR_SMOOTHING_WINDOW,
-                                DEFAULT_ERROR_SMOOTHING_POLYNOMIAL,
+                    if smooth_error:
+                        # Savgol filter in the log variance.
+                        error_col = np.sqrt(
+                            np.exp(
+                                savgol_filter(
+                                    np.log(variance_col_filled),
+                                    DEFAULT_ERROR_SMOOTHING_WINDOW,
+                                    DEFAULT_ERROR_SMOOTHING_POLYNOMIAL,
+                                )
                             )
                         )
-                    )
-                else:
-                    error_col = np.sqrt(variance_col_filled)
+                    else:
+                        error_col = np.sqrt(variance_col_filled)
+            else:
+                error_col = np.sqrt(variance_array[icol])
+
 
             mean_p1d_table["error" + col][index_mean[0]:index_mean[1]] = error_col
             mean_p1d_table["min" + col][index_mean[0]:index_mean[1]] = min_array[icol]
