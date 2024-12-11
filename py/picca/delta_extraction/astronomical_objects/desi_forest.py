@@ -149,7 +149,7 @@ class DesiForest(Forest):
                 'name': 'EXPID',
                 'value': "-".join(str(expid) for expid in self.expid),
                 'comment': 'Observation expid(s)'
-            },            
+            },
             {
                 'name': 'FIBER',
                 'value': "-".join(str(fiber) for fiber in self.fiber),
@@ -192,7 +192,8 @@ class DesiForest(Forest):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('TARGETID', int), ('NIGHT', 'S150'), ('PETAL', 'S150'), ('TILEID', 'S150'), ('EXPID', 'S150'),('FIBER', 'S150')]   #need to figure out realistic length for these strings
+        dtype += [('TARGETID', int), ('NIGHT', 'S150'), ('PETAL', 'S150'),
+                  ('TILEID', 'S150'), ('EXPID', 'S150'),('FIBER', 'S150')]
         return dtype
 
     @classmethod

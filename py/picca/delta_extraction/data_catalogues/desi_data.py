@@ -402,7 +402,6 @@ class DesiDataFileHandler():
                 w_t = w_t[0]
             if metadata_dict is not None and not self.use_non_coadded_spectra:
                 exp_w_t = np.where(metadata_dict["EXP_TARGETID"] == targetid)[0]
-                
                 expid = metadata_dict["EXP_EXPID"][exp_w_t]
                 night = metadata_dict["EXP_NIGHT"][exp_w_t]
                 petal = metadata_dict["EXP_PETAL"][exp_w_t]
