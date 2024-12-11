@@ -125,16 +125,16 @@ def main(cmdargs):
                         type=float,
                         default=None,
                         required=False,
-                        help=('Angular cut (in degrees) between a pixel and '
-                              'the background quasar of the other pixel (to '
-                              'avoid contamination from redshift errors).'))
+                        help=('Angular cut (in degrees) between the foreground '
+                              'and the background quasars (to avoid '
+                              'contamination from redshift errors).'))
     
     parser.add_argument('--zerr-cut-kms',
                         type=float,
                         default=None,
                         required=False,
-                        help=('Velocity cut (in km/s) between a pixel and the '
-                              'background quasar of the other pixel (to avoid '
+                        help=('Velocity cut (in km/s) between the foreground '
+                              'and the background quasars (to avoid '
                               'contamination from redshift errors).'))
 
     parser.add_argument(

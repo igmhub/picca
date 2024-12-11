@@ -112,21 +112,21 @@ def main(cmdargs):
                         default=10,
                         required=False,
                         help='Max redshift for object field')
-    
+
     parser.add_argument('--zerr-cut-deg',
                         type=float,
                         default=None,
                         required=False,
-                        help=('Angular cut (in degrees) between a quasar and '
-                              'the background quasar of the pixel (to avoid '
+                        help=('Angular cut (in degrees) between the foreground '
+                              'and the background quasars (to avoid '
                               'contamination from redshift errors).'))
 
     parser.add_argument('--zerr-cut-kms',
                         type=float,
                         default=None,
                         required=False,
-                        help=('Velocity cut (in km/s) between a quasar and the '
-                              'background quasar of the pixel (to avoid '
+                        help=('Velocity cut (in km/s) between the foreground '
+                              'and the background quasars (to avoid '
                               'contamination from redshift errors).'))
 
     parser.add_argument(
