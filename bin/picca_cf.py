@@ -88,6 +88,18 @@ def main(cmdargs):
                         default=50,
                         required=False,
                         help='Number of r-transverse bins')
+    
+    parser.add_argument('--zerr-cut-deg',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help="Cut on angular distance in degrees (pixels pairs within this distance and also fulfilling zerr-cut-km will be discarded).")
+    
+    parser.add_argument('--zerr-cut-km',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help="Cut on redshift difference in in km/s (pixels pairs within this difference and also fulfilling zerr-cut-deg will be discarded).")
 
     parser.add_argument('--z-cut-min',
                         type=float,
@@ -249,6 +261,14 @@ def main(cmdargs):
     cf.alpha = args.z_evol
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
+
+    if (args.zerr_cut_deg is None) != (args.zerr_cut_km is None):
+        raise ValueError("Options --zerr-cut-deg and --zerr-cut-km must be "
+                         "specified together")
+
+    cf.zerr_cut_deg = args.zerr_cut_deg
+    cf.zerr_cut_km = args.zerr_cut_km
+
 
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir)

@@ -34,6 +34,9 @@ z_cut_min = None
 ang_max = None
 nside = None
 
+zerr_cut_deg = None
+zerr_cut_km = None
+
 counter = None
 num_data = None
 
@@ -87,6 +90,13 @@ def fill_neighs(healpixs):
             ]
             ang = delta.get_angle_between(neighbours)
             w = ang < ang_max
+
+            if zerr_cut_deg is not None:
+                w &= (ang > zerr_cut_deg*np.pi/180.)
+                w &= np.array([
+                    abs(delta.z_qso - obj.z_qso) for obj in neighbours
+                ])/(delta.z_qso+1) * constants.SPEED_LIGHT > zerr_cut_km
+
             if not ang_correlation:
                 r_comov = np.array([obj.r_comov for obj in neighbours])
                 w &= (delta.r_comov[0] - r_comov) * np.cos(ang / 2.) < r_par_max
