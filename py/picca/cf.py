@@ -412,19 +412,28 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
         if weights1[i] == 0:
             continue
 
-        raise ValueError("CRASH (UPDATE THIS)")
-
         if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
-            continue
+            # mean redshift of quasar-pixel pair
+            z_qF = 0.5 * (z1[i] + z_qso_2)
+            # velocity separation between pixel 1 and backgroud quasar 2
+            dv_kms = np.abs(z1[i] - z_qso_2)/(1 + z_qF)
+            dv_kms *= constants.SPEED_LIGHT
+            if dv_kms < zerr_cut_kms:
+                continue
 
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
 
-            if zerr_cut_kms is not None:
-                if (np.abs(z1[i] - z_qso_2)/(z2 + 1)*constants.SPEED_LIGHT < zerr_cut_kms) or (np.abs(z2[j] - z_qso_1)/(z1+1)*constants.SPEED_LIGHT < zerr_cut_kms):
+            if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
+                # mean redshift of quasar-pixel pair
+                z_qF = 0.5 * (z2[j] + z_qso_1)
+                # velocity separation between pixel 1 and backgroud quasar 2
+                dv_kms = np.abs(z2[j] - z_qso_1)/(1 + z_qF)
+                dv_kms *= constants.SPEED_LIGHT
+                if dv_kms < zerr_cut_kms:
                     continue
-
+            
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
             if not x_correlation:

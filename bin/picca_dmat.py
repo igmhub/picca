@@ -100,6 +100,22 @@ def main(cmdargs):
         help=('Coefficient multiplying np and nt to get finner binning for the '
               'model'))
 
+    parser.add_argument('--zerr-cut-deg',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Angular cut (in degrees) between a pixel and '
+                              'the background quasar of the other pixel (to '
+                              'avoid contamination from redshift errors).'))
+    
+    parser.add_argument('--zerr-cut-kms',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Velocity cut (in km/s) between a pixel and the '
+                              'background quasar of the other pixel (to avoid '
+                              'contamination from redshift errors).'))
+
     parser.add_argument(
         '--z-cut-min',
         type=float,
@@ -285,6 +301,13 @@ def main(cmdargs):
     cf.reject = args.rej
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
+
+    if (args.zerr_cut_deg is None) != (args.zerr_cut_kms is None):
+        raise ValueError("Options --zerr-cut-deg and --zerr-cut-kms must be "
+                         "specified together")
+
+    cf.zerr_cut_deg = args.zerr_cut_deg
+    cf.zerr_cut_kms = args.zerr_cut_kms
 
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir)
