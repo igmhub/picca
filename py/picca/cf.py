@@ -36,7 +36,7 @@ ang_max = None
 nside = None
 
 zerr_cut_deg = None
-zerr_cut_km = None
+zerr_cut_kms = None
 
 counter = None
 num_data = None
@@ -264,8 +264,8 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
             if weights2[j] == 0:
                 continue
 
-            if zerr_cut_km is not None:
-                if (np.abs(z1[i] - z_qso_2) < zerr_cut_km) or (np.abs(z2[j] - z_qso_1) < zerr_cut_km):
+            if zerr_cut_kms is not None:
+                if (np.abs(z1[i] - z_qso_2) < zerr_cut_kms) or (np.abs(z2[j] - z_qso_1) < zerr_cut_kms):
                     continue
 
             if ang_correlation:
@@ -408,8 +408,8 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             if weights2[j] == 0:
                 continue
 
-            if zerr_cut_km is not None:
-                if (np.abs(z1[i] - z_qso_2)/(z2 + 1)*constants.SPEED_LIGHT < zerr_cut_km) or (np.abs(z2[j] - z_qso_1)/(z1+1)*constants.SPEED_LIGHT < zerr_cut_km):
+            if zerr_cut_kms is not None:
+                if (np.abs(z1[i] - z_qso_2)/(z2 + 1)*constants.SPEED_LIGHT < zerr_cut_kms) or (np.abs(z2[j] - z_qso_1)/(z1+1)*constants.SPEED_LIGHT < zerr_cut_kms):
                     continue
 
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)

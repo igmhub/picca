@@ -117,14 +117,18 @@ def main(cmdargs):
                         type=float,
                         default=None,
                         required=False,
-                        help="Cut on angular distance in degrees (pixels pairs within this distance and also fulfilling zerr-cut-km will be discarded).")
-    
-    parser.add_argument('--zerr-cut-km',
+                        help=('Angular cut (in degrees) between a quasar and '
+                              'the background quasar of the pixel (to avoid '
+                              'contamination from redshift errors).'))
+
+    parser.add_argument('--zerr-cut-kms',
                         type=float,
                         default=None,
                         required=False,
-                        help="Cut on redshift difference in in km/s (pixels pairs within this difference and also fulfilling zerr-cut-deg will be discarded).")
-    
+                        help=('Velocity cut (in km/s) between a quasar and the '
+                              'background quasar of the pixel (to avoid '
+                              'contamination from redshift errors).'))
+
     parser.add_argument(
         '--z-cut-min',
         type=float,
@@ -280,12 +284,12 @@ def main(cmdargs):
     xcf.nside = args.nside
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
 
-    if (args.zerr_cut_deg is None) != (args.zerr_cut_km is None):
-        raise ValueError("Options --zerr-cut-deg and --zerr-cut-km must be "
+    if (args.zerr_cut_deg is None) != (args.zerr_cut_kms is None):
+        raise ValueError("Options --zerr-cut-deg and --zerr-cut-kms must be "
                          "specified together")
     
     xcf.zerr_cut_deg = args.zerr_cut_deg
-    xcf.zerr_cut_km = args.zerr_cut_km
+    xcf.zerr_cut_kms = args.zerr_cut_kms
 
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir)
