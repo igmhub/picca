@@ -882,14 +882,17 @@ def compute_average_pk_redshift(
                         / np.sum(weights_col) ** 2
                     )
                 else:
-                    # JM estimator: gives negative values
-                    # variance = ((np.sum(weights) ** 2 / np.sum(weights**2)) - 1) ** (
-                    #     -1
-                    # ) * (
-                    #     (np.sum(weights**2 * data_values**2) / np.sum(weights**2))
-                    #     - (np.sum(weights * data_values) / np.sum(weights)) ** 2
-                    # )
-                    variance = 1 / np.sum(weights_col)
+                    # Taking JM estimator only for P1D, 
+                    # because it gives almost only negative values for other columns.
+                    if col == "Pk":
+                        variance = ((np.sum(weights) ** 2 / np.sum(weights**2)) - 1) ** (
+                            -1
+                        ) * (
+                            (np.sum(weights**2 * data_values**2) / np.sum(weights**2))
+                            - (np.sum(weights * data_values) / np.sum(weights)) ** 2
+                        )
+                    else:
+                        variance = 1 / np.sum(weights_col)
                 if col == "Pk":
                     standard_dev = np.concatenate(
                         [
