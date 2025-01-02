@@ -569,6 +569,8 @@ def fill_average_pk(
                 variance_col = variance_array[icol]
                 if len(variance_col) == len(variance_col[np.isnan(variance_col)]):
                     error_col = np.sqrt(variance_col)
+                elif len(variance_col) == len(variance_col[variance_col < 0.0]):
+                    error_col = np.sqrt(variance_col)
                 else:
                     mask_negative_variance = variance_col < 0.0
                     variance_indices = np.arange(len(variance_col))
@@ -582,11 +584,15 @@ def fill_average_pk(
 
                     if smooth_error:
                         # Savgol filter in the log variance.
+                        window_filter = min(
+                            DEFAULT_ERROR_SMOOTHING_WINDOW,
+                            int(3 * len(variance_col_filled) / 4),
+                        )
                         error_col = np.sqrt(
                             np.exp(
                                 savgol_filter(
                                     np.log(variance_col_filled),
-                                    DEFAULT_ERROR_SMOOTHING_WINDOW,
+                                    window_filter,
                                     DEFAULT_ERROR_SMOOTHING_POLYNOMIAL,
                                 )
                             )
