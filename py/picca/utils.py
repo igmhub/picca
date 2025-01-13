@@ -507,7 +507,10 @@ def modify_weights_with_varlss_factor(data, attributes, varlss_mod_factor):
         varlss_mod_factor: float
             Multiplicative factor for var_lss
     """
-    varfunc = fitsio.read(attributes, ext="VAR_FUNC")
+    try:
+        varfunc = fitsio.read(attributes, ext="VAR_FUNC")
+    except OSError:
+        varfunc = fitsio.read(attributes, ext="VAR_FUNC-fit")
     varfunc['lambda'] = np.log10(varfunc['lambda'])
     interp_eta = interpolate.interp1d(
         varfunc['lambda'], varfunc['eta'], fill_value='extrapolate', kind='cubic')

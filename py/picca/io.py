@@ -229,8 +229,8 @@ def read_blinding(in_dir):
     elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
         files += glob.glob(in_dir)
     else:
-        files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir
-                                                           + '/*.fits.gz')
+        files += glob.glob(in_dir + '/delta*.fits') + glob.glob(in_dir
+                                                           + '/delta*.fits.gz')
     filename = files[0]
     hdul = fitsio.FITS(filename)
     if "LAMBDA" in hdul: # This is for ImageHDU format
@@ -342,7 +342,7 @@ def read_deltas(
         files += sorted(glob.glob(in_dir))
     else:
         files += sorted(
-            glob.glob(in_dir + '/*.fits') + glob.glob(in_dir + '/*.fits.gz'))
+            glob.glob(in_dir + '/delta*.fits') + glob.glob(in_dir + '/delta*.fits.gz'))
     files = sorted(files)
 
     arguments = [(f, z_min_qso, z_max_qso) for f in files]
@@ -372,6 +372,14 @@ def read_deltas(
         if not attributes:
             raise ValueError('Recalculating weights require an attributes file.')
         modify_weights_with_varlss_factor(deltas, attributes, varlss_mod_factor)
+        
+    # Renormalize deltas
+    if renormalize_deltas:
+        userprint(f"Stacking and renormalizing deltas\n")
+        z_min, z_max = 0, 10
+        stack_flux_and_normalize(
+            deltas, lambda_abs * (1 + z_min) + 4.0, lambda_abs * (1 + z_max) - 4.0,
+            dlambda=8.0)
 
     # Rebin
     if rebin_factor is not None:
@@ -405,11 +413,6 @@ def read_deltas(
         if not healpix in data:
             data[healpix] = []
         data[healpix].append(delta)
-
-    if renormalize_deltas:
-        stack_flux_and_normalize(
-            deltas, lambda_abs * (1 + z_min) + 4.0, lambda_abs * (1 + z_max) - 4.0,
-            dlambda=8.0)
 
     return data, num_data, z_min, z_max
 
