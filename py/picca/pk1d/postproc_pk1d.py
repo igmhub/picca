@@ -565,43 +565,27 @@ def fill_average_pk(
         for icol, col in enumerate(p1d_table_cols):
             mean_p1d_table["mean" + col][index_mean[0]:index_mean[1]] = mean_array[icol]
 
-            if col == "Pk":
-                variance_col = variance_array[icol]
-                if len(variance_col) == len(variance_col[np.isnan(variance_col)]):
-                    error_col = np.sqrt(variance_col)
-                elif len(variance_col) == len(variance_col[variance_col < 0.0]):
-                    error_col = np.sqrt(variance_col)
-                else:
-                    mask_negative_variance = variance_col < 0.0
-                    variance_indices = np.arange(len(variance_col))
-                    interp_func = interp1d(
-                        variance_indices[~mask_negative_variance],
-                        variance_col[~mask_negative_variance],
-                        kind="linear",
-                        fill_value="extrapolate",
+            variance_col = variance_array[icol]
+            if len(variance_col) == len(variance_col[np.isnan(variance_col)]):
+                error_col = np.sqrt(variance_col)
+            else:
+                if smooth_error:
+                    # Savgol filter in the log variance.
+                    window_filter = min(
+                        DEFAULT_ERROR_SMOOTHING_WINDOW,
+                        int(3 * len(variance_col) / 4),
                     )
-                    variance_col_filled = interp_func(variance_indices)
-
-                    if smooth_error:
-                        # Savgol filter in the log variance.
-                        window_filter = min(
-                            DEFAULT_ERROR_SMOOTHING_WINDOW,
-                            int(3 * len(variance_col_filled) / 4),
-                        )
-                        error_col = np.sqrt(
-                            np.exp(
-                                savgol_filter(
-                                    np.log(variance_col_filled),
-                                    window_filter,
-                                    DEFAULT_ERROR_SMOOTHING_POLYNOMIAL,
-                                )
+                    error_col = np.sqrt(
+                        np.exp(
+                            savgol_filter(
+                                np.log(variance_col),
+                                window_filter,
+                                DEFAULT_ERROR_SMOOTHING_POLYNOMIAL,
                             )
                         )
-                    else:
-                        error_col = np.sqrt(variance_col_filled)
-            else:
-                error_col = np.sqrt(variance_array[icol])
-
+                    )
+                else:
+                    error_col = np.sqrt(variance_col)
 
             mean_p1d_table["error" + col][index_mean[0]:index_mean[1]] = error_col
             mean_p1d_table["min" + col][index_mean[0]:index_mean[1]] = min_array[icol]
@@ -888,17 +872,7 @@ def compute_average_pk_redshift(
                         / np.sum(weights_col) ** 2
                     )
                 else:
-                    # Taking JM estimator only for P1D, 
-                    # because it gives almost only negative values for other columns.
-                    if col == "Pk":
-                        variance = ((np.sum(weights) ** 2 / np.sum(weights**2)) - 1) ** (
-                            -1
-                        ) * (
-                            (np.sum(weights**2 * data_values**2) / np.sum(weights**2))
-                            - (np.sum(weights * data_values) / np.sum(weights)) ** 2
-                        )
-                    else:
-                        variance = 1 / np.sum(weights_col)
+                    variance = 1 / np.sum(weights_col)
                 if col == "Pk":
                     standard_dev = np.concatenate(
                         [
@@ -1206,7 +1180,7 @@ def compute_groups_for_one_forest(nbins_k, p1d_los):
         if number_in_bins != 0:
             weight = p1d_los["weight"][mask_ikbin][0]
             p1d_weights_id[ikbin] = weight
-            covariance_weights_id[ikbin] = weight / number_in_bins
+            covariance_weights_id[ikbin] = np.sqrt(weight / number_in_bins)
             p1d_groups_id[ikbin] = np.nansum(
                 p1d_los["pk"][mask_ikbin] * covariance_weights_id[ikbin]
             )
