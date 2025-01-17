@@ -797,7 +797,11 @@ def compute_average_pk_redshift(
                 snr_bins = (snr_bin_edges[:-1] + snr_bin_edges[1:]) / 2
 
                 data_values = p1d_table[col][select]
-                data_values = data_values[mask_nan_p1d_values]
+                data_snr = p1d_table["forest_snr"][select]
+                data_snr, data_values = (
+                    data_snr[mask_nan_p1d_values],
+                    data_values[mask_nan_p1d_values],
+                )
                 # Fit function to observed dispersion in col:
                 standard_dev_col, _, _ = binned_statistic(
                     data_snr, data_values, statistic="std", bins=snr_bin_edges
@@ -820,8 +824,9 @@ def compute_average_pk_redshift(
                 variance_estimated_col = fitfunc_variance_pk1d(data_snr, *coef_col)
                 weights_col = 1.0 / variance_estimated_col
                 if apply_z_weights:
-                    weights *= redshift_weights
-                mean = np.average(data_values, weights=weights)
+                    mean = np.average(data_values, weights=weights * redshift_weights)
+                else:
+                    mean = np.average(data_values, weights=weights)
                 if apply_z_weights:
                     # Analytic expression for the re-weighted average:
                     error = np.sqrt(np.sum(weights_col * redshift_weights)) / np.sum(
@@ -829,6 +834,10 @@ def compute_average_pk_redshift(
                     )
                 else:
                     error = np.sqrt(1.0 / np.sum(weights_col))
+                    # Variance estimator derived by Jean-Marc, we keep the estimated one.
+                    # error = np.sqrt(((np.sum(weights)**2 / np.sum(weights**2)) - 1 )**(-1) * (
+                    # ( np.sum(weights**2 * data_values**2) / np.sum(weights**2) ) - (
+                    # np.sum(weights * data_values)/ np.sum(weights) )**2 ))
                 if col == "Pk":
                     standard_dev = np.concatenate(
                         [
@@ -1142,7 +1151,7 @@ def compute_groups_for_one_forest(nbins_k, p1d_los):
         if number_in_bins != 0:
             weight = p1d_los["weight"][mask_ikbin][0]
             p1d_weights_id[ikbin] = weight
-            covariance_weights_id[ikbin] = np.sqrt(weight / number_in_bins)
+            covariance_weights_id[ikbin] = weight / number_in_bins
             p1d_groups_id[ikbin] = np.nansum(
                 p1d_los["pk"][mask_ikbin] * covariance_weights_id[ikbin]
             )
@@ -1199,11 +1208,11 @@ def compute_cov(
     mean_pk_product = np.outer(mean_pk, mean_pk)
 
     sum_p1d_weights = np.nansum(p1d_weights, axis=0)
-    weights_sum_of_product = np.outer(sum_p1d_weights, sum_p1d_weights)
+    weights_sum_product = np.outer(sum_p1d_weights, sum_p1d_weights)
 
     p1d_groups_product_sum = np.zeros((nbins_k, nbins_k))
-    covariance_weights_product_of_sum = np.zeros((nbins_k, nbins_k))
-    weights_product_of_sum = np.zeros((nbins_k, nbins_k))
+    covariance_weights_product_sum = np.zeros((nbins_k, nbins_k))
+    weights_product_sum = np.zeros((nbins_k, nbins_k))
 
     for i, p1d_group in enumerate(p1d_groups):
         # The summation is done with np.nansum instead of simple addition to not
@@ -1212,21 +1221,21 @@ def compute_cov(
         p1d_groups_product_sum = np.nansum(
             [p1d_groups_product_sum, np.outer(p1d_group, p1d_group)], axis=0
         )
-        covariance_weights_product_of_sum = np.nansum(
+        covariance_weights_product_sum = np.nansum(
             [
-                covariance_weights_product_of_sum,
+                covariance_weights_product_sum,
                 np.outer(covariance_weights[i], covariance_weights[i]),
             ],
             axis=0,
         )
-        weights_product_of_sum = np.nansum(
-            [weights_product_of_sum, np.outer(p1d_weights[i], p1d_weights[i])], axis=0
+        weights_product_sum = np.nansum(
+            [weights_product_sum, np.outer(p1d_weights[i], p1d_weights[i])], axis=0
         )
 
     del p1d_groups, covariance_weights, p1d_weights
 
-    covariance_matrix = (weights_product_of_sum / weights_sum_of_product) * (
-        (p1d_groups_product_sum / covariance_weights_product_of_sum) - mean_pk_product
+    covariance_matrix = ((weights_sum_product /weights_product_sum) - 1)**(-1) * (
+        (p1d_groups_product_sum / covariance_weights_product_sum) - mean_pk_product
     )
 
     # For fit_snr method, due to the SNR fitting scheme used for weighting,
