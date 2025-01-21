@@ -23,14 +23,15 @@ from astropy.stats import bootstrap
 from astropy.table import Table, vstack
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
-from scipy.stats import binned_statistic
 from scipy.signal import savgol_filter
+from scipy.stats import binned_statistic
+
 from picca.constants import ABSORBER_IGM, SPEED_LIGHT
 from picca.pk1d.utils import (
+    DEFAULT_ERROR_SMOOTHING_POLYNOMIAL,
+    DEFAULT_ERROR_SMOOTHING_WINDOW,
     MEANPK_FITRANGE_SNR,
     fitfunc_variance_pk1d,
-    DEFAULT_ERROR_SMOOTHING_WINDOW,
-    DEFAULT_ERROR_SMOOTHING_POLYNOMIAL,
 )
 from picca.utils import userprint
 
@@ -888,7 +889,7 @@ def compute_average_pk_redshift(
                         / np.sum(weights_col) ** 2
                     )
                 else:
-                    # Taking JM estimator only for P1D, 
+                    # Taking JM estimator only for P1D,
                     # because it gives almost only negative values for other columns.
                     if col == "Pk":
                         variance = ((np.sum(weights) ** 2 / np.sum(weights**2)) - 1) ** (
@@ -1288,7 +1289,12 @@ def compute_cov(
     )
 
     # Force the diagonal to be equal to the variance, including smoothing.
-    np.fill_diagonal(covariance_matrix, error_pk**2)
+    covariance_diag = np.diag(covariance_matrix)
+    covariance_matrix = (
+            covariance_matrix
+            * np.outer(error_pk, error_pk)
+           / np.sqrt(np.outer(covariance_diag, covariance_diag))
+        )
 
     covariance_array = np.ravel(covariance_matrix)
 
