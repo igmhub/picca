@@ -13,6 +13,7 @@ See the respective docstrings for more details
 import sys
 import numpy as np
 import fitsio
+from astropy.io import fits
 import iminuit
 
 from scipy import interpolate
@@ -507,15 +508,19 @@ def modify_weights_with_varlss_factor(data, attributes, varlss_mod_factor):
         varlss_mod_factor: float
             Multiplicative factor for var_lss
     """
+    att = fits.open(attributes) # need astropy's case-insensitivity to work with qsonic and picca attributes files
     try:
-        varfunc = fitsio.read(attributes, ext="VAR_FUNC")
+        varfunc = att['VAR_FUNC']
     except OSError:
-        varfunc = fitsio.read(attributes, ext="VAR_FUNC-fit")
-    varfunc['lambda'] = np.log10(varfunc['lambda'])
+        varfunc = att['VAR_FUNC-fit']
+    try:
+        loglam = np.log10(varfunc.data['lambda'])
+    except KeyError:
+        loglam = varfunc.data['loglam']
     interp_eta = interpolate.interp1d(
-        varfunc['lambda'], varfunc['eta'], fill_value='extrapolate', kind='cubic')
+        loglam, varfunc.data['eta'], fill_value='extrapolate', kind='cubic')
     interp_varlss = interpolate.interp1d(
-        varfunc['lambda'], varfunc['var_lss'], fill_value='extrapolate', kind='cubic')
+        loglam, varfunc.data['var_lss'], fill_value='extrapolate', kind='cubic')
 
     for delta in data:
         if delta.ivar is None:
