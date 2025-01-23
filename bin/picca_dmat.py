@@ -249,6 +249,18 @@ def main(cmdargs):
                         action='store_true',
                         help='Ignore redshift evolution when computing distortion matrix')
 
+    parser.add_argument('--varlss-mod-factor', type=float, default=None,
+                        help='Modifies weights with this factor. Requires '
+                             'IVAR column to be present in deltas and an input'
+                             ' attributes file.')
+    parser.add_argument('--attributes', type=str, default=None,
+                        help='Attributes file with VAR_FUNC extension with '
+                             'lambda, eta, var_lss columns.')
+    parser.add_argument('--attributes2', type=str, default=None, required=False,
+                        help='Attributes file for 2nd tracer')
+    parser.add_argument('--renormalize-deltas', action="store_true",
+                        help="Stacks deltas and renormalizes deltas.")
+
     args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
@@ -310,7 +322,10 @@ def main(cmdargs):
                                                   nproc=args.nproc,
                                                   rebin_factor=args.rebin_factor,
                                                   z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources)
+                                                  z_max_qso=args.z_max_sources,
+                                                  varlss_mod_factor=args.varlss_mod_factor,
+                                                  attributes=args.attributes,
+                                                  renormalize_deltas=args.renormalize_deltas)
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -325,6 +340,8 @@ def main(cmdargs):
         cf.alpha2 = args.z_evol2
         if args.in_dir2 is None:
             args.in_dir2 = args.in_dir
+        if args.attributes2 is None:
+            args.attributes2 = args.attributes
         if args.lambda_abs2:
             cf.lambda_abs2 = constants.ABSORBER_IGM[args.lambda_abs2]
         else:
@@ -341,7 +358,10 @@ def main(cmdargs):
             nproc=args.nproc,
             rebin_factor=args.rebin_factor,
             z_min_qso=args.z_min_sources,
-            z_max_qso=args.z_max_sources)
+            z_max_qso=args.z_max_sources,
+            varlss_mod_factor=args.varlss_mod_factor,
+            attributes=args.attributes2,
+            renormalize_deltas=args.renormalize_deltas)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
