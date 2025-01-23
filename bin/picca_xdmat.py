@@ -248,6 +248,17 @@ def main(cmdargs):
                         action='store_true',
                         help='Ignore redshift evolution when computing distortion matrix')
 
+
+    parser.add_argument('--varlss-mod-factor', type=float, default=None,
+                        help='Modifies weights with this factor. Requires '
+                             'IVAR column to be present in deltas and an input'
+                             ' attributes file.')
+    parser.add_argument('--attributes', type=str, default=None,
+                        help='Attributes file with VAR_FUNC extension with '
+                             'lambda, eta, var_lss columns.')
+    parser.add_argument('--renormalize-deltas', action="store_true",
+                        help="Stacks deltas and renormalizes deltas.")
+
     args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -303,7 +314,10 @@ def main(cmdargs):
                                                   nproc=args.nproc,
                                                   rebin_factor=args.rebin_factor,
                                                   z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources)
+                                                  z_max_qso=args.z_max_sources,
+                                                  varlss_mod_factor=args.varlss_mod_factor,
+                                                  attributes=args.attributes,
+                                                  renormalize_deltas=args.renormalize_deltas)
     xcf.data = data
     xcf.num_data = num_data
     userprint("\n")
