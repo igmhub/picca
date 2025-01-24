@@ -113,6 +113,22 @@ def main(cmdargs):
                         required=False,
                         help='Max redshift for object field')
 
+    parser.add_argument('--zerr-cut-deg',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Angular cut (in degrees) between the foreground '
+                              'and the background quasars (to avoid '
+                              'contamination from redshift errors).'))
+
+    parser.add_argument('--zerr-cut-kms',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Velocity cut (in km/s) between the foreground '
+                              'and the background quasars (to avoid '
+                              'contamination from redshift errors).'))
+
     parser.add_argument(
         '--z-cut-min',
         type=float,
@@ -267,6 +283,13 @@ def main(cmdargs):
     xcf.num_bins_r_trans = args.nt
     xcf.nside = args.nside
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
+
+    if (args.zerr_cut_deg is None) != (args.zerr_cut_kms is None):
+        raise ValueError("Options --zerr-cut-deg and --zerr-cut-kms must be "
+                         "specified together")
+    
+    xcf.zerr_cut_deg = args.zerr_cut_deg
+    xcf.zerr_cut_kms = args.zerr_cut_kms
 
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir)
