@@ -171,6 +171,12 @@ def main(cmdargs):
                         help='Parameter for the wavelength grid used for the skymask,'
                              'if --skymask-file is set.')
 
+    parser.add_argument('--select-chunkid',
+                        type=int,
+                        default=None,
+                        help='If set, only chunks with CHUNK_ID==select-chunkid are kept.'
+                             'This option can be used only when Pk1D was computed with nb-part=3.')
+
     parser.add_argument('--overwrite',
                         action='store_true',
                         default=False,
@@ -270,6 +276,7 @@ def main(cmdargs):
                                     output_snrfit=args.output_snrfit,
                                     snrcut=snrcut,
                                     skymask_matrices=skymask_matrices,
+                                    select_chunkid=args.select_chunkid,
                                     zbins_snrcut=zbins_snrcut,
                                     nomedians=args.no_median,
                                     velunits=args.velunits,

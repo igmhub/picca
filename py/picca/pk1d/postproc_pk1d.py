@@ -28,7 +28,8 @@ from picca.pk1d.utils import MEANPK_FITRANGE_SNR, fitfunc_variance_pk1d
 from picca.utils import userprint
 
 
-def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matrices=None):
+def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None,
+              skymask_matrices=None, select_chunkid=None):
     """Read Pk1D data from a single file.
 
     Arguments
@@ -52,6 +53,11 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matr
     and Pk_noise vectors. This correction makes use of a matrix operation.
     The corrected powers are stored into "Pk_raw_skycorr" and "Pk_noise_skycorr".
     Note that this correction makes sense only after the Pks have been averaged over sightlines.
+
+    select_chunkid: int or None
+    if not None, chunks with CHUNK_ID!=select_chunkid are discarded. The case of low-z quasars
+    with less than the (default) 3 chunks is taken into account by hand. This option is meant to be
+    used for a data split test.
 
     Return
     ------
@@ -120,6 +126,21 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matr
                 chunk_table["sub_forest_id"] = (
                     f"{chunk_header['LOS_ID']}_{chunk_header['CHUNK_ID']}"
                 )
+
+            if select_chunkid is not None:
+                #- Handle by hand the case of low-z quasars
+                # (that have less than 3 chunks in the standard DESI Y1 analysis configuration)
+                zqso = chunk_header('Z')
+                # default: forest has three chunks 0 1 2
+                fake_chunkid = chunk_header['CHUNK_ID']
+                if zqso < 2.2774:
+                    # forest has one chunk "0", close to Lya emission => should be labelled 2
+                    fake_chunkid += 2
+                elif zqso < 2.3275:
+                    # same but forest has two chunks "0" and "1"
+                    fake_chunkid += 1
+                if fake_chunkid!=select_chunkid:
+                    continue
 
             if snrcut is not None:
                 if len(snrcut) > 1:
@@ -1445,6 +1466,7 @@ def run_postproc_pk1d(
     apply_z_weights=False,
     snrcut=None,
     skymask_matrices=None,
+    select_chunkid=None,
     zbins_snrcut=None,
     output_snrfit=None,
     nomedians=False,
@@ -1483,7 +1505,7 @@ def run_postproc_pk1d(
 
     with Pool(ncpu) as pool:
         output_readpk1d = pool.starmap(
-            read_pk1d, [[f, kbin_edges, snrcut, zbins_snrcut, skymask_matrices] for f in files]
+            read_pk1d, [[f, kbin_edges, snrcut, zbins_snrcut, skymask_matrices, select_chunkid] for f in files]
         )
 
     output_readpk1d = [x for x in output_readpk1d if x is not None]
