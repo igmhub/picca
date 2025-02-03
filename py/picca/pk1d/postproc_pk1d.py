@@ -130,7 +130,7 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None,
             if select_chunkid is not None:
                 #- Handle by hand the case of low-z quasars
                 # (that have less than 3 chunks in the standard DESI Y1 analysis configuration)
-                zqso = chunk_header('Z')
+                zqso = chunk_header['Z']
                 # default: forest has three chunks 0 1 2
                 fake_chunkid = chunk_header['CHUNK_ID']
                 if zqso < 2.2774:
