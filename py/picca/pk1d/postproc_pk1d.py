@@ -1505,7 +1505,8 @@ def run_postproc_pk1d(
 
     with Pool(ncpu) as pool:
         output_readpk1d = pool.starmap(
-            read_pk1d, [[f, kbin_edges, snrcut, zbins_snrcut, skymask_matrices, select_chunkid] for f in files]
+            read_pk1d, [[f, kbin_edges, snrcut, zbins_snrcut,
+                         skymask_matrices, select_chunkid] for f in files]
         )
 
     output_readpk1d = [x for x in output_readpk1d if x is not None]
