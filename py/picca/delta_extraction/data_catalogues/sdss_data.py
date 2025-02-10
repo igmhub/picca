@@ -2,7 +2,7 @@
 import os
 import logging
 import time
-from multiprocessing import Pool
+import multiprocessing
 
 import numpy as np
 import fitsio
@@ -203,11 +203,15 @@ class SdssData(Data):
         """
         self.logger.progress(f"Reading {len(catalog)} objects")
 
+        # Trick to trigger Pk1dForest.__init__() outside the Pool
+        _ = self._read_single_spec(catalog, 0)
+
         forests_by_thingid = {}
         #-- Loop over unique objects
-        pool = Pool(self.num_processors)
-        output_spec = pool.starmap(
-            self._read_single_spec, [[catalog, i] for i in range(len(catalog))])
+        context = multiprocessing.get_context('fork')
+        with context.Pool(processes=self.num_processors) as pool:
+            output_spec = pool.starmap(
+                self._read_single_spec, [[catalog, i] for i in range(len(catalog))])
 
         # remove ignored files:
         output_spec = [x for x in output_spec if x is not None]
