@@ -41,6 +41,7 @@ class SdssData(Data):
     (see Data in py/picca/delta_extraction/data.py)
     __init__
     __parse_config
+    _read_single_spec
     read_from_spec
     read_from_spplate
 
@@ -75,6 +76,9 @@ class SdssData(Data):
 
         config["flux units"] = "10**-19 W/(m2 nm)"
         super().__init__(config)
+
+        if self.analysis_type == "PK 1D":
+            SdssPk1dForest.update_class_variables()
 
         # load DRQ Catalogue
         catalogue = DrqCatalogue(config).catalogue
@@ -202,9 +206,6 @@ class SdssData(Data):
         Table with the DRQ catalog
         """
         self.logger.progress(f"Reading {len(catalog)} objects")
-
-        # Trick to trigger Pk1dForest.__init__() outside the Pool
-        _ = self._read_single_spec(catalog, 0)
 
         forests_by_thingid = {}
         #-- Loop over unique objects
