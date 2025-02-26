@@ -1207,9 +1207,9 @@ def compute_groups_for_one_forest(nbins_k, p1d_los):
         if number_in_bins != 0:
             weight = p1d_los["weight"][mask_ikbin][0]
             p1d_weights_id[ikbin] = weight
-            covariance_weights_id[ikbin] = weight / number_in_bins
+            covariance_weights_id[ikbin] = weight
             p1d_groups_id[ikbin] = np.nansum(
-                p1d_los["pk"][mask_ikbin] * covariance_weights_id[ikbin]
+                p1d_los["pk"][mask_ikbin] * weight / number_in_bins
             )
     return p1d_weights_id, covariance_weights_id, p1d_groups_id
 
