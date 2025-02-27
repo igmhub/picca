@@ -1068,8 +1068,8 @@ def compute_and_fill_covariance(
                 boot_cov.append(covariance_array)
 
             index_cov = cov_table_regular_slice(izbin, nbins_k)
-            cov_table["boot_covariance"][index_cov[0]:index_cov[1]] = np.mean(boot_cov, axis=0)
-            cov_table["error_boot_covariance"][index_cov[0]:index_cov[1]] = np.std(boot_cov, axis=0)
+            cov_table["boot_covariance"][index_cov[0]:index_cov[1]] = np.nanmean(boot_cov, axis=0)
+            cov_table["error_boot_covariance"][index_cov[0]:index_cov[1]] = np.nanstd(boot_cov, axis=0)
 
 
 def compute_p1d_groups(
