@@ -444,7 +444,7 @@ def compute_mean_pk1d(
             mean_pk = mean_p1d_table["meanPk"][index_mean[0] : index_mean[1]]
 
             if n_chunks[izbin] == 0:
-                p1d_weights_z, p1d_groups_z = [], [], []
+                p1d_weights_z, p1d_groups_z = [], []
             else:
                 p1d_weights_z, p1d_groups_z = compute_p1d_groups(
                     weight_method,
@@ -971,7 +971,7 @@ def compute_and_fill_covariance(
                         mean_pk,
                         p1d_weights_z,
                         p1d_groups_z,
-                    ) = ([], [], [], [])
+                    ) = ([], [], [])
                 else:
                     mean_pk = p1d_groups[izbin][0]
                     p1d_weights_z = p1d_groups[izbin][1][bootid[iboot]]
