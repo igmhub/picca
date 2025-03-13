@@ -226,7 +226,6 @@ def compute_mean_pk1d(
     compute_bootstrap=False,
     number_bootstrap=50,
     number_worker=8,
-    smooth_error=True,
 ):
     """Compute mean P1D in a set of given (z,k) bins, from individual chunks P1Ds.
 
@@ -277,9 +276,6 @@ def compute_mean_pk1d(
 
     number_worker: int
     Calculations of mean P1Ds and covariances are run parallel over redshift bins.
-
-    smooth_error: Bool
-    Smooth the mean P1D error bar and the diagonal covariance.
 
     Return
     ------
@@ -420,7 +416,6 @@ def compute_mean_pk1d(
         weight_method,
         snrfit_table,
         nomedians,
-        smooth_error,
     )
 
     if compute_covariance or compute_bootstrap:
@@ -447,12 +442,11 @@ def compute_mean_pk1d(
             cov_table["N"][index_cov[0]:index_cov[1]] = n_array
             index_mean = mean_p1d_table_regular_slice(izbin, nbins_k)
             mean_pk = mean_p1d_table["meanPk"][index_mean[0] : index_mean[1]]
-            error_pk = mean_p1d_table["errorPk"][index_mean[0] : index_mean[1]]
 
             if n_chunks[izbin] == 0:
-                p1d_weights_z, covariance_weights_z, p1d_groups_z = [], [], []
+                p1d_weights_z, p1d_groups_z = [], [], []
             else:
-                p1d_weights_z, covariance_weights_z, p1d_groups_z = compute_p1d_groups(
+                p1d_weights_z, p1d_groups_z = compute_p1d_groups(
                     weight_method,
                     nbins_k,
                     zbin_edges,
@@ -466,9 +460,7 @@ def compute_mean_pk1d(
             p1d_groups.append(
                 [
                     mean_pk,
-                    error_pk,
                     p1d_weights_z,
-                    covariance_weights_z,
                     p1d_groups_z,
                 ]
             )
@@ -506,7 +498,6 @@ def fill_average_pk(
     weight_method,
     snrfit_table,
     nomedians,
-    smooth_error,
 ):
     """Fill the average P1D table for all redshift and k bins.
 
@@ -538,9 +529,6 @@ def fill_average_pk(
     nomedians: bool,
     If True, do not use median values in the fit to the SNR.
 
-    smooth_error: Bool
-    Smooth the mean P1D error bar and the diagonal covariance.
-
     Return
     ------
     None
@@ -565,46 +553,7 @@ def fill_average_pk(
         mean_p1d_table["N"][index_mean[0]:index_mean[1]] = n_array
         for icol, col in enumerate(p1d_table_cols):
             mean_p1d_table["mean" + col][index_mean[0]:index_mean[1]] = mean_array[icol]
-
-            if col == "Pk":
-                variance_col = variance_array[icol]
-                if len(variance_col) == len(variance_col[np.isnan(variance_col)]):
-                    error_col = np.sqrt(variance_col)
-                elif len(variance_col) == len(variance_col[variance_col < 0.0]):
-                    error_col = np.sqrt(variance_col)
-                else:
-                    mask_negative_variance = variance_col < 0.0
-                    variance_indices = np.arange(len(variance_col))
-                    interp_func = interp1d(
-                        variance_indices[~mask_negative_variance],
-                        variance_col[~mask_negative_variance],
-                        kind="linear",
-                        fill_value="extrapolate",
-                    )
-                    variance_col_filled = interp_func(variance_indices)
-
-                    if smooth_error:
-                        # Savgol filter in the log variance.
-                        window_filter = min(
-                            DEFAULT_ERROR_SMOOTHING_WINDOW,
-                            int(3 * len(variance_col_filled) / 4),
-                        )
-                        error_col = np.sqrt(
-                            np.exp(
-                                savgol_filter(
-                                    np.log(variance_col_filled),
-                                    window_filter,
-                                    DEFAULT_ERROR_SMOOTHING_POLYNOMIAL,
-                                )
-                            )
-                        )
-                    else:
-                        error_col = np.sqrt(variance_col_filled)
-            else:
-                error_col = np.sqrt(variance_array[icol])
-
-
-            mean_p1d_table["error" + col][index_mean[0]:index_mean[1]] = error_col
+            mean_p1d_table["error" + col][index_mean[0]:index_mean[1]] = np.sqrt(variance_array[icol])
             mean_p1d_table["min" + col][index_mean[0]:index_mean[1]] = min_array[icol]
             mean_p1d_table["max" + col][index_mean[0]:index_mean[1]] = max_array[icol]
             if not nomedians:
@@ -889,17 +838,7 @@ def compute_average_pk_redshift(
                         / np.sum(weights_col) ** 2
                     )
                 else:
-                    # Taking JM estimator only for P1D,
-                    # because it gives almost only negative values for other columns.
-                    if col == "Pk":
-                        variance = ((np.sum(weights) ** 2 / np.sum(weights**2)) - 1) ** (
-                            -1
-                        ) * (
-                            (np.sum(weights**2 * data_values**2) / np.sum(weights**2))
-                            - (np.sum(weights * data_values) / np.sum(weights)) ** 2
-                        )
-                    else:
-                        variance = 1 / np.sum(weights_col)
+                    variance = 1 / np.sum(weights_col)
                 if col == "Pk":
                     standard_dev = np.concatenate(
                         [
@@ -1030,23 +969,17 @@ def compute_and_fill_covariance(
                 if bootid[iboot] is None:
                     (
                         mean_pk,
-                        error_pk,
                         p1d_weights_z,
-                        covariance_weights_z,
                         p1d_groups_z,
-                    ) = ([], [], [], [], [])
+                    ) = ([], [], [], [])
                 else:
                     mean_pk = p1d_groups[izbin][0]
-                    error_pk = p1d_groups[izbin][1]
-                    p1d_weights_z = p1d_groups[izbin][2][bootid[iboot]]
-                    covariance_weights_z = p1d_groups[izbin][3][bootid[iboot]]
-                    p1d_groups_z = p1d_groups[izbin][4][bootid[iboot]]
+                    p1d_weights_z = p1d_groups[izbin][1][bootid[iboot]]
+                    p1d_groups_z = p1d_groups[izbin][2][bootid[iboot]]
                 p1d_groups_bootstrap.append(
                     [
                         mean_pk,
-                        error_pk,
                         p1d_weights_z,
-                        covariance_weights_z,
                         p1d_groups_z,
                     ]
                 )
@@ -1116,9 +1049,6 @@ def compute_p1d_groups(
     p1d_weights  (array-like):
     Weights associated with p1d pixels for all subforest, used in the calculation of covariance.
 
-    covariance_weights (array-like):
-    Weights for all subforest used inside the main covariance sum.
-
     p1d_groups (array-like):
     Individual p1d pixels grouped in the same wavenumber binning for all subforest
     """
@@ -1167,12 +1097,11 @@ def compute_p1d_groups(
 
     del p1d_los_table
 
-    p1d_weights, covariance_weights, p1d_groups = (
+    p1d_weights, p1d_groups = (
         output_group[:, 0, :],
         output_group[:, 1, :],
-        output_group[:, 2, :],
     )
-    return p1d_weights, covariance_weights, p1d_groups
+    return p1d_weights, p1d_groups
 
 
 def compute_groups_for_one_forest(nbins_k, p1d_los):
@@ -1191,35 +1120,29 @@ def compute_groups_for_one_forest(nbins_k, p1d_los):
     p1d_weights_id  (array-like):
     Weights associated with p1d pixels for one subforest, used in the calculation of covariance.
 
-    covariance_weights_id (array-like):
-    Weights for one subforest used inside the main covariance sum.
-
     p1d_groups_id (array-like):
     Individual p1d pixels grouped in the same wavenumber binning for one subforest
     """
     p1d_weights_id = np.zeros(nbins_k)
-    covariance_weights_id = np.zeros(nbins_k)
     p1d_groups_id = np.zeros(nbins_k)
 
+    mask_finite = np.isfinite(p1d_los["pk"])
     for ikbin in range(nbins_k):
-        mask_ikbin = p1d_los["k_index"] == ikbin
+        mask_ikbin = mask_finite & (p1d_los["k_index"] == ikbin)
         number_in_bins = len(mask_ikbin[mask_ikbin])
         if number_in_bins != 0:
             weight = p1d_los["weight"][mask_ikbin][0]
             p1d_weights_id[ikbin] = weight
-            covariance_weights_id[ikbin] = weight
-            p1d_groups_id[ikbin] = np.nansum(
-                p1d_los["pk"][mask_ikbin] * weight / number_in_bins
+            p1d_groups_id[ikbin] = weight * np.sum(
+                p1d_los["pk"][mask_ikbin] / number_in_bins
             )
-    return p1d_weights_id, covariance_weights_id, p1d_groups_id
+    return p1d_weights_id, p1d_groups_id
 
 
 def compute_cov(
     nbins_k,
     mean_pk,
-    error_pk,
     p1d_weights,
-    covariance_weights,
     p1d_groups,
 ):
     """Compute the covariance of a set of 1D power spectra.
@@ -1240,9 +1163,6 @@ def compute_cov(
     p1d_weights  (array-like):
     Weights associated with p1d pixels for all subforest, used in the calculation of covariance.
 
-    covariance_weights (array-like):
-    Weights for all subforest used inside the main covariance sum.
-
     p1d_groups (array-like):
     Individual p1d pixels grouped in the same wavenumber binning for all subforest
 
@@ -1261,7 +1181,6 @@ def compute_cov(
     weights_sum_product = np.outer(sum_p1d_weights, sum_p1d_weights)
 
     p1d_groups_product_sum = np.zeros((nbins_k, nbins_k))
-    covariance_weights_product_sum = np.zeros((nbins_k, nbins_k))
     weights_product_sum = np.zeros((nbins_k, nbins_k))
 
     for i, p1d_group in enumerate(p1d_groups):
@@ -1271,30 +1190,15 @@ def compute_cov(
         p1d_groups_product_sum = np.nansum(
             [p1d_groups_product_sum, np.outer(p1d_group, p1d_group)], axis=0
         )
-        covariance_weights_product_sum = np.nansum(
-            [
-                covariance_weights_product_sum,
-                np.outer(covariance_weights[i], covariance_weights[i]),
-            ],
-            axis=0,
-        )
         weights_product_sum = np.nansum(
             [weights_product_sum, np.outer(p1d_weights[i], p1d_weights[i])], axis=0
         )
 
-    del p1d_groups, covariance_weights, p1d_weights
+    del p1d_groups, p1d_weights
 
     covariance_matrix = ((weights_sum_product /weights_product_sum) - 1)**(-1) * (
-        (p1d_groups_product_sum / covariance_weights_product_sum) - mean_pk_product
+        (p1d_groups_product_sum / weights_product_sum) - mean_pk_product
     )
-
-    # Force the diagonal to be equal to the variance, including smoothing.
-    covariance_diag = np.diag(covariance_matrix)
-    covariance_matrix = (
-            covariance_matrix
-            * np.outer(error_pk, error_pk)
-           / np.sqrt(np.outer(covariance_diag, covariance_diag))
-        )
 
     covariance_array = np.ravel(covariance_matrix)
 
@@ -1500,7 +1404,6 @@ def run_postproc_pk1d(
     compute_covariance=False,
     compute_bootstrap=False,
     number_bootstrap=50,
-    smooth_error=True,
 ):
     """
     Read individual Pk1D data from a set of files and compute P1D statistics.
@@ -1555,7 +1458,6 @@ def run_postproc_pk1d(
         compute_bootstrap=compute_bootstrap,
         number_bootstrap=number_bootstrap,
         number_worker=ncpu,
-        smooth_error=smooth_error
     )
 
     metadata_header = {
