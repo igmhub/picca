@@ -1163,8 +1163,8 @@ def compute_cov(
     if len(p1d_groups) == 0:
         return np.full(nbins_k * nbins_k, np.nan)
 
-    p1d_groups_average = np.nansum(p1d_weights * p1d_groups, axis=0)/np.nansum(p1d_weights, axis=0)
-    p1d_groups_average_product = np.outer(p1d_groups_average, p1d_groups_average)
+    mean_pk_from_groups = np.nansum(p1d_groups, axis=0)/np.nansum(p1d_weights, axis=0)
+    mean_pk_groups_product = np.outer(mean_pk_from_groups, mean_pk_from_groups)
 
     sum_p1d_weights = np.nansum(p1d_weights, axis=0)
     weights_sum_product = np.outer(sum_p1d_weights, sum_p1d_weights)
@@ -1186,7 +1186,7 @@ def compute_cov(
     del p1d_groups, p1d_weights
 
     covariance_matrix = ((weights_sum_product /weights_product_sum) - 1)**(-1) * (
-        (p1d_groups_product_sum / weights_product_sum) - p1d_groups_average_product
+        (p1d_groups_product_sum / weights_product_sum) - mean_pk_groups_product
     )
 
     covariance_array = np.ravel(covariance_matrix)
