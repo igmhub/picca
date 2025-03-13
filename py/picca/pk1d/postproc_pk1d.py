@@ -438,8 +438,6 @@ def compute_mean_pk1d(
             cov_table["k1"][index_cov[0]:index_cov[1]] = k1_array
             cov_table["k2"][index_cov[0]:index_cov[1]] = k2_array
             cov_table["N"][index_cov[0]:index_cov[1]] = n_array
-            index_mean = mean_p1d_table_regular_slice(izbin, nbins_k)
-            mean_pk = mean_p1d_table["meanPk"][index_mean[0] : index_mean[1]]
 
             if n_chunks[izbin] == 0:
                 p1d_weights_z, p1d_groups_z = [], []
@@ -457,7 +455,6 @@ def compute_mean_pk1d(
 
             p1d_groups.append(
                 [
-                    mean_pk,
                     p1d_weights_z,
                     p1d_groups_z,
                 ]
@@ -966,17 +963,14 @@ def compute_and_fill_covariance(
             for iboot in range(number_bootstrap):
                 if bootid[iboot] is None:
                     (
-                        mean_pk,
                         p1d_weights_z,
                         p1d_groups_z,
-                    ) = ([], [], [])
+                    ) = ([], [])
                 else:
-                    mean_pk = p1d_groups[izbin][0]
                     p1d_weights_z = p1d_groups[izbin][1][bootid[iboot]]
                     p1d_groups_z = p1d_groups[izbin][2][bootid[iboot]]
                 p1d_groups_bootstrap.append(
                     [
-                        mean_pk,
                         p1d_weights_z,
                         p1d_groups_z,
                     ]
@@ -1139,7 +1133,6 @@ def compute_groups_for_one_forest(nbins_k, p1d_los):
 
 def compute_cov(
     nbins_k,
-    mean_pk,
     p1d_weights,
     p1d_groups,
 ):
@@ -1154,9 +1147,6 @@ def compute_cov(
 
     nbins_k (int):
     Number of k bins.
-
-    mean_pk (array-like):
-    Mean 1D power spectra, for the considered redshift bin.
 
     p1d_weights  (array-like):
     Weights associated with p1d pixels for all subforest, used in the calculation of covariance.
@@ -1173,7 +1163,8 @@ def compute_cov(
     if len(p1d_groups) == 0:
         return np.full(nbins_k * nbins_k, np.nan)
 
-    mean_pk_product = np.outer(mean_pk, mean_pk)
+    p1d_groups_average = np.nansum(p1d_weights * p1d_groups, axis=0)/np.nansum(p1d_weights, axis=0)
+    p1d_groups_average_product = np.outer(p1d_groups_average, p1d_groups_average)
 
     sum_p1d_weights = np.nansum(p1d_weights, axis=0)
     weights_sum_product = np.outer(sum_p1d_weights, sum_p1d_weights)
@@ -1195,7 +1186,7 @@ def compute_cov(
     del p1d_groups, p1d_weights
 
     covariance_matrix = ((weights_sum_product /weights_product_sum) - 1)**(-1) * (
-        (p1d_groups_product_sum / weights_product_sum) - mean_pk_product
+        (p1d_groups_product_sum / weights_product_sum) - p1d_groups_average_product
     )
 
     covariance_array = np.ravel(covariance_matrix)
