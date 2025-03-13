@@ -28,8 +28,6 @@ from scipy.stats import binned_statistic
 
 from picca.constants import ABSORBER_IGM, SPEED_LIGHT
 from picca.pk1d.utils import (
-    DEFAULT_ERROR_SMOOTHING_POLYNOMIAL,
-    DEFAULT_ERROR_SMOOTHING_WINDOW,
     MEANPK_FITRANGE_SNR,
     fitfunc_variance_pk1d,
 )
