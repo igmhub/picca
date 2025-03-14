@@ -1098,6 +1098,8 @@ def compute_p1d_groups(
 
 def compute_groups_for_one_forest(nbins_k, p1d_los):
     """Compute the P1D groups for one subforest.
+    Since all the P1D have the same weight for sub-forest and k bin,
+    the weigths are equal, but we keep the general shape of the group computation.
 
     Arguments
     ---------
@@ -1115,7 +1117,7 @@ def compute_groups_for_one_forest(nbins_k, p1d_los):
     p1d_groups_id (array-like):
     Individual p1d pixels grouped in the same wavenumber binning for one subforest
     """
-    p1d_weights_id = np.zeros(nbins_k)
+    p1d_groups_weights_id = np.zeros(nbins_k)
     p1d_groups_id = np.zeros(nbins_k)
 
     mask_finite = np.isfinite(p1d_los["pk"])
@@ -1123,12 +1125,13 @@ def compute_groups_for_one_forest(nbins_k, p1d_los):
         mask_ikbin = mask_finite & (p1d_los["k_index"] == ikbin)
         number_in_bins = len(mask_ikbin[mask_ikbin])
         if number_in_bins != 0:
-            weight = p1d_los["weight"][mask_ikbin][0]
-            p1d_weights_id[ikbin] = weight
-            p1d_groups_id[ikbin] = weight * np.sum(
-                p1d_los["pk"][mask_ikbin] / number_in_bins
+            weights = p1d_los["weight"][mask_ikbin]
+            pk = p1d_los["pk"][mask_ikbin]
+            p1d_groups_weights_id[ikbin] = np.nansum(weights)
+            p1d_groups_id[ikbin] = np.nansum(weights * pk) / (
+                p1d_groups_weights_id[ikbin]
             )
-    return p1d_weights_id, p1d_groups_id
+    return p1d_groups_weights_id, p1d_groups_id
 
 
 def compute_cov(
@@ -1163,7 +1166,7 @@ def compute_cov(
     if len(p1d_groups) == 0:
         return np.full(nbins_k * nbins_k, np.nan)
 
-    mean_pk_from_groups = np.nansum(p1d_groups, axis=0)/np.nansum(p1d_weights, axis=0)
+    mean_pk_from_groups = np.nansum(p1d_weights * p1d_groups, axis=0)/np.nansum(p1d_weights, axis=0)
     mean_pk_groups_product = np.outer(mean_pk_from_groups, mean_pk_from_groups)
 
     sum_p1d_weights = np.nansum(p1d_weights, axis=0)
@@ -1173,11 +1176,15 @@ def compute_cov(
     weights_product_sum = np.zeros((nbins_k, nbins_k))
 
     for i, p1d_group in enumerate(p1d_groups):
-        # The summation is done with np.nansum instead of simple addition to not
+        # The summation is done with np.nansum instead of simple addition to not
         # include the NaN that are present in the individual p1d.
         # The summation is not done at the end, to prevent memory overhead.
         p1d_groups_product_sum = np.nansum(
-            [p1d_groups_product_sum, np.outer(p1d_group, p1d_group)], axis=0
+            [
+                p1d_groups_product_sum,
+                np.outer(p1d_weights[i] * p1d_group, p1d_weights[i] * p1d_group),
+            ],
+            axis=0,
         )
         weights_product_sum = np.nansum(
             [weights_product_sum, np.outer(p1d_weights[i], p1d_weights[i])], axis=0
