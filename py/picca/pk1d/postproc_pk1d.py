@@ -21,9 +21,7 @@ import fitsio
 import numpy as np
 from astropy.stats import bootstrap
 from astropy.table import Table, vstack
-from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
-from scipy.signal import savgol_filter
 from scipy.stats import binned_statistic
 
 from picca.constants import ABSORBER_IGM, SPEED_LIGHT
@@ -548,8 +546,10 @@ def fill_average_pk(
         mean_p1d_table["N"][index_mean[0]:index_mean[1]] = n_array
         for icol, col in enumerate(p1d_table_cols):
             mean_p1d_table["mean" + col][index_mean[0]:index_mean[1]] = mean_array[icol]
-            mean_p1d_table["error" + col][index_mean[0]:index_mean[1]] = np.sqrt(variance_array[icol])
-            mean_p1d_table["min" + col][index_mean[0]:index_mean[1]] = min_array[icol]
+            mean_p1d_table["error" + col][index_mean[0] : index_mean[1]] = np.sqrt(
+                variance_array[icol]
+            )
+            mean_p1d_table["min" + col][index_mean[0] : index_mean[1]] = min_array[icol]
             mean_p1d_table["max" + col][index_mean[0]:index_mean[1]] = max_array[icol]
             if not nomedians:
                 mean_p1d_table["median" + col][index_mean[0]:index_mean[1]] = median_array[icol]
@@ -993,8 +993,12 @@ def compute_and_fill_covariance(
                 boot_cov.append(covariance_array)
 
             index_cov = cov_table_regular_slice(izbin, nbins_k)
-            cov_table["boot_covariance"][index_cov[0]:index_cov[1]] = np.nanmean(boot_cov, axis=0)
-            cov_table["error_boot_covariance"][index_cov[0]:index_cov[1]] = np.nanstd(boot_cov, axis=0)
+            cov_table["boot_covariance"][index_cov[0] : index_cov[1]] = np.nanmean(
+                boot_cov, axis=0
+            )
+            cov_table["error_boot_covariance"][index_cov[0] : index_cov[1]] = np.nanstd(
+                boot_cov, axis=0
+            )
 
 
 def compute_p1d_groups(
