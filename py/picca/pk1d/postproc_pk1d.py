@@ -1076,8 +1076,7 @@ def compute_average_bootstrap_z(
     group_id = p1d_groups[boot_id, :]
     if np.nansum(weights_id) == 0.0:
         return np.full(group_id.shape[-1], np.nan)
-    else:
-        return np.nansum(weights_id * group_id, axis=0) / np.nansum(weights_id, axis=0)
+    return np.nansum(weights_id * group_id, axis=0) / np.nansum(weights_id, axis=0)
 
 
 def compute_p1d_groups(
