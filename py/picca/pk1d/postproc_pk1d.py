@@ -221,6 +221,8 @@ def compute_mean_pk1d(
     compute_covariance=False,
     compute_bootstrap=False,
     number_bootstrap=50,
+    compute_bootstrap_average=False,
+    number_bootstrap_average=1000,
     number_worker=8,
 ):
     """Compute mean P1D in a set of given (z,k) bins, from individual chunks P1Ds.
@@ -267,8 +269,14 @@ def compute_mean_pk1d(
     compute_bootstrap: Bool
     If True, compute statistical covariance using a simple bootstrap method.
 
+    compute_bootstrap_average: Bool
+    If True, compute covariance using the bootstrap of P1D averages.
+
     number_bootstrap: int
     Number of bootstrap samples used if compute_bootstrap is True.
+
+    number_bootstrap: int
+    Number of bootstrap samples used if compute_bootstrap_average is True.
 
     number_worker: int
     Calculations of mean P1Ds and covariances are run parallel over redshift bins.
@@ -355,6 +363,8 @@ def compute_mean_pk1d(
                 cov_table["error_boot_covariance"] = np.zeros(
                     nbins_z * nbins_k * nbins_k
                 )
+            if compute_bootstrap_average:
+                cov_table["boot_average_covariance"] = np.zeros(nbins_z * nbins_k * nbins_k)
 
             k_index = np.full(len(p1d_table["k"]), -1, dtype=int)
             for ikbin, _ in enumerate(kbin_edges[:-1]):  # First loop 1) k bins
@@ -461,11 +471,13 @@ def compute_mean_pk1d(
         compute_and_fill_covariance(
             compute_covariance,
             compute_bootstrap,
+            compute_bootstrap_average,
             nbins_k,
             nbins_z,
             p1d_groups,
             number_worker,
             number_bootstrap,
+            number_bootstrap_average,
             cov_table,
         )
 
@@ -889,11 +901,13 @@ def compute_average_pk_redshift(
 def compute_and_fill_covariance(
     compute_covariance,
     compute_bootstrap,
+    compute_bootstrap_average,
     nbins_k,
     nbins_z,
     p1d_groups,
     number_worker,
     number_bootstrap,
+    number_bootstrap_average,
     cov_table,
 ):
     """Compute the covariance and bootstrap covariance and fill the corresponding
@@ -906,6 +920,9 @@ def compute_and_fill_covariance(
 
     compute_bootstrap: Bool
     If True, compute statistical covariance using a simple bootstrap method.
+
+    compute_bootstrap_average: Bool
+    If True, compute covariance using the bootstrap of P1D averages.
 
     nbins_k (int):
     Number of k bins.
@@ -921,6 +938,9 @@ def compute_and_fill_covariance(
 
     number_bootstrap: int
     Number of bootstrap samples used if compute_bootstrap is True.
+
+    number_bootstrap: int
+    Number of bootstrap samples used if compute_bootstrap_average is True.
 
     cov_table (array-like):
     Covariance table to fill.
@@ -999,6 +1019,65 @@ def compute_and_fill_covariance(
             cov_table["error_boot_covariance"][index_cov[0] : index_cov[1]] = np.nanstd(
                 boot_cov, axis=0
             )
+
+    if compute_bootstrap_average:
+        userprint("Computing covariance matrix with bootstrap on the average P1D")
+        for izbin in range(nbins_z):
+            p1d_groups_z = p1d_groups[izbin]
+
+            if len(p1d_groups_z[0]) == 0:
+                boot_average_cov = np.full(nbins_k * nbins_k, np.nan)
+            else:
+                boot_id_average = np.array(
+                    bootstrap(np.arange(len(p1d_groups_z[0])), number_bootstrap_average)
+                ).astype(int)
+
+                func = partial(
+                    compute_average_bootstrap_z,
+                    p1d_groups[izbin][0],
+                    p1d_groups[izbin][1],
+                )
+                if number_worker == 1:
+                    boot_average_pk = [func(boot_id) for boot_id in boot_id_average]
+                else:
+                    with Pool(number_worker) as pool:
+                        boot_average_pk = pool.map(func, boot_id_average)
+
+                boot_average_cov = np.cov(np.transpose(np.array(boot_average_pk)))
+                boot_average_cov = np.ravel(boot_average_cov)
+
+            index_cov = cov_table_regular_slice(izbin, nbins_k)
+            cov_table["boot_average_covariance"][
+                index_cov[0] : index_cov[1]
+            ] = boot_average_cov
+
+
+def compute_average_bootstrap_z(
+    p1d_weights,
+    p1d_groups,
+    boot_id,
+):
+    """Compute the average P1D using bootstrap method.
+
+    Arguments
+    ---------
+    p1d_weights  (array-like):
+    Weights associated with p1d pixels for all subforest, used in the calculation of covariance.
+
+    p1d_groups (array-like):
+    Individual p1d pixels grouped in the same wavenumber binning for all subforest
+
+    Return
+    ------
+    (array-like):
+    Array of average P1D.
+    """
+    weights_id = p1d_weights[boot_id, :]
+    group_id = p1d_groups[boot_id, :]
+    if np.nansum(weights_id) == 0.0:
+        return np.full(group_id.shape[-1], np.nan)
+    else:
+        return np.nansum(weights_id * group_id, axis=0) / np.nansum(weights_id, axis=0)
 
 
 def compute_p1d_groups(
@@ -1404,6 +1483,8 @@ def run_postproc_pk1d(
     compute_covariance=False,
     compute_bootstrap=False,
     number_bootstrap=50,
+    compute_bootstrap_average=False,
+    number_bootstrap_average=1000,
 ):
     """
     Read individual Pk1D data from a set of files and compute P1D statistics.
@@ -1457,6 +1538,8 @@ def run_postproc_pk1d(
         compute_covariance=compute_covariance,
         compute_bootstrap=compute_bootstrap,
         number_bootstrap=number_bootstrap,
+        compute_bootstrap_average=compute_bootstrap_average,
+        number_bootstrap_average=number_bootstrap_average,
         number_worker=ncpu,
     )
 

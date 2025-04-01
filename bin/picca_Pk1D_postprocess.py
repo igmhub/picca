@@ -199,19 +199,31 @@ def main(cmdargs):
                         action='store_true',
                         default=False,
                         required=False,
-                        help='Compute covariance matrix, cpu-intensive calculation')
+                        help='Compute covariance matrix')
 
     parser.add_argument('--bootstrap',
                         action='store_true',
                         default=False,
                         required=False,
-                        help='Compute covariance matrix with bootstrap method, very cpu-intensive calculation')
+                        help='Compute covariance matrix with bootstrap method')
 
     parser.add_argument('--nbootstrap',
                         type=int,
                         default=20,
                         required=False,
                         help='Number of bootstrap iteration used')
+    
+    parser.add_argument('--bootstrap_average',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Compute covariance matrix with bootstrap method on the average P1D')
+
+    parser.add_argument('--nbootstrap_average',
+                        type=int,
+                        default=1000,
+                        required=False,
+                        help='Number of bootstrap iteration used for average bootstrap')
     
     args = parser.parse_args(cmdargs)
 
@@ -277,7 +289,10 @@ def main(cmdargs):
                                     ncpu = args.ncpu,
                                     compute_covariance=args.covariance,
                                     compute_bootstrap=args.bootstrap,
-                                    number_bootstrap=args.nbootstrap)
+                                    number_bootstrap=args.nbootstrap,
+                                    compute_bootstrap_average=args.bootstrap_average,
+                                    number_bootstrap_average=args.nbootstrap_average,
+                                    )
 
 
 if __name__ == '__main__':
