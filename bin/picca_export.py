@@ -140,7 +140,6 @@ def main(cmdargs):
         hdul = fitsio.FITS(args.cov)
         covariance = hdul[1]['CO'][:]
         hdul.close()
-        covariance_boot = None
     elif args.cor is not None:
         userprint(("INFO: The correlation-matrix will be read from file: "
                    "{}").format(args.cor))
@@ -157,7 +156,6 @@ def main(cmdargs):
         covariance = compute_cov(xi, weights)
         var = np.diagonal(covariance)
         covariance = correlation * np.sqrt(var * var[:, None])
-        covariance_boot = None
     else:
         delta_r_par = (r_par_max - r_par_min) / num_bins_r_par
         delta_r_trans = (r_trans_max - 0.) / num_bins_r_trans
