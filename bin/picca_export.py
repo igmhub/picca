@@ -161,8 +161,8 @@ def main(cmdargs):
         delta_r_trans = (r_trans_max - 0.) / num_bins_r_trans
 
         if args.num_boot_cov > 0:
-            userprint(f"INFO: Covariance with {args.nboot_cov} bootstrap realizations.")
-            covariance = compute_cov_boot(xi, weights, nboots=args.nboot_cov)
+            userprint(f"INFO: Covariance with {args.num_boot_cov} bootstrap realizations.")
+            covariance = compute_cov_boot(xi, weights, nboots=args.num_boot_cov)
         else:
             covariance = compute_cov(xi, weights)
 
