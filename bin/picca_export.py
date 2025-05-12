@@ -9,7 +9,7 @@ import scipy.linalg
 import h5py
 import os.path
 
-from picca.utils import smooth_cov, compute_cov
+from picca.utils import smooth_cov, compute_cov, compute_cov_boot
 from picca.utils import userprint
 
 # TODO: add tags here when we are allowed to unblind them
