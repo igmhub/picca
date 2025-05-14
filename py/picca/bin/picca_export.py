@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """Export auto and cross-correlation for the fitter."""
-import sys
 import argparse
 import fitsio
 import numpy as np
@@ -16,7 +15,7 @@ from picca.utils import userprint
 UNBLINDABLE_STRATEGIES = ["none", "desi_m2", "desi_y1", "desi_y3"]
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     """Export auto and cross-correlation for the fitter."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -342,8 +341,3 @@ def main(cmdargs):
                   comment=comment,
                   extname='DMATTRI')
     results.close()
-
-
-if __name__ == '__main__':
-    cmdargs = sys.argv[1:]
-    main(cmdargs)

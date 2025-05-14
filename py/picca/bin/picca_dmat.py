@@ -4,7 +4,6 @@
 This module follow the procedure described in sections 3.5 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
-import sys
 import time
 import argparse
 import multiprocessing
@@ -36,7 +35,7 @@ def calc_dmat(healpixs):
     return dmat_data
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes the distortion matrix"""
     parser = argparse.ArgumentParser(
@@ -523,8 +522,3 @@ def main(cmdargs):
 
     t3 = time.time()
     userprint(f'picca_dmat.py - Time total : {(t3-t0)/60:.3f} minutes')
-
-
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)
