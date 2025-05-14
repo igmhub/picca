@@ -429,7 +429,7 @@ def main(cmdargs=None):
         type=float,
         default=None,
         required=False,
-        help='Maximal number of masked pixels in a part of forest (default is 21% of the forest length, i.e. similar to the previous value at z=2.5 for a 3 chunk spectrum and 1050-1180A)')
+        help='Maximal number of masked pixels in a part of forest (default is 21%% of the forest length, i.e. similar to the previous value at z=2.5 for a 3 chunk spectrum and 1050-1180A)')
 
     parser.add_argument('--no-apply-filling',
                         action='store_true',
