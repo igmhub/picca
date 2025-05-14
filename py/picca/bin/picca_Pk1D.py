@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Compute the 1D power spectrum
 """
-import sys
 import argparse
 import glob
 from array import array
@@ -336,7 +335,7 @@ def process_all_files(index_file_args):
     return 0
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Compute the 1D power spectrum
     Uses the resolution matrix correction for DESI data"""
@@ -562,8 +561,3 @@ def main(cmdargs):
     else:
         [process_all_files((i, f, args)) for i, f in enumerate(files)]
     userprint("all done ")
-
-
-if __name__ == '__main__':
-    cmdargs = sys.argv[1:]
-    main(cmdargs)

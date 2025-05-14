@@ -43,7 +43,17 @@ picca = [
 ]
 
 [project.scripts]
+# Correlation function
 "picca_cf.py" = "picca.bin.picca_cf:main"
-"picca_dmat.py" = "picca.bin.picca_dmat:main"
+"picca_xcf.py" = "picca.bin.picca_xcf:main"
 "picca_export.py" = "picca.bin.picca_export:main"
+# Distortion
+"picca_dmat.py" = "picca.bin.picca_dmat:main"
+"picca_xdmat.py" = "picca.bin.picca_xdmat:main"
+"picca_fast_metal_dmat.py" = "picca.bin.picca_fast_metal_dmat:main"
+"picca_fast_metal_xdmat.py" = "picca.bin.picca_fast_metal_xdmat:main"
+# P1D
+"picca_Pk1D.py" = "picca.bin.picca_Pk1D:main"
+"picca_Pk1D_cross_exposure.py" = "picca.bin.picca_Pk1D_cross_exposure:main"
+"picca_Pk1D_postprocess.py" = "picca.bin.picca_Pk1D_postprocess:main"
 # Add the rest here
