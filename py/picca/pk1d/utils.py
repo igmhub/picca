@@ -6,7 +6,7 @@ from picca import constants
 from picca.utils import userprint
 
 DEFAULT_K_MIN_VEL = 0.000813
-DEFAULT_K_BIN_VEL = 0.000542
+DEFAULT_K_BIN_VEL = 0.0005
 # Default k_min in AA: assumed average redshift of 3.4,
 #  and a forest defined between 1050 and 1200 Angstrom:
 DEFAULT_K_MIN_LIN = 2 * np.pi / ((1200 - 1050) * (1 + 3.4))
