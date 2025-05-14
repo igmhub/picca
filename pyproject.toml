@@ -43,6 +43,8 @@ picca = [
 ]
 
 [project.scripts]
+# Continuum fitting
+"picca_delta_extraction.py" = "picca.bin.picca_delta_extraction:main"
 # Correlation function
 "picca_cf.py" = "picca.bin.picca_cf:main"
 "picca_xcf.py" = "picca.bin.picca_xcf:main"
