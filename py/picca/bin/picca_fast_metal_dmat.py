@@ -217,7 +217,7 @@ def calc_fast_metal_dmat(in_lambda_abs_1,
     return dmat, r_par_eff_2d, r_trans_eff_2d, z_eff_2d
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Compute the auto and cross-correlation of delta fields for a list of IGM
     absorption."""
@@ -665,8 +665,3 @@ def main(cmdargs):
     t3 = time.time()
     userprint(
         f'picca_fast_metal_dmat.py - Time total : {(t3-t0)/60:.3f} minutes')
-
-
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)

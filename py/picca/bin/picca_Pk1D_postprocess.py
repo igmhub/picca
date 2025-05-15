@@ -2,7 +2,7 @@
 """Compute the averaged 1D power spectrum
 """
 
-import sys, os, argparse
+import os, argparse
 import numpy as np
 import fitsio
 from picca.pk1d import postproc_pk1d, utils
@@ -35,7 +35,7 @@ def define_wavenumber_array(k_min, k_max, k_dist, velunits, pixsize, rebinfac):
 
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     """Compute the averaged 1D power spectrum"""
 
     parser = argparse.ArgumentParser(
@@ -293,8 +293,3 @@ def main(cmdargs):
                                     compute_bootstrap_average=args.bootstrap_average,
                                     number_bootstrap_average=args.nbootstrap_average,
                                     )
-
-
-if __name__ == '__main__':
-    cmdargs = sys.argv[1:]
-    main(cmdargs)

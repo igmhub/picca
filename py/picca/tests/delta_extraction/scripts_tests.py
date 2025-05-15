@@ -10,8 +10,6 @@ from picca.tests.delta_extraction.abstract_test import AbstractTest
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-PICCA_BIN = THIS_DIR.split("py/picca")[0]+"bin/"
-
 class ScriptsTest(AbstractTest):
     """Test script
     picca_delta_extraction.py under $PICCA_HOME/bin
@@ -31,10 +29,7 @@ class ScriptsTest(AbstractTest):
         command : list
         A list of items with the script to run and its options
         """
-        command = ["python",
-                   "{}/picca_delta_extraction.py".format(PICCA_BIN),
-                   config_file,
-                   ]
+        command = ["picca_delta_extraction.py", config_file]
         print("Running command: ", " ".join(command))
 
         try:
