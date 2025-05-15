@@ -5,7 +5,6 @@ list of IGM absorption.
 This module follow the procedure described in sections 4.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
-import sys
 import time
 import argparse
 from functools import partial
@@ -41,7 +40,7 @@ def calc_metal_dmat(abs_igm, healpixs):
     return dmat_data
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     """Compute the distortion matrix of the cross-correlation delta x object for
      a list of IGM absorption."""
     parser = argparse.ArgumentParser(
@@ -538,8 +537,3 @@ def main(cmdargs):
 
     t3 = time.time()
     userprint(f'picca_metal_xdmat.py - Time total: {(t3-t0)/60:.3f} minutes')
-
-
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)

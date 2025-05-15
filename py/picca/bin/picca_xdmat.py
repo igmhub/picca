@@ -5,7 +5,6 @@ object
 This module follow the procedure described in sections 3.5 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
-import sys
 import time
 import argparse
 import multiprocessing
@@ -37,7 +36,7 @@ def calc_dmat(healpixs):
     return dmat_data
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     """Computes the distortion matrix of the cross-correlation delta x
     object."""
     parser = argparse.ArgumentParser(
@@ -506,7 +505,3 @@ def main(cmdargs):
 
     t3 = time.time()
     userprint(f'picca_xdmat.py - Time total: {(t3-t0)/60:.3f} minutes')
-
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)

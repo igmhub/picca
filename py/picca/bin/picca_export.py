@@ -7,6 +7,7 @@ import scipy.interpolate
 import scipy.linalg
 import h5py
 import os.path
+import sys
 
 from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
