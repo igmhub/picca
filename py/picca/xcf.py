@@ -34,6 +34,9 @@ z_cut_min = None
 ang_max = None
 nside = None
 
+zerr_cut_deg = None
+zerr_cut_kms = None
+
 counter = None
 num_data = None
 
@@ -87,6 +90,22 @@ def fill_neighs(healpixs):
             ]
             ang = delta.get_angle_between(neighbours)
             w = ang < ang_max
+
+            if zerr_cut_deg is not None:
+                # angular separation between the quasars (in deg)
+                ang_deg = 180./np.pi*ang
+                # collect redshift of neighbouring quasars
+                obj_z_qso = np.array([obj.z_qso for obj in neighbours])
+                # mean redshift of quasar pair
+                z_qq = 0.5 * (delta.z_qso + obj_z_qso)
+                # velocity separation between foreground and backgroud quasar
+                dv_kms = np.abs(delta.z_qso - obj_z_qso)/(1 + z_qq)
+                dv_kms *= constants.SPEED_LIGHT
+                # mask quasar pairs that are close in both directions
+                zerr_cut_mask = (ang_deg < zerr_cut_deg)
+                zerr_cut_mask &= (dv_kms < zerr_cut_kms)
+                w &= (~zerr_cut_mask)
+
             if not ang_correlation:
                 r_comov = np.array([obj.r_comov for obj in neighbours])
                 w &= (delta.r_comov[0] - r_comov) * np.cos(ang / 2.) < r_par_max

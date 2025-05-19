@@ -13,7 +13,7 @@ from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
 
 # TODO: add tags here when we are allowed to unblind them
-UNBLINDABLE_STRATEGIES = ["none", "desi_m2", "desi_y1"]
+UNBLINDABLE_STRATEGIES = ["none", "desi_m2", "desi_y1", "desi_y3"]
 
 
 def main(cmdargs):
