@@ -123,7 +123,8 @@ class DesiHealpixFast(DesiData):
                 t1 = time.time()
                 self.logger.progress(f"Time spent meerging threads: {t1-t0}")
         else:
-            raise NotImplementedError('fast healpix reading is not implemented for analyses with "num processors=1"')
+            raise NotImplementedError('fast healpix reading is not implemented'
+                                      'for analyses with "num processors=1"')
 
         if len(self.forests) == 0:
             raise DataError("No quasars found, stopping here")

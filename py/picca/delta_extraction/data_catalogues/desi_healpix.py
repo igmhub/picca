@@ -277,7 +277,6 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
         if hdul_truth is not None:
             hdul_truth.close()
 
-        
         if not self.use_non_coadded_spectra:
             exp_targetid = exp_fibermap['TARGETID']
             exp_expid = exp_fibermap['EXPID']
@@ -304,7 +303,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
                             'NIGHT': night,
                             'EXPID': expid,
                             'FIBER': fiber}
-        
+
         forests_by_targetid, num_data = self.format_data(
             catalogue,
             spectrographs_data,
