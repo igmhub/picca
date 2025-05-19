@@ -124,17 +124,17 @@ class SdssForest(Forest):
             },
             {
                 'name': 'PLATE',
-                'value': "-".join(f"{plate:04d}" for plate in self.plate),
+                'value': ",".join(f"{plate:04d}" for plate in self.plate),
                 'comment': 'SDSS plate(s)',
             },
             {
                 'name': 'MJD',
-                'value': "-".join(f"{mjd:05d}" for mjd in self.mjd),
+                'value': ",".join(f"{mjd:05d}" for mjd in self.mjd),
                 'comment': 'Modified Julian date'
             },
             {
                 'name': 'FIBERID',
-                'value': "-".join(f"{fiberid:04d}" for fiberid in self.fiberid),
+                'value': ",".join(f"{fiberid:04d}" for fiberid in self.fiberid),
                 'comment': 'SDSS fiber id(s)',
             },
         ]
@@ -154,9 +154,9 @@ class SdssForest(Forest):
         metadata = super().get_metadata()
         metadata += [
             self.thingid,
-            "-".join(f"{plate:04d}" for plate in self.plate),
-            "-".join(f"{mjd:05d}" for mjd in self.mjd),
-            "-".join(f"{fiberid:04d}" for fiberid in self.fiberid),
+            ",".join(f"{plate:04d}" for plate in self.plate),
+            ",".join(f"{mjd:05d}" for mjd in self.mjd),
+            ",".join(f"{fiberid:04d}" for fiberid in self.fiberid),
         ]
         return metadata
 
