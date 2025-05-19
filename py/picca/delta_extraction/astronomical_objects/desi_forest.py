@@ -132,27 +132,27 @@ class DesiForest(Forest):
             },
             {
                 'name': 'NIGHT',
-                'value': "-".join(str(night) for night in self.night),
+                'value': ",".join(str(night) for night in self.night),
                 'comment': "Observation night(s)"
             },
             {
                 'name': 'PETAL',
-                'value': "-".join(str(petal) for petal in self.petal),
+                'value': ",".join(str(petal) for petal in self.petal),
                 'comment': 'Observation petal(s)'
             },
             {
                 'name': 'TILEID',
-                'value': "-".join(str(tileid) for tileid in self.tileid),
+                'value': ",".join(str(tileid) for tileid in self.tileid),
                 'comment': 'Observation tile(s)'
             },
             {
                 'name': 'EXPID',
-                'value': "-".join(str(expid) for expid in self.expid),
+                'value': ",".join(str(expid) for expid in self.expid),
                 'comment': 'Observation expid(s)'
             },
             {
                 'name': 'FIBER',
-                'value': "-".join(str(fiber) for fiber in self.fiber),
+                'value': ",".join(str(fiber) for fiber in self.fiber),
                 'comment': 'Observation fiber(s)'
             },
         ]
@@ -172,11 +172,11 @@ class DesiForest(Forest):
         metadata = super().get_metadata()
         metadata += [
             self.targetid,
-            "-".join(str(n) for night in self.night for n in night),
-            "-".join(str(p) for petal in self.petal for p in petal),
-            "-".join(str(t) for tileid in self.tileid for t in tileid),
-            "-".join(str(e) for expid in self.expid for e in expid),
-            "-".join(str(f) for fiber in self.fiber for f in fiber),
+            ",".join(str(n) for night in self.night for n in night),
+            ",".join(str(p) for petal in self.petal for p in petal),
+            ",".join(str(t) for tileid in self.tileid for t in tileid),
+            ",".join(str(e) for expid in self.expid for e in expid),
+            ",".join(str(f) for fiber in self.fiber for f in fiber),
         ]
         return metadata
 
