@@ -55,6 +55,7 @@ picca = [
 "picca_fast_metal_xdmat.py" = "picca.bin.picca_fast_metal_xdmat:main"
 # P1D
 "picca_Pk1D.py" = "picca.bin.picca_Pk1D:main"
+"picca_Pk1D_average_mean.py" = "picca.bin.picca_Pk1D_average_mean:main"
 "picca_Pk1D_cross_exposure.py" = "picca.bin.picca_Pk1D_cross_exposure:main"
 "picca_Pk1D_postprocess.py" = "picca.bin.picca_Pk1D_postprocess:main"
 # Add the rest here

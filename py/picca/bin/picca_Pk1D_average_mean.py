@@ -7,7 +7,7 @@ from picca.pk1d import postproc_pk1d
 from picca.utils import userprint
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     """Compute the averaged 1D power spectrum averages"""
 
     parser = argparse.ArgumentParser(
@@ -69,8 +69,3 @@ def main(cmdargs):
         args.output_path,
         weighted_mean=False,
     )
-
-
-if __name__ == "__main__":
-    cmdargs = sys.argv[1:]
-    main(cmdargs)
