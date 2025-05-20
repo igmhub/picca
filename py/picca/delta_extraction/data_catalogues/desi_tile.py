@@ -186,7 +186,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
         If True, remove the quasars taken on the same night.
 
         keep_single_exposures: bool
-        If True, the date loadded from non-coadded spectra are not coadded. 
+        If True, the date loadded from non-coadded spectra are not coadded.
         Otherwise, coadd the spectra here.
 
         logger: logging.Logger
@@ -232,9 +232,12 @@ class DesiTileFileHandler(DesiDataFileHandler):
             return {}, 0
 
         fibermap = hdul['FIBERMAP'].read()
+        has_exp_fibermap = ('EXP_FIBERMAP' in hdul)
         if not self.use_non_coadded_spectra:
-            exp_fibermap = hdul['EXP_FIBERMAP'].read()
-
+            if has_exp_fibermap :
+                exp_fibermap = hdul['EXP_FIBERMAP'].read()
+            else :
+                exp_fibermap = fibermap
 
         ra = fibermap['TARGET_RA']
         dec = fibermap['TARGET_DEC']
@@ -254,31 +257,25 @@ class DesiTileFileHandler(DesiDataFileHandler):
 
         petal_spec = fibermap['PETAL_LOC'][0]
 
-        if not self.use_non_coadded_spectra:
-            exp_targetid = exp_fibermap['TARGETID']
-            exp_expid = exp_fibermap['EXPID']
-            exp_petal = exp_fibermap['PETAL_LOC']
-            exp_fiber = exp_fibermap['FIBER']
-            exp_night = exp_fibermap['NIGHT']
-            exp_tileid = exp_fibermap['TILEID']
-            metadata_dict = {'EXP_PETAL': exp_petal,
-                            'EXP_TILEID': exp_tileid,
-                            'EXP_NIGHT': exp_night,
-                            'EXP_EXPID': exp_expid,
-                            'EXP_FIBER': exp_fiber,
-                            'EXP_TARGETID': exp_targetid}
-        else:
-            expid = fibermap['EXPID']
-            petal = fibermap['PETAL_LOC']
-            fiber = fibermap['FIBER']
-            night = fibermap['NIGHT']
-            tileid = fibermap['TILEID']
+        input_fibermap = fibermap
+        ikeys=["TARGETID","NIGHT","EXPID","PETAL_LOC","FIBER","TILEID"]
+        if not self.use_non_coadded_spectra :
+            input_fibermap = exp_fibermap
+            okeys=["EXP_TARGETID","EXP_NIGHT","EXP_EXPID","EXP_PETAL","EXP_FIBER","EXP_TILEID"]
+        else :
+            okeys=["TARGETID","NIGHT","EXPID","PETAL","FIBER","TILEID"]
+        metadata_dict = dict()
 
-            metadata_dict = {'PETAL': petal,
-                            'TILEID': tileid,
-                            'NIGHT': night,
-                            'EXPID': expid,
-                            'FIBER': fiber}
+        for ikey,okey in zip(ikeys,okeys) :
+            if ikey in input_fibermap.dtype.names :
+                if has_exp_fibermap :
+                    metadata_dict[okey] = exp_fibermap[ikey]
+                else :
+                    metadata_dict[okey] = fibermap[ikey]
+            else :
+                metadata_dict[okey] = np.zeros(len(fibermap),dtype=int)
+                #self.logger.warning(
+                #    f"Missing column '{ikey}' in EXP_FIBERMAP of {filename}")
 
 
         spectrographs_data = {}

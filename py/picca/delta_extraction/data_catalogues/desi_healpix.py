@@ -208,9 +208,12 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
-        if not self.use_non_coadded_spectra:
-            exp_fibermap = hdul['EXP_FIBERMAP'].read()
-
+        has_exp_fibermap = ('EXP_FIBERMAP' in hdul)
+        if not self.use_non_coadded_spectra :
+            if has_exp_fibermap :
+                exp_fibermap = hdul['EXP_FIBERMAP'].read()
+            else :
+                exp_fibermap = fibermap
         index_unique = np.full(fibermap.shape,True)
         if self.uniquify_night_targetid:
             if "NIGHT" in fibermap.dtype.names:
@@ -277,32 +280,26 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
         if hdul_truth is not None:
             hdul_truth.close()
 
-        if not self.use_non_coadded_spectra:
-            exp_targetid = exp_fibermap['TARGETID']
-            exp_expid = exp_fibermap['EXPID']
-            exp_petal = exp_fibermap['PETAL_LOC']
-            exp_fiber = exp_fibermap['FIBER']
-            exp_night = exp_fibermap['NIGHT']
-            exp_tileid = exp_fibermap['TILEID']
-            metadata_dict = {'EXP_PETAL': exp_petal,
-                            'EXP_TILEID': exp_tileid,
-                            'EXP_NIGHT': exp_night,
-                            'EXP_EXPID': exp_expid,
-                            'EXP_FIBER': exp_fiber,
-                            'EXP_TARGETID': exp_targetid}
-        else:
-            #the indexing in this case is because the targetid is indexed the same way below
-            expid = fibermap['EXPID'][index_unique]
-            petal = fibermap['PETAL_LOC'][index_unique]
-            fiber = fibermap['FIBER'][index_unique]
-            night = fibermap['NIGHT'][index_unique]
-            tileid = fibermap['TILEID'][index_unique]
+        input_fibermap = fibermap
+        ikeys=["TARGETID","NIGHT","EXPID","PETAL_LOC","FIBER","TILEID"]
+        if not self.use_non_coadded_spectra :
+            input_fibermap = exp_fibermap
+            okeys=["EXP_TARGETID","EXP_NIGHT","EXP_EXPID","EXP_PETAL","EXP_FIBER","EXP_TILEID"]
+        else :
+            okeys=["TARGETID","NIGHT","EXPID","PETAL","FIBER","TILEID"]
+        metadata_dict = dict()
 
-            metadata_dict = {'PETAL': petal,
-                            'TILEID': tileid,
-                            'NIGHT': night,
-                            'EXPID': expid,
-                            'FIBER': fiber}
+        for ikey,okey in zip(ikeys,okeys) :
+            if ikey in input_fibermap.dtype.names :
+                if has_exp_fibermap :
+                    metadata_dict[okey] = exp_fibermap[ikey]
+                else :
+                    metadata_dict[okey] = fibermap[ikey][index_unique]
+            else :
+                metadata_dict[okey] = np.zeros(index_unique.size,dtype=int)
+                #self.logger.warning(
+                #    f"Missing column '{ikey}' in EXP_FIBERMAP of {filename}")
+
 
         forests_by_targetid, num_data = self.format_data(
             catalogue,

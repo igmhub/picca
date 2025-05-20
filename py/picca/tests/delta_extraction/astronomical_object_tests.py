@@ -708,13 +708,13 @@ class AstronomicalObjectTest(AbstractTest):
             self.assertTrue(header[index + 1].get("name") == "THING_ID")
             self.assertTrue(header[index + 1].get("value") == test_obj.thingid)
             self.assertTrue(header[index + 2].get("name") == "PLATE")
-            plate = ",".join([f"{plate:04d}" for plate in test_obj.plate])
+            plate = "-".join([f"{plate:04d}" for plate in test_obj.plate])
             self.assertTrue(header[index + 2].get("value") == plate)
             self.assertTrue(header[index + 3].get("name") == "MJD")
-            mjd = ",".join([f"{mjd:05d}" for mjd in test_obj.mjd])
+            mjd = "-".join([f"{mjd:05d}" for mjd in test_obj.mjd])
             self.assertTrue(header[index + 3].get("value") == mjd)
             self.assertTrue(header[index + 4].get("name") == "FIBERID")
-            fiberid = ",".join(
+            fiberid = "-".join(
                 [f"{fiberid:04d}" for fiberid in test_obj.fiberid])
             self.assertTrue(header[index + 4].get("value") == fiberid)
             index += 4
