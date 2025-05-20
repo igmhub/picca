@@ -201,8 +201,10 @@ class DesiHealpixFileHandler():
             return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
-        exp_fibermap = hdul['EXP_FIBERMAP'].read()
-
+        if 'EXP_FIBERMAP' in hdul :
+            exp_fibermap = hdul['EXP_FIBERMAP'].read()
+        else :
+            exp_fibermap = fibermap
         colors = ["B", "R"]
         if "Z_FLUX" in hdul:
             colors.append("Z")
@@ -232,12 +234,6 @@ class DesiHealpixFileHandler():
                     f"Error reading {targetid}. Ignoring object")
                 continue
 
-            nights=exp_fibermap["NIGHT"][w_t_exp]
-            petals=exp_fibermap["PETAL_LOC"][w_t_exp]
-            fibers=exp_fibermap["FIBER"][w_t_exp]
-            tileids=exp_fibermap["TILEID"][w_t_exp]
-            expids=exp_fibermap["EXPID"][w_t_exp]
-
             w_t = w_t[0]
             # Construct DesiForest instance
             # Fluxes from the different spectrographs will be coadded
@@ -251,13 +247,16 @@ class DesiHealpixFileHandler():
                 "ra": row['RA'],
                 "dec": row['DEC'],
                 "z": row['Z'],
-                "log_lambda": log_lambda,
-                "night": nights,
-                "petal": petals,
-                "fiber": fibers,
-                "tileid": tileids,
-                "expid": expids,
+                "log_lambda": log_lambda
             }
+            ikeys=["NIGHT","PETAL_LOC","FIBER","TILEID","EXPID"]
+            okeys=["night","petal","fiber","tileid","expid"]
+            for ikey,okey in zip(ikeys,okeys) :
+                if ikey in exp_fibermap.dtype.names :
+                    args[okey] = exp_fibermap[ikey][w_t_exp]
+                else :
+                    args[okey] = np.zeros(w_t_exp.size,dtype=int)
+
             forest = DesiForest(**args)
             forest.rebin()
             forests.append(forest)

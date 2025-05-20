@@ -24,7 +24,7 @@ accepted_options = update_accepted_options(accepted_options, accepted_options_qu
 accepted_options = update_accepted_options(accepted_options,
     ["use non-coadded spectra",
      "uniquify night targetid",
-     "keep single exposures", 
+     "keep single exposures",
      "wave solution"])
 
 defaults = update_default_options(defaults, {
@@ -38,7 +38,7 @@ defaults = update_default_options(defaults, {
 defaults = update_default_options(defaults, defaults_quasar_catalogue)
 
 def verify_exposures_shape(forests_by_targetid):
-    """Verify that the exposures have the same shape. 
+    """Verify that the exposures have the same shape.
     If not, it removes them from the dictionnary of forests by targetid.
     Only works for use_non_coadded_spectra and keep_single_exposures options.
 
@@ -134,7 +134,7 @@ class DesiData(Data):
     If True, remove the quasars taken on the same night.
 
     keep_single_exposures: bool
-    If True, the date loadded from non-coadded spectra are not coadded. 
+    If True, the date loadded from non-coadded spectra are not coadded.
     Otherwise, coadd the spectra here.
     """
 
@@ -295,7 +295,7 @@ class DesiDataFileHandler():
     If True, remove the quasars taken on the same night.
 
     keep_single_exposures: bool
-    If True, the date loadded from non-coadded spectra are not coadded. 
+    If True, the date loadded from non-coadded spectra are not coadded.
     Otherwise, coadd the spectra here.
     """
 
@@ -314,7 +314,7 @@ class DesiDataFileHandler():
         for details
 
         keep_single_exposures: bool
-        If True, the date loadded from non-coadded spectra are not coadded. 
+        If True, the date loadded from non-coadded spectra are not coadded.
         Otherwise, coadd the spectra here.
 
         uniquify_night_targetid: bool
@@ -540,7 +540,7 @@ class DesiDataFileHandler():
 
         num_data: int
         The number of instances loaded
-        
+
         Return
         ------
         forests_by_targetid: dict
