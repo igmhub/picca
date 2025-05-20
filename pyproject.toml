@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "picca"
 dynamic = ["dependencies", "version", "readme"]
 description = "Package for Igm Cosmological-Correlations Analyses"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE" ]
 authors = [
@@ -38,7 +38,6 @@ namespaces = true
 
 [tool.setuptools.package-data]
 picca = [
-    "fitter2/models/*/*.fits",
     "delta_extraction/expected_fluxes/raw_stats/*fits.gz"
 ]
 
