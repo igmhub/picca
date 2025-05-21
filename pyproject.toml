@@ -59,3 +59,5 @@ picca = [
 "picca_Pk1D_cross_exposure.py" = "picca.bin.picca_Pk1D_cross_exposure:main"
 "picca_Pk1D_postprocess.py" = "picca.bin.picca_Pk1D_postprocess:main"
 # Add the rest here
+"picca_compute_fvoigt_hcd.py" = "picca.bin.picca_compute_fvoigt_hcd:main"
+"picca_compute_fvoigt.py" = "picca.bin.picca_compute_fvoigt:main"
