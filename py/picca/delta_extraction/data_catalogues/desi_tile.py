@@ -232,12 +232,10 @@ class DesiTileFileHandler(DesiDataFileHandler):
             return {}, 0
 
         fibermap = hdul['FIBERMAP'].read()
-        has_exp_fibermap = ('EXP_FIBERMAP' in hdul)
+        exp_fibermap = None
         if not self.use_non_coadded_spectra:
-            if has_exp_fibermap :
+            if 'EXP_FIBERMAP' in hdul :
                 exp_fibermap = hdul['EXP_FIBERMAP'].read()
-            else :
-                exp_fibermap = fibermap
 
         ra = fibermap['TARGET_RA']
         dec = fibermap['TARGET_DEC']
@@ -257,26 +255,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
 
         petal_spec = fibermap['PETAL_LOC'][0]
 
-        input_fibermap = fibermap
-        ikeys=["TARGETID","NIGHT","EXPID","PETAL_LOC","FIBER","TILEID"]
-        if not self.use_non_coadded_spectra :
-            input_fibermap = exp_fibermap
-            okeys=["EXP_TARGETID","EXP_NIGHT","EXP_EXPID","EXP_PETAL","EXP_FIBER","EXP_TILEID"]
-        else :
-            okeys=["TARGETID","NIGHT","EXPID","PETAL","FIBER","TILEID"]
-        metadata_dict = dict()
-
-        for ikey,okey in zip(ikeys,okeys) :
-            if ikey in input_fibermap.dtype.names :
-                if has_exp_fibermap :
-                    metadata_dict[okey] = exp_fibermap[ikey]
-                else :
-                    metadata_dict[okey] = fibermap[ikey]
-            else :
-                metadata_dict[okey] = np.zeros(len(fibermap),dtype=int)
-                #self.logger.warning(
-                #    f"Missing column '{ikey}' in EXP_FIBERMAP of {filename}")
-
+        metadata_dict=self.get_metadata_dict(fibermap,exp_fibermap,np.arange(len(fibermap)))
 
         spectrographs_data = {}
         for color in colors:

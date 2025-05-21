@@ -208,12 +208,11 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
-        has_exp_fibermap = ('EXP_FIBERMAP' in hdul)
+        exp_fibermap = None
         if not self.use_non_coadded_spectra :
-            if has_exp_fibermap :
+            if 'EXP_FIBERMAP' in hdul  :
                 exp_fibermap = hdul['EXP_FIBERMAP'].read()
-            else :
-                exp_fibermap = fibermap
+
         index_unique = np.full(fibermap.shape,True)
         if self.uniquify_night_targetid:
             if "NIGHT" in fibermap.dtype.names:
@@ -280,26 +279,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
         if hdul_truth is not None:
             hdul_truth.close()
 
-        input_fibermap = fibermap
-        ikeys=["TARGETID","NIGHT","EXPID","PETAL_LOC","FIBER","TILEID"]
-        if not self.use_non_coadded_spectra :
-            input_fibermap = exp_fibermap
-            okeys=["EXP_TARGETID","EXP_NIGHT","EXP_EXPID","EXP_PETAL","EXP_FIBER","EXP_TILEID"]
-        else :
-            okeys=["TARGETID","NIGHT","EXPID","PETAL","FIBER","TILEID"]
-        metadata_dict = dict()
-
-        for ikey,okey in zip(ikeys,okeys) :
-            if ikey in input_fibermap.dtype.names :
-                if has_exp_fibermap :
-                    metadata_dict[okey] = exp_fibermap[ikey]
-                else :
-                    metadata_dict[okey] = fibermap[ikey][index_unique]
-            else :
-                metadata_dict[okey] = np.zeros(index_unique.size,dtype=int)
-                #self.logger.warning(
-                #    f"Missing column '{ikey}' in EXP_FIBERMAP of {filename}")
-
+        metadata_dict=self.get_metadata_dict(fibermap,exp_fibermap,index_unique)
 
         forests_by_targetid, num_data = self.format_data(
             catalogue,

@@ -633,3 +633,27 @@ class DesiDataFileHandler():
         """
         raise DataError(
             "Function 'read_data' was not overloaded by child class")
+
+    def get_metadata_dict(self,fibermap,exp_fibermap,index_unique) :
+
+        input_fibermap = fibermap
+        ikeys=["TARGETID","NIGHT","EXPID","PETAL_LOC","FIBER","TILEID"]
+        if not self.use_non_coadded_spectra :
+            if exp_fibermap is not None :
+                input_fibermap = exp_fibermap
+            okeys=["EXP_TARGETID","EXP_NIGHT","EXP_EXPID","EXP_PETAL","EXP_FIBER","EXP_TILEID"]
+        else :
+            okeys=["TARGETID","NIGHT","EXPID","PETAL","FIBER","TILEID"]
+
+        metadata_dict = dict()
+
+        for ikey,okey in zip(ikeys,okeys) :
+            if ikey in input_fibermap.dtype.names :
+                if exp_fibermap is not None :
+                    metadata_dict[okey] = exp_fibermap[ikey]
+                else :
+                    metadata_dict[okey] = fibermap[ikey][index_unique]
+            else :
+                metadata_dict[okey] = np.zeros(index_unique.size,dtype=int)
+
+        return  metadata_dict
