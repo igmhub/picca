@@ -636,24 +636,29 @@ class DesiDataFileHandler():
 
     def get_metadata_dict(self,fibermap,exp_fibermap,index_unique) :
         """
-        Constructs a dictionary containing metadata extracted from the provided fibermap and exp_fibermap.
+        Constructs a dictionary containing metadata extracted from the provided fibermap 
+        and exp_fibermap.
 
         Parameters:
         - fibermap (numpy.ndarray): The primary fibermap data structure containing metadata.
-        - exp_fibermap (numpy.ndarray or None): The exposure-specific fibermap data structure containing metadata.
-          If None, the function uses the `fibermap` and `index_unique` to extract metadata.
-        - index_unique (numpy.ndarray): An array of indices used to select unique entries from the `fibermap`.
+        - exp_fibermap (numpy.ndarray or None): The exposure-specific fibermap data structure 
+          containing metadata. If None, the function uses the `fibermap` and `index_unique` 
+          to extract metadata.
+        - index_unique (numpy.ndarray): An array of indices used to select unique entries from 
+          the `fibermap`.
 
         Returns:
-        - metadata_dict (dict): A dictionary where keys are metadata field names and values are numpy arrays
-          containing the corresponding metadata values. The keys are prefixed with 'EXP_' if `use_non_coadded_spectra`
-          is False and `exp_fibermap` is not None.
+        - metadata_dict (dict): A dictionary where keys are metadata field names and values 
+          are numpy arrays containing the corresponding metadata values. The keys are prefixed 
+          with 'EXP_' if `use_non_coadded_spectra` is False and `exp_fibermap` is not None.
 
         Notes:
-        - The function checks if certain keys (`TARGETID`, `NIGHT`, `EXPID`, `PETAL_LOC`, `FIBER`, `TILEID`) exist in the
-          `input_fibermap`. If a key exists, it extracts the corresponding data; otherwise, it fills the entry with zeros.
-        - The `use_non_coadded_spectra` attribute of the class instance determines whether to use the `exp_fibermap` or
-          the `fibermap` combined with `index_unique` for extracting metadata.
+        - The function checks if certain keys (`TARGETID`, `NIGHT`, `EXPID`, `PETAL_LOC`, 
+          `FIBER`, `TILEID`) exist in the `input_fibermap`. If a key exists, it extracts the 
+          corresponding data; otherwise, it fills the entry with zeros.
+        - The `use_non_coadded_spectra` attribute of the class instance determines whether to 
+          use the `exp_fibermap` or the `fibermap` combined with `index_unique` for extracting 
+          metadata.
         """
         input_fibermap = fibermap
         ikeys=["TARGETID","NIGHT","EXPID","PETAL_LOC","FIBER","TILEID"]
