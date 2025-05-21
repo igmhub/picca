@@ -455,7 +455,7 @@ class Data:
             if lambda_abs_igm_name is None:
                 raise DataError(
                     "Missing argument 'lambda abs IGM' required by Data "
-                    "when 'analysys type' is 'PK 1D'")
+                    "when 'analysis type' is 'PK 1D'")
             Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(lambda_abs_igm_name)
             if Pk1dForest.lambda_abs_igm is None:
                 raise DataError(

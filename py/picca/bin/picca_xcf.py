@@ -5,7 +5,6 @@ delta field.
 This module follow the procedure described in sections 3.1 and 3.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
-import sys
 import time
 import argparse
 import multiprocessing
@@ -37,7 +36,7 @@ def corr_func(healpixs):
     return correlation_function_data
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     """Compute the cross-correlation between a catalog of objects and a delta
     field."""
     parser = argparse.ArgumentParser(
@@ -112,6 +111,22 @@ def main(cmdargs):
                         default=10,
                         required=False,
                         help='Max redshift for object field')
+
+    parser.add_argument('--zerr-cut-deg',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Angular cut (in degrees) between the foreground '
+                              'and the background quasars (to avoid '
+                              'contamination from redshift errors).'))
+
+    parser.add_argument('--zerr-cut-kms',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Velocity cut (in km/s) between the foreground '
+                              'and the background quasars (to avoid '
+                              'contamination from redshift errors).'))
 
     parser.add_argument(
         '--z-cut-min',
@@ -267,6 +282,13 @@ def main(cmdargs):
     xcf.num_bins_r_trans = args.nt
     xcf.nside = args.nside
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
+
+    if (args.zerr_cut_deg is None) != (args.zerr_cut_kms is None):
+        raise ValueError("Options --zerr-cut-deg and --zerr-cut-kms must be "
+                         "specified together")
+    
+    xcf.zerr_cut_deg = args.zerr_cut_deg
+    xcf.zerr_cut_kms = args.zerr_cut_kms
 
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir)
@@ -470,7 +492,3 @@ def main(cmdargs):
 
     t3 = time.time()
     userprint(f'picca_xcf.py - Time total: {(t3-t0)/60:.3f} minutes')
-
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)

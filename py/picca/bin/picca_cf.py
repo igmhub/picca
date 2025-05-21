@@ -4,7 +4,6 @@
 This module follow the procedure described in sections 3.1 and 3.2 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
-import sys
 import time
 import argparse
 import multiprocessing
@@ -35,7 +34,7 @@ def corr_func(healpixs):
     return correlation_function_data
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     """Compute the auto and cross-correlation of delta fields"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -88,6 +87,22 @@ def main(cmdargs):
                         default=50,
                         required=False,
                         help='Number of r-transverse bins')
+    
+    parser.add_argument('--zerr-cut-deg',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Angular cut (in degrees) between a pixel and '
+                              'the background quasar of the other pixel (to '
+                              'avoid contamination from redshift errors).'))
+    
+    parser.add_argument('--zerr-cut-kms',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Velocity cut (in km/s) between a pixel and the '
+                              'background quasar of the other pixel (to avoid '
+                              'contamination from redshift errors).'))
 
     parser.add_argument('--z-cut-min',
                         type=float,
@@ -249,6 +264,14 @@ def main(cmdargs):
     cf.alpha = args.z_evol
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
+
+    if (args.zerr_cut_deg is None) != (args.zerr_cut_kms is None):
+        raise ValueError("Options --zerr-cut-deg and --zerr-cut-kms must be "
+                         "specified together")
+
+    cf.zerr_cut_deg = args.zerr_cut_deg
+    cf.zerr_cut_kms = args.zerr_cut_kms
+
 
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir)
@@ -436,7 +459,3 @@ def main(cmdargs):
 
     t3 = time.time()
     userprint(f'picca_cf.py - Time total : {(t3-t0)/60:.3f} minutes')
-
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)

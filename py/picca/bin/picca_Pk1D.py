@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Compute the 1D power spectrum
 """
-import sys
 import argparse
 import glob
 from array import array
@@ -97,6 +96,16 @@ def process_all_files(index_file_args):
             if np.sum(delta.exposures_diff)==0:
                 continue
 
+        if linear_binning:
+            max_num_pixels_forest_theoretical=(1180-1050)*(delta.z_qso+1)/pixel_step  #currently no min/max restframe values defined, so hard coding for the moment
+        else:
+            max_num_pixels_forest_theoretical=(np.log(1180)-np.log10(1050))/pixel_step
+        # minimum number of pixel in forest
+        if args.nb_pixel_min is not None:
+            min_num_pixels = args.nb_pixel_min
+        else:
+            min_num_pixels = int(args.nb_pixel_frac_min*max_num_pixels_forest_theoretical)     #this is currently just hardcoding values so that spectra have a minimum length changing with z; but might be problematic for SBs
+        
         if args.parts_in_redshift:
             # define chunks on a fixed redshift grid
             z_grid = np.array(args.z_parts)
@@ -105,11 +114,12 @@ def process_all_files(index_file_args):
                             delta.delta,
                             delta.exposures_diff,
                             delta.ivar,
-                            min_num_pixels=args.nb_pixel_min,
+                            min_num_pixels=min_num_pixels,
                             reso_matrix=(delta.resolution_matrix
                                  if reso_correction == 'matrix' else None),
                             linear_binning=linear_binning)
             num_parts = len(split_array[0])
+
             if reso_correction == 'matrix':
                 (mean_z_array, lambda_array, delta_array, exposures_diff_array,
                 ivar_array, reso_matrix_array) = split_array
@@ -194,7 +204,15 @@ def process_all_files(index_file_args):
                      pixel_step, log_lambda_array[part_index],
                      delta_array[part_index], exposures_diff_array[part_index],
                      ivar_array[part_index], args.no_apply_filling)
-            if num_masked_pixels > args.nb_pixel_masked_max:
+            
+            if (args.nb_pixel_masked_max is not None):
+                max_num_masked_pixels = args.nb_pixel_masked_max
+            elif linear_binning:
+                max_num_masked_pixels = int(args.nb_pixel_masked_frac_max*(np.max(lambda_new)-np.min(lambda_new))/pixel_step)           #this only accounts for masking inside the spectrum, not at the adges
+            else:
+                max_num_masked_pixels = int(args.nb_pixel_masked_frac_max*(np.max(log_lambda_new)-np.min(log_lambda_new))/pixel_step)
+                            
+            if num_masked_pixels > max_num_masked_pixels:
                 continue
 
             # Compute pk_raw, needs uniform binning
@@ -317,7 +335,7 @@ def process_all_files(index_file_args):
     return 0
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Compute the 1D power spectrum
     Uses the resolution matrix correction for DESI data"""
@@ -388,16 +406,30 @@ def main(cmdargs):
 
     parser.add_argument('--nb-pixel-min',
                         type=int,
-                        default=75,
+                        default=None,
                         required=False,
                         help='Minimal number of pixels in a part of forest')
+    
+
+    parser.add_argument('--nb-pixel-frac-min',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help='Minimal number of pixels in a part of forest (default is assuming ~577 pixels for a z=2.5 QSO in the forest of 1050-1180A and masking up to 75)')
 
     parser.add_argument(
         '--nb-pixel-masked-max',
         type=int,
-        default=40,
+        default=None,#40,
         required=False,
         help='Maximal number of masked pixels in a part of forest')
+    
+    parser.add_argument(
+        '--nb-pixel-masked-frac-max',
+        type=float,
+        default=None,
+        required=False,
+        help='Maximal number of masked pixels in a part of forest (default is 21%% of the forest length, i.e. similar to the previous value at z=2.5 for a 3 chunk spectrum and 1050-1180A)')
 
     parser.add_argument('--no-apply-filling',
                         action='store_true',
@@ -503,6 +535,25 @@ def main(cmdargs):
     #create output dir if it does not exist
     os.makedirs(args.out_dir, exist_ok=True)
 
+    if args.nb_pixel_min is None and args.nb_pixel_frac_min is None:
+            # could make this fraction a new default, but that would probably cause trouble for SBs
+            # args.nb_pixel_frac_min = 0.13  #this is a suggestion for a new default
+            args.nb_pixel_min = 75    #this is the previous default
+    elif not (args.nb_pixel_frac_min is None or args.nb_pixel_min is None):
+        print("both nb_pixel_frac_min and nb_pixel_min were set, using the latter")
+        args.nb_pixel_frac_min=None
+
+    if args.nb_pixel_masked_frac_max is None and args.nb_pixel_masked_max is None:
+            # could make this, i.e. 10% of the estimated forest length the new default
+            # args.nb_pixel_masked_frac_max = 0.21  #this is a suggestion for a new default
+            args.nb_pixel_masked_max = 40  #this is the previous default
+    elif not (args.nb_pixel_masked_frac_max is None or args.nb_pixel_masked_max is None):
+        print("both nb_pixel_masked_frac_max and nb_pixel_masked_max were set, using the latter")
+        args.nb_pixel_masked_frac_max=None
+
+
+    print([[i, f] for i, f in enumerate(files)])
+
     if args.num_processors > 1:
         pool = Pool(args.num_processors)
         index_file_args = [(i, f, args) for i, f in enumerate(files)]
@@ -510,8 +561,3 @@ def main(cmdargs):
     else:
         [process_all_files((i, f, args)) for i, f in enumerate(files)]
     userprint("all done ")
-
-
-if __name__ == '__main__':
-    cmdargs = sys.argv[1:]
-    main(cmdargs)

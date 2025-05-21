@@ -76,8 +76,14 @@ def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lam
     if np.in1d(thingid, objs_thingid).sum() == 0:
         hdul.close()
         return
-    ra = hdul['METADATA']['RA'][:].astype(np.float64) * np.pi / 180.
-    dec = hdul['METADATA']['DEC'][:].astype(np.float64) * np.pi / 180.
+    if 'RA' in hdul['METADATA'].get_colnames() and 'DEC' in hdul['METADATA'].get_colnames():
+        ra = hdul['METADATA']['RA'][:].astype(np.float64) * np.pi / 180.
+        dec = hdul['METADATA']['DEC'][:].astype(np.float64) * np.pi / 180.
+    elif 'TARGET_RA' in hdul['METADATA'].get_colnames() and 'TARGET_DEC' in hdul['METADATA'].get_colnames():
+        ra = hdul['METADATA']['TARGET_RA'][:].astype(np.float64) * np.pi / 180.
+        dec = hdul['METADATA']['TARGET_DEC'][:].astype(np.float64) * np.pi / 180.
+    else:
+        raise ValueError('RA and DEC columns not found in transmission files.')
     z = hdul['METADATA']['Z'][:]
 
     # Use "lambda_array" to store either lambda or log lambda
@@ -314,8 +320,14 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
 
     w = hdu[z_key][:] > max(0., lambda_min / lambda_max_rest_frame - 1.)
     w &= hdu[z_key][:] < max(0., lambda_max / lambda_min_rest_frame - 1.)
-    objs_ra = hdu['RA'][:][w].astype('float64') * np.pi / 180.
-    objs_dec = hdu['DEC'][:][w].astype('float64') * np.pi / 180.
+    if 'RA' in key_val and 'DEC' in key_val:
+        objs_ra = hdu['RA'][:][w].astype('float64') * np.pi / 180.
+        objs_dec = hdu['DEC'][:][w].astype('float64') * np.pi / 180.
+    elif 'TARGET_RA' in key_val and 'TARGET_DEC' in key_val:
+        objs_ra = hdu['TARGET_RA'][:][w].astype('float64') * np.pi / 180.
+        objs_dec = hdu['TARGET_DEC'][:][w].astype('float64') * np.pi / 180.
+    else:
+        raise ValueError('RA and DEC columns not found in objects catalog.')
     objs_thingid = objs_thingid[w]
     hdul.close()
     userprint('INFO: Found {} quasars'.format(objs_ra.size))

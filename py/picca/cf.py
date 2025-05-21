@@ -35,6 +35,9 @@ r_trans_max = None
 ang_max = None
 nside = None
 
+zerr_cut_deg = None
+zerr_cut_kms = None
+
 counter = None
 num_data = None
 num_data2 = None
@@ -172,16 +175,16 @@ def compute_xi(healpixs):
                 if ang_correlation:
                     compute_xi_forest_pairs_fast(
                         delta1.z, 10.**delta1.log_lambda,
-                        10.**delta1.log_lambda, delta1.weights, delta1.delta,
+                        10.**delta1.log_lambda, delta1.weights, delta1.delta, delta1.z_qso,
                         delta2.z, 10.**delta2.log_lambda,
-                        10.**delta2.log_lambda, delta2.weights, delta2.delta,
+                        10.**delta2.log_lambda, delta2.weights, delta2.delta, delta2.z_qso,
                         ang, same_half_plate, weights, xi, r_par, r_trans, z,
                         num_pairs)
                 else:
                     compute_xi_forest_pairs_fast(
                         delta1.z, delta1.r_comov, delta1.dist_m, delta1.weights,
-                        delta1.delta, delta2.z, delta2.r_comov, delta2.dist_m,
-                        delta2.weights, delta2.delta, ang, same_half_plate,
+                        delta1.delta, delta1.z_qso, delta2.z, delta2.r_comov, delta2.dist_m,
+                        delta2.weights, delta2.delta, delta2.z_qso, ang, same_half_plate,
                         weights, xi, r_par, r_trans, z, num_pairs)
 
                 #-- These were used by compute_xi_forest_pairs (to be deprecated)
@@ -202,11 +205,10 @@ def compute_xi(healpixs):
 
 
 @njit
-def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
-                                 r_comov2, dist_m2, weights2, delta2, ang,
-                                 same_half_plate, rebin_weight, rebin_xi,
-                                 rebin_r_par, rebin_r_trans, rebin_z,
-                                 rebin_num_pairs):
+def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_1,
+                                 z2, r_comov2, dist_m2, weights2, delta2, z_qso_2,
+                                 ang, same_half_plate, rebin_weight, rebin_xi,
+                                 rebin_r_par, rebin_r_trans, rebin_z, rebin_num_pairs):
     """Computes the contribution of a given pair of forests to the correlation
     function. Fills rebin_* on place.
 
@@ -221,6 +223,8 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
             Pixel weights for forest 1
         delta1: array of float
             Delta field for forest 1
+        z_qso_1: float
+            Redshift of QSO 1
         z2: array of float
             Redshift of pixel 2
         r_comov2: array of float
@@ -231,7 +235,9 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
             Pixel weights for forest 2
         delta2: array of float
             Delta field for forest 2
-        ang: array of float
+        z_qso_2: float
+            Redshift of QSO 2
+        ang: float
             Angular separation between pixels in forests 1 and 2
         same_half_plate: bool
             Flag to determine if the two forests are on the same half plate
@@ -251,10 +257,28 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
         if weights1[i] == 0:
             continue
 
-        for j in range(z2.size):
-            if weights2[j] == 0:
+        if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
+            # mean redshift of quasar-pixel pair
+            z_qF = 0.5 * (z1[i] + z_qso_2)
+            # velocity separation between pixel 1 and backgroud quasar 2
+            dv_kms = np.abs(z1[i] - z_qso_2)/(1 + z_qF)
+            dv_kms *= constants.SPEED_LIGHT
+            if dv_kms < zerr_cut_kms:
                 continue
 
+        for j in range(z2.size): 
+            if weights2[j] == 0:
+                continue
+            
+            if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
+                # mean redshift of quasar-pixel pair
+                z_qF = 0.5 * (z2[j] + z_qso_1)
+                # velocity separation between pixel 1 and backgroud quasar 2
+                dv_kms = np.abs(z2[j] - z_qso_1)/(1 + z_qF)
+                dv_kms *= constants.SPEED_LIGHT
+                if dv_kms < zerr_cut_kms:
+                    continue
+            
             if ang_correlation:
                 r_par = r_comov1[i] / r_comov2[j]
                 if not x_correlation and r_par < 1.:
@@ -358,9 +382,11 @@ def compute_dmat(healpixs):
                 weights2 = delta2.weights
                 log_lambda2 = delta2.log_lambda
                 z2 = delta2.z
+                z_qso_1 = delta1.z_qso
+                z_qso_2 = delta2.z_qso
                 compute_dmat_forest_pairs_fast(
                     log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1,
-                    dist_m2, z1, z2, weights1, weights2, ang, weights_dmat,
+                    dist_m2, z1, z2, weights1, weights2, z_qso_1, z_qso_2, ang, weights_dmat,
                     dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
                     same_half_plate, order1, order2)
             setattr(delta1, "neighbours", None)
@@ -375,6 +401,7 @@ def compute_dmat(healpixs):
 @njit
 def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                                    dist_m1, dist_m2, z1, z2, weights1, weights2,
+                                   z_qso_1, z_qso_2,
                                    ang, weights_dmat, dmat, r_par_eff,
                                    r_trans_eff, z_eff, weight_eff,
                                    same_half_plate, order1, order2):
@@ -384,9 +411,29 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
     for i in range(z1.size):
         if weights1[i] == 0:
             continue
+
+        if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
+            # mean redshift of quasar-pixel pair
+            z_qF = 0.5 * (z1[i] + z_qso_2)
+            # velocity separation between pixel 1 and backgroud quasar 2
+            dv_kms = np.abs(z1[i] - z_qso_2)/(1 + z_qF)
+            dv_kms *= constants.SPEED_LIGHT
+            if dv_kms < zerr_cut_kms:
+                continue
+
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
+
+            if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
+                # mean redshift of quasar-pixel pair
+                z_qF = 0.5 * (z2[j] + z_qso_1)
+                # velocity separation between pixel 1 and backgroud quasar 2
+                dv_kms = np.abs(z2[j] - z_qso_1)/(1 + z_qF)
+                dv_kms *= constants.SPEED_LIGHT
+                if dv_kms < zerr_cut_kms:
+                    continue
+            
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
             if not x_correlation:
@@ -445,9 +492,29 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
     for i in range(z1.size):
         if weights1[i] == 0:
             continue
+
+        if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
+            # mean redshift of quasar-pixel pair
+            z_qF = 0.5 * (z1[i] + z_qso_2)
+            # velocity separation between pixel 1 and backgroud quasar 2
+            dv_kms = np.abs(z1[i] - z_qso_2)/(1 + z_qF)
+            dv_kms *= constants.SPEED_LIGHT
+            if dv_kms < zerr_cut_kms:
+                continue
+
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
+
+            if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
+                # mean redshift of quasar-pixel pair
+                z_qF = 0.5 * (z2[j] + z_qso_1)
+                # velocity separation between pixel 1 and backgroud quasar 2
+                dv_kms = np.abs(z2[j] - z_qso_1)/(1 + z_qF)
+                dv_kms *= constants.SPEED_LIGHT
+                if dv_kms < zerr_cut_kms:
+                    continue
+
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
             if not x_correlation:

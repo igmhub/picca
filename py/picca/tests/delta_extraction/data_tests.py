@@ -312,7 +312,7 @@ class DataTest(AbstractTest):
         }})
         expected_message = (
             "Missing argument 'lambda abs IGM' required by Data when "
-            "'analysys type' is 'PK 1D'"
+            "'analysis type' is 'PK 1D'"
         )
         with self.assertRaises(DataError) as context_manager:
             Data(config["data"])
