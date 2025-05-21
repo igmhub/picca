@@ -208,6 +208,10 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
+        exp_fibermap = None
+        if not self.use_non_coadded_spectra :
+            if 'EXP_FIBERMAP' in hdul  :
+                exp_fibermap = hdul['EXP_FIBERMAP'].read()
 
         index_unique = np.full(fibermap.shape,True)
         if self.uniquify_night_targetid:
@@ -275,10 +279,13 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
         if hdul_truth is not None:
             hdul_truth.close()
 
+        metadata_dict=self.get_metadata_dict(fibermap,exp_fibermap,index_unique)
+
         forests_by_targetid, num_data = self.format_data(
             catalogue,
             spectrographs_data,
             fibermap["TARGETID"][index_unique],
-            reso_from_truth=reso_from_truth)
+            reso_from_truth=reso_from_truth,
+            metadata_dict=metadata_dict)
 
         return forests_by_targetid, num_data

@@ -186,7 +186,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
         If True, remove the quasars taken on the same night.
 
         keep_single_exposures: bool
-        If True, the date loadded from non-coadded spectra are not coadded. 
+        If True, the date loadded from non-coadded spectra are not coadded.
         Otherwise, coadd the spectra here.
 
         logger: logging.Logger
@@ -232,6 +232,10 @@ class DesiTileFileHandler(DesiDataFileHandler):
             return {}, 0
 
         fibermap = hdul['FIBERMAP'].read()
+        exp_fibermap = None
+        if not self.use_non_coadded_spectra:
+            if 'EXP_FIBERMAP' in hdul :
+                exp_fibermap = hdul['EXP_FIBERMAP'].read()
 
         ra = fibermap['TARGET_RA']
         dec = fibermap['TARGET_DEC']
@@ -250,6 +254,8 @@ class DesiTileFileHandler(DesiDataFileHandler):
         dec = np.radians(dec)
 
         petal_spec = fibermap['PETAL_LOC'][0]
+
+        metadata_dict=self.get_metadata_dict(fibermap,exp_fibermap,np.arange(len(fibermap)))
 
         spectrographs_data = {}
         for color in colors:
@@ -294,6 +300,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
             catalogue[select],
             spectrographs_data,
             fibermap["TARGETID"],
+            metadata_dict=metadata_dict
         )
 
         return forests_by_targetid, num_data

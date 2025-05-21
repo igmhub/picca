@@ -122,6 +122,9 @@ class DesiHealpixFast(DesiData):
                 self.forests = combine_results(imap_it)
                 t1 = time.time()
                 self.logger.progress(f"Time spent meerging threads: {t1-t0}")
+        else:
+            raise NotImplementedError('fast healpix reading is not implemented'
+                                      'for analyses with "num processors=1"')
 
         if len(self.forests) == 0:
             raise DataError("No quasars found, stopping here")
@@ -198,7 +201,10 @@ class DesiHealpixFileHandler():
             return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
-
+        if 'EXP_FIBERMAP' in hdul :
+            exp_fibermap = hdul['EXP_FIBERMAP'].read()
+        else :
+            exp_fibermap = fibermap
         colors = ["B", "R"]
         if "Z_FLUX" in hdul:
             colors.append("Z")
@@ -222,6 +228,7 @@ class DesiHealpixFileHandler():
             # It should be there by construction
             targetid = row["TARGETID"]
             w_t = np.where(fibermap["TARGETID"] == targetid)[0]
+            w_t_exp = np.where(exp_fibermap["TARGETID"] == targetid)[0]
             if len(w_t) == 0:
                 self.logger.warning(
                     f"Error reading {targetid}. Ignoring object")
@@ -240,8 +247,16 @@ class DesiHealpixFileHandler():
                 "ra": row['RA'],
                 "dec": row['DEC'],
                 "z": row['Z'],
-                "log_lambda": log_lambda,
+                "log_lambda": log_lambda
             }
+            ikeys=["NIGHT","PETAL_LOC","FIBER","TILEID","EXPID"]
+            okeys=["night","petal","fiber","tileid","expid"]
+            for ikey,okey in zip(ikeys,okeys) :
+                if ikey in exp_fibermap.dtype.names :
+                    args[okey] = exp_fibermap[ikey][w_t_exp]
+                else :
+                    args[okey] = np.zeros(w_t_exp.size,dtype=int)
+
             forest = DesiForest(**args)
             forest.rebin()
             forests.append(forest)
