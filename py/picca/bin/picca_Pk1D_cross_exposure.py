@@ -2,7 +2,7 @@
 """Compute the individual cross-exposure 1D power spectra
 """
 
-import sys, os, argparse, glob
+import os, argparse, glob
 import fitsio
 import numpy as np
 from picca.pk1d.compute_pk1d import compute_pk_cross_exposure, Pk1D
@@ -151,7 +151,7 @@ def treat_pk_file(out_dir, filename):
             pk1d_class.write_fits(file_out)
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     """Compute the averaged 1D power spectrum"""
 
     parser = argparse.ArgumentParser(
@@ -196,8 +196,3 @@ def main(cmdargs):
     else:
         with mp.Pool(args.num_processors) as pool:
             pool.map(func, files)
-
-
-if __name__ == "__main__":
-    cmdargs = sys.argv[1:]
-    main(cmdargs)

@@ -163,7 +163,9 @@ Before submitting a PR please make sure to:
    pylint py/picca/pk1d/
    ```
    depending on the module you are working on.
-   
+
+New scripts should be added to `pyproject.toml` file under the [project.scripts] section.
+
 When merging PRs (or committing to master directly):
 - by default the patch version is increased via a github action, so every change of master will generate a new version
 This behaviour can be changed by adding one of the following to the commit-msg of the merge commit:

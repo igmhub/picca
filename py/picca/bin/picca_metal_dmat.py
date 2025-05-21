@@ -1,24 +1,25 @@
 #!/usr/bin/env python
-"""Compute the distortion matrix of the cross-correlation delta x object for a
-list of IGM absorption.
+"""Compute the auto and cross-correlation of delta fields for a list of IGM
+absorption.
 
 This module follow the procedure described in sections 4.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
-import sys
 import time
 import argparse
-from functools import partial
 import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
+from functools import partial
 import numpy as np
 import fitsio
 
-from picca import constants, xcf, io, utils
+from picca import constants, cf, utils, io
 from picca.utils import userprint
 
+#store the default silicon metals modelled in the CF/XCF
+DEFAULT_SI_METALS = ['SiIII(1207)','SiII(1190)','SiII(1193)','SiII(1260)']
 
-def calc_metal_dmat(abs_igm, healpixs):
+def calc_metal_dmat(abs_igm1, abs_igm2, healpixs):
     """Computes the metal distortion matrix.
 
     To optimize the computation, first compute a list of neighbours for each of
@@ -26,8 +27,11 @@ def calc_metal_dmat(abs_igm, healpixs):
     using several CPUs.
 
     Args:
-        abs_igm: string
+        abs_igm1: str
             Name of the absorption in picca.constants defining the
+            redshift of the forest pixels
+        abs_igm2: str
+            Name of the second absorption in picca.constants defining the
             redshift of the forest pixels
         healpixs: array of ints
             List of healpix numbers
@@ -35,19 +39,22 @@ def calc_metal_dmat(abs_igm, healpixs):
     Returns:
         The distortion matrix data
     """
-    xcf.fill_neighs(healpixs)
+    cf.fill_neighs(healpixs)
     np.random.seed(healpixs[0])
-    dmat_data = xcf.compute_metal_dmat(healpixs, abs_igm=abs_igm)
+    dmat_data = cf.compute_metal_dmat(healpixs,
+                                      abs_igm1=abs_igm1,
+                                      abs_igm2=abs_igm2)
     return dmat_data
 
 
-def main(cmdargs):
-    """Compute the distortion matrix of the cross-correlation delta x object for
-     a list of IGM absorption."""
+def main(cmdargs=None):
+    # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
+    """Compute the auto and cross-correlation of delta fields for a list of IGM
+    absorption."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Compute the distortion matrix of the cross-correlation '
-                     'delta x object for a list of IGM absorption.'))
+        description=('Compute the auto and cross-correlation of delta fields '
+                     'for a list of IGM absorption.'))
 
     parser.add_argument('--out',
                         type=str,
@@ -61,23 +68,15 @@ def main(cmdargs):
                         required=True,
                         help='Directory to delta files')
 
-    parser.add_argument('--drq',
+    parser.add_argument('--in-dir2',
                         type=str,
                         default=None,
-                        required=True,
-                        help='Catalog of objects in DRQ format')
-
-    parser.add_argument(
-                        '--mode',
-                        type=str,
-                        default='sdss',
-                        choices=['sdss','desi','desi_mocks','desi_healpix'],
                         required=False,
-                        help='type of catalog supplied, default sdss')
+                        help='Directory to 2nd delta files')
 
     parser.add_argument('--rp-min',
                         type=float,
-                        default=-200.,
+                        default=0.,
                         required=False,
                         help='Min r-parallel [h^-1 Mpc]')
 
@@ -95,7 +94,7 @@ def main(cmdargs):
 
     parser.add_argument('--np',
                         type=int,
-                        default=100,
+                        default=50,
                         required=False,
                         help='Number of r-parallel bins')
 
@@ -112,18 +111,6 @@ def main(cmdargs):
         required=False,
         help=('Coefficient multiplying np and nt to get finner binning for the '
               'model'))
-
-    parser.add_argument('--z-min-obj',
-                        type=float,
-                        default=0,
-                        required=False,
-                        help='Min redshift for object field')
-
-    parser.add_argument('--z-max-obj',
-                        type=float,
-                        default=10,
-                        required=False,
-                        help='Max redshift for object field')
 
     parser.add_argument(
         '--z-cut-min',
@@ -167,19 +154,31 @@ def main(cmdargs):
         help=('Name of the absorption in picca.constants defining the redshift '
               'of the delta'))
 
-    parser.add_argument('--obj-name',
-                        type=str,
-                        default='QSO',
-                        required=False,
-                        help='Name of the object tracer')
+    parser.add_argument(
+        '--lambda-abs2',
+        type=str,
+        default=None,
+        required=False,
+        help=('Name of the absorption in picca.constants defining the redshift '
+              'of the 2nd delta'))
 
     parser.add_argument(
         '--abs-igm',
         type=str,
-        default=None,
+        default=[],
         required=False,
         nargs='*',
-        help='List of names of metal absorption in picca.constants')
+        help=('List of names of metal absorption in picca.constants present in '
+              'forest'))
+
+    parser.add_argument(
+        '--abs-igm2',
+        type=str,
+        default=[],
+        required=False,
+        nargs='*',
+        help=('List of names of metal absorption in picca.constants present in '
+              '2nd forest'))
 
     parser.add_argument('--z-ref',
                         type=float,
@@ -188,18 +187,18 @@ def main(cmdargs):
                         help='Reference redshift')
 
     parser.add_argument(
-        '--z-evol-del',
+        '--z-evol',
         type=float,
         default=2.9,
         required=False,
         help='Exponent of the redshift evolution of the delta field')
 
     parser.add_argument(
-        '--z-evol-obj',
+        '--z-evol2',
         type=float,
-        default=1.44,
+        default=2.9,
         required=False,
-        help='Exponent of the redshift evolution of the object field')
+        help='Exponent of the redshift evolution of the 2nd delta field')
 
     parser.add_argument(
         '--metal-alpha',
@@ -236,11 +235,17 @@ def main(cmdargs):
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
     parser.add_argument(
+        '--remove-same-half-plate-close-pairs',
+        action='store_true',
+        required=False,
+        help='Reject pairs in the first bin in r-parallel from same half plate')
+
+    parser.add_argument(
         '--rej',
         type=float,
         default=1.,
         required=False,
-        help=('Fraction of rejected object-forests pairs: -1=no rejection, '
+        help=('Fraction of rejected forest-forest pairs: -1=no rejection, '
               '1=all rejection'))
 
     parser.add_argument('--nside',
@@ -261,6 +266,13 @@ def main(cmdargs):
                         required=False,
                         help='Maximum number of spectra to read')
 
+    parser.add_argument(
+        '--unfold-cf',
+        action='store_true',
+        required=False,
+        help=('rp can be positive or negative depending on the relative '
+              'position between absorber1 and absorber2'))
+
     parser.add_argument('--rebin-factor',
                         type=int,
                         default=None,
@@ -268,87 +280,112 @@ def main(cmdargs):
                         help='Rebin factor for deltas. If not None, deltas will '
                              'be rebinned by that factor')
 
-    args = parser.parse_args(cmdargs)
+    parser.add_argument('--fast-metals',
+                    action='store_true',
+                    required=False,
+                    help='compute only the metal correlations used by Vega'
+                       'i.e. 4 LyaxSi matrices and CIVxCIV')
 
+    args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
-    # setup variables in module xcf
-    xcf.r_par_max = args.rp_max
-    xcf.r_par_min = args.rp_min
-    xcf.r_trans_max = args.rt_max
-    xcf.z_cut_max = args.z_cut_max
-    xcf.z_cut_min = args.z_cut_min
-    xcf.num_bins_r_par = args.np * args.coef_binning_model
-    xcf.num_bins_r_trans = args.nt * args.coef_binning_model
-    xcf.num_model_bins_r_par = args.np * args.coef_binning_model
-    xcf.num_model_bins_r_trans = args.nt * args.coef_binning_model
-    xcf.nside = args.nside
-    xcf.z_ref = args.z_ref
-    xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
-    xcf.reject = args.rej
+    userprint("nproc", args.nproc)
 
-    xcf.alpha_abs = {}
-    xcf.alpha_abs[args.lambda_abs] = args.z_evol_del
+    # setup variables in module cf
+    cf.r_par_max = args.rp_max
+    cf.r_trans_max = args.rt_max
+    cf.r_par_min = args.rp_min
+    cf.z_cut_max = args.z_cut_max
+    cf.z_cut_min = args.z_cut_min
+    cf.num_bins_r_par = args.np * args.coef_binning_model
+    cf.num_bins_r_trans = args.nt * args.coef_binning_model
+    cf.num_model_bins_r_par = args.np * args.coef_binning_model
+    cf.num_model_bins_r_trans = args.nt * args.coef_binning_model
+    cf.nside = args.nside
+    cf.z_ref = args.z_ref
+    cf.alpha = args.z_evol
+    cf.reject = args.rej
+    cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
+    cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
+
+    cf.alpha_abs = {}
+    cf.alpha_abs[args.lambda_abs] = cf.alpha
     for metal in args.abs_igm:
-        xcf.alpha_abs[metal] = args.metal_alpha
+        cf.alpha_abs[metal] = args.metal_alpha
 
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir)
 
     # load fiducial cosmology
-    cosmo = constants.Cosmo(Om=args.fid_Om,
-                            Or=args.fid_Or,
-                            Ok=args.fid_Ok,
-                            wl=args.fid_wl,
-                            blinding=blinding)
-    xcf.cosmo = cosmo
+    cf.cosmo = constants.Cosmo(Om=args.fid_Om,
+                               Or=args.fid_Or,
+                               Ok=args.fid_Ok,
+                               wl=args.fid_wl,
+                               blinding=blinding)
 
     t0 = time.time()
 
-    # read deltas
+    ### Read data 1
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  args.nside,
-                                                  xcf.lambda_abs,
-                                                  args.z_evol_del,
-                                                  args.z_ref,
-                                                  cosmo,
+                                                  cf.nside,
+                                                  cf.lambda_abs,
+                                                  cf.alpha,
+                                                  cf.z_ref,
+                                                  cf.cosmo,
                                                   max_num_spec=args.nspec,
                                                   nproc=args.nproc,
                                                   rebin_factor=args.rebin_factor,
                                                   z_min_qso=args.z_min_sources,
                                                   z_max_qso=args.z_max_sources)
+    del z_max
+    cf.data = data
+    cf.num_data = num_data
+    cf.ang_max = utils.compute_ang_max(cf.cosmo, cf.r_trans_max, z_min)
+    userprint("")
+    userprint("done, npix = {}".format(len(data)))
 
-    xcf.data = data
-    xcf.num_data = num_data
+    ### Read data 2
+    if args.in_dir2 or args.lambda_abs2:
+        if args.lambda_abs2 or args.unfold_cf:
+            cf.x_correlation = True
+        cf.alpha2 = args.z_evol2
+        if args.in_dir2 is None:
+            args.in_dir2 = args.in_dir
+        if args.lambda_abs2:
+            cf.lambda_abs2 = constants.ABSORBER_IGM[args.lambda_abs2]
+        else:
+            cf.lambda_abs2 = cf.lambda_abs
+        cf.alpha_abs[args.lambda_abs2] = cf.alpha2
+        for m in args.abs_igm2:
+            cf.alpha_abs[m] = args.metal_alpha
 
-    ### Find the redshift range
-    if args.z_min_obj is None:
-        r_comov_min = cosmo.get_r_comov(z_min)
-        r_comov_min = max(0., r_comov_min + xcf.r_par_min)
-        args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
-        userprint("z_min_obj = {}".format(args.z_min_obj), end="")
-    if args.z_max_obj is None:
-        r_comov_max = cosmo.get_r_comov(z_max)
-        r_comov_max = max(0., r_comov_max + xcf.r_par_max)
-        args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
-        userprint("z_max_obj = {}".format(args.z_max_obj), end="")
-
-    # read objets
-    objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
-                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo, mode=args.mode)
-    xcf.objs = objs
-
-    # compute maximum angular separation
-    xcf.ang_max = utils.compute_ang_max(cosmo, xcf.r_trans_max, z_min, z_min2)
+        data2, num_data2, z_min2, z_max2 = io.read_deltas(
+            args.in_dir2,
+            cf.nside,
+            cf.lambda_abs2,
+            cf.alpha2,
+            cf.z_ref,
+            cf.cosmo,
+            max_num_spec=args.nspec,
+            nproc=args.nproc,
+            rebin_factor=args.rebin_factor,
+            z_min_qso=args.z_min_sources,
+            z_max_qso=args.z_max_sources)
+        del z_max2
+        cf.data2 = data2
+        cf.num_data2 = num_data2
+        cf.ang_max = utils.compute_ang_max(cf.cosmo, cf.r_trans_max, z_min,
+                                           z_min2)
+        userprint("")
+        userprint("done, npix = {}".format(len(data2)))
 
     t1 = time.time()
-    userprint(f'picca_metal_xdmat.py - Time reading data: {(t1-t0)/60:.3f} minutes')
+    userprint(f'picca_metal_dmat.py - Time reading data: {(t1-t0)/60:.3f} minutes')
 
-    xcf.counter = Value('i', 0)
-    xcf.lock = Lock()
+    cf.counter = Value('i', 0)
+    cf.lock = Lock()
     cpu_data = {}
     for index, healpix in enumerate(sorted(list(data.keys()))):
         num_processor = index % args.nproc
@@ -366,80 +403,107 @@ def main(cmdargs):
     num_pairs_all = []
     num_pairs_used_all = []
 
+    abs_igm = [args.lambda_abs] + args.abs_igm
+    userprint("abs_igm = {}".format(abs_igm))
+
+    if args.lambda_abs2 is None:
+        args.lambda_abs2 = args.lambda_abs
+        args.abs_igm2 = args.abs_igm
+
+    abs_igm_2 = [args.lambda_abs2] + args.abs_igm2
+
+    if cf.x_correlation:
+        userprint("abs_igm2 = {}".format(abs_igm_2))
+
     # loop over metals
-    for index, abs_igm in enumerate(args.abs_igm):
-        xcf.counter.value = 0
-        calc_metal_dmat_wrapper = partial(calc_metal_dmat, abs_igm)
-        userprint("")
+    for index1, abs_igm1 in enumerate(abs_igm):
+        index0 = index1
+        if args.lambda_abs != args.lambda_abs2:
+            index0 = 0
+        for index2, abs_igm2 in enumerate(abs_igm_2[index0:]):
+            if index1 == 0 and index2 == 0:
+                continue
 
-        if args.nproc > 1:
-            context = multiprocessing.get_context('fork')
-            pool = context.Pool(processes=args.nproc)
-            dmat_data = pool.map(calc_metal_dmat_wrapper,
-                                 sorted(cpu_data.values()))
-            pool.close()
-        elif args.nproc == 1:
-            dmat_data = map(calc_metal_dmat_wrapper, sorted(cpu_data.values()))
+            if args.fast_metals:
+                if not (abs_igm1 == "LYA" and abs_igm2 in DEFAULT_SI_METALS) \
+                and not (abs_igm1 == "CIV(eff)" and abs_igm1 == abs_igm2):
+                    continue
 
-        # merge the results from different CPUs
-        dmat_data = list(dmat_data)
-        weights_dmat = np.array([item[0] for item in dmat_data]).sum(axis=0)
-        dmat = np.array([item[1] for item in dmat_data]).sum(axis=0)
-        r_par = np.array([item[2] for item in dmat_data]).sum(axis=0)
-        r_trans = np.array([item[3] for item in dmat_data]).sum(axis=0)
-        z = np.array([item[4] for item in dmat_data]).sum(axis=0)
-        weights = np.array([item[5] for item in dmat_data]).sum(axis=0)
+            cf.counter.value = 0
+            calc_metal_dmat_wrapper = partial(calc_metal_dmat, abs_igm1,
+                                              abs_igm2)
+            userprint("")
 
-        # normalize_values
-        w = weights > 0
-        r_par[w] /= weights[w]
-        r_trans[w] /= weights[w]
-        z[w] /= weights[w]
-        num_pairs = np.array([item[6] for item in dmat_data]).sum(axis=0)
-        num_pairs_used = np.array([item[7] for item in dmat_data]).sum(axis=0)
-        w = weights_dmat > 0
-        dmat[w, :] /= weights_dmat[w, None]
+            # compute the distortion matrix
+            if args.nproc > 1:
+                context = multiprocessing.get_context('fork')
+                pool = context.Pool(processes=args.nproc)
+                dmat_data = pool.map(calc_metal_dmat_wrapper,
+                                     sorted(cpu_data.values()))
+                pool.close()
+            elif args.nproc == 1:
+                dmat_data = map(calc_metal_dmat_wrapper,
+                                sorted(cpu_data.values()))
 
-        # add these results to the list ofor the different metal absorption
-        dmat_all.append(dmat)
-        weights_dmat_all.append(weights_dmat)
-        r_par_all.append(r_par)
-        r_trans_all.append(r_trans)
-        z_all.append(z)
-        names.append(abs_igm)
-        num_pairs_all.append(num_pairs)
-        num_pairs_used_all.append(num_pairs_used)
+            # merge the results from different CPUs
+            dmat_data = list(dmat_data)
+            weights_dmat = np.array([item[0] for item in dmat_data]).sum(axis=0)
+            dmat = np.array([item[1] for item in dmat_data]).sum(axis=0)
+            r_par = np.array([item[2] for item in dmat_data]).sum(axis=0)
+            r_trans = np.array([item[3] for item in dmat_data]).sum(axis=0)
+            z = np.array([item[4] for item in dmat_data]).sum(axis=0)
+            weights = np.array([item[5] for item in dmat_data]).sum(axis=0)
+            num_pairs = np.array([item[6] for item in dmat_data]).sum(axis=0)
+            num_pairs_used = np.array([item[7] for item in dmat_data]).sum(axis=0)
+
+            # normalize_values
+            w = weights > 0
+            r_par[w] /= weights[w]
+            r_trans[w] /= weights[w]
+            z[w] /= weights[w]
+            w = weights_dmat > 0
+            dmat[w, :] /= weights_dmat[w, None]
+
+            # add these results to the list ofor the different metal absorption
+            dmat_all.append(dmat)
+            weights_dmat_all.append(weights_dmat)
+            r_par_all.append(r_par)
+            r_trans_all.append(r_trans)
+            z_all.append(z)
+            names.append(abs_igm1 + "_" + abs_igm2)
+            num_pairs_all.append(num_pairs)
+            num_pairs_used_all.append(num_pairs_used)
 
     t2 = time.time()
-    userprint(f'picca_metal_xdmat.py - Time computing all metal matrix: {(t2-t1)/60:.3f} minutes')
+    userprint(f'picca_metal_dmat.py - Time computing all metal matrices : {(t2-t1)/60:.3f} minutes')
 
     # save the results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [
         {
             'name': 'RPMIN',
-            'value': xcf.r_par_min,
+            'value': cf.r_par_min,
             'comment': 'Minimum r-parallel [h^-1 Mpc]'
         },
         {
             'name': 'RPMAX',
-            'value': xcf.r_par_max,
+            'value': cf.r_par_max,
             'comment': 'Maximum r-parallel [h^-1 Mpc]'
         },
         {
             'name': 'RTMAX',
-            'value': xcf.r_trans_max,
+            'value': cf.r_trans_max,
             'comment': 'Maximum r-transverse [h^-1 Mpc]'
         },
         {
             'name': 'NP',
-            'value': xcf.num_bins_r_par,
+            'value': cf.num_bins_r_par,
             'comment': 'Number of bins in r-parallel'
         },
         {
             'name': 'NT',
-            'value': xcf.num_bins_r_trans,
-            'comment': 'Number of bins in r-transverse'
+            'value': cf.num_bins_r_trans,
+            'comment': ' Number of bins in r-transverse'
         },
         {
             'name': 'COEFMOD',
@@ -448,18 +512,23 @@ def main(cmdargs):
         },
         {
             'name': 'ZCUTMIN',
-            'value': xcf.z_cut_min,
+            'value': cf.z_cut_min,
             'comment': 'Minimum redshift of pairs'
         },
         {
             'name': 'ZCUTMAX',
-            'value': xcf.z_cut_max,
+            'value': cf.z_cut_max,
             'comment': 'Maximum redshift of pairs'
         },
         {
             'name': 'REJ',
-            'value': xcf.reject,
+            'value': cf.reject,
             'comment': 'Rejection factor'
+        },
+        {
+            'name': 'ALPHAMET',
+            'value': args.metal_alpha,
+            'comment': 'Evolution of metal bias'
         }, {
             'name': 'OMEGAM',
             'value': args.fid_Om,
@@ -504,27 +573,27 @@ def main(cmdargs):
     out_comment = []
     out_units = []
     for index, name in enumerate(names):
-        out_names += ['RP_' + args.obj_name + '_' + name]
+        out_names += ['RP_' + name]
         out_list += [r_par_all[index]]
         out_comment += ['R-parallel']
         out_units += ['h^-1 Mpc']
 
-        out_names += ['RT_' + args.obj_name + '_' + name]
+        out_names += ['RT_' + name]
         out_list += [r_trans_all[index]]
         out_comment += ['R-transverse']
         out_units += ['h^-1 Mpc']
 
-        out_names += ['Z_' + args.obj_name + '_' + name]
+        out_names += ['Z_' + name]
         out_list += [z_all[index]]
         out_comment += ['Redshift']
         out_units += ['']
 
-        out_names += [dmat_name + args.obj_name + '_' + name]
+        out_names += [dmat_name + name]
         out_list += [dmat_all[index]]
         out_comment += ['Distortion matrix']
         out_units += ['']
 
-        out_names += ['WDM_' + args.obj_name + '_' + name]
+        out_names += ['WDM_' + name]
         out_list += [weights_dmat_all[index]]
         out_comment += ['Sum of weight']
         out_units += ['']
@@ -537,9 +606,4 @@ def main(cmdargs):
     results.close()
 
     t3 = time.time()
-    userprint(f'picca_metal_xdmat.py - Time total: {(t3-t0)/60:.3f} minutes')
-
-
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)
+    userprint(f'picca_metal_dmat.py - Time total : {(t3-t0)/60:.3f} minutes')
