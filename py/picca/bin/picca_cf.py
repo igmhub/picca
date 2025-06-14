@@ -87,6 +87,11 @@ def main(cmdargs=None):
                         default=50,
                         required=False,
                         help='Number of r-transverse bins')
+
+    parser.add_argument('--rmu-binning', action="store_true",
+                        help=('Estimate in r,mu binning. np becomes mu bins.'
+                              ' nt becomes r bins. rp min max is always 0, 1')
+                        )
     
     parser.add_argument('--zerr-cut-deg',
                         type=float,
@@ -250,6 +255,11 @@ def main(cmdargs=None):
 
     if args.nproc is None:
         args.nproc = cpu_count() // 2
+
+    cf.rmu_binning = args.rmu_binning
+    if cf.rmu_binning:
+        args.rp_min = 0
+        args.rp_max = 1
 
     # setup variables in module cf
     cf.r_par_max = args.rp_max
@@ -435,7 +445,8 @@ def main(cmdargs=None):
     ]
     results.write(
         [r_par, r_trans, z, num_pairs],
-        names=['RP', 'RT', 'Z', 'NB'],
+        names=['MU' if cf.rmu_binning else 'RP',
+               'R' if cf.rmu_binning else 'RT', 'Z', 'NB'],
         comment=['R-parallel', 'R-transverse', 'Redshift', 'Number of pairs'],
         units=['h^-1 Mpc', 'h^-1 Mpc', '', ''],
         header=header,
