@@ -445,10 +445,11 @@ def main(cmdargs=None):
     ]
     results.write(
         [r_par, r_trans, z, num_pairs],
-        names=['MU' if cf.rmu_binning else 'RP',
-               'R' if cf.rmu_binning else 'RT', 'Z', 'NB'],
-        comment=['R-parallel', 'R-transverse', 'Redshift', 'Number of pairs'],
-        units=['h^-1 Mpc', 'h^-1 Mpc', '', ''],
+        names=['RP', 'RT', 'Z', 'NB'],
+        comment=['R-parallel' if not cf.rmu_binning else 'Mu',
+                 'R-transverse' if not cf.rmu_binning else 'Radial separation',
+                 'Redshift', 'Number of pairs'],
+        units=['h^-1 Mpc' if not cf.rmu_binning else '', 'h^-1 Mpc', '', ''],
         header=header,
         extname='ATTRI')
 
