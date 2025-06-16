@@ -205,54 +205,6 @@ def compute_xi(healpixs):
     return weights, xi, r_par, r_trans, z, num_pairs
 
 
-def calculate_xi_ell(ells, xi_list, weights_list):
-    """Calculates the multipoles and their approximate weights per healpix.
-    Args:
-        ells: list(int)
-            List of multipoles
-        xi_list: list(cf)
-            List of correlation functions in rperp, rpara scheme for all hpx
-        weights_list: list(weight)
-            Weights for all healpixels
-
-    Returns:
-        xi_ells: np.ndarray
-            CF multipoles for all hpx
-        weight_ells: np.ndarray
-            Weights for each multipole for all hpx
-    """
-    dmu = (r_par_max - r_par_min) / num_bins_r_par
-    muc = np.arange(num_bins_r_par) * dmu + r_par_min + dmu / 2
-    leg_ells = [
-        np.polynomial.legendre.Legendre.basis(ell)(muc)
-        for ell in ells]
-
-    if x_correlation:
-        dmu /= 2
-
-    xi_ells = []
-    for xi in xi_list:
-        xi = xi.reshape(num_bins_r_par, num_bins_r_trans)
-        xi_ell = [
-            (xi * leg_ells[i][:, None]).sum(0) * dmu * (2 * ell + 1)
-            for i, ell in enumerate(ells)
-        ]
-        xi_ells.append(np.hstack(xi_ell))
-
-    # Approximate weights based on variance propagation rule.
-    weight_ells = []
-    leg_ells = [_**2 for _ in leg_ells]
-    for we in weights_list:
-        we = 1.0 / we.reshape(num_bins_r_par, num_bins_r_trans)
-        we_ell = [
-            (we * leg_ells[i][:, None]).sum(0) * (dmu * (2 * ell + 1))**2
-            for i, ell in enumerate(ells)
-        ]
-        weight_ells.append(1.0 / np.hstack(we_ell))
-
-    return np.vstack(xi_ells), np.vstack(weight_ells)
-
-
 @njit
 def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_1,
                                  z2, r_comov2, dist_m2, weights2, delta2, z_qso_2,
@@ -488,6 +440,9 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
+            if rmu_binning:
+                r_trans = np.sqrt(r_trans**2 + r_par**2)
+                r_par /= r_trans
             if not x_correlation:
                 r_par = np.abs(r_par)
             if (r_par >= r_par_max or r_trans >= r_trans_max or

@@ -9,7 +9,7 @@ import h5py
 import os.path
 import sys
 
-from picca.utils import smooth_cov, compute_cov
+from picca.utils import smooth_cov, compute_cov, calculate_xi_ell
 from picca.utils import userprint
 
 # TODO: add tags here when we are allowed to unblind them
@@ -46,6 +46,14 @@ def main(cmdargs=None):
 
     parser.add_argument('--multipoles', action="store_true",
                         help='Use multipole extension')
+    parser.add_argument('--nell-model-max', type=int, default=6,
+                        help=('Number of even multipoles for the model'
+                              ' if rmu-binning')
+                        )
+    parser.add_argument('--nell-out-max', type=int, default=10,
+                        help=('Number of even multipoles for the output'
+                              ' if rmu-binning')
+                        )
 
     parser.add_argument(
         '--cov',
@@ -90,32 +98,28 @@ def main(cmdargs=None):
     args = parser.parse_args(cmdargs)
 
     hdul = fitsio.FITS(args.data)
-    if args.multipoles:
-        ext = 3
-        userprint("Smoothing is turned off for multipoles")
-        args.do_not_smooth_cov = True
-    else:
-        ext = 1
 
-    r_par = np.array(hdul[ext]['RP'][:])
-    r_trans = np.array(hdul[ext]['RT'][:])
-    z = np.array(hdul[ext]['Z'][:])
-    num_pairs = np.array(hdul[ext]['NB'][:])
-    weights = np.array(hdul[ext + 1]['WE'][:])
+    r_par = np.array(hdul[1]['RP'][:])
+    r_trans = np.array(hdul[1]['RT'][:])
+    z = np.array(hdul[1]['Z'][:])
+    num_pairs = np.array(hdul[1]['NB'][:])
+    weights = np.array(hdul[2]['WE'][:])
 
-    if 'DA_BLIND' in hdul[ext + 1].get_colnames():
-        xi = np.array(hdul[ext + 1]['DA_BLIND'][:])
+    if 'DA_BLIND' in hdul[2].get_colnames():
+        xi = np.array(hdul[2]['DA_BLIND'][:])
         data_name = 'DA_BLIND'
     else:
-        xi = np.array(hdul[ext + 1]['DA'][:])
+        xi = np.array(hdul[2]['DA'][:])
         data_name = 'DA'
 
-    head = hdul[ext].read_header()
+    head = hdul[1].read_header()
     num_bins_r_par = head['NP']
     num_bins_r_trans = head['NT']
     r_trans_max = head['RTMAX']
     r_par_min = head['RPMIN']
     r_par_max = head['RPMAX']
+
+    is_x_correlation = r_par_min < 0
 
     if "BLINDING" in head:
         blinding = head["BLINDING"]
@@ -138,6 +142,36 @@ def main(cmdargs=None):
         xi_shuffled[w] /= weight_shuffled[w]
         hdul.close()
         xi -= xi_shuffled[:, None]
+
+    if args.multipoles:
+        userprint("Smoothing is turned off for multipoles")
+        args.do_not_smooth_cov = True
+        assert head['RMU_BIN']
+
+        ells_out = np.arange(args.nell_out_max)
+        if not is_x_correlation:
+            ells_out = ells_out[ells_out % 2 == 0]
+
+        nell_out = ells_out.size
+        sum_weights = weights.sum(axis=0)
+        sum_weights = sum_weights.reshape(num_bins_r_par, num_bins_r_trans)
+        sum_sum_weights = sum_weights.sum(0)
+        # The following assumes the same effective r and z.
+        # Is there a multipole dependent weighting for effective r and z?
+        r_trans = r_trans.reshape(num_bins_r_par, num_bins_r_trans)
+        r_trans = np.sum(sum_weights * r_trans, 0) / sum_sum_weights
+        r_trans = np.tile(r_trans, nell_out)
+
+        z = z.reshape(num_bins_r_par, num_bins_r_trans)
+        z = np.sum(sum_weights * z, 0) / sum_sum_weights
+        z = np.tile(z, nell_out)
+
+        num_pairs = num_pairs.reshape(num_bins_r_par, num_bins_r_trans).sum(0)
+        num_pairs = np.tile(num_pairs, nell_out)
+        r_par = np.repeat(ells_out, num_bins_r_trans)
+
+        xi, weights = calculate_xi_ell(
+            ells_out, xi, weights, num_bins_r_par, is_x_correlation)
 
     if args.cov is not None:
         userprint(("INFO: The covariance-matrix will be read from file: "

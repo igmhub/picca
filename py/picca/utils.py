@@ -28,6 +28,58 @@ def userprint(*args, **kwds):
     sys.stdout.flush()
 
 
+def calculate_xi_ell(ells, xi_list, weights_list, nmu, x_correlation=False):
+    """Calculates the multipoles and their approximate weights per healpix.
+    Args:
+        ells: list(int)
+            List of multipoles
+        xi_list: list(cf)
+            List of correlation functions in rperp, rpara scheme for all hpx
+        weights_list: list(weight)
+            Weights for all healpixels
+
+    Returns:
+        xi_ells: np.ndarray
+            CF multipoles for all hpx
+        weight_ells: np.ndarray
+            Weights for each multipole for all hpx
+    """
+    mu1 = -1.0 if x_correlation else 0.0
+    dmu = (1.0 - mu1) / nmu
+    muc = np.arange(nmu) * dmu + mu1 + dmu / 2
+    leg_ells = [
+        np.polynomial.legendre.Legendre.basis(ell)(muc)
+        for ell in ells]
+
+    if x_correlation:
+        dmu /= 2
+
+    nr = xi_list[0].size // nmu
+    assert nmu * nr == xi_list[0].size
+
+    xi_ells = []
+    for xi in xi_list:
+        xi = xi.reshape(nmu, nr)
+        xi_ell = [
+            (xi * leg_ells[i][:, None]).sum(0) * dmu * (2 * ell + 1)
+            for i, ell in enumerate(ells)
+        ]
+        xi_ells.append(np.hstack(xi_ell))
+
+    # Approximate weights based on variance propagation rule.
+    weight_ells = []
+    leg_ells = [_**2 for _ in leg_ells]
+    for we in weights_list:
+        we = 1.0 / we.reshape(nmu, nr)
+        we_ell = [
+            (we * leg_ells[i][:, None]).sum(0) * (dmu * (2 * ell + 1))**2
+            for i, ell in enumerate(ells)
+        ]
+        weight_ells.append(1.0 / np.hstack(we_ell))
+
+    return np.vstack(xi_ells), np.vstack(weight_ells)
+
+
 def compute_cov(xi, weights):
     """Computes the covariance matrix using the subsampling technique
 
