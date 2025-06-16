@@ -100,6 +100,15 @@ def main(cmdargs=None):
                         required=False,
                         help='Number of r-transverse bins')
 
+    parser.add_argument('--rmu-binning', action="store_true",
+                        help=('Estimate in r,mu binning. np becomes mu bins.'
+                              ' nt becomes r bins. rp min max is always -1, 1')
+                        )
+
+    parser.add_argument('--nell', type=int, default=10,
+                        help='Number of multipoles to calculate if rmu-binning'
+                        )
+
     parser.add_argument('--z-min-obj',
                         type=float,
                         default=0,
@@ -273,6 +282,11 @@ def main(cmdargs=None):
         args.nproc = cpu_count() // 2
 
     # setup variables in module xcf
+    xcf.rmu_binning = args.rmu_binning
+    if xcf.rmu_binning:
+        args.rp_min = -1
+        args.rp_max = 1
+
     xcf.r_par_max = args.rp_max
     xcf.r_par_min = args.rp_min
     xcf.z_cut_max = args.z_cut_max
@@ -402,13 +416,14 @@ def main(cmdargs=None):
     num_pairs_list = correlation_function_data[:, 5, :].astype(np.int64)
     healpix_list = np.array(sorted(list(cpu_data.keys())))
 
-    w = (weights_list.sum(axis=0) > 0.)
+    sum_weights = weights_list.sum(axis=0)
+    w = sum_weights > 0
     r_par = (r_par_list * weights_list).sum(axis=0)
-    r_par[w] /= weights_list.sum(axis=0)[w]
+    r_par[w] /= sum_weights[w]
     r_trans = (r_trans_list * weights_list).sum(axis=0)
-    r_trans[w] /= weights_list.sum(axis=0)[w]
+    r_trans[w] /= sum_weights[w]
     z = (z_list * weights_list).sum(axis=0)
-    z[w] /= weights_list.sum(axis=0)[w]
+    z[w] /= sum_weights[w]
     num_pairs = num_pairs_list.sum(axis=0)
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
@@ -469,8 +484,10 @@ def main(cmdargs=None):
     results.write(
         [r_par, r_trans, z, num_pairs],
         names=['RP', 'RT', 'Z', 'NB'],
-        comment=['R-parallel', 'R-transverse', 'Redshift', 'Number of pairs'],
-        units=['h^-1 Mpc', 'h^-1 Mpc', '', ''],
+        comment=['R-parallel' if not xcf.rmu_binning else 'Mu',
+                 'R-transverse' if not xcf.rmu_binning else 'Radial separation',
+                 'Redshift', 'Number of pairs'],
+        units=['h^-1 Mpc' if not xcf.rmu_binning else '', 'h^-1 Mpc', '', ''],
         header=header,
         extname='ATTRI')
 
@@ -487,6 +504,38 @@ def main(cmdargs=None):
                   comment=['Healpix index', 'Sum of weight', 'Correlation'],
                   header=header2,
                   extname='COR')
+
+    if xcf.rmu_binning and args.nell > 0:
+        sum_weights = sum_weights.reshape(args.np, args.nt)
+        sum_sum_weights = sum_weights.sum(0)
+        r_trans = r_trans.reshape(args.np, args.nt)
+        z = z.reshape(args.np, args.nt)
+        # Is there a multipole dependent weighting for effective r and z?
+        r_ell = np.sum(sum_weights * r_trans, 0) / sum_sum_weights
+        z_ell = np.sum(sum_weights * z, 0) / sum_sum_weights
+        num_pairs_ell = num_pairs.reshape(args.np, args.nt).sum(0)
+        ells = np.arange(args.nell)
+        rp_ell = np.repeat(ells, args.nt)
+        r_ell = np.tile(r_ell, args.nell)
+        z_ell = np.tile(z_ell, args.nell)
+        num_pairs_ell = np.tile(num_pairs_ell, args.nell)
+        header[3]['value'] = args.nell
+
+        results.write(
+            [rp_ell, r_ell, z_ell, num_pairs_ell],
+            names=['RP', 'RT', 'Z', 'NB'],
+            comment=['Multipole', 'Radial separation', 'Redshift', 'Number of pairs'],
+            units=['', 'h^-1 Mpc', '', ''],
+            header=header,
+            extname='ATTRI_ELL')
+
+        xi_ells, we_ells = xcf.calculate_xi_ell(ells, xi_list, weights_list)
+        results.write(
+            [healpix_list, we_ells, xi_ells],
+            names=['HEALPID', 'WE', da_name],
+            comment=['Healpix index', 'Sum of weight', 'Correlation'],
+            header=header2,
+            extname='COR_ELL')
 
     results.close()
 
