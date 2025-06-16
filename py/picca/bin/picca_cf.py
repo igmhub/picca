@@ -92,7 +92,11 @@ def main(cmdargs=None):
                         help=('Estimate in r,mu binning. np becomes mu bins.'
                               ' nt becomes r bins. rp min max is always 0, 1')
                         )
-    
+
+    parser.add_argument('--nell', type=int, default=5,
+                        help=('Number of even multipoles to calculate'
+                              ' if rmu-binning')
+                        )
     parser.add_argument('--zerr-cut-deg',
                         type=float,
                         default=None,
@@ -378,13 +382,14 @@ def main(cmdargs=None):
     healpix_list = np.array(sorted(list(cpu_data.keys())))
 
     # normalize values
-    w = (weights_list.sum(axis=0) > 0.)
+    sum_weights = weights_list.sum(axis=0)
+    w = sum_weights > 0
     r_par = (r_par_list * weights_list).sum(axis=0)
-    r_par[w] /= weights_list.sum(axis=0)[w]
+    r_par[w] /= sum_weights[w]
     r_trans = (r_trans_list * weights_list).sum(axis=0)
-    r_trans[w] /= weights_list.sum(axis=0)[w]
+    r_trans[w] /= sum_weights[w]
     z = (z_list * weights_list).sum(axis=0)
-    z[w] /= weights_list.sum(axis=0)[w]
+    z[w] /= sum_weights[w]
     num_pairs = num_pairs_list.sum(axis=0)
 
     # save data
@@ -467,6 +472,31 @@ def main(cmdargs=None):
                   header=header2,
                   extname='COR')
 
+    if cf.rmu_binning and args.nell > 0:
+        sum_weights = sum_weights.reshape(args.np, args.nt)
+        sum_sum_weights = sum_weights.sum(0)
+        r_trans = r_trans.reshape(args.np, args.nt)
+        z = z.reshape(args.np, args.nt)
+        # Is there a multipole dependent weighting for effective r and z?
+        r_ell = np.sum(sum_weights * r_trans, 0) / sum_sum_weights
+        z_ell = np.sum(sum_weights * z, 0) / sum_sum_weights
+        num_pairs_ell = num_pairs.reshape(args.np, args.nt).sum(0)
+        results.write(
+            [r_ell, z_ell, num_pairs_ell],
+            names=['RT', 'Z', 'NB'],
+            comment=['Radial separation', 'Redshift', 'Number of pairs'],
+            units=['h^-1 Mpc', '', ''],
+            header=header,
+            extname='ATTRI_ELL')
+
+        ells = 2 * np.arange(args.nell)
+        xi_ells, we_ells = cf.calculate_xi_ell(ells, xi_list, weights_list)
+        results.write(
+            [healpix_list, we_ells, xi_ells],
+            names=['HEALPID', 'WE', xi_list_name],
+            comment=['Healpix index', 'Sum of weight', 'Correlation'],
+            header=header2,
+            extname='COR_ELL')
     results.close()
 
     t3 = time.time()
