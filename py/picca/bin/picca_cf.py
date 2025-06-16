@@ -481,15 +481,21 @@ def main(cmdargs=None):
         r_ell = np.sum(sum_weights * r_trans, 0) / sum_sum_weights
         z_ell = np.sum(sum_weights * z, 0) / sum_sum_weights
         num_pairs_ell = num_pairs.reshape(args.np, args.nt).sum(0)
+        ells = 2 * np.arange(args.nell)
+        rp_ell = np.repeat(ells, args.nt)
+        r_ell = np.tile(r_ell, args.nell)
+        z_ell = np.tile(z_ell, args.nell)
+        num_pairs_ell = np.tile(num_pairs_ell, args.nell)
+        header[3]['value'] = args.nell
+
         results.write(
-            [r_ell, z_ell, num_pairs_ell],
-            names=['RT', 'Z', 'NB'],
-            comment=['Radial separation', 'Redshift', 'Number of pairs'],
-            units=['h^-1 Mpc', '', ''],
+            [rp_ell, r_ell, z_ell, num_pairs_ell],
+            names=['RP', 'RT', 'Z', 'NB'],
+            comment=['Multipole', 'Radial separation', 'Redshift', 'Number of pairs'],
+            units=['', 'h^-1 Mpc', '', ''],
             header=header,
             extname='ATTRI_ELL')
 
-        ells = 2 * np.arange(args.nell)
         xi_ells, we_ells = cf.calculate_xi_ell(ells, xi_list, weights_list)
         results.write(
             [healpix_list, we_ells, xi_ells],

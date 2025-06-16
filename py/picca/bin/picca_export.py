@@ -97,7 +97,7 @@ def main(cmdargs=None):
     else:
         ext = 1
 
-    r_par = np.array(hdul[1]['RP'][:])
+    r_par = np.array(hdul[ext]['RP'][:])
     r_trans = np.array(hdul[ext]['RT'][:])
     z = np.array(hdul[ext]['Z'][:])
     num_pairs = np.array(hdul[ext]['NB'][:])
@@ -110,7 +110,7 @@ def main(cmdargs=None):
         xi = np.array(hdul[ext + 1]['DA'][:])
         data_name = 'DA'
 
-    head = hdul[1].read_header()
+    head = hdul[ext].read_header()
     num_bins_r_par = head['NP']
     num_bins_r_trans = head['NT']
     r_trans_max = head['RTMAX']
