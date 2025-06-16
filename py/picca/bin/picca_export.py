@@ -231,7 +231,8 @@ def main(cmdargs=None):
     if args.dmat is not None:
         hdul = fitsio.FITS(args.dmat)
         head_dmat = hdul[1].read_header()
-        nmu_dmat, nr_dmat = head_dmat['NP'], head_dmat['NT']
+        nmu_dmat = head_dmat['NP']
+        nr_dmat = head_dmat['NT'] * head_dmat['COEFMOD']
         dr_dmat = head_dmat['RTMAX'] / nr_dmat
 
         if data_name == "DA_BLIND" and 'DM_BLIND' in hdul[1].get_colnames():
@@ -274,10 +275,10 @@ def main(cmdargs=None):
             ell_to_tr_matrix = legvander(
                 r_par_dmat, args.nell_model_max)[:, ells_model]
             cols = np.floor(r_trans_dmat / dr_dmat).astype(int)
-            cols = np.vstack([cols + j * nr_dmat for j in range(nell_model)])
+            cols = np.hstack([cols + j * nr_dmat for j in range(nell_model)])
             rows = np.repeat(np.arange(dmat.shape[1]), nell_model)
             ell_to_tr_matrix = coo_array(
-                ell_to_tr_matrix, (rows, cols),
+                (ell_to_tr_matrix.ravel(), (rows, cols)),
                 shape=(dmat.shape[1], nell_model * nr_dmat))
 
             r_par_dmat = np.repeat(ells_model, nr_dmat)
@@ -307,7 +308,7 @@ def main(cmdargs=None):
 
             for i in range(xi.size):
                 ell = i // num_bins_r_trans
-                j1 = i * num_bins_r_par
+                j1 = (i % num_bins_r_trans) * num_bins_r_par
                 j2 = j1 + num_bins_r_par
                 tr_to_ell_matrix[i, j1:j2] = leg_ells[ell]
 
