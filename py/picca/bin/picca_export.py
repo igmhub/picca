@@ -44,6 +44,9 @@ def main(cmdargs=None):
         help=('Distortion matrix produced via picca_dmat.py, picca_xdmat.py... '
               '(if not provided will be identity)'))
 
+    parser.add_argument('--multipoles', action="store_true",
+                        help='Use multipole extension')
+
     parser.add_argument(
         '--cov',
         type=str,
@@ -87,18 +90,24 @@ def main(cmdargs=None):
     args = parser.parse_args(cmdargs)
 
     hdul = fitsio.FITS(args.data)
+    if args.multipoles:
+        ext = 3
+        userprint("Smoothing is turned off for multipoles")
+        args.do_not_smooth_cov = True
+    else:
+        ext = 1
 
     r_par = np.array(hdul[1]['RP'][:])
-    r_trans = np.array(hdul[1]['RT'][:])
-    z = np.array(hdul[1]['Z'][:])
-    num_pairs = np.array(hdul[1]['NB'][:])
-    weights = np.array(hdul[2]['WE'][:])
+    r_trans = np.array(hdul[ext]['RT'][:])
+    z = np.array(hdul[ext]['Z'][:])
+    num_pairs = np.array(hdul[ext]['NB'][:])
+    weights = np.array(hdul[ext + 1]['WE'][:])
 
-    if 'DA_BLIND' in hdul[2].get_colnames():
-        xi = np.array(hdul[2]['DA_BLIND'][:])
+    if 'DA_BLIND' in hdul[ext + 1].get_colnames():
+        xi = np.array(hdul[ext + 1]['DA_BLIND'][:])
         data_name = 'DA_BLIND'
     else:
-        xi = np.array(hdul[2]['DA'][:])
+        xi = np.array(hdul[ext + 1]['DA'][:])
         data_name = 'DA'
 
     head = hdul[1].read_header()
