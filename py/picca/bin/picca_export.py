@@ -172,6 +172,8 @@ def main(cmdargs=None):
 
         xi, weights = calculate_xi_ell(
             ells_out, xi, weights, num_bins_r_par, is_x_correlation)
+    else:
+        ells_out = None
 
     if args.cov is not None:
         userprint(("INFO: The covariance-matrix will be read from file: "
@@ -343,7 +345,7 @@ def main(cmdargs=None):
         else:
             raise ValueError("Unknown correlation type: {}".format(args.blind_corr_type))
 
-        if corr_size == len(xi):
+        if corr_size == num_bins_r_par * num_bins_r_trans:
             # Read the blinding file and get the right template
             blinding_filename = blinding_dir + blinding_templates[blinding]['standard']
         else:
@@ -357,14 +359,19 @@ def main(cmdargs=None):
         hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
         diff_grid = np.array([float.fromhex(x) for x in hex_diff])
 
-        if corr_size == len(xi):
+        if corr_size == num_bins_r_par * num_bins_r_trans:
             diff = diff_grid
         else:
             # Interpolate the blinding template on the regular grid
             interp = scipy.interpolate.RectBivariateSpline(
-                    rp_interp_grid, rt_interp_grid,
-                    diff_grid.reshape(len(rp_interp_grid), len(rt_interp_grid)), kx=3, ky=3)
+                rp_interp_grid, rt_interp_grid,
+                diff_grid.reshape(len(rp_interp_grid), len(rt_interp_grid)),
+                kx=3, ky=3)
             diff = interp.ev(r_par, r_trans)
+
+        if args.multipoles:
+            diff = calculate_xi_ell(
+                ells_out, diff, [], num_bins_r_par, is_x_correlation)[0]
 
         # Check that the shapes match
         if np.shape(xi) != np.shape(diff):
