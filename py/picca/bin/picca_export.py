@@ -9,6 +9,9 @@ import h5py
 import os.path
 import sys
 
+from numpy.polynomial.legendre import legvander
+from scipy.sparse import coo_array
+
 from picca.utils import smooth_cov, compute_cov, calculate_xi_ell
 from picca.utils import userprint
 
@@ -148,7 +151,7 @@ def main(cmdargs=None):
         args.do_not_smooth_cov = True
         assert head['RMU_BIN']
 
-        ells_out = np.arange(args.nell_out_max)
+        ells_out = np.arange(args.nell_out_max + 1)
         if not is_x_correlation:
             ells_out = ells_out[ells_out % 2 == 0]
 
@@ -227,6 +230,10 @@ def main(cmdargs=None):
 
     if args.dmat is not None:
         hdul = fitsio.FITS(args.dmat)
+        head_dmat = hdul[1].read_header()
+        nmu_dmat, nr_dmat = head_dmat['NP'], head_dmat['NT']
+        dr_dmat = head_dmat['RTMAX'] / nr_dmat
+
         if data_name == "DA_BLIND" and 'DM_BLIND' in hdul[1].get_colnames():
             dmat = np.array(hdul[1]['DM_BLIND'][:])
             dmat_name = 'DM_BLIND'
@@ -255,6 +262,57 @@ def main(cmdargs=None):
             r_trans_dmat = r_trans.copy()
             z_dmat = z.copy()
         hdul.close()
+
+        if args.multipoles:
+            assert head_dmat['RMU_BIN']
+            ells_model = np.arange(args.nell_model_max + 1)
+            if not is_x_correlation:
+                ells_model = ells_model[ells_model % 2 == 0]
+            nell_model = ells_model.size
+
+            # From model multipoles to transverse-radial interpolation matrix.
+            ell_to_tr_matrix = legvander(
+                r_par_dmat, args.nell_model_max)[:, ells_model]
+            cols = np.floor(r_trans_dmat / dr_dmat).astype(int)
+            cols = np.vstack([cols + j * nr_dmat for j in range(nell_model)])
+            rows = np.repeat(np.arange(dmat.shape[1]), nell_model)
+            ell_to_tr_matrix = coo_array(
+                ell_to_tr_matrix, (rows, cols),
+                shape=(dmat.shape[1], nell_model * nr_dmat))
+
+            r_par_dmat = np.repeat(ells_model, nr_dmat)
+            r_trans_dmat = np.tile(
+                r_trans_dmat.reshape(nmu_dmat, nr_dmat).mean(0), nell_model)
+            z_dmat = np.tile(
+                z_dmat.reshape(nmu_dmat, nr_dmat).mean(0), nell_model)
+            dmat = ell_to_tr_matrix.T.dot(dmat.T).T
+
+            del ell_to_tr_matrix, rows, cols
+
+            # From transverse-radial binning to multipoles matrix
+            assert xi.size == nell_out * num_bins_r_trans
+            tr_to_ell_matrix = np.zeros((xi.size, dmat.shape[0]))
+            mu1 = -1.0 if is_x_correlation else 0.0
+            dmu = (1.0 - mu1) / num_bins_r_par
+            muc = np.arange(num_bins_r_par) * dmu + mu1 + dmu / 2
+
+            if is_x_correlation:
+                dmu /= 2
+
+            leg_ells = [
+                np.polynomial.legendre.Legendre.basis(ell)(muc)
+                * dmu * (2 * ell + 1)
+                for ell in ells_out]
+            del mu1, dmu, muc
+
+            for i in range(xi.size):
+                ell = i // num_bins_r_trans
+                j1 = i * num_bins_r_par
+                j2 = j1 + num_bins_r_par
+                tr_to_ell_matrix[i, j1:j2] = leg_ells[ell]
+
+            dmat = tr_to_ell_matrix.dot(dmat)
+            del tr_to_ell_matrix
     else:
         dmat = np.eye(len(xi))
         r_par_dmat = r_par.copy()
