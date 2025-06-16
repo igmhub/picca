@@ -105,10 +105,6 @@ def main(cmdargs=None):
                               ' nt becomes r bins. rp min max is always -1, 1')
                         )
 
-    parser.add_argument('--nell', type=int, default=10,
-                        help='Number of multipoles to calculate if rmu-binning'
-                        )
-
     parser.add_argument('--z-min-obj',
                         type=float,
                         default=0,

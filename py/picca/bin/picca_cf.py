@@ -93,10 +93,6 @@ def main(cmdargs=None):
                               ' nt becomes r bins. rp min max is always 0, 1')
                         )
 
-    parser.add_argument('--nell', type=int, default=5,
-                        help=('Number of even multipoles to calculate'
-                              ' if rmu-binning')
-                        )
     parser.add_argument('--zerr-cut-deg',
                         type=float,
                         default=None,
