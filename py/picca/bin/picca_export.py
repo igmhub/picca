@@ -47,11 +47,11 @@ def main(cmdargs=None):
     parser.add_argument('--multipoles', action="store_true",
                         help='Use multipole extension')
     parser.add_argument('--nell-model-max', type=int, default=6,
-                        help=('Number of even multipoles for the model'
+                        help=('Number of multipoles for the model'
                               ' if rmu-binning')
                         )
     parser.add_argument('--nell-out-max', type=int, default=10,
-                        help=('Number of even multipoles for the output'
+                        help=('Number of multipoles for the output'
                               ' if rmu-binning')
                         )
 
