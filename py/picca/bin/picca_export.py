@@ -275,7 +275,8 @@ def main(cmdargs=None):
             ell_to_tr_matrix = legvander(
                 r_par_dmat, args.nell_model_max)[:, ells_model]
             cols = np.floor(r_trans_dmat / dr_dmat).astype(int)
-            cols = np.hstack([cols + j * nr_dmat for j in range(nell_model)])
+            cols = np.repeat(cols, nell_model) + np.tile(
+                np.arange(nell_model) * nr_dmat, cols.size)
             rows = np.repeat(np.arange(dmat.shape[1]), nell_model)
             ell_to_tr_matrix = coo_array(
                 (ell_to_tr_matrix.ravel(), (rows, cols)),
@@ -308,9 +309,8 @@ def main(cmdargs=None):
 
             for i in range(xi.size):
                 ell = i // num_bins_r_trans
-                j1 = (i % num_bins_r_trans) * num_bins_r_par
-                j2 = j1 + num_bins_r_par
-                tr_to_ell_matrix[i, j1:j2] = leg_ells[ell]
+                j1 = i % num_bins_r_trans
+                tr_to_ell_matrix[i, j1::num_bins_r_trans] = leg_ells[ell]
 
             dmat = tr_to_ell_matrix.dot(dmat)
             del tr_to_ell_matrix
