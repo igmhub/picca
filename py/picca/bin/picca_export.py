@@ -326,6 +326,11 @@ def main(cmdargs=None):
 
             dmat = tr_to_ell_matrix.dot(dmat)
             del tr_to_ell_matrix
+
+            header_multipole.append({
+                'name': 'NL_MODEL',
+                'value': nell_model,
+                'comment': 'Number of model multipoles'})
     else:
         dmat = np.eye(len(xi))
         r_par_dmat = r_par.copy()
