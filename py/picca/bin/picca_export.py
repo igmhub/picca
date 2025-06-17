@@ -175,8 +175,20 @@ def main(cmdargs=None):
 
         xi, weights = calculate_xi_ell(
             ells_out, xi, weights, num_bins_r_par, is_x_correlation)
+        header_multipole = [
+            {'name': 'MLTPOLE',
+             'value': True,
+             'comment': 'Specifying if in multipoles.'},
+            {'name': 'NL_DATA',
+             'value': nell_out,
+             'comment': 'Number of output multipoles'}
+        ]
     else:
         ells_out = None
+        header_multipole = [
+            {'name': 'MLTPOLE',
+             'value': False,
+             'comment': 'Specifying if in multipoles.'}]
 
     if args.cov is not None:
         userprint(("INFO: The covariance-matrix will be read from file: "
@@ -363,8 +375,12 @@ def main(cmdargs=None):
         'name': 'WL',
         'value': head['WL'],
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    },
-    ]
+    }, {
+        'name': "RMU_BIN",
+        'value': head['RMU_BIN'] and not args.multipoles,
+        'comment': 'True if binned in r, mu'
+    }
+    ] + header_multipole
     comment = [
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
