@@ -151,7 +151,7 @@ def main(cmdargs=None):
         args.do_not_smooth_cov = True
         assert head['RMU_BIN']
 
-        ells_out = np.arange(args.lmax_out + 1)
+        ells_out = np.arange(args.lmax_data + 1)
         if not is_x_correlation:
             ells_out = ells_out[ells_out % 2 == 0]
 
