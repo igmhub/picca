@@ -49,13 +49,13 @@ def main(cmdargs=None):
 
     parser.add_argument('--multipoles', action="store_true",
                         help='Use multipole extension')
-    parser.add_argument('--nell-model-max', type=int, default=6,
-                        help=('Number of multipoles for the model'
-                              ' if rmu-binning')
+    parser.add_argument('--lmax-model', type=int, default=6,
+                        help=('Max multipole ell for the model if rmu-binning'
+                              '. Note odd multipoles are removed from auto.')
                         )
-    parser.add_argument('--nell-out-max', type=int, default=10,
-                        help=('Number of multipoles for the output'
-                              ' if rmu-binning')
+    parser.add_argument('--lmax-data', type=int, default=10,
+                        help=('Max multipole ell for the output if rmu-binning'
+                              '. Note odd multipoles are removed from auto.')
                         )
 
     parser.add_argument(
@@ -151,7 +151,7 @@ def main(cmdargs=None):
         args.do_not_smooth_cov = True
         assert head['RMU_BIN']
 
-        ells_out = np.arange(args.nell_out_max + 1)
+        ells_out = np.arange(args.lmax_out + 1)
         if not is_x_correlation:
             ells_out = ells_out[ells_out % 2 == 0]
 
@@ -266,14 +266,14 @@ def main(cmdargs=None):
 
         if args.multipoles:
             assert head_dmat['RMU_BIN']
-            ells_model = np.arange(args.nell_model_max + 1)
+            ells_model = np.arange(args.lmax_model + 1)
             if not is_x_correlation:
                 ells_model = ells_model[ells_model % 2 == 0]
             nell_model = ells_model.size
 
             # From model multipoles to transverse-radial interpolation matrix.
             ell_to_tr_matrix = legvander(
-                r_par_dmat, args.nell_model_max)[:, ells_model]
+                r_par_dmat, args.lmax_model)[:, ells_model]
             cols = np.floor(r_trans_dmat / dr_dmat).astype(int)
             cols = np.repeat(cols, nell_model) + np.tile(
                 np.arange(nell_model) * nr_dmat, cols.size)
