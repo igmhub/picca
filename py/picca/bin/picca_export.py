@@ -12,7 +12,8 @@ import sys
 from numpy.polynomial.legendre import legvander
 from scipy.sparse import coo_array
 
-from picca.utils import smooth_cov, compute_cov, calculate_xi_ell
+from picca.utils import (
+    smooth_cov, compute_cov, calculate_xi_ell, get_legendre_bins)
 from picca.utils import userprint
 
 # TODO: add tags here when we are allowed to unblind them
@@ -306,18 +307,9 @@ def main(cmdargs=None):
             # From transverse-radial binning to multipoles matrix
             assert xi.size == nell_out * num_bins_r_trans
             tr_to_ell_matrix = np.zeros((xi.size, dmat.shape[0]))
-            mu1 = -1.0 if is_x_correlation else 0.0
-            dmu = (1.0 - mu1) / num_bins_r_par
-            muc = np.arange(num_bins_r_par) * dmu + mu1 + dmu / 2
 
-            if is_x_correlation:
-                dmu /= 2
-
-            leg_ells = [
-                np.polynomial.legendre.Legendre.basis(ell)(muc)
-                * dmu * (2 * ell + 1)
-                for ell in ells_out]
-            del mu1, dmu, muc
+            leg_ells = get_legendre_bins(
+                ells_out, num_bins_r_par, is_x_correlation)
 
             for i in range(xi.size):
                 ell = i // num_bins_r_trans
