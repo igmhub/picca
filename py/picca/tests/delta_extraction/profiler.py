@@ -8,8 +8,9 @@ import pstats
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 os.environ["THIS_DIR"] = THIS_DIR
 
-PICCA_BIN = THIS_DIR.split("py/picca")[0]+"bin/"
-sys.path.append(PICCA_BIN)
+# Not needed if picca is installed properly
+# PICCA_BIN = THIS_DIR.split("py/picca")[0]+"bin/"
+# sys.path.append(PICCA_BIN)
 
 from picca_delta_extraction import main
 

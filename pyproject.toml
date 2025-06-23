@@ -1,3 +1,63 @@
 [build-system]
-requires = ["setuptools >= 56.2.0", "gitpython >= 3.1.18", "wheel"]
-build-backend = "setuptools.build_meta:__legacy__"
+requires = ["setuptools>=61",  "gitpython >= 3.1.18", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "picca"
+dynamic = ["dependencies", "version", "readme"]
+description = "Package for Igm Cosmological-Correlations Analyses"
+requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE" ]
+authors = [
+    { name = "Nicolas Busca" },
+    { name = "Helion du Mas des Bourboux" },
+    { name = "Ignasi Pérez-Ràfols", email = "iprafols@gmail.com" },
+    { name = "Michael Walther" },
+    { name = "The DESI Lya forest picca topical group" }
+]
+keywords = ["cosmology", "lyman-alpha", "bao"]
+classifiers = [
+    "Programming Language :: Python :: 3"
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "picca.__version__"}
+readme = {file = "README.md", content-type = "text/markdown"}
+dependencies = {file = "requirements.txt"}
+
+[project.urls]
+Homepage = "https://github.com/igmhub/picca"
+
+[tool.setuptools]
+package-dir = { "" = "py" }
+
+[tool.setuptools.packages.find]
+where = ["py"]
+namespaces = true
+
+[tool.setuptools.package-data]
+picca = [
+    "delta_extraction/expected_fluxes/raw_stats/*fits.gz"
+]
+
+[project.scripts]
+# Continuum fitting
+"picca_delta_extraction.py" = "picca.bin.picca_delta_extraction:main"
+# Correlation function
+"picca_cf.py" = "picca.bin.picca_cf:main"
+"picca_xcf.py" = "picca.bin.picca_xcf:main"
+"picca_export.py" = "picca.bin.picca_export:main"
+# Distortion
+"picca_dmat.py" = "picca.bin.picca_dmat:main"
+"picca_xdmat.py" = "picca.bin.picca_xdmat:main"
+"picca_fast_metal_dmat.py" = "picca.bin.picca_fast_metal_dmat:main"
+"picca_fast_metal_xdmat.py" = "picca.bin.picca_fast_metal_xdmat:main"
+# P1D
+"picca_Pk1D.py" = "picca.bin.picca_Pk1D:main"
+"picca_Pk1D_average_mean.py" = "picca.bin.picca_Pk1D_average_mean:main"
+"picca_Pk1D_cross_exposure.py" = "picca.bin.picca_Pk1D_cross_exposure:main"
+"picca_Pk1D_postprocess.py" = "picca.bin.picca_Pk1D_postprocess:main"
+# Add the rest here
+"picca_compute_fvoigt_hcd.py" = "picca.bin.picca_compute_fvoigt_hcd:main"
+"picca_compute_fvoigt.py" = "picca.bin.picca_compute_fvoigt:main"

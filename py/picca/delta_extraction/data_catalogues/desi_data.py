@@ -24,7 +24,7 @@ accepted_options = update_accepted_options(accepted_options, accepted_options_qu
 accepted_options = update_accepted_options(accepted_options,
     ["use non-coadded spectra",
      "uniquify night targetid",
-     "keep single exposures", 
+     "keep single exposures",
      "wave solution"])
 
 defaults = update_default_options(defaults, {
@@ -38,7 +38,7 @@ defaults = update_default_options(defaults, {
 defaults = update_default_options(defaults, defaults_quasar_catalogue)
 
 def verify_exposures_shape(forests_by_targetid):
-    """Verify that the exposures have the same shape. 
+    """Verify that the exposures have the same shape.
     If not, it removes them from the dictionnary of forests by targetid.
     Only works for use_non_coadded_spectra and keep_single_exposures options.
 
@@ -134,7 +134,7 @@ class DesiData(Data):
     If True, remove the quasars taken on the same night.
 
     keep_single_exposures: bool
-    If True, the date loadded from non-coadded spectra are not coadded. 
+    If True, the date loadded from non-coadded spectra are not coadded.
     Otherwise, coadd the spectra here.
     """
 
@@ -295,7 +295,7 @@ class DesiDataFileHandler():
     If True, remove the quasars taken on the same night.
 
     keep_single_exposures: bool
-    If True, the date loadded from non-coadded spectra are not coadded. 
+    If True, the date loadded from non-coadded spectra are not coadded.
     Otherwise, coadd the spectra here.
     """
 
@@ -314,7 +314,7 @@ class DesiDataFileHandler():
         for details
 
         keep_single_exposures: bool
-        If True, the date loadded from non-coadded spectra are not coadded. 
+        If True, the date loadded from non-coadded spectra are not coadded.
         Otherwise, coadd the spectra here.
 
         uniquify_night_targetid: bool
@@ -352,7 +352,8 @@ class DesiDataFileHandler():
                     catalogue,
                     spectrographs_data,
                     targetid_spec,
-                    reso_from_truth=False):
+                    reso_from_truth=False,
+                    metadata_dict=None):
         """After data has been read, format it into DesiForest instances
 
         Instances will be DesiForest or DesiPk1dForest depending on analysis_type
@@ -399,6 +400,51 @@ class DesiDataFileHandler():
                         f"for {targetid}")
             else:
                 w_t = w_t[0]
+            if metadata_dict is not None and not self.use_non_coadded_spectra:
+                exp_w_t = np.where(metadata_dict["EXP_TARGETID"] == targetid)[0]
+                expid = metadata_dict["EXP_EXPID"][exp_w_t]
+                night = metadata_dict["EXP_NIGHT"][exp_w_t]
+                petal = metadata_dict["EXP_PETAL"][exp_w_t]
+                tileid = metadata_dict["EXP_TILEID"][exp_w_t]
+                fiber = metadata_dict["EXP_FIBER"][exp_w_t]
+                metadata_dict_targetid = {'expid': expid,
+                                          'night': night,
+                                          'petal': petal,
+                                          'fiber': fiber,
+                                          'tileid': tileid}
+            elif metadata_dict is not None and self.use_non_coadded_spectra:
+                try:
+                    len(metadata_dict["EXPID"][w_t])
+                    expid = metadata_dict["EXPID"][w_t]
+                except TypeError:
+                    expid = [metadata_dict["EXPID"][w_t]]
+                try:
+                    len(metadata_dict["NIGHT"][w_t])
+                    night = metadata_dict["NIGHT"][w_t]
+                except TypeError:
+                    night = [metadata_dict["NIGHT"][w_t]]
+                try:
+                    len(metadata_dict["PETAL"][w_t])
+                    petal = metadata_dict["PETAL"][w_t]
+                except TypeError:
+                    petal = [metadata_dict["PETAL"][w_t]]
+                try:
+                    len(metadata_dict["FIBER"][w_t])
+                    fiber = metadata_dict["FIBER"][w_t]
+                except TypeError:
+                    fiber = [metadata_dict["FIBER"][w_t]]
+                try:
+                    len(metadata_dict["TILEID"][w_t])
+                    tileid = metadata_dict["TILEID"][w_t]
+                except TypeError:
+                    tileid = [metadata_dict["TILEID"][w_t]]
+                metadata_dict_targetid = {'expid': expid,
+                                          'night': night,
+                                          'petal': petal,
+                                          'fiber': fiber,
+                                          'tileid': tileid}
+            else:
+                metadata_dict_targetid = None
             # Construct DesiForest instance
             # Fluxes from the different spectrographs will be coadded
             for spec in spectrographs_data.values():
@@ -431,7 +477,8 @@ class DesiDataFileHandler():
                                 ivar_i,
                                 w_t,
                                 reso_from_truth,
-                                num_data)
+                                num_data,
+                                metadata_dict=metadata_dict_targetid)
                 else:
                     forests_by_targetid, num_data  = self.update_forest_dictionary(
                             forests_by_targetid,
@@ -443,7 +490,8 @@ class DesiDataFileHandler():
                             ivar,
                             w_t,
                             reso_from_truth,
-                            num_data)
+                            num_data,
+                            metadata_dict=metadata_dict_targetid)
         return forests_by_targetid, num_data
 
     def update_forest_dictionary(self,
@@ -456,7 +504,8 @@ class DesiDataFileHandler():
                                  ivar,
                                  w_t,
                                  reso_from_truth,
-                                 num_data):
+                                 num_data,
+                                 metadata_dict=None):
         """Add new forests to the current forest dictonary
 
         Arguments
@@ -491,7 +540,7 @@ class DesiDataFileHandler():
 
         num_data: int
         The number of instances loaded
-        
+
         Return
         ------
         forests_by_targetid: dict
@@ -508,6 +557,8 @@ class DesiDataFileHandler():
             "dec": row['DEC'],
             "z": row['Z'],
         }
+        if metadata_dict is not None:
+            args.update(metadata_dict)
         args["log_lambda"] = np.log10(spec['WAVELENGTH'])
 
 
@@ -582,3 +633,51 @@ class DesiDataFileHandler():
         """
         raise DataError(
             "Function 'read_data' was not overloaded by child class")
+
+    def get_metadata_dict(self,fibermap,exp_fibermap,index_unique) :
+        """
+        Constructs a dictionary containing metadata extracted from the provided fibermap 
+        and exp_fibermap.
+
+        Parameters:
+        - fibermap (numpy.ndarray): The primary fibermap data structure containing metadata.
+        - exp_fibermap (numpy.ndarray or None): The exposure-specific fibermap data structure 
+          containing metadata. If None, the function uses the `fibermap` and `index_unique` 
+          to extract metadata.
+        - index_unique (numpy.ndarray): An array of indices used to select unique entries from 
+          the `fibermap`.
+
+        Returns:
+        - metadata_dict (dict): A dictionary where keys are metadata field names and values 
+          are numpy arrays containing the corresponding metadata values. The keys are prefixed 
+          with 'EXP_' if `use_non_coadded_spectra` is False and `exp_fibermap` is not None.
+
+        Notes:
+        - The function checks if certain keys (`TARGETID`, `NIGHT`, `EXPID`, `PETAL_LOC`, 
+          `FIBER`, `TILEID`) exist in the `input_fibermap`. If a key exists, it extracts the 
+          corresponding data; otherwise, it fills the entry with zeros.
+        - The `use_non_coadded_spectra` attribute of the class instance determines whether to 
+          use the `exp_fibermap` or the `fibermap` combined with `index_unique` for extracting 
+          metadata.
+        """
+        input_fibermap = fibermap
+        ikeys=["TARGETID","NIGHT","EXPID","PETAL_LOC","FIBER","TILEID"]
+        if not self.use_non_coadded_spectra :
+            if exp_fibermap is not None :
+                input_fibermap = exp_fibermap
+            okeys=["EXP_TARGETID","EXP_NIGHT","EXP_EXPID","EXP_PETAL","EXP_FIBER","EXP_TILEID"]
+        else :
+            okeys=["TARGETID","NIGHT","EXPID","PETAL","FIBER","TILEID"]
+
+        metadata_dict = {}
+
+        for ikey,okey in zip(ikeys,okeys) :
+            if ikey in input_fibermap.dtype.names :
+                if exp_fibermap is not None :
+                    metadata_dict[okey] = exp_fibermap[ikey]
+                else :
+                    metadata_dict[okey] = fibermap[ikey][index_unique]
+            else :
+                metadata_dict[okey] = np.zeros(index_unique.size,dtype=int)
+
+        return  metadata_dict

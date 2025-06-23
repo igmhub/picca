@@ -37,7 +37,7 @@ class DesiForest(Forest):
     targetid: int
     Targetid of the object
 
-    tile: list of int
+    tileid: list of int
     Identifier of the tile used in the observation. None for no info
     """
     def __init__(self, **kwargs):
@@ -68,10 +68,20 @@ class DesiForest(Forest):
                                           "Missing variable 'targetid'")
         del kwargs["targetid"]
 
-        self.tile = []
-        if kwargs.get("tile") is not None:
-            self.tile.append(kwargs.get("tile"))
-            del kwargs["tile"]
+        self.tileid = []
+        if kwargs.get("tileid") is not None:
+            self.tileid.append(kwargs.get("tileid"))
+            del kwargs["tileid"]
+
+        self.fiber = []
+        if kwargs.get("fiber") is not None:
+            self.fiber.append(kwargs.get("fiber"))
+            del kwargs["fiber"]
+
+        self.expid = []
+        if kwargs.get("expid") is not None:
+            self.expid.append(kwargs.get("expid"))
+            del kwargs["expid"]
 
         # call parent constructor
         kwargs["los_id"] = self.targetid
@@ -98,7 +108,9 @@ class DesiForest(Forest):
                                           f"{type(other).__name__}")
         self.night += other.night
         self.petal += other.petal
-        self.tile += other.tile
+        self.tileid += other.tileid
+        self.expid += other.expid
+        self.fiber += other.fiber
         super().coadd(other)
 
     def get_header(self):
@@ -120,18 +132,28 @@ class DesiForest(Forest):
             },
             {
                 'name': 'NIGHT',
-                'value': "-".join(str(night) for night in self.night),
+                'value': ",".join(str(night) for night in self.night),
                 'comment': "Observation night(s)"
             },
             {
                 'name': 'PETAL',
-                'value': "-".join(str(petal) for petal in self.petal),
+                'value': ",".join(str(petal) for petal in self.petal),
                 'comment': 'Observation petal(s)'
             },
             {
-                'name': 'TILE',
-                'value': "-".join(str(tile) for tile in self.tile),
+                'name': 'TILEID',
+                'value': ",".join(str(tileid) for tileid in self.tileid),
                 'comment': 'Observation tile(s)'
+            },
+            {
+                'name': 'EXPID',
+                'value': ",".join(str(expid) for expid in self.expid),
+                'comment': 'Observation expid(s)'
+            },
+            {
+                'name': 'FIBER',
+                'value': ",".join(str(fiber) for fiber in self.fiber),
+                'comment': 'Observation fiber(s)'
             },
         ]
 
@@ -150,9 +172,11 @@ class DesiForest(Forest):
         metadata = super().get_metadata()
         metadata += [
             self.targetid,
-            "-".join(str(night) for night in self.night),
-            "-".join(str(petal) for petal in self.petal),
-            "-".join(str(tile) for tile in self.tile),
+            ",".join(str(n) for night in self.night for n in night),
+            ",".join(str(p) for petal in self.petal for p in petal),
+            ",".join(str(t) for tileid in self.tileid for t in tileid),
+            ",".join(str(e) for expid in self.expid for e in expid),
+            ",".join(str(f) for fiber in self.fiber for f in fiber),
         ]
         return metadata
 
@@ -168,7 +192,8 @@ class DesiForest(Forest):
         data
         """
         dtype = super().get_metadata_dtype()
-        dtype += [('TARGETID', int), ('NIGHT', 'S12'), ('PETAL', 'S12'), ('TILE', 'S12')]
+        dtype += [('TARGETID', int), ('NIGHT', 'S150'), ('PETAL', 'S150'),
+                  ('TILEID', 'S150'), ('EXPID', 'S150'),('FIBER', 'S150')]
         return dtype
 
     @classmethod
@@ -182,5 +207,5 @@ class DesiForest(Forest):
         A list with the units of the line-of-sight data
         """
         units = super().get_metadata_units()
-        units += ["", "", "", ""]
+        units += ["", "", "", "", "", ""]
         return units

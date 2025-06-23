@@ -193,7 +193,7 @@ def calc_fast_metal_dmat(in_lambda_abs,
     return dmat, r_par_eff_2d, r_trans_eff_2d, z_eff_2d
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     """Compute the metal matrix of the cross-correlation delta x object for
      a list of IGM absorption."""
     parser = argparse.ArgumentParser(
@@ -612,8 +612,3 @@ def main(cmdargs):
 
     t3 = time.time()
     userprint(f'picca_metal_xdmat.py - Time total: {(t3-t0)/60:.3f} minutes')
-
-
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)
