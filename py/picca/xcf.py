@@ -361,6 +361,9 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
                 continue
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
+            if rmu_binning:
+                r_trans = np.sqrt(r_trans**2 + r_par**2)
+                r_par /= r_trans
             if (r_par >= r_par_max or r_trans >= r_trans_max or
                     r_par <= r_par_min):
                 continue
