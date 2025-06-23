@@ -69,7 +69,7 @@ def main(cmdargs=None):
 
     parser.add_argument(
         '--num-boot-cov',
-        type=int, default=10000,
+        type=int, default=0,
         help='Number of bootstrap realizations. <=0 turns it off.')
     parser.add_argument(
         '--do-not-smooth-cov',
