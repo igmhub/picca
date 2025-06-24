@@ -244,9 +244,6 @@ def main(cmdargs=None):
     if args.dmat is not None:
         hdul = fitsio.FITS(args.dmat)
         head_dmat = hdul[1].read_header()
-        nmu_dmat = head_dmat['NP']
-        nr_dmat = head_dmat['NT'] * head_dmat['COEFMOD']
-        dr_dmat = head_dmat['RTMAX'] / nr_dmat
 
         if data_name == "DA_BLIND" and 'DM_BLIND' in hdul[1].get_colnames():
             dmat = np.array(hdul[1]['DM_BLIND'][:])
@@ -279,6 +276,9 @@ def main(cmdargs=None):
 
         if args.multipoles:
             assert head_dmat['RMU_BIN']
+            nmu_dmat = head_dmat['NP'] * head_dmat['COEFMOD']
+            nr_dmat = head_dmat['NT'] * head_dmat['COEFMOD']
+            dr_dmat = head_dmat['RTMAX'] / nr_dmat
             ells_model = np.arange(args.lmax_model + 1)
             if not is_x_correlation:
                 ells_model = ells_model[ells_model % 2 == 0]

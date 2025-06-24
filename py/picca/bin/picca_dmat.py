@@ -102,7 +102,7 @@ def main(cmdargs=None):
         default=1,
         required=False,
         help=('Coefficient multiplying np and nt to get finner binning for the '
-              'model. Only nt is multiplied in rmu-binning'))
+              'model.'))
 
     parser.add_argument('--zerr-cut-deg',
                         type=float,
@@ -281,9 +281,7 @@ def main(cmdargs=None):
     if cf.rmu_binning:
         args.rp_min = 0
         args.rp_max = 1
-        cf.num_model_bins_r_par = args.np
-    else:
-        cf.num_model_bins_r_par = args.np * args.coef_binning_model
+
     cf.r_par_max = args.rp_max
     cf.r_par_min = args.rp_min
     cf.r_trans_max = args.rt_max
@@ -291,6 +289,7 @@ def main(cmdargs=None):
     cf.z_cut_min = args.z_cut_min
     cf.num_bins_r_par = args.np
     cf.num_bins_r_trans = args.nt
+    cf.num_model_bins_r_par = args.np * args.coef_binning_model
     cf.num_model_bins_r_trans = args.nt * args.coef_binning_model
     cf.nside = args.nside
 
