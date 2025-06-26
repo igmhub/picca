@@ -122,6 +122,7 @@ def main(cmdargs=None):
     r_trans_max = head['RTMAX']
     r_par_min = head['RPMIN']
     r_par_max = head['RPMAX']
+    nsamples = xi.shape[0]
 
     is_x_correlation = r_par_min < 0
 
@@ -376,6 +377,8 @@ def main(cmdargs=None):
         'name': "RMU_BIN",
         'value': head['RMU_BIN'] and not args.multipoles,
         'comment': 'True if binned in r, mu'
+    }, {
+        'name': "NSAMPLES", 'value': nsamples, 'comment': 'Number of samples'
     }
     ] + header_multipole
     comment = [
