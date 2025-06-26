@@ -100,6 +100,11 @@ def main(cmdargs=None):
                         required=False,
                         help='Number of r-transverse bins')
 
+    parser.add_argument('--rmu-binning', action="store_true",
+                        help=('Estimate in r,mu binning. np becomes mu bins.'
+                              ' nt becomes r bins. rp min max is always -1, 1')
+                        )
+
     parser.add_argument(
         '--coef-binning-model',
         type=int,
@@ -270,6 +275,11 @@ def main(cmdargs=None):
     userprint("nproc", args.nproc)
 
     # setup variables in module xcf
+    xcf.rmu_binning = args.rmu_binning
+    if xcf.rmu_binning:
+        args.rp_min = -1
+        args.rp_max = 1
+
     xcf.r_par_max = args.rp_max
     xcf.r_par_min = args.rp_min
     xcf.r_trans_max = args.rt_max
@@ -485,6 +495,10 @@ def main(cmdargs=None):
             'name': "BLINDING",
             'value': blinding,
             'comment': 'String specifying the blinding strategy'
+        }, {
+            'name': "RMU_BIN",
+            'value': cf.rmu_binning,
+            'comment': 'True if binned in r, mu'
         }
         ]
     dmat_name = "DM"
