@@ -477,7 +477,7 @@ def main(cmdargs=None):
         'comment': 'String specifying the blinding strategy'
     }, {
         'name': "RMU_BIN",
-        'value': cf.rmu_binning,
+        'value': xcf.rmu_binning,
         'comment': 'True if binned in r, mu'
     }
     ]
