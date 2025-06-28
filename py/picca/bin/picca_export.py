@@ -375,7 +375,7 @@ def main(cmdargs=None):
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
     }, {
         'name': "RMU_BIN",
-        'value': head['RMU_BIN'] and not args.multipoles,
+        'value': 'RMU_BIN' in head and head['RMU_BIN'] and not args.multipoles,
         'comment': 'True if binned in r, mu'
     }, {
         'name': "NSAMPLES", 'value': nsamples, 'comment': 'Number of samples'
