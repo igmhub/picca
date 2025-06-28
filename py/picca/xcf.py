@@ -109,9 +109,10 @@ def fill_neighs(healpixs):
 
             if not ang_correlation:
                 r_comov = np.array([obj.r_comov for obj in neighbours])
-                w &= (delta.r_comov[0] - r_comov) * np.cos(ang / 2.) < r_par_max
-                w &= (delta.r_comov[-1] - r_comov) * np.cos(
-                    ang / 2.) > r_par_min
+                f = r_trans_max if rmu_binning else 1
+                w &= (delta.r_comov[0] - r_comov) * np.cos(ang / 2.) < r_par_max * f
+                w &= (delta.r_comov[-1] - r_comov) * np.cos(ang / 2.) > r_par_min * f
+
             neighbours = np.array(neighbours)[w]
             delta.neighbours = np.array([
                 obj for obj in neighbours
