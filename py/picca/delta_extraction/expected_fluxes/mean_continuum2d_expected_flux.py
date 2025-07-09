@@ -95,8 +95,7 @@ class MeanContinuum2dExpectedFlux(Dr16ExpectedFlux):
         ------
         ExpectedFluxError if variables are not valid
         """
-        super().__parse_config(config)
-
+        
         limit_z_string = config.get("limit z")
         if limit_z_string is None:
             raise ExpectedFluxError(
