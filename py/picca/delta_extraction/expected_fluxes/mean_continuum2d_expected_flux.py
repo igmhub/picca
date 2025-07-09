@@ -73,14 +73,15 @@ class MeanContinuum2dExpectedFlux(Dr16ExpectedFlux):
         ExpectedFluxError if Forest class variables are not set
         """
         self.logger = logging.getLogger(__name__)
-        super().__init__(config)
-
+        
         # load variables from config
         self.limit_z = None
         self.num_z_bins = None
         self.z_bins = None
         self.z_centers = None
         self.__parse_config(config)
+
+        super().__init__(config)
 
     def __parse_config(self, config):
         """Parse the configuration options
