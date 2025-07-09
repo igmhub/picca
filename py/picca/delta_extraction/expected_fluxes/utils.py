@@ -56,7 +56,9 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     """
     # get mean continuum
     if isinstance(get_mean_cont, RegularGridInterpolator):
-        mean_cont = get_mean_cont([forest.z, forest.log_lambda - np.log10(1 + forest.z)])    
+        log_lambda = forest.log_lambda - np.log10(1 + forest.z)
+        points = np.column_stack([np.full_like(log_lambda, forest.z), log_lambda])
+        mean_cont = get_mean_cont(points)
     else:
         # get mean continuum as a function of log_lambda
         mean_cont = get_mean_cont(forest.log_lambda - np.log10(1 + forest.z))
