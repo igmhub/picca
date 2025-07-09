@@ -19,7 +19,7 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     forest: Forest
     A forest instance where the continuum will be computed
 
-    get_mean_cont: scipy.interpolate.interp1d
+    get_mean_cont: scipy.interpolate.interp1d or scipy.interpolate.RegularGridInterpolator
     Interpolation function to compute the unabsorbed mean quasar continua.
 
     get_eta: scipy.interpolate.interp1d
@@ -54,7 +54,12 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     the chi2 of the fit, and the number of datapoints used in the fit.
     """
     # get mean continuum
-    mean_cont = get_mean_cont(forest.log_lambda - np.log10(1 + forest.z))
+    if isinstance(get_mean_cont, RegularGridInterpolator):
+        mean_cont = get_mean_cont(forest.log_lambda - np.log10(1 + forest.z),
+                                   forest.z)    
+    else:
+        # get mean continuum as a function of log_lambda
+        mean_cont = get_mean_cont(forest.log_lambda - np.log10(1 + forest.z))
 
     # add transmission correction
     # (previously computed using method add_optical_depth)
