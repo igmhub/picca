@@ -210,17 +210,6 @@ class MeanContinuum2dExpectedFlux(Dr16ExpectedFlux):
         results: fitsio.FITS
         The open fits file
         """
-        results.write([
-            Forest.log_lambda_rest_frame_grid,
-            self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
-            self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
-        ],
-                      names=['LOGLAM_REST', 'MEAN_CONT', 'WEIGHT'],
-                      units=['log(Angstrom)', Forest.flux_units, ''],
-                      extname='CONT')
-        results["CONT"].write_comment("Mean quasar continuum")
-        results["CONT"].write_checksum()
-
         # Create meshgrid for evaluation
         z_meshgrid, log_lam_mesh_grid = np.meshgrid(self.z_centers, Forest.log_lambda_rest_frame_grid, indexing='ij')
         points = np.stack([z_meshgrid.ravel(), log_lam_mesh_grid.ravel()], axis=-1)
