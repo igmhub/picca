@@ -1,6 +1,7 @@
 """This module defines the method compute_continuum to compute the quasar continua"""
 import iminuit
 import numpy as np
+from scipy.interpolate import RegularGridInterpolator
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.least_squares.least_squares_cont_model import LeastsSquaresContModel
