@@ -9,7 +9,7 @@ import h5py
 import os.path
 import sys
 
-from picca.utils import smooth_cov, compute_cov
+from picca.utils import smooth_cov, compute_cov, compute_cov_boot
 from picca.utils import userprint
 
 # TODO: add tags here when we are allowed to unblind them
@@ -67,6 +67,10 @@ def main(cmdargs=None):
         required=False,
         help='Remove a correlation from shuffling the distribution of los')
 
+    parser.add_argument(
+        '--num-boot-cov',
+        type=int, default=0,
+        help='Number of bootstrap realizations. <=0 turns it off.')
     parser.add_argument(
         '--do-not-smooth-cov',
         action='store_true',
@@ -155,20 +159,25 @@ def main(cmdargs=None):
     else:
         delta_r_par = (r_par_max - r_par_min) / num_bins_r_par
         delta_r_trans = (r_trans_max - 0.) / num_bins_r_trans
-        if not args.do_not_smooth_cov:
+
+        if args.num_boot_cov > 0:
+            userprint(f"INFO: Covariance with {args.num_boot_cov} bootstrap realizations.")
+            covariance = compute_cov_boot(xi, weights, nboots=args.num_boot_cov)
+        else:
+            covariance = compute_cov(xi, weights)
+
+        if args.do_not_smooth_cov:
+            userprint("INFO: The covariance will not be smoothed")
+        else:
             userprint("INFO: The covariance will be smoothed")
             if args.smooth_per_r_par :
                 userprint("INFO: with different correlation coefficients per r_par")
-            covariance = smooth_cov(xi,
-                                    weights,
-                                    r_par,
-                                    r_trans,
-                                    delta_r_trans=delta_r_trans,
-                                    delta_r_par=delta_r_par,
-                                    per_r_par=args.smooth_per_r_par)
-        else:
-            userprint("INFO: The covariance will not be smoothed")
-            covariance = compute_cov(xi, weights)
+            covariance = smooth_cov(
+                None, None, r_par, r_trans,
+                delta_r_trans=delta_r_trans,
+                delta_r_par=delta_r_par,
+                covariance=covariance,
+                per_r_par=args.smooth_per_r_par)
 
     xi = (xi * weights).sum(axis=0)
     weights = weights.sum(axis=0)
@@ -178,7 +187,7 @@ def main(cmdargs=None):
     try:
         scipy.linalg.cholesky(covariance)
     except scipy.linalg.LinAlgError:
-        userprint("WARNING: Matrix is not positive definite")
+        userprint("WARNING: Covariance matrix is not positive definite")
 
     if args.dmat is not None:
         hdul = fitsio.FITS(args.dmat)
