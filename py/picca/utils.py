@@ -127,6 +127,30 @@ def compute_cov(xi, weights):
     return covariance
 
 
+def compute_cov_boot(xi, weights, nboots=10000, seed=121567):
+    """Computes the covariance matrix using the bootstrap technique
+
+    Args:
+        xi: 2D np.array of shape (nhpx, ndata)
+            Correlation function measurement in each helpix
+        weights: 2D np.array of shape (nhpx, ndata)
+            Weights on the correlation function measurement
+
+    Returns:
+        The covariance matrix
+    """
+    nhpx, ndata = xi.shape
+    boot_xis = np.empty((nboots, ndata))
+    rnst = np.random.default_rng(seed)
+
+    for i in range(nboots):
+        idx = rnst.choice(nhpx, size=nhpx)
+        wei = weights[idx]
+        boot_xis[i] = np.sum(wei * xi[idx], axis=0) / wei.sum(0)
+
+    return np.cov(boot_xis, rowvar=False)
+
+
 def smooth_cov(xi,
                weights,
                r_par,
