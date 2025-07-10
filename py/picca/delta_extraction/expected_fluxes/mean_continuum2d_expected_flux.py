@@ -114,11 +114,11 @@ class MeanContinuum2dExpectedFlux(Dr16ExpectedFlux):
         num_z_bins = config.getint("num z bins")
         if num_z_bins is None or num_z_bins < 1:
             raise ExpectedFluxError(
-                "Missing or invalid argument 'num z bins' required by MeanContinuum2dExpectedFlux")
+                "Missing argument 'num z bins' required by MeanContinuum2dExpectedFlux")
         self.num_z_bins = num_z_bins
 
         self.z_bins = np.linspace(self.limit_z[0], self.limit_z[1],
-                                  self.num_z_bins)
+                                  self.num_z_bins + 1)
         self.z_centers = (self.z_bins[:-1] + self.z_bins[1:]) / 2
 
     def _initialize_mean_continuum_arrays(self):
