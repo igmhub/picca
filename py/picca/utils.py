@@ -28,6 +28,75 @@ def userprint(*args, **kwds):
     sys.stdout.flush()
 
 
+def get_legendre_bins(ells, nmu, x_correlation):
+    """Return mu-bin averaged Legendre multipoles.
+    Args:
+        ells: list(int)
+            List of multipoles
+        nmu: int
+            Number of mu bins
+        x_correlation: bool
+            True if cross-correlations. mu's start from -1.
+
+    Returns:
+        leg_ells: list(np.ndarray)
+            Bin averaged Legendre multipoles. Array of size nmu.
+    """
+    mu1 = -1.0 if x_correlation else 0.0
+    mue = np.linspace(mu1, 1.0, nmu + 1)
+    f = 0.5 if x_correlation else 1.0
+
+    leg_ells = [
+        np.polynomial.legendre.Legendre.basis(ell).integ()(mue)
+        * f * (2 * ell + 1)
+        for ell in ells]
+    leg_ells = [le[1:] - le[:-1] for le in leg_ells]
+
+    return leg_ells
+
+
+def calculate_xi_ell(ells, xi_list, weights_list, nmu, x_correlation=False):
+    """Calculates the multipoles and their approximate weights per healpix.
+    Args:
+        ells: list(int)
+            List of multipoles
+        xi_list: list(cf)
+            List of correlation functions in rperp, rpara scheme for all hpx
+        weights_list: list(weight)
+            Weights for all healpixels
+        nmu: int
+            Number of mu bins
+        x_correlation: bool
+            True if cross-correlations. mu's start from -1.
+
+    Returns:
+        xi_ells: np.ndarray
+            CF multipoles for all hpx
+        weight_ells: np.ndarray
+            Weights for each multipole for all hpx
+    """
+    leg_ells = get_legendre_bins(ells, nmu, x_correlation)
+
+    nr = xi_list[0].size // nmu
+    assert nmu * nr == xi_list[0].size
+
+    xi_ells = []
+    for xi in xi_list:
+        xi = xi.reshape(nmu, nr)
+        xi_ell = [(xi * le[:, None]).sum(0) for le in leg_ells]
+        xi_ells.append(np.hstack(xi_ell))
+
+    # Approximate weights based on variance propagation rule.
+    weight_ells = []
+    leg_ells = [le**2 for le in leg_ells]
+    for we in weights_list:
+        we = 1.0 / we.reshape(nmu, nr)
+        we_ell = [(we * le[:, None]).sum(0) for le in leg_ells]
+        weight_ells.append(1.0 / np.hstack(we_ell))
+
+    return np.vstack(xi_ells), np.vstack(weight_ells)
+
+
 def compute_cov(xi, weights):
     """Computes the covariance matrix using the subsampling technique
 

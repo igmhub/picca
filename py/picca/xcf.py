@@ -53,6 +53,7 @@ reject = None
 lock = None
 
 cosmo = None
+rmu_binning = False
 ang_correlation = False
 
 # variables for distortion matrix
@@ -108,9 +109,10 @@ def fill_neighs(healpixs):
 
             if not ang_correlation:
                 r_comov = np.array([obj.r_comov for obj in neighbours])
-                w &= (delta.r_comov[0] - r_comov) * np.cos(ang / 2.) < r_par_max
-                w &= (delta.r_comov[-1] - r_comov) * np.cos(
-                    ang / 2.) > r_par_min
+                f = r_trans_max if rmu_binning else 1
+                w &= (delta.r_comov[0] - r_comov) * np.cos(ang / 2.) < r_par_max * f
+                w &= (delta.r_comov[-1] - r_comov) * np.cos(ang / 2.) > r_par_min * f
+
             neighbours = np.array(neighbours)[w]
             delta.neighbours = np.array([
                 obj for obj in neighbours
@@ -250,6 +252,10 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
                 r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
                 r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
 
+            if rmu_binning:
+                r_trans = np.sqrt(r_trans**2 + r_par**2)
+                r_par /= r_trans
+
             if (r_par >= r_par_max or r_trans >= r_trans_max or
                     r_par <= r_par_min):
                 continue
@@ -356,6 +362,9 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
                 continue
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
+            if rmu_binning:
+                r_trans = np.sqrt(r_trans**2 + r_par**2)
+                r_par /= r_trans
             if (r_par >= r_par_max or r_trans >= r_trans_max or
                     r_par <= r_par_min):
                 continue
@@ -401,6 +410,10 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
                 continue
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
+            if rmu_binning:
+                r_trans = np.sqrt(r_trans**2 + r_par**2)
+                r_par /= r_trans
+
             if (r_par >= r_par_max or r_trans >= r_trans_max or
                     r_par < r_par_min):
                 continue

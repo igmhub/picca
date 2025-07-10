@@ -100,6 +100,11 @@ def main(cmdargs=None):
                         required=False,
                         help='Number of r-transverse bins')
 
+    parser.add_argument('--rmu-binning', action="store_true",
+                        help=('Estimate in r,mu binning. np becomes mu bins.'
+                              ' nt becomes r bins. rp min max is always -1, 1')
+                        )
+
     parser.add_argument('--z-min-obj',
                         type=float,
                         default=0,
@@ -273,6 +278,11 @@ def main(cmdargs=None):
         args.nproc = cpu_count() // 2
 
     # setup variables in module xcf
+    xcf.rmu_binning = args.rmu_binning
+    if xcf.rmu_binning:
+        args.rp_min = -1
+        args.rp_max = 1
+
     xcf.r_par_max = args.rp_max
     xcf.r_par_min = args.rp_min
     xcf.z_cut_max = args.z_cut_max
@@ -402,13 +412,14 @@ def main(cmdargs=None):
     num_pairs_list = correlation_function_data[:, 5, :].astype(np.int64)
     healpix_list = np.array(sorted(list(cpu_data.keys())))
 
-    w = (weights_list.sum(axis=0) > 0.)
+    sum_weights = weights_list.sum(axis=0)
+    w = sum_weights > 0
     r_par = (r_par_list * weights_list).sum(axis=0)
-    r_par[w] /= weights_list.sum(axis=0)[w]
+    r_par[w] /= sum_weights[w]
     r_trans = (r_trans_list * weights_list).sum(axis=0)
-    r_trans[w] /= weights_list.sum(axis=0)[w]
+    r_trans[w] /= sum_weights[w]
     z = (z_list * weights_list).sum(axis=0)
-    z[w] /= weights_list.sum(axis=0)[w]
+    z[w] /= sum_weights[w]
     num_pairs = num_pairs_list.sum(axis=0)
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
@@ -464,13 +475,19 @@ def main(cmdargs=None):
         'name': "BLINDING",
         'value': blinding,
         'comment': 'String specifying the blinding strategy'
+    }, {
+        'name': "RMU_BIN",
+        'value': xcf.rmu_binning,
+        'comment': 'True if binned in r, mu'
     }
     ]
     results.write(
         [r_par, r_trans, z, num_pairs],
         names=['RP', 'RT', 'Z', 'NB'],
-        comment=['R-parallel', 'R-transverse', 'Redshift', 'Number of pairs'],
-        units=['h^-1 Mpc', 'h^-1 Mpc', '', ''],
+        comment=['R-parallel' if not xcf.rmu_binning else 'Mu',
+                 'R-transverse' if not xcf.rmu_binning else 'Radial separation',
+                 'Redshift', 'Number of pairs'],
+        units=['h^-1 Mpc' if not xcf.rmu_binning else '', 'h^-1 Mpc', '', ''],
         header=header,
         extname='ATTRI')
 
