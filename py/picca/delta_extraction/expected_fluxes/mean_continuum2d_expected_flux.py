@@ -118,7 +118,7 @@ class MeanContinuum2dExpectedFlux(Dr16ExpectedFlux):
         self.num_z_bins = num_z_bins
 
         self.z_bins = np.linspace(self.limit_z[0], self.limit_z[1],
-                                  self.num_z_bins + 1)
+                                  self.num_z_bins)
         self.z_centers = (self.z_bins[:-1] + self.z_bins[1:]) / 2
 
     def _initialize_mean_continuum_arrays(self):
