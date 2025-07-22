@@ -1,5 +1,6 @@
 """This module defines the class MeanContinuumInterpExpectedFlux"""
 import logging
+import multiprocessing
 
 import numba
 import numpy as np
@@ -145,11 +146,6 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         The initialized arrays are:
         - self.get_mean_cont
         """
-        # TODO: this should be replaced by a method that computes the interpolation 
-        # using the interp_coeff_lambda function for consistency but we need to 
-        # figure out how to solve clashes with the method compute_continuum in
-        # picca.delta_extraction.expected_fluxes.utils
-        #
         # initialize the mean quasar continuum
         if self.interpolation_type == "2D":
             mean_cont = np.ones(
@@ -161,11 +157,11 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         elif self.interpolation_type == "1D":
             self.mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
             
-            #self.get_mean_cont = interp1d(
-            #    Forest.log_lambda_rest_frame_grid,
-            #    self.mean_cont,
-            #    fill_value='extrapolate'
-            #)
+            self.get_mean_cont = interp1d(
+                Forest.log_lambda_rest_frame_grid,
+                self.mean_cont,
+                fill_value='extrapolate'
+            )
             self.get_mean_cont = self.get_mean_cont_aux
         # this should never happen, but just in case
         else: # pragma: no cover
@@ -199,7 +195,6 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
                 f"required by MeanContinuum2dExpectedFlux. "
                 f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
         
-    # TODO: numbaize this function
     def compute_mean_cont_1d(self, forests, which_cont=lambda forest: forest.continuum):
         """Compute the mean quasar continuum over the whole sample.
         Then updates the value of self.get_mean_cont to contain it
@@ -214,6 +209,48 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         which_cont: Function or lambda
         Should return what to use as continuum given a forest
         """
+        A_matrix = np.zeros(
+            (Forest.log_lambda_rest_frame_grid.size, Forest.log_lambda_rest_frame_grid.size)
+        )
+        B_matrix = np.zeros(Forest.log_lambda_rest_frame_grid.size)   
+
+        context = multiprocessing.get_context('fork')
+        with context.Pool(processes=self.num_processors) as pool:
+            arguments = [(
+                    Forest.log_lambda_rest_frame_grid, 
+                    forest.log_lambda, 
+                    forest.flux, 
+                    forest.continuum, 
+                    forest.z, 
+                    self.compute_forest_weights(forest, forest.continuum)
+                    )
+                    for forest in forests if forest.bad_continuum_reason is None]
+            imap_it = pool.starmap(compute_mean_cont_1d, arguments)
+
+            for partial_A_matrix, partial_B_matrix in imap_it:
+                A_matrix += partial_A_matrix
+                B_matrix += partial_B_matrix
+
+        # Take care of unstable solutions
+        # If the diagonal of A_matrix is zero, we set it to 1.0
+        # This is a workaround for the case where there is no coverage
+        # for some wavelengths.
+        w = np.diagonal(A_matrix) == 0
+        A_matrix[w, w] = 1.0
+
+        # Solve the linear system A_matrix * mean_cont = B_matrix
+        self.mean_cont = np.linalg.solve(A_matrix, B_matrix)
+        
+        # update the interpolator with the mean continuum
+        self.get_mean_cont = interp1d(
+            Forest.log_lambda_rest_frame_grid,
+            self.mean_cont,
+            fill_value='extrapolate'
+        )
+
+        return
+    
+        # Old implementation without numba and without parallelization
         A_matrix = np.zeros(
             (Forest.log_lambda_rest_frame_grid.size, Forest.log_lambda_rest_frame_grid.size)
         )
@@ -251,62 +288,13 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
 
         # Solve the linear system A_matrix * mean_cont = B_matrix
         self.mean_cont = np.linalg.solve(A_matrix, B_matrix)
-
-        # TODO: this should be replaced by a method that computes the interpolation 
-        # using the interp_coeff_lambda function for consistency but we need to 
-        # figure out how to solve clashes with the method compute_continuum in
-        # picca.delta_extraction.expected_fluxes.utils
-        #
-        # update the interpolator with the mean continuum
-        #self.get_mean_cont = interp1d(
-        #    Forest.log_lambda_rest_frame_grid,
-        #    self.mean_cont,
-        #    fill_value='extrapolate'
-        #)
-        self.get_mean_cont = self.get_mean_cont_aux
-
-    # TODO: fix naming of this function
-    # Currently it clashes with the initialization of the class
-    # due to the __init__ method from the parent class
-    def get_mean_cont_aux(self, points):
-        """Get the mean continuum at the given points
-
-        Arguments
-        ---------
-        points: np.ndarray
-        Points where to evaluate the mean continuum.
-        If interpolation_type == "2D", it should be of shape
-        (N, 2) where N is the number of points and the two columns are the redshift
-        and the log wavelength in Angstroms.
-        If interpolation_type == "1D", it should be of shape (N,) where N is the number
-        of points and the values are the log wavelength in Angstroms.
-
-        Returns
-        -------
-        np.ndarray
-        The mean continuum at the given points.
-        """
-        if self.interpolation_type == "2D":
-            raise NotImplementedError(
-                "2D interpolation is not implemented yet in MeanContinuum2dExpectedFlux. "
-                "Please use 1D interpolation instead.")
-        elif self.interpolation_type == "1D":
-            coeffs, rf_wavelength_bin = interp_coeff_lambda(
-                points,
-                Forest.log_lambda_rest_frame_grid)
-            
-            mean_cont = self.mean_cont[rf_wavelength_bin] * coeffs
-            w = np.where(rf_wavelength_bin < Forest.log_lambda_rest_frame_grid.size - 1)
-            mean_cont[w] += self.mean_cont[rf_wavelength_bin[w] + 1] * (1 - coeffs[w])
-
-        # this should never happen, but just in case
-        else: # pragma: no cover
-            raise ExpectedFluxError(
-                f"Invalid interpolation type '{self.interpolation_type}' "
-                f"required by MeanContinuum2dExpectedFlux. "
-                f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
         
-        return mean_cont
+        # update the interpolator with the mean continuum
+        self.get_mean_cont = interp1d(
+            Forest.log_lambda_rest_frame_grid,
+            self.mean_cont,
+            fill_value='extrapolate'
+        )
 
     def hdu_cont(self, results):
         """Add to the results file an HDU with the continuum information
@@ -376,3 +364,42 @@ def interp_coeff_lambda(rf_wavelength, rf_wavelength_grid):
     coeff = (rf_wavelength_high - rf_wavelength) / (rf_wavelength_high - rf_wavelength_low)
 
     return coeff, rf_wavelength_bin
+
+@numba.njit()
+def compute_mean_cont_1d(log_lambda_rest_frame_grid, log_lambda, flux, continuum, redshift, weight):
+    """Compute the mean quasar continuum over the whole sample.
+    Then updates the value of self.get_mean_cont to contain it
+    The mean continuum is computed as a function of the rest-frame 
+    wavelength.
+
+    Arguments
+    ---------
+    log_lambda_rest_frame_grid: np.ndarray
+    A 1D array of rest-frame wavelengths (in Angstroms) where the continuum is defined.
+
+    which_cont: Function or lambda
+    Should return what to use as continuum given a forest
+    """
+    A_matrix = np.zeros(
+        (log_lambda_rest_frame_grid.size, log_lambda_rest_frame_grid.size)
+    )
+    B_matrix = np.zeros(log_lambda_rest_frame_grid.size)
+
+    log_lambda_rf = log_lambda - np.log10(1 + redshift)
+    coeffs, rf_wavelength_bin = interp_coeff_lambda(
+            log_lambda_rf,
+            log_lambda_rest_frame_grid)
+    
+    w = np.where(continuum > 0)
+    B_matrix[rf_wavelength_bin[w]] += weight[w] * coeffs[w] * flux[w] / continuum[w]
+
+    w = np.where((continuum > 0) & (rf_wavelength_bin < log_lambda_rest_frame_grid.size - 1))
+    B_matrix[rf_wavelength_bin[w] + 1] += weight[w] * (1 - coeffs[w]) * flux[w] / continuum[w]
+
+    A_matrix[rf_wavelength_bin, rf_wavelength_bin] += weight * coeffs * coeffs
+    w = np.where(rf_wavelength_bin < log_lambda_rest_frame_grid.size - 1)
+    A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w]] += weight[w] * coeffs[w] * (1 - coeffs[w])
+    A_matrix[rf_wavelength_bin[w], rf_wavelength_bin[w] + 1] += weight[w] * coeffs[w] * (1 - coeffs[w])
+    A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w] + 1] += weight[w] * (1 - coeffs[w]) * (1 - coeffs[w])
+
+    return A_matrix, B_matrix
