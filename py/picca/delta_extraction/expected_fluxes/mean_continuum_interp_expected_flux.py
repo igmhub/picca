@@ -295,8 +295,9 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
                 points,
                 Forest.log_lambda_rest_frame_grid)
             
-            mean_cont = self.mean_cont[rf_wavelength_bin] * coeffs + \
-                self.mean_cont[rf_wavelength_bin + 1] * (1 - coeffs) 
+            mean_cont = self.mean_cont[rf_wavelength_bin] * coeffs
+            w = np.where(rf_wavelength_bin < Forest.log_lambda_rest_frame_grid.size - 1)
+            mean_cont[w] += self.mean_cont[rf_wavelength_bin[w] + 1] * (1 - coeffs[w])
 
         # this should never happen, but just in case
         else: # pragma: no cover
