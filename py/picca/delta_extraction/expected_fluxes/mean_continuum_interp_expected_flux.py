@@ -86,9 +86,9 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         self.z_centers = None
         self.__parse_config(config)
 
+        self.mean_cont = None
         super().__init__(config)
 
-        self.mean_cont = None
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -263,6 +263,7 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         #    self.mean_cont,
         #    fill_value='extrapolate'
         #)
+        self.get_mean_cont = self.get_mean_cont_aux
 
     # TODO: fix naming of this function
     # Currently it clashes with the initialization of the class
