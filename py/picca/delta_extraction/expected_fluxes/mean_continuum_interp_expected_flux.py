@@ -154,21 +154,18 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         if self.interpolation_type == "2D":
             mean_cont = np.ones(
                 (self.z_bins.size - 1, Forest.log_lambda_rest_frame_grid.size))
-            mean_cont_weight = np.zeros(
-                (self.z_bins.size - 1, Forest.log_lambda_rest_frame_grid.size))
             
             self.get_mean_cont = RegularGridInterpolator(
                 (self.z_centers, Forest.log_lambda_rest_frame_grid), mean_cont, bounds_error=False, fill_value=0.0
             )
         elif self.interpolation_type == "1D":
-            mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
-            mean_cont_weight = np.zeros(Forest.log_lambda_rest_frame_grid.size)
-
-            self.get_mean_cont = interp1d(
-                Forest.log_lambda_rest_frame_grid, 
-                mean_cont, 
-                fill_value='extrapolate'
-            )
+            self.mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
+            
+            #self.get_mean_cont = interp1d(
+            #    Forest.log_lambda_rest_frame_grid,
+            #    self.mean_cont,
+            #    fill_value='extrapolate'
+            #)
         # this should never happen, but just in case
         else: # pragma: no cover
             raise ExpectedFluxError(
@@ -252,7 +249,7 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         A_matrix[w, w] = 1.0
 
         # Solve the linear system A_matrix * mean_cont = B_matrix
-        mean_cont = np.linalg.solve(A_matrix, B_matrix)
+        self.mean_cont = np.linalg.solve(A_matrix, B_matrix)
 
         # TODO: this should be replaced by a method that computes the interpolation 
         # using the interp_coeff_lambda function for consistency but we need to 
@@ -260,11 +257,50 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         # picca.delta_extraction.expected_fluxes.utils
         #
         # update the interpolator with the mean continuum
-        self.get_mean_cont = interp1d(
-            Forest.log_lambda_rest_frame_grid, 
-            mean_cont, 
-            fill_value='extrapolate'
-        )
+        #self.get_mean_cont = interp1d(
+        #    Forest.log_lambda_rest_frame_grid,
+        #    self.mean_cont,
+        #    fill_value='extrapolate'
+        #)
+
+    def get_mean_cont(self, points):
+        """Get the mean continuum at the given points
+
+        Arguments
+        ---------
+        points: np.ndarray
+        Points where to evaluate the mean continuum.
+        If interpolation_type == "2D", it should be of shape
+        (N, 2) where N is the number of points and the two columns are the redshift
+        and the log wavelength in Angstroms.
+        If interpolation_type == "1D", it should be of shape (N,) where N is the number
+        of points and the values are the log wavelength in Angstroms.
+
+        Returns
+        -------
+        np.ndarray
+        The mean continuum at the given points.
+        """
+        if self.interpolation_type == "2D":
+            raise NotImplementedError(
+                "2D interpolation is not implemented yet in MeanContinuum2dExpectedFlux. "
+                "Please use 1D interpolation instead.")
+        elif self.interpolation_type == "1D":
+            coeffs, rf_wavelength_bin = interp_coeff_lambda(
+                points,
+                Forest.log_lambda_rest_frame_grid)
+            
+            mean_cont = self.mean_cont[rf_wavelength_bin] * coeffs + \
+                self.mean_cont[rf_wavelength_bin + 1] * (1 - coeffs) 
+
+        # this should never happen, but just in case
+        else: # pragma: no cover
+            raise ExpectedFluxError(
+                f"Invalid interpolation type '{self.interpolation_type}' "
+                f"required by MeanContinuum2dExpectedFlux. "
+                f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
+        
+        return mean_cont
 
     def hdu_cont(self, results):
         """Add to the results file an HDU with the continuum information
