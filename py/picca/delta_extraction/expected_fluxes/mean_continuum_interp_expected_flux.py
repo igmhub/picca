@@ -166,6 +166,7 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
             #    self.mean_cont,
             #    fill_value='extrapolate'
             #)
+            self.get_mean_cont = self.get_mean_cont_aux
         # this should never happen, but just in case
         else: # pragma: no cover
             raise ExpectedFluxError(
@@ -263,7 +264,10 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         #    fill_value='extrapolate'
         #)
 
-    def get_mean_cont(self, points):
+    # TODO: fix naming of this function
+    # Currently it clashes with the initialization of the class
+    # due to the __init__ method from the parent class
+    def get_mean_cont_aux(self, points):
         """Get the mean continuum at the given points
 
         Arguments
