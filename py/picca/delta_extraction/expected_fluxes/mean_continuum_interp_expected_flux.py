@@ -201,6 +201,7 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
                 f"required by MeanContinuum2dExpectedFlux. "
                 f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
         
+    # TODO: numbaize this function
     def compute_mean_cont_1d(self, forests, which_cont=lambda forest: forest.continuum):
         """Compute the mean quasar continuum over the whole sample.
         Then updates the value of self.get_mean_cont to contain it
@@ -290,8 +291,16 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
             results["CONT"].write_comment("2D mean quasar continuum (z, loglam)")
             results["CONT"].write_checksum()
         elif self.interpolation_type == "1D":
-            super().hdu_cont(results)
-        # this should never happen, but just in case
+            results.write([
+                Forest.log_lambda_rest_frame_grid,
+                self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
+            ],
+                names=['LOGLAM_REST', 'MEAN_CONT'],
+                units=['log(Angstrom)', Forest.flux_units, ''],
+                extname='CONT')
+            results["CONT"].write_comment("Mean quasar continuum")
+            results["CONT"].write_checksum()
+            # this should never happen, but just in case
         else: # pragma: no cover
             raise ExpectedFluxError(
                 f"Invalid interpolation type '{self.interpolation_type}' "
