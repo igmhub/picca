@@ -12,11 +12,12 @@ from picca.delta_extraction.utils import (update_accepted_options,
                                           ABSORBER_IGM)
 
 accepted_options = update_accepted_options(accepted_options, [
-    "limit z", "num z bins" 
+    "interpolation type", "limit z", "num z bins"
 ])
 
 defaults = update_default_options(
     defaults, {
+        "interpolation type": "1D",
         "limit z": (1.94, 4.5),
         "num z bins": 10,
     })
