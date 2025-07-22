@@ -162,7 +162,6 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
                 self.mean_cont,
                 fill_value='extrapolate'
             )
-            self.get_mean_cont = self.get_mean_cont_aux
         # this should never happen, but just in case
         else: # pragma: no cover
             raise ExpectedFluxError(
