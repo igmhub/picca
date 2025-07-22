@@ -273,21 +273,30 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         results: fitsio.FITS
         The open fits file
         """
-        # Create meshgrid for evaluation
-        z_meshgrid, log_lam_mesh_grid = np.meshgrid(self.z_centers, Forest.log_lambda_rest_frame_grid, indexing='ij')
-        points = np.stack([z_meshgrid.ravel(), log_lam_mesh_grid.ravel()], axis=-1)
-        mean_cont_2d = self.get_mean_cont(points).reshape(z_meshgrid.shape)
-        
-        results.write([
-            z_meshgrid,
-            log_lam_mesh_grid,
-            mean_cont_2d,
-        ],
-            names=['Z_CENTERS', 'LOGLAM_REST', 'MEAN_CONT'],
-            units=['', 'log(Angstrom)', Forest.flux_units, ''],
-            extname='CONT')
-        results["CONT"].write_comment("2D mean quasar continuum (z, loglam)")
-        results["CONT"].write_checksum()
+        if self.interpolation_type != "2D":
+            # Create meshgrid for evaluation
+            z_meshgrid, log_lam_mesh_grid = np.meshgrid(self.z_centers, Forest.log_lambda_rest_frame_grid, indexing='ij')
+            points = np.stack([z_meshgrid.ravel(), log_lam_mesh_grid.ravel()], axis=-1)
+            mean_cont_2d = self.get_mean_cont(points).reshape(z_meshgrid.shape)
+            
+            results.write([
+                z_meshgrid,
+                log_lam_mesh_grid,
+                mean_cont_2d,
+            ],
+                names=['Z_CENTERS', 'LOGLAM_REST', 'MEAN_CONT'],
+                units=['', 'log(Angstrom)', Forest.flux_units, ''],
+                extname='CONT')
+            results["CONT"].write_comment("2D mean quasar continuum (z, loglam)")
+            results["CONT"].write_checksum()
+        elif self.interpolation_type == "1D":
+            super().hdu_cont(results)
+        # this should never happen, but just in case
+        else: # pragma: no cover
+            raise ExpectedFluxError(
+                f"Invalid interpolation type '{self.interpolation_type}' "
+                f"required by MeanContinuum2dExpectedFlux. "
+                f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")  
 
 
 @numba.njit()
