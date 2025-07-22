@@ -296,7 +296,7 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
                 self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
             ],
                 names=['LOGLAM_REST', 'MEAN_CONT'],
-                units=['log(Angstrom)', Forest.flux_units, ''],
+                units=['log(Angstrom)', Forest.flux_units],
                 extname='CONT')
             results["CONT"].write_comment("Mean quasar continuum")
             results["CONT"].write_checksum()
