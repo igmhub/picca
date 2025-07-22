@@ -395,10 +395,19 @@ def compute_mean_cont_1d(log_lambda_rest_frame_grid, log_lambda, flux, continuum
     w = np.where((continuum > 0) & (rf_wavelength_bin < log_lambda_rest_frame_grid.size - 1))
     B_matrix[rf_wavelength_bin[w] + 1] += weight[w] * (1 - coeffs[w]) * flux[w] / continuum[w]
 
-    A_matrix[rf_wavelength_bin, rf_wavelength_bin] += weight * coeffs * coeffs
+    # diagonal elements
+    #A_matrix[rf_wavelength_bin, rf_wavelength_bin] += weight * coeffs * coeffs
+    for index in range(rf_wavelength_bin.size):
+        A_matrix[rf_wavelength_bin[index], rf_wavelength_bin[index]] += weight[index] * coeffs[index] * coeffs[index]
+
+    # Off-diagonal elements
     w = np.where(rf_wavelength_bin < log_lambda_rest_frame_grid.size - 1)
-    A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w]] += weight[w] * coeffs[w] * (1 - coeffs[w])
-    A_matrix[rf_wavelength_bin[w], rf_wavelength_bin[w] + 1] += weight[w] * coeffs[w] * (1 - coeffs[w])
-    A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w] + 1] += weight[w] * (1 - coeffs[w]) * (1 - coeffs[w])
+    for index in w[0]:
+        A_matrix[rf_wavelength_bin[index] + 1, rf_wavelength_bin[index]] += weight[index] * coeffs[index] * (1 - coeffs[index])
+        A_matrix[rf_wavelength_bin[index], rf_wavelength_bin[index] + 1] += weight[index] * coeffs[index] * (1 - coeffs[index])
+        A_matrix[rf_wavelength_bin[index] + 1, rf_wavelength_bin[index] + 1] += weight[index] * (1 - coeffs[index]) * (1 - coeffs[index])
+    #A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w]] += weight[w] * coeffs[w] * (1 - coeffs[w])
+    #A_matrix[rf_wavelength_bin[w], rf_wavelength_bin[w] + 1] += weight[w] * coeffs[w] * (1 - coeffs[w])
+    #A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w] + 1] += weight[w] * (1 - coeffs[w]) * (1 - coeffs[w])
 
     return A_matrix, B_matrix
