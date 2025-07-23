@@ -208,6 +208,9 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         which_cont: Function or lambda
         Should return what to use as continuum given a forest
         """
+        
+        """
+        # numba implementation shows a memory leak when using
         A_matrix = np.zeros(
             (Forest.log_lambda_rest_frame_grid.size, Forest.log_lambda_rest_frame_grid.size)
         )
@@ -248,7 +251,7 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         )
 
         return
-    
+        """
         # Old implementation without numba and without parallelization
         A_matrix = np.zeros(
             (Forest.log_lambda_rest_frame_grid.size, Forest.log_lambda_rest_frame_grid.size)
@@ -363,6 +366,7 @@ def interp_coeff_lambda(rf_wavelength, rf_wavelength_grid):
     coeff = (rf_wavelength_high - rf_wavelength) / (rf_wavelength_high - rf_wavelength_low)
 
     return coeff, rf_wavelength_bin
+
 
 @numba.njit()
 def compute_mean_cont_1d(log_lambda_rest_frame_grid, log_lambda, flux, continuum, redshift, weight):
