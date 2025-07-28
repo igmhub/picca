@@ -152,7 +152,8 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
                 (self.z_bins.size - 1, Forest.log_lambda_rest_frame_grid.size))
             
             self.get_mean_cont = RegularGridInterpolator(
-                (self.z_centers, Forest.log_lambda_rest_frame_grid), mean_cont, bounds_error=False, fill_value=0.0
+                (self.z_centers, Forest.log_lambda_rest_frame_grid), 
+                mean_cont, bounds_error=False, fill_value='extrapolate'
             )
         elif self.interpolation_type == "1D":
             self.mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
@@ -184,9 +185,7 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         if self.interpolation_type == "1D":
             self.compute_mean_cont_1d(forests, which_cont)
         elif self.interpolation_type == "2D":
-            raise NotImplementedError(
-                "2D interpolation is not implemented yet in MeanContinuum2dExpectedFlux. "
-                "Please use 1D interpolation instead.")
+            self.compute_mean_cont_2d(forests, which_cont)
         # this should never happen, but just in case
         else: # pragma: no cover
             raise ExpectedFluxError(
@@ -298,6 +297,98 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
             fill_value='extrapolate'
         )
 
+    def compute_mean_cont_2d(self, forests, which_cont=lambda forest: forest.continuum):
+        """Compute the mean quasar continuum over the whole sample.
+        Then updates the value of self.get_mean_cont to contain it
+        The mean continuum is computed as a function of the rest-frame 
+        wavelength and redshift.
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+
+        which_cont: Function or lambda
+        Should return what to use as continuum given a forest
+        """
+        # for simplicity we introduce a new index 
+        # combined_bin = z_bin + N_z_bins * rf_wavelength_bin
+        # where z_bin is the index of the redshift bin and rf_wavelength_bin
+        # is the index of the rest-frame wavelength bin.
+        # This allows us to use a similar logic as in the 1D case.
+        matrix_size = Forest.n_z_bins * Forest.log_lambda_rest_frame_grid.size
+
+        A_matrix = np.zeros(
+            (matrix_size, matrix_size)
+        )
+        B_matrix = np.zeros(matrix_size)   
+
+        for forest in forests:
+            if forest.bad_continuum_reason is not None:
+                continue
+
+            log_lambda_rf = forest.log_lambda - np.log10(1 + forest.z)
+            weights = self.compute_forest_weights(forest, forest.continuum)
+            rf_wavelength_coeffs, rf_wavelength_bin = interp_coeff_lambda(
+                log_lambda_rf,
+                Forest.log_lambda_rest_frame_grid)
+            z_coeffs, z_bin = interp_coeff_z(
+                forest.z,
+                self.z_centers)
+            z_coeffs = np.repeat(z_coeffs, Forest.log_lambda_rest_frame_grid.size)
+            
+            # combined_bin is the index of the bin in the 2D matrix
+            combined_bin = z_bin + self.num_z_bins * rf_wavelength_bin
+            combined_bin_plus_wavelength = z_bin + self.num_z_bins * (rf_wavelength_bin + 1)
+            combined_bin_plus_z = z_bin + 1 + self.num_z_bins * (rf_wavelength_bin)
+            combined_bin_plus_both = z_bin + 1 + self.num_z_bins * (rf_wavelength_bin + 1)
+
+            # Fill the B_matrix
+            # diagonal elements
+            w = np.where(forest.continuum > 0)
+            B_matrix[combined_bin[w]] += weights[w] * z_coeffs[w] * rf_wavelength_coeffs[w] * forest.flux[w] / forest.continuum[w]
+            # off-diagonal elements
+            w = np.where((forest.continuum > 0) & (combined_bin_plus_wavelength < matrix_size - 1))
+            B_matrix[combined_bin_plus_wavelength[w] + 1] += weights[w] * z_coeffs[w] * (1 - rf_wavelength_coeffs[w]) * forest.flux[w] / forest.continuum[w]
+            w = np.where((forest.continuum > 0) & (combined_bin_plus_z < matrix_size - 1))
+            B_matrix[combined_bin_plus_z[w] + 1] += weights[w] * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * forest.flux[w] / forest.continuum[w]
+            w = np.where((forest.continuum > 0) & (combined_bin_plus_both < matrix_size - 1))
+            B_matrix[combined_bin_plus_both[w] + 1] += weights[w] * (1 - z_coeffs[w]) * (1 - rf_wavelength_coeffs[w]) * forest.flux[w] / forest.continuum[w]
+
+            # Fill the A_matrix
+            # diagonal elements
+            A_matrix[combined_bin, combined_bin] += weights * z_coeffs * z_coeffs * rf_wavelength_coeffs * rf_wavelength_coeffs
+            # off-diagonal elements
+            w = np.where(combined_bin_plus_wavelength < matrix_size - 1)
+            A_matrix[combined_bin_plus_wavelength[w], combined_bin[w]] += weights[w] * z_coeffs[w] * z_coeffs[w] * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs[w] * z_coeffs[w] * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs[w] * z_coeffs[w] * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
+            w = np.where(combined_bin_plus_z < matrix_size - 1)
+            A_matrix[combined_bin_plus_z[w], combined_bin[w]] += weights[w] * z_coeffs[w] * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
+            A_matrix[combined_bin[w], combined_bin_plus_z[w]] += weights[w] * z_coeffs[w] * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_z[w], combined_bin_plus_z[w]] += weights[w] * (1 - z_coeffs[w]) * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
+            w = np.where(combined_bin_plus_both < matrix_size - 1)
+            A_matrix[combined_bin_plus_both[w], combined_bin[w]] += weights[w] * z_coeffs[w] * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin[w], combined_bin_plus_both[w]] += weights[w] * z_coeffs[w] * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_both[w], combined_bin_plus_both[w]] += weights[w] * (1 - z_coeffs[w]) * (1 - z_coeffs[w]) * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
+
+
+        # Take care of unstable solutions
+        # If the diagonal of A_matrix is zero, we set it to 1.0
+        # This is a workaround for the case where there is no coverage
+        # for some wavelengths.
+        w = np.diagonal(A_matrix) == 0
+        A_matrix[w, w] = 1.0
+
+        # Solve the linear system A_matrix * mean_cont = B_matrix
+        self.mean_cont = np.linalg.solve(A_matrix, B_matrix)
+        
+        # update the interpolator with the mean continuum
+        self.get_mean_cont = RegularGridInterpolator(
+            (self.z_centers, Forest.log_lambda_rest_frame_grid), 
+            self.mean_cont, bounds_error=False, fill_value='extrapolate',
+        )
+        
     def hdu_cont(self, results):
         """Add to the results file an HDU with the continuum information
 
@@ -346,10 +437,11 @@ def interp_coeff_lambda(rf_wavelength, rf_wavelength_grid):
 
     Arguments
     ---------
-    rf_wavelength: float
-        Rest-frame wavelength in Angstroms
+    rf_wavelength: float or np.ndarray
+    Rest-frame wavelength in Angstroms
+    
     rf_wavelength_grid: np.ndarray
-        Rest-frame wavelength nodes where the interpolation is defined
+    Rest-frame wavelength nodes where the interpolation is defined
 
     Returns
     -------
@@ -367,6 +459,33 @@ def interp_coeff_lambda(rf_wavelength, rf_wavelength_grid):
 
     return coeff, rf_wavelength_bin
 
+@numba.njit()
+def interp_coeff_lambda(z, z_grid):
+    """Compute the interpolation coefficients for a given rest-frame wavelength.
+
+    Arguments
+    ---------
+    z: float
+    Redshift
+    
+    z: np.ndarray
+    Redshift grid where the interpolation is defined
+
+    Returns
+    -------
+    coeff: np.ndarray
+    Interpolation coefficients for the given redshift
+
+    z_bin: int or np.ndarray
+    Indices of the z bins for the given z value
+    """
+    z_bin = np.digitize(z, z_grid) - 1
+    z_low = z_grid[z_bin]
+    z_high = z_grid[z_bin + 1]
+
+    coeff = (z_high - z) / (z_high - z_low)
+
+    return coeff, z_bin
 
 @numba.njit()
 def compute_mean_cont_1d(log_lambda_rest_frame_grid, log_lambda, flux, continuum, redshift, weight):
