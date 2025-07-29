@@ -180,10 +180,14 @@ class LeastsSquaresContModel:
         weights = np.empty_like(forest.log_lambda)
         weights[~w] = 0
 
-        if np.any(cont_model[w] == 0):
-            print("w", w)
-            print("cont_model", cont_model)
-            print("kwargs", kwargs)
+        if np.all(cont_model[w] == 0):
+            import sys
+            print("id", forest.los_id, file=sys.stderr)
+            print("w", w, file=sys.stderr)
+            print("cont_model", cont_model, file=sys.stderr)
+            print("kwargs", kwargs, file=sys.stderr)
+            weights[w] = 1
+            #return weights
             raise LeastSquaresError("The continuum model has zero values. "
                                     "This will lead to division by zero in the "
                                     "weights computation. Please check the "
