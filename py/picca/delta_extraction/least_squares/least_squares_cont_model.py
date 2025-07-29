@@ -131,6 +131,11 @@ class LeastsSquaresContModel:
             raise LeastSquaresError("Function get_continuum_model requires "
                                     "'mean_cont' in the **kwargs dictionary")
         mean_cont = kwargs.get("mean_cont")
+        if np.all(mean_cont == 0):
+            raise LeastSquaresError("The mean continuum has zero values. "
+                                    "This will lead to division by zero later on "
+                                    "and should not occur. Please check the mean "
+                                    "continuum.")
         for key in ["log_lambda_max", "log_lambda_min"]:
             if key not in kwargs:
                 raise LeastSquaresError("Function get_continuum_model requires "
