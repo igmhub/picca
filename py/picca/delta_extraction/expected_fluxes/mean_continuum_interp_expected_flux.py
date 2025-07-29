@@ -150,10 +150,11 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         if self.interpolation_type == "2D":
             mean_cont = np.ones(
                 (self.z_bins.size - 1, Forest.log_lambda_rest_frame_grid.size))
-            
+            # fill_value cannot be "extrapolate" for RegularGridInterpolator
+            # so we use 0.0 instead
             self.get_mean_cont = RegularGridInterpolator(
                 (self.z_centers, Forest.log_lambda_rest_frame_grid), 
-                mean_cont, bounds_error=False, fill_value='extrapolate'
+                mean_cont, bounds_error=False, fill_value=0
             )
         elif self.interpolation_type == "1D":
             self.mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
@@ -316,7 +317,7 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         # where z_bin is the index of the redshift bin and rf_wavelength_bin
         # is the index of the rest-frame wavelength bin.
         # This allows us to use a similar logic as in the 1D case.
-        matrix_size = Forest.n_z_bins * Forest.log_lambda_rest_frame_grid.size
+        matrix_size = self.num_z_bins * Forest.log_lambda_rest_frame_grid.size
 
         A_matrix = np.zeros(
             (matrix_size, matrix_size)
@@ -335,7 +336,6 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
             z_coeffs, z_bin = interp_coeff_z(
                 forest.z,
                 self.z_centers)
-            z_coeffs = np.repeat(z_coeffs, Forest.log_lambda_rest_frame_grid.size)
             
             # combined_bin is the index of the bin in the 2D matrix
             combined_bin = z_bin + self.num_z_bins * rf_wavelength_bin
@@ -346,31 +346,31 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
             # Fill the B_matrix
             # diagonal elements
             w = np.where(forest.continuum > 0)
-            B_matrix[combined_bin[w]] += weights[w] * z_coeffs[w] * rf_wavelength_coeffs[w] * forest.flux[w] / forest.continuum[w]
+            B_matrix[combined_bin[w]] += weights[w] * z_coeffs * rf_wavelength_coeffs[w] * forest.flux[w] / forest.continuum[w]
             # off-diagonal elements
             w = np.where((forest.continuum > 0) & (combined_bin_plus_wavelength < matrix_size - 1))
-            B_matrix[combined_bin_plus_wavelength[w] + 1] += weights[w] * z_coeffs[w] * (1 - rf_wavelength_coeffs[w]) * forest.flux[w] / forest.continuum[w]
+            B_matrix[combined_bin_plus_wavelength[w] + 1] += weights[w] * z_coeffs * (1 - rf_wavelength_coeffs[w]) * forest.flux[w] / forest.continuum[w]
             w = np.where((forest.continuum > 0) & (combined_bin_plus_z < matrix_size - 1))
-            B_matrix[combined_bin_plus_z[w] + 1] += weights[w] * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * forest.flux[w] / forest.continuum[w]
+            B_matrix[combined_bin_plus_z[w] + 1] += weights[w] * (1 - z_coeffs) * rf_wavelength_coeffs[w] * forest.flux[w] / forest.continuum[w]
             w = np.where((forest.continuum > 0) & (combined_bin_plus_both < matrix_size - 1))
-            B_matrix[combined_bin_plus_both[w] + 1] += weights[w] * (1 - z_coeffs[w]) * (1 - rf_wavelength_coeffs[w]) * forest.flux[w] / forest.continuum[w]
+            B_matrix[combined_bin_plus_both[w] + 1] += weights[w] * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * forest.flux[w] / forest.continuum[w]
 
             # Fill the A_matrix
             # diagonal elements
             A_matrix[combined_bin, combined_bin] += weights * z_coeffs * z_coeffs * rf_wavelength_coeffs * rf_wavelength_coeffs
             # off-diagonal elements
             w = np.where(combined_bin_plus_wavelength < matrix_size - 1)
-            A_matrix[combined_bin_plus_wavelength[w], combined_bin[w]] += weights[w] * z_coeffs[w] * z_coeffs[w] * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
-            A_matrix[combined_bin[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs[w] * z_coeffs[w] * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
-            A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs[w] * z_coeffs[w] * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_wavelength[w], combined_bin[w]] += weights[w] * z_coeffs * z_coeffs * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * z_coeffs * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * z_coeffs * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
             w = np.where(combined_bin_plus_z < matrix_size - 1)
-            A_matrix[combined_bin_plus_z[w], combined_bin[w]] += weights[w] * z_coeffs[w] * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
-            A_matrix[combined_bin[w], combined_bin_plus_z[w]] += weights[w] * z_coeffs[w] * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
-            A_matrix[combined_bin_plus_z[w], combined_bin_plus_z[w]] += weights[w] * (1 - z_coeffs[w]) * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_z[w], combined_bin[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
+            A_matrix[combined_bin[w], combined_bin_plus_z[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_z[w], combined_bin_plus_z[w]] += weights[w] * (1 - z_coeffs) * (1 - z_coeffs) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
             w = np.where(combined_bin_plus_both < matrix_size - 1)
-            A_matrix[combined_bin_plus_both[w], combined_bin[w]] += weights[w] * z_coeffs[w] * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
-            A_matrix[combined_bin[w], combined_bin_plus_both[w]] += weights[w] * z_coeffs[w] * (1 - z_coeffs[w]) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
-            A_matrix[combined_bin_plus_both[w], combined_bin_plus_both[w]] += weights[w] * (1 - z_coeffs[w]) * (1 - z_coeffs[w]) * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_both[w], combined_bin[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin[w], combined_bin_plus_both[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_both[w], combined_bin_plus_both[w]] += weights[w] * (1 - z_coeffs) * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
 
 
         # Take care of unstable solutions
@@ -381,12 +381,16 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         A_matrix[w, w] = 1.0
 
         # Solve the linear system A_matrix * mean_cont = B_matrix
-        self.mean_cont = np.linalg.solve(A_matrix, B_matrix)
+        mean_cont = np.linalg.solve(A_matrix, B_matrix)
+        # Undo the new indexing
+        self.mean_cont = mean_cont.reshape(
+            (self.num_z_bins, Forest.log_lambda_rest_frame_grid.size))
+
         
         # update the interpolator with the mean continuum
         self.get_mean_cont = RegularGridInterpolator(
             (self.z_centers, Forest.log_lambda_rest_frame_grid), 
-            self.mean_cont, bounds_error=False, fill_value='extrapolate',
+            self.mean_cont, bounds_error=False, fill_value=0.0,
         )
         
     def hdu_cont(self, results):
@@ -460,8 +464,8 @@ def interp_coeff_lambda(rf_wavelength, rf_wavelength_grid):
     return coeff, rf_wavelength_bin
 
 @numba.njit()
-def interp_coeff_lambda(z, z_grid):
-    """Compute the interpolation coefficients for a given rest-frame wavelength.
+def interp_coeff_z(z, z_grid):
+    """Compute the interpolation coefficients for a given redshift.
 
     Arguments
     ---------
