@@ -175,8 +175,8 @@ class LeastsSquaresContModel:
         if "use_constant_weight" not in kwargs:
             raise LeastSquaresError("Function get_continuum_weights requires "
                                     "'use_constant_weight' in the **kwargs dictionary")
-        # Assign 0 weight to pixels with ivar==0
-        w = forest.ivar > 0
+        # Assign 0 weight to pixels with ivar==0 or cont_model==0
+        w = forest.ivar > 0 and cont_model > 0
         weights = np.empty_like(forest.log_lambda)
         weights[~w] = 0
 
