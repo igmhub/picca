@@ -131,11 +131,6 @@ class LeastsSquaresContModel:
             raise LeastSquaresError("Function get_continuum_model requires "
                                     "'mean_cont' in the **kwargs dictionary")
         mean_cont = kwargs.get("mean_cont")
-        if np.all(mean_cont == 0):
-            raise LeastSquaresError("The mean continuum has zero values. "
-                                    "This will lead to division by zero later on "
-                                    "and should not occur. Please check the mean "
-                                    "continuum.")
         for key in ["log_lambda_max", "log_lambda_min"]:
             if key not in kwargs:
                 raise LeastSquaresError("Function get_continuum_model requires "
@@ -184,19 +179,6 @@ class LeastsSquaresContModel:
         w = forest.ivar > 0
         weights = np.empty_like(forest.log_lambda)
         weights[~w] = 0
-
-        if np.all(cont_model[w] == 0):
-            import sys
-            print("id", forest.los_id, file=sys.stderr)
-            print("w", w, file=sys.stderr)
-            print("cont_model", cont_model, file=sys.stderr)
-            print("kwargs", kwargs, file=sys.stderr)
-            weights[w] = 1
-            #return weights
-            raise LeastSquaresError("The continuum model has zero values. "
-                                    "This will lead to division by zero in the "
-                                    "weights computation. Please check the "
-                                    "continuum model.")
 
         if kwargs.get("use_constant_weight"):
             weights[w] = 1
