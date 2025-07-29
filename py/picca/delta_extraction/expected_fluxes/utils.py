@@ -114,6 +114,8 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
         bad_continuum_reason = "minuit didn't converge"
     if np.any(cont_model < 0):
         bad_continuum_reason = "negative continuum"
+    if np.all(cont_model == 0):
+        bad_continuum_reason = "zero continuum"
 
     if bad_continuum_reason is None:
         continuum_fit_parameters = (minimizer.values["zero_point"],
