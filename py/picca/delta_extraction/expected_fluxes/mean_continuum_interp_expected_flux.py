@@ -413,7 +413,7 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
                 mean_cont_2d,
             ],
                 names=['Z_CENTERS', 'LOGLAM_REST', 'MEAN_CONT'],
-                units=['', 'log(Angstrom)', Forest.flux_units, ''],
+                units=['', 'log(Angstrom)', Forest.flux_units],
                 extname='CONT')
             results["CONT"].write_comment("2D mean quasar continuum (z, loglam)")
             results["CONT"].write_checksum()
