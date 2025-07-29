@@ -290,6 +290,14 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
 
         # Solve the linear system A_matrix * mean_cont = B_matrix
         self.mean_cont = np.linalg.solve(A_matrix, B_matrix)
+        try:
+            mean_cont = np.linalg.solve(A_matrix, B_matrix)
+        except np.linalg.LinAlgError:
+            raise ExpectedFluxError(
+                "The linear system could not be solved. "
+                "This may be due to a lack of coverage for some wavelengths."
+            )
+            mean_cont, *_ = np.linalg.lstsq(A_matrix, B_matrix, rcond=None)
         
         # update the interpolator with the mean continuum
         self.get_mean_cont = interp1d(
@@ -312,6 +320,7 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         which_cont: Function or lambda
         Should return what to use as continuum given a forest
         """
+        self.logger.debug("Entering compute_mean_cont_2d")
         # for simplicity we introduce a new index 
         # combined_bin = z_bin + N_z_bins * rf_wavelength_bin
         # where z_bin is the index of the redshift bin and rf_wavelength_bin
@@ -372,6 +381,16 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
             A_matrix[combined_bin[w], combined_bin_plus_both[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
             A_matrix[combined_bin_plus_both[w], combined_bin_plus_both[w]] += weights[w] * (1 - z_coeffs) * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
 
+        # check that A is symmetric
+        if not np.allclose(A_matrix, A_matrix.T):
+            raise ExpectedFluxError(
+                "A_matrix is not symmetric. "
+                "This should not happen, please report this issue.")
+        # check that the diagonal in A is positive or 0
+        if not np.all(np.diagonal(A_matrix) >= 0):
+            raise ExpectedFluxError(
+                "A_matrix diagonal is not positive or 0. "
+                "This should not happen, please report this issue.")
 
         # Take care of unstable solutions
         # If the diagonal of A_matrix is zero, we set it to 1.0
