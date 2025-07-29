@@ -404,7 +404,6 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
         # Undo the new indexing
         self.mean_cont = mean_cont.reshape(
             (self.num_z_bins, Forest.log_lambda_rest_frame_grid.size))
-
         
         # update the interpolator with the mean continuum
         self.get_mean_cont = RegularGridInterpolator(

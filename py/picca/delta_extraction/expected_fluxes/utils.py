@@ -89,6 +89,7 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
 
     zero_point = (forest.flux * forest.ivar).sum() / forest.ivar.sum()
     slope = 0.0
+    error = np.max([np.fabs(zero_point) / 2., 1e-6])
 
     # debugging code
     import warnings
@@ -99,8 +100,8 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
         minimizer = iminuit.Minuit(leasts_squares,
                                 zero_point=zero_point,
                                 slope=slope)
-        minimizer.errors["zero_point"] = np.max([np.fabs(zero_point) / 10., 1e-6])
-        minimizer.errors["slope"] = np.max([np.fabs(slope) / 10., 1e-6])
+        minimizer.errors["zero_point"] = error
+        minimizer.errors["slope"] = error
         minimizer.errordef = 1.
         minimizer.print_level = 0
         minimizer.fixed["slope"] = order == 0
