@@ -8,7 +8,8 @@ from scipy.interpolate import interp1d, RegularGridInterpolator
 
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux, defaults, accepted_options
+#from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux, defaults, accepted_options
+from picca.delta_extraction.expected_fluxes.dr16_fixed_fudge_expected_flux import Dr16FixedFudgeExpectedFlux, defaults, accepted_options
 from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options,
                                           ABSORBER_IGM)
@@ -26,7 +27,7 @@ defaults = update_default_options(
 
 ACCEPTED_INTERPOLATION_TYPES = ["1D", "2D"]
 
-class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
+class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
     """Class to the expected flux as done in the DR16 SDSS analysys
     The mean expected flux is calculated iteratively as explained in
     du Mas des Bourboux et al. (2020) except that the we don't use 
@@ -154,7 +155,7 @@ class MeanContinuumInterpExpectedFlux(Dr16ExpectedFlux):
             # so we use 0.0 instead
             self.get_mean_cont = RegularGridInterpolator(
                 (self.z_centers, Forest.log_lambda_rest_frame_grid), 
-                mean_cont, bounds_error=False, fill_value=0
+                mean_cont, bounds_error=False, fill_value=0.0
             )
         elif self.interpolation_type == "1D":
             self.mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
