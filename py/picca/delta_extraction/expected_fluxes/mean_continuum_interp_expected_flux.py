@@ -358,29 +358,39 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             w = np.where(forest.continuum > 0)
             B_matrix[combined_bin[w]] += weights[w] * z_coeffs * rf_wavelength_coeffs[w] * forest.flux[w] / forest.continuum[w]
             # off-diagonal elements
-            w = np.where((forest.continuum > 0) & (combined_bin_plus_wavelength < matrix_size - 1))
+            w = np.where((forest.continuum > 0) & (combined_bin_plus_wavelength < matrix_size))
             B_matrix[combined_bin_plus_wavelength[w] + 1] += weights[w] * z_coeffs * (1 - rf_wavelength_coeffs[w]) * forest.flux[w] / forest.continuum[w]
-            w = np.where((forest.continuum > 0) & (combined_bin_plus_z < matrix_size - 1))
-            B_matrix[combined_bin_plus_z[w] + 1] += weights[w] * (1 - z_coeffs) * rf_wavelength_coeffs[w] * forest.flux[w] / forest.continuum[w]
-            w = np.where((forest.continuum > 0) & (combined_bin_plus_both < matrix_size - 1))
-            B_matrix[combined_bin_plus_both[w] + 1] += weights[w] * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * forest.flux[w] / forest.continuum[w]
+            w = np.where((forest.continuum > 0) & (combined_bin_plus_z < matrix_size))
+            B_matrix[combined_bin_plus_z[w]] += weights[w] * (1 - z_coeffs) * rf_wavelength_coeffs[w] * forest.flux[w] / forest.continuum[w]
+            w = np.where((forest.continuum > 0) & (combined_bin_plus_both < matrix_size))
+            B_matrix[combined_bin_plus_both[w]] += weights[w] * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * forest.flux[w] / forest.continuum[w]
 
             # Fill the A_matrix
             # diagonal elements
             A_matrix[combined_bin, combined_bin] += weights * z_coeffs * z_coeffs * rf_wavelength_coeffs * rf_wavelength_coeffs
             # off-diagonal elements
-            w = np.where(combined_bin_plus_wavelength < matrix_size - 1)
-            A_matrix[combined_bin_plus_wavelength[w], combined_bin[w]] += weights[w] * z_coeffs * z_coeffs * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            w = np.where(combined_bin_plus_wavelength < matrix_size)
             A_matrix[combined_bin[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * z_coeffs * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_wavelength[w], combined_bin[w]] += weights[w] * z_coeffs * z_coeffs * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
             A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * z_coeffs * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
-            w = np.where(combined_bin_plus_z < matrix_size - 1)
-            A_matrix[combined_bin_plus_z[w], combined_bin[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
+            w = np.where(combined_bin_plus_z < matrix_size)
             A_matrix[combined_bin[w], combined_bin_plus_z[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_z[w], combined_bin[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
             A_matrix[combined_bin_plus_z[w], combined_bin_plus_z[w]] += weights[w] * (1 - z_coeffs) * (1 - z_coeffs) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
-            w = np.where(combined_bin_plus_both < matrix_size - 1)
-            A_matrix[combined_bin_plus_both[w], combined_bin[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            w = np.where(combined_bin_plus_both < matrix_size)
             A_matrix[combined_bin[w], combined_bin_plus_both[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_both[w], combined_bin[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
             A_matrix[combined_bin_plus_both[w], combined_bin_plus_both[w]] += weights[w] * (1 - z_coeffs) * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
+            # cross terms
+            w = np.where((combined_bin_plus_wavelength < matrix_size) & (combined_bin_plus_z < matrix_size))
+            A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_z[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_z[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            w = np.where((combined_bin_plus_wavelength < matrix_size) & (combined_bin_plus_both < matrix_size))
+            A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_both[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_both[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
+            w = np.where((combined_bin_plus_z < matrix_size) & (combined_bin_plus_both < matrix_size))
+            A_matrix[combined_bin_plus_z[w], combined_bin_plus_both[w]] += weights[w] * (1 - z_coeffs) * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_both[w], combined_bin_plus_z[w]] += weights[w] * (1 - z_coeffs) * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
 
         # check that A is symmetric
         if not np.allclose(A_matrix, A_matrix.T):
@@ -431,7 +441,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 log_lam_mesh_grid,
                 mean_cont_2d,
             ],
-                names=['Z_CENTERS', 'LOGLAM_REST', 'MEAN_CONT'],
+                names=['Z_CENTER', 'LOGLAM_REST', 'MEAN_CONT'],
                 units=['', 'log(Angstrom)', Forest.flux_units],
                 extname='CONT')
             results["CONT"].write_comment("2D mean quasar continuum (z, loglam)")
