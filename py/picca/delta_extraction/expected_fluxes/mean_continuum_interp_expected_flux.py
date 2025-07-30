@@ -343,9 +343,11 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             rf_wavelength_coeffs, rf_wavelength_bin = interp_coeff_lambda(
                 log_lambda_rf,
                 Forest.log_lambda_rest_frame_grid)
+            one_minus_rf_wavelength_coeffs = 1 - rf_wavelength_coeffs
             z_coeffs, z_bin = interp_coeff_z(
                 forest.z,
                 self.z_centers)
+            one_minus_z_coeffs = 1 - z_coeffs
             
             # combined_bin is the index of the bin in the 2D matrix
             combined_bin = z_bin + self.num_z_bins * rf_wavelength_bin
@@ -355,42 +357,42 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
 
             # Fill the B_matrix
             # diagonal elements
-            w = np.where(forest.continuum > 0)
-            B_matrix[combined_bin[w]] += weights[w] * z_coeffs * rf_wavelength_coeffs[w] * forest.flux[w] / forest.continuum[w]
+            w = np.where((forest.continuum > 0) & 
+                         (combined_bin < matrix_size) &
+                         (combined_bin_plus_wavelength < matrix_size) &
+                         (combined_bin_plus_z < matrix_size) &
+                         (combined_bin_plus_both < matrix_size))
+            flux_over_cont = forest.flux[w] / forest.continuum[w]
+            B_matrix[combined_bin[w]] += weights[w] * z_coeffs * rf_wavelength_coeffs[w] * flux_over_cont
             # off-diagonal elements
-            w = np.where((forest.continuum > 0) & (combined_bin_plus_wavelength < matrix_size))
-            B_matrix[combined_bin_plus_wavelength[w] + 1] += weights[w] * z_coeffs * (1 - rf_wavelength_coeffs[w]) * forest.flux[w] / forest.continuum[w]
-            w = np.where((forest.continuum > 0) & (combined_bin_plus_z < matrix_size))
-            B_matrix[combined_bin_plus_z[w]] += weights[w] * (1 - z_coeffs) * rf_wavelength_coeffs[w] * forest.flux[w] / forest.continuum[w]
-            w = np.where((forest.continuum > 0) & (combined_bin_plus_both < matrix_size))
-            B_matrix[combined_bin_plus_both[w]] += weights[w] * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * forest.flux[w] / forest.continuum[w]
+            B_matrix[combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * one_minus_rf_wavelength_coeffs[w] * flux_over_cont
+            B_matrix[combined_bin_plus_z[w]] += weights[w] * one_minus_z_coeffs[w] * rf_wavelength_coeffs[w] * flux_over_cont
+            B_matrix[combined_bin_plus_both[w]] += weights[w] * one_minus_z_coeffs[w] * one_minus_rf_wavelength_coeffs[w] * flux_over_cont
 
             # Fill the A_matrix
             # diagonal elements
             A_matrix[combined_bin, combined_bin] += weights * z_coeffs * z_coeffs * rf_wavelength_coeffs * rf_wavelength_coeffs
             # off-diagonal elements
-            w = np.where(combined_bin_plus_wavelength < matrix_size)
-            A_matrix[combined_bin[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * z_coeffs * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
-            A_matrix[combined_bin_plus_wavelength[w], combined_bin[w]] += weights[w] * z_coeffs * z_coeffs * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
-            A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * z_coeffs * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
-            w = np.where(combined_bin_plus_z < matrix_size)
-            A_matrix[combined_bin[w], combined_bin_plus_z[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
-            A_matrix[combined_bin_plus_z[w], combined_bin[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
-            A_matrix[combined_bin_plus_z[w], combined_bin_plus_z[w]] += weights[w] * (1 - z_coeffs) * (1 - z_coeffs) * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
-            w = np.where(combined_bin_plus_both < matrix_size)
-            A_matrix[combined_bin[w], combined_bin_plus_both[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
-            A_matrix[combined_bin_plus_both[w], combined_bin[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
-            A_matrix[combined_bin_plus_both[w], combined_bin_plus_both[w]] += weights[w] * (1 - z_coeffs) * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * z_coeffs * rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_wavelength[w], combined_bin[w]] += weights[w] * z_coeffs * z_coeffs * rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * z_coeffs * one_minus_rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
+            
+            A_matrix[combined_bin[w], combined_bin_plus_z[w]] += weights[w] * z_coeffs * one_minus_z_coeffs * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_z[w], combined_bin[w]] += weights[w] * z_coeffs * one_minus_z_coeffs * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_z[w], combined_bin_plus_z[w]] += weights[w] * one_minus_z_coeffs * one_minus_z_coeffs * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
+            
+            A_matrix[combined_bin[w], combined_bin_plus_both[w]] += weights[w] * z_coeffs * one_minus_z_coeffs * rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_both[w], combined_bin[w]] += weights[w] * z_coeffs * one_minus_z_coeffs * rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_both[w], combined_bin_plus_both[w]] += weights[w] * one_minus_z_coeffs * one_minus_z_coeffs * one_minus_rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
             # cross terms
-            w = np.where((combined_bin_plus_wavelength < matrix_size) & (combined_bin_plus_z < matrix_size))
-            A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_z[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
-            A_matrix[combined_bin_plus_z[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
-            w = np.where((combined_bin_plus_wavelength < matrix_size) & (combined_bin_plus_both < matrix_size))
-            A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_both[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
-            A_matrix[combined_bin_plus_both[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * (1 - z_coeffs) * (1 - rf_wavelength_coeffs[w]) * (1 - rf_wavelength_coeffs[w])
-            w = np.where((combined_bin_plus_z < matrix_size) & (combined_bin_plus_both < matrix_size))
-            A_matrix[combined_bin_plus_z[w], combined_bin_plus_both[w]] += weights[w] * (1 - z_coeffs) * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
-            A_matrix[combined_bin_plus_both[w], combined_bin_plus_z[w]] += weights[w] * (1 - z_coeffs) * (1 - z_coeffs) * rf_wavelength_coeffs[w] * (1 - rf_wavelength_coeffs[w])
+            A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_z[w]] += weights[w] * z_coeffs * one_minus_z_coeffs * rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_z[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * one_minus_z_coeffs * rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
+            
+            A_matrix[combined_bin_plus_wavelength[w], combined_bin_plus_both[w]] += weights[w] * z_coeffs * one_minus_z_coeffs * one_minus_rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_both[w], combined_bin_plus_wavelength[w]] += weights[w] * z_coeffs * one_minus_z_coeffs * one_minus_rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
+            
+            A_matrix[combined_bin_plus_z[w], combined_bin_plus_both[w]] += weights[w] * one_minus_z_coeffs * one_minus_z_coeffs * rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
+            A_matrix[combined_bin_plus_both[w], combined_bin_plus_z[w]] += weights[w] * one_minus_z_coeffs * one_minus_z_coeffs * rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
 
         # check that A is symmetric
         if not np.allclose(A_matrix, A_matrix.T):
