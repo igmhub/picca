@@ -513,7 +513,7 @@ class Delta(QSO):
                    mean_reso, mean_z, delta_log_lambda)
 
     @classmethod
-    def from_image(cls, hdul, pk1d_type=False, z_min_qso=0, z_max_qso=10):
+    def from_image(cls, hdul, pk1d_type=False, z_min_qso=0, z_max_qso=10, min_lambda_obs=None, max_lambda_obs=None):
         """Initialize instance from an ascii file.
 
         Args:
@@ -526,6 +526,13 @@ class Delta(QSO):
                 Specifies the minimum redshift for QSOs
             z_max_qso: float - default: 10
                 Specifies the maximum redshift for QSOs
+        min_lambda_obs: float or None - default: None
+            Minimum observed wavelength for the Lya forest pixels. If None, no minimum
+            wavelength is applied.
+        max_lambda_obs: float or None - default: None
+            Maximum observed wavelength for the Lya forest pixels. If None, no maximum
+            wavelength is applied.
+            
         Returns:
             a Delta instance
         """
@@ -565,9 +572,18 @@ class Delta(QSO):
         mean_resolution_matrix = Nones
         mean_reso_pix = Nones
         weights = hdul["WEIGHT"].read().astype(float)
-        w = weights > 0
         cont = hdul["CONT"].read().astype(float)
-
+        w_l = np.ones_like(log_lambda, dtype=bool)
+        if min_lambda_obs is not None:
+            w_l &= log_lambda >= np.log10(min_lambda_obs)
+        if max_lambda_obs is not None:
+            w_l &= log_lambda <= np.log10(max_lambda_obs)
+        
+        log_lambda = log_lambda[w_l]
+        weights = weights[:,w_l]
+        cont = cont[:,w_l]
+        delta = delta[:,w_l]
+        w = weights > 0        
         if "THING_ID" in hdul["METADATA"].get_colnames():
             los_id = hdul["METADATA"]["THING_ID"][:]
             plate = hdul["METADATA"]["PLATE"][:]
@@ -598,7 +614,11 @@ class Delta(QSO):
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
                    mean_reso, mean_z, resolution_matrix,
                    mean_resolution_matrix, mean_reso_pix, w):
-            if z_qso_i >= z_min_qso and z_qso_i <= z_max_qso:        
+            if z_qso_i >= z_min_qso and z_qso_i <= z_max_qso :
+                
+                if not w_i.any():
+                    # no pixels in this forest
+                    continue    
                 deltas.append(cls(
                     los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i, log_lambda[w_i],
                     weights_i[w_i] if weights_i is not None else None, 

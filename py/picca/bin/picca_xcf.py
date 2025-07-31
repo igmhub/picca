@@ -160,6 +160,20 @@ def main(cmdargs=None):
         required=False,
         help=('Limit the maximum redshift of the quasars '
                 'used as sources for spectra'))
+    
+    parser.add_argument('--min-lambda-obs', 
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Minimum observed wavelength of the for Lya forest pixels '
+                              'in Angstroms'))
+    
+    parser.add_argument('--max-lambda-obs', 
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Maximum observed wavelength of the for Lya forest pixels '
+                              'in Angstroms'))
 
     parser.add_argument(
         '--lambda-abs',
@@ -267,6 +281,12 @@ def main(cmdargs=None):
                         help='Rebin factor for deltas. If not None, deltas will '
                              'be rebinned by that factor')
 
+    parser.add_argument('--min-pixels', 
+                        type=int,
+                        default=20,
+                        required=False,
+                        help=('Minimum number of pixels in forest to accept delta '
+                              'it for the correlation function. Default is 20.'))
 
     args = parser.parse_args(cmdargs)
     if args.nproc is None:
@@ -317,7 +337,7 @@ def main(cmdargs=None):
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo, mode=args.mode)
+                                   cosmo, mode=args.mode, obj_weighting=args.obj_weighting)
     xcf.objs = objs
 
     ### Read deltas
@@ -332,7 +352,10 @@ def main(cmdargs=None):
                                                   nproc=args.nproc,
                                                   rebin_factor=args.rebin_factor,
                                                   z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources)
+                                                  z_max_qso=args.z_max_sources,
+                                                  min_lambda_obs=args.min_lambda_obs,
+                                                  max_lambda_obs=args.max_lambda_obs,
+                                                  min_pixels=args.min_pixels)
     xcf.data = data
     xcf.num_data = num_data
     userprint("")
