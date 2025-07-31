@@ -348,6 +348,19 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 forest.z,
                 self.z_centers)
             one_minus_z_coeffs = 1 - z_coeffs
+
+            if any(rf_wavelength_coeffs < 0) or any(one_minus_rf_wavelength_coeffs < 0):
+                raise ExpectedFluxError(
+                    "Negative coefficients found in the rest-frame wavelength interpolation. "
+                    "This should not happen, please report this issue.")
+            if any(z_coeffs < 0) or any(one_minus_z_coeffs < 0):
+                raise ExpectedFluxError(
+                    "Negative coefficients found in the redshift interpolation. "
+                    "This should not happen, please report this issue.")
+            if any(weights < 0):
+                raise ExpectedFluxError(
+                    "Negative weights found in the forest weights. "
+                    "This should not happen, please report this issue.")
             
             # combined_bin is the index of the bin in the 2D matrix
             combined_bin = z_bin + self.num_z_bins * rf_wavelength_bin
