@@ -353,7 +353,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 raise ExpectedFluxError(
                     "Negative coefficients found in the rest-frame wavelength interpolation. "
                     "This should not happen, please report this issue.")
-            if any(z_coeffs < 0) or any(one_minus_z_coeffs < 0):
+            if z_coeffs < 0 or one_minus_z_coeffs < 0:
                 raise ExpectedFluxError(
                     "Negative coefficients found in the redshift interpolation. "
                     "This should not happen, please report this issue.")
