@@ -358,6 +358,15 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                     "Negative coefficients found in the redshift interpolation. "
                     "This should not happen, please report this issue.")
             if any(weights < 0):
+                print("\n################################")
+                print("################################")
+                print("log_lambda weight ivar continuum eta var_lss fudge")
+                for weight, ivar, continuum, log_lambda in zip(weights, forest.ivar, forest.continuum, forest.log_lambda):
+                    var_lss = self.get_var_lss(log_lambda)
+                    eta = self.get_eta(log_lambda)
+                    fudge = self.get_fudge(log_lambda)
+                    print(f"{log_lambda:.4f} {weight:.4f} {ivar:.4f} {continuum:.4f} {eta:.4f} {var_lss:.4f} {fudge:.4f}")
+
                 raise ExpectedFluxError(
                     "Negative weights found in the forest weights. "
                     "This should not happen, please report this issue.")
