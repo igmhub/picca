@@ -21,8 +21,8 @@ accepted_options = update_accepted_options(accepted_options, [
 defaults = update_default_options(
     defaults, {
         "interpolation type": "1D",
-        "limit z": (1.94, 4.5),
-        "num z bins": 10,
+        "limit z": (1.8, 5.),
+        "num z bins": 3,
     })
 
 ACCEPTED_INTERPOLATION_TYPES = ["1D", "2D"]
@@ -30,18 +30,18 @@ ACCEPTED_INTERPOLATION_TYPES = ["1D", "2D"]
 class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
     """Class to the expected flux as done in the DR16 SDSS analysys
     The mean expected flux is calculated iteratively as explained in
-    du Mas des Bourboux et al. (2020) except that the we don't use 
+    du Mas des Bourboux et al. (2020) except that the we don't use
     the stacking technique to compute the mean quasar continuum.
-    Instead, we build an interpolator. 
+    Instead, we build an interpolator.
 
     Additionally, the mean continuum can be computed in 2D, i.e. the
     mean continuum is computed as a function of both the wavelength and
-    the redshift. 
+    the redshift.
 
     Methods
     -------
     (see Dr16ExpectedFlux in py/picca/delta_extraction/expected_fluxes/dr16_expected_flux.py)
-    
+
     Attributes
     ----------
     (see Dr16ExpectedFlux in py/picca/delta_extraction/expected_fluxes/dr16_expected_flux.py)
@@ -58,12 +58,8 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
     num_z_bins: int
     Number of redshift bins to use for the analysis.
 
-    z_bins: np.ndarray
+    z_bin_edges: np.ndarray
     Bins in redshift used to compute the mean continuum.
-
-    z_centers: np.ndarray
-    Centers of the redshift bins used to compute the mean continuum.
-    This is used to interpolate the mean continuum and its weights.
     """
 
     def __init__(self, config):
@@ -79,13 +75,12 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         ExpectedFluxError if Forest class variables are not set
         """
         self.logger = logging.getLogger(__name__)
-        
+
         # load variables from config
         self.interpolation_type = None
         self.limit_z = None
         self.num_z_bins = None
-        self.z_bins = None
-        self.z_centers = None
+        self.z_bin_edges = None
         self.__parse_config(config)
 
         self.mean_cont = None
@@ -115,7 +110,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 f"Invalid interpolation type '{self.interpolation_type}' "
                 f"required by MeanContinuum2dExpectedFlux. "
                 f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
-        
+
         if self.interpolation_type == "2D":
             limit_z_string = config.get("limit z")
             if limit_z_string is None:
@@ -138,9 +133,8 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                     "Missing argument 'num z bins' required by MeanContinuum2dExpectedFlux")
             self.num_z_bins = num_z_bins
 
-            self.z_bins = np.linspace(self.limit_z[0], self.limit_z[1],
+            self.z_bin_edges = np.linspace(self.limit_z[0], self.limit_z[1],
                                     self.num_z_bins + 1)
-            self.z_centers = (self.z_bins[:-1] + self.z_bins[1:]) / 2
 
     def _initialize_mean_continuum_arrays(self):
         """Initialize mean continuum arrays
@@ -150,16 +144,16 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         # initialize the mean quasar continuum
         if self.interpolation_type == "2D":
             mean_cont = np.ones(
-                (self.z_bins.size - 1, Forest.log_lambda_rest_frame_grid.size))
+                (self.z_bin_edges.size, Forest.log_lambda_rest_frame_grid.size))
             # fill_value cannot be "extrapolate" for RegularGridInterpolator
             # so we use 0.0 instead
             self.get_mean_cont = RegularGridInterpolator(
-                (self.z_centers, Forest.log_lambda_rest_frame_grid), 
+                (self.z_bin_edges, Forest.log_lambda_rest_frame_grid),
                 mean_cont, bounds_error=False, fill_value=0.0
             )
         elif self.interpolation_type == "1D":
             self.mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
-            
+
             self.get_mean_cont = interp1d(
                 Forest.log_lambda_rest_frame_grid,
                 self.mean_cont,
@@ -194,11 +188,11 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 f"Invalid interpolation type '{self.interpolation_type}' "
                 f"required by MeanContinuum2dExpectedFlux. "
                 f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
-        
+
     def compute_mean_cont_1d(self, forests, which_cont=lambda forest: forest.continuum):
         """Compute the mean quasar continuum over the whole sample.
         Then updates the value of self.get_mean_cont to contain it
-        The mean continuum is computed as a function of the rest-frame 
+        The mean continuum is computed as a function of the rest-frame
         wavelength.
 
         Arguments
@@ -209,22 +203,22 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         which_cont: Function or lambda
         Should return what to use as continuum given a forest
         """
-        
+
         """
         # numba implementation shows a memory leak when using
         A_matrix = np.zeros(
             (Forest.log_lambda_rest_frame_grid.size, Forest.log_lambda_rest_frame_grid.size)
         )
-        B_matrix = np.zeros(Forest.log_lambda_rest_frame_grid.size)   
+        B_matrix = np.zeros(Forest.log_lambda_rest_frame_grid.size)
 
         context = multiprocessing.get_context('fork')
         with context.Pool(processes=self.num_processors) as pool:
             arguments = [(
-                    Forest.log_lambda_rest_frame_grid, 
-                    forest.log_lambda, 
-                    forest.flux, 
-                    forest.continuum, 
-                    forest.z, 
+                    Forest.log_lambda_rest_frame_grid,
+                    forest.log_lambda,
+                    forest.flux,
+                    forest.continuum,
+                    forest.z,
                     self.compute_forest_weights(forest, forest.continuum)
                     )
                     for forest in forests if forest.bad_continuum_reason is None]
@@ -243,7 +237,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
 
         # Solve the linear system A_matrix * mean_cont = B_matrix
         self.mean_cont = np.linalg.solve(A_matrix, B_matrix)
-        
+
         # update the interpolator with the mean continuum
         self.get_mean_cont = interp1d(
             Forest.log_lambda_rest_frame_grid,
@@ -257,7 +251,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         A_matrix = np.zeros(
             (Forest.log_lambda_rest_frame_grid.size, Forest.log_lambda_rest_frame_grid.size)
         )
-        B_matrix = np.zeros(Forest.log_lambda_rest_frame_grid.size)   
+        B_matrix = np.zeros(Forest.log_lambda_rest_frame_grid.size)
 
         for forest in forests:
             if forest.bad_continuum_reason is not None:
@@ -268,13 +262,13 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             coeffs, rf_wavelength_bin = interp_coeff_lambda(
                 log_lambda_rf,
                 Forest.log_lambda_rest_frame_grid)
-            
+
             w = np.where(forest.continuum > 0)
             B_matrix[rf_wavelength_bin[w]] += weights[w] * coeffs[w] * forest.flux[w] / forest.continuum[w]
-            
+
             w = np.where((forest.continuum > 0) & (rf_wavelength_bin < Forest.log_lambda_rest_frame_grid.size - 1))
             B_matrix[rf_wavelength_bin[w] + 1] += weights[w] * (1 - coeffs[w]) * forest.flux[w] / forest.continuum[w]
-            
+
             A_matrix[rf_wavelength_bin, rf_wavelength_bin] += weights * coeffs * coeffs
             w = np.where(rf_wavelength_bin < Forest.log_lambda_rest_frame_grid.size - 1)
             A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w]] += weights[w] * coeffs[w] * (1 - coeffs[w])
@@ -299,7 +293,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 "This may be due to a lack of coverage for some wavelengths."
             )
             mean_cont, *_ = np.linalg.lstsq(A_matrix, B_matrix, rcond=None)
-        
+
         # update the interpolator with the mean continuum
         self.get_mean_cont = interp1d(
             Forest.log_lambda_rest_frame_grid,
@@ -310,7 +304,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
     def compute_mean_cont_2d(self, forests, which_cont=lambda forest: forest.continuum):
         """Compute the mean quasar continuum over the whole sample.
         Then updates the value of self.get_mean_cont to contain it
-        The mean continuum is computed as a function of the rest-frame 
+        The mean continuum is computed as a function of the rest-frame
         wavelength and redshift.
 
         Arguments
@@ -322,17 +316,17 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         Should return what to use as continuum given a forest
         """
         self.logger.debug("Entering compute_mean_cont_2d")
-        # for simplicity we introduce a new index 
-        # combined_bin = z_bin + N_z_bins * rf_wavelength_bin
+        # for simplicity we introduce a new index
+        # combined_bin = z_bin + N_z_bin_edges * rf_wavelength_bin
         # where z_bin is the index of the redshift bin and rf_wavelength_bin
         # is the index of the rest-frame wavelength bin.
         # This allows us to use a similar logic as in the 1D case.
-        matrix_size = self.num_z_bins * Forest.log_lambda_rest_frame_grid.size
+        matrix_size = self.z_bin_edges.size * Forest.log_lambda_rest_frame_grid.size
 
         A_matrix = np.zeros(
             (matrix_size, matrix_size)
         )
-        B_matrix = np.zeros(matrix_size)   
+        B_matrix = np.zeros(matrix_size)
 
         for forest in forests:
             if forest.bad_continuum_reason is not None:
@@ -346,7 +340,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             one_minus_rf_wavelength_coeffs = 1 - rf_wavelength_coeffs
             z_coeffs, z_bin = interp_coeff_z(
                 forest.z,
-                self.z_centers)
+                self.z_bin_edges)
             one_minus_z_coeffs = 1 - z_coeffs
 
             if any(rf_wavelength_coeffs < 0) or any(one_minus_rf_wavelength_coeffs < 0):
@@ -370,15 +364,15 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 raise ExpectedFluxError(
                     "Negative weights found in the forest weights. "
                     "This should not happen, please report this issue.")
-            
+
             # combined_bin is the index of the bin in the 2D matrix
-            combined_bin = z_bin + self.num_z_bins * rf_wavelength_bin
-            combined_bin_plus_wavelength = z_bin + self.num_z_bins * (rf_wavelength_bin + 1)
-            combined_bin_plus_z = z_bin + 1 + self.num_z_bins * (rf_wavelength_bin)
-            combined_bin_plus_both = z_bin + 1 + self.num_z_bins * (rf_wavelength_bin + 1)
+            combined_bin = z_bin + self.z_bin_edges.size * rf_wavelength_bin
+            combined_bin_plus_wavelength = z_bin + self.z_bin_edges.size * (rf_wavelength_bin + 1)
+            combined_bin_plus_z = z_bin + 1 + self.z_bin_edges.size * (rf_wavelength_bin)
+            combined_bin_plus_both = z_bin + 1 + self.z_bin_edges.size * (rf_wavelength_bin + 1)
 
             # Fill the B_matrix
-            w = np.where((forest.continuum > 0) & 
+            w = np.where((forest.continuum > 0) &
                          (combined_bin < matrix_size) &
                          (combined_bin_plus_wavelength < matrix_size) &
                          (combined_bin_plus_z < matrix_size) &
@@ -446,16 +440,16 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
 
         # Solve the linear system A_matrix * mean_cont = B_matrix
         mean_cont = np.linalg.solve(A_matrix, B_matrix)
-        # Undo the new indexing
+        # Undo the new indexing (needed to add transposition)
         self.mean_cont = mean_cont.reshape(
-            (self.num_z_bins, Forest.log_lambda_rest_frame_grid.size))
-        
+            (Forest.log_lambda_rest_frame_grid.size , self.z_bin_edges.size)).T
+
         # update the interpolator with the mean continuum
         self.get_mean_cont = RegularGridInterpolator(
-            (self.z_centers, Forest.log_lambda_rest_frame_grid), 
+            (self.z_bin_edges, Forest.log_lambda_rest_frame_grid),
             self.mean_cont, bounds_error=False, fill_value=0.0,
         )
-        
+
     def hdu_cont(self, results):
         """Add to the results file an HDU with the continuum information
 
@@ -466,16 +460,16 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         """
         if self.interpolation_type == "2D":
             # Create meshgrid for evaluation
-            z_meshgrid, log_lam_mesh_grid = np.meshgrid(self.z_centers, Forest.log_lambda_rest_frame_grid, indexing='ij')
+            z_meshgrid, log_lam_mesh_grid = np.meshgrid(self.z_bin_edges, Forest.log_lambda_rest_frame_grid, indexing='ij')
             points = np.stack([z_meshgrid.ravel(), log_lam_mesh_grid.ravel()], axis=-1)
             mean_cont_2d = self.get_mean_cont(points).reshape(z_meshgrid.shape)
-            
+
             results.write([
                 z_meshgrid,
                 log_lam_mesh_grid,
                 mean_cont_2d,
             ],
-                names=['Z_CENTER', 'LOGLAM_REST', 'MEAN_CONT'],
+                names=['Z_BIN_EDGE', 'LOGLAM_REST', 'MEAN_CONT'],
                 units=['', 'log(Angstrom)', Forest.flux_units],
                 extname='CONT')
             results["CONT"].write_comment("2D mean quasar continuum (z, loglam)")
@@ -495,7 +489,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             raise ExpectedFluxError(
                 f"Invalid interpolation type '{self.interpolation_type}' "
                 f"required by MeanContinuum2dExpectedFlux. "
-                f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")  
+                f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
 
 
 @numba.njit()
@@ -506,7 +500,7 @@ def interp_coeff_lambda(rf_wavelength, rf_wavelength_grid):
     ---------
     rf_wavelength: float or np.ndarray
     Rest-frame wavelength in Angstroms
-    
+
     rf_wavelength_grid: np.ndarray
     Rest-frame wavelength nodes where the interpolation is defined
 
@@ -534,7 +528,7 @@ def interp_coeff_z(z, z_grid):
     ---------
     z: float
     Redshift
-    
+
     z: np.ndarray
     Redshift grid where the interpolation is defined
 
@@ -558,7 +552,7 @@ def interp_coeff_z(z, z_grid):
 def compute_mean_cont_1d(log_lambda_rest_frame_grid, log_lambda, flux, continuum, redshift, weight):
     """Compute the mean quasar continuum over the whole sample.
     Then updates the value of self.get_mean_cont to contain it
-    The mean continuum is computed as a function of the rest-frame 
+    The mean continuum is computed as a function of the rest-frame
     wavelength.
 
     Arguments
@@ -578,7 +572,7 @@ def compute_mean_cont_1d(log_lambda_rest_frame_grid, log_lambda, flux, continuum
     coeffs, rf_wavelength_bin = interp_coeff_lambda(
             log_lambda_rf,
             log_lambda_rest_frame_grid)
-    
+
     w = np.where(continuum > 0)
     B_matrix[rf_wavelength_bin[w]] += weight[w] * coeffs[w] * flux[w] / continuum[w]
 
