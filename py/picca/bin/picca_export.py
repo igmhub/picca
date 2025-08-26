@@ -9,7 +9,12 @@ import h5py
 import os.path
 import sys
 
-from picca.utils import smooth_cov, compute_cov, compute_cov_boot
+from numpy.polynomial.legendre import legvander
+from scipy.sparse import coo_array
+
+from picca.utils import (
+    smooth_cov, compute_cov, compute_cov_boot,
+    calculate_xi_ell, get_legendre_bins)
 from picca.utils import userprint
 
 # TODO: add tags here when we are allowed to unblind them
@@ -43,6 +48,17 @@ def main(cmdargs=None):
         required=False,
         help=('Distortion matrix produced via picca_dmat.py, picca_xdmat.py... '
               '(if not provided will be identity)'))
+
+    parser.add_argument('--multipoles', action="store_true",
+                        help='Use multipole extension')
+    parser.add_argument('--lmax-model', type=int, default=6,
+                        help=('Max multipole ell for the model if rmu-binning'
+                              '. Note odd multipoles are removed from auto.')
+                        )
+    parser.add_argument('--lmax-data', type=int, default=10,
+                        help=('Max multipole ell for the output if rmu-binning'
+                              '. Note odd multipoles are removed from auto.')
+                        )
 
     parser.add_argument(
         '--cov',
@@ -111,6 +127,9 @@ def main(cmdargs=None):
     r_trans_max = head['RTMAX']
     r_par_min = head['RPMIN']
     r_par_max = head['RPMAX']
+    nsamples = xi.shape[0]
+
+    is_x_correlation = r_par_min < 0
 
     if "BLINDING" in head:
         blinding = head["BLINDING"]
@@ -133,6 +152,50 @@ def main(cmdargs=None):
         xi_shuffled[w] /= weight_shuffled[w]
         hdul.close()
         xi -= xi_shuffled[:, None]
+
+    if args.multipoles:
+        userprint("Smoothing is turned off for multipoles")
+        args.do_not_smooth_cov = True
+        assert head['RMU_BIN']
+
+        ells_out = np.arange(args.lmax_data + 1)
+        if not is_x_correlation:
+            ells_out = ells_out[ells_out % 2 == 0]
+
+        nell_out = ells_out.size
+        sum_weights = weights.sum(axis=0)
+        sum_weights = sum_weights.reshape(num_bins_r_par, num_bins_r_trans)
+        sum_sum_weights = sum_weights.sum(0)
+        # The following assumes the same effective r and z.
+        # Is there a multipole dependent weighting for effective r and z?
+        r_trans = r_trans.reshape(num_bins_r_par, num_bins_r_trans)
+        r_trans = np.sum(sum_weights * r_trans, 0) / sum_sum_weights
+        r_trans = np.tile(r_trans, nell_out)
+
+        z = z.reshape(num_bins_r_par, num_bins_r_trans)
+        z = np.sum(sum_weights * z, 0) / sum_sum_weights
+        z = np.tile(z, nell_out)
+
+        num_pairs = num_pairs.reshape(num_bins_r_par, num_bins_r_trans).sum(0)
+        num_pairs = np.tile(num_pairs, nell_out)
+        r_par = np.repeat(ells_out, num_bins_r_trans)
+
+        xi, weights = calculate_xi_ell(
+            ells_out, xi, weights, num_bins_r_par, is_x_correlation)
+        header_multipole = [
+            {'name': 'MLTPOLE',
+             'value': True,
+             'comment': 'Specifying if in multipoles.'},
+            {'name': 'NL_DATA',
+             'value': nell_out,
+             'comment': 'Number of output multipoles'}
+        ]
+    else:
+        ells_out = None
+        header_multipole = [
+            {'name': 'MLTPOLE',
+             'value': False,
+             'comment': 'Specifying if in multipoles.'}]
 
     if args.cov is not None:
         userprint(("INFO: The covariance-matrix will be read from file: "
@@ -191,6 +254,8 @@ def main(cmdargs=None):
 
     if args.dmat is not None:
         hdul = fitsio.FITS(args.dmat)
+        head_dmat = hdul[1].read_header()
+
         if data_name == "DA_BLIND" and 'DM_BLIND' in hdul[1].get_colnames():
             dmat = np.array(hdul[1]['DM_BLIND'][:])
             dmat_name = 'DM_BLIND'
@@ -219,6 +284,56 @@ def main(cmdargs=None):
             r_trans_dmat = r_trans.copy()
             z_dmat = z.copy()
         hdul.close()
+
+        if args.multipoles:
+            assert head_dmat['RMU_BIN']
+            nmu_dmat = head_dmat['NP'] * head_dmat['COEFMOD']
+            nr_dmat = head_dmat['NT'] * head_dmat['COEFMOD']
+            dr_dmat = head_dmat['RTMAX'] / nr_dmat
+            ells_model = np.arange(args.lmax_model + 1)
+            if not is_x_correlation:
+                ells_model = ells_model[ells_model % 2 == 0]
+            nell_model = ells_model.size
+
+            # From model multipoles to transverse-radial interpolation matrix.
+            ell_to_tr_matrix = legvander(
+                r_par_dmat, args.lmax_model)[:, ells_model]
+            cols = np.floor(r_trans_dmat / dr_dmat).astype(int)
+            cols = np.repeat(cols, nell_model) + np.tile(
+                np.arange(nell_model) * nr_dmat, cols.size)
+            rows = np.repeat(np.arange(dmat.shape[1]), nell_model)
+            ell_to_tr_matrix = coo_array(
+                (ell_to_tr_matrix.ravel(), (rows, cols)),
+                shape=(dmat.shape[1], nell_model * nr_dmat))
+
+            r_par_dmat = np.repeat(ells_model, nr_dmat)
+            r_trans_dmat = np.tile(
+                r_trans_dmat.reshape(nmu_dmat, nr_dmat).mean(0), nell_model)
+            z_dmat = np.tile(
+                z_dmat.reshape(nmu_dmat, nr_dmat).mean(0), nell_model)
+            dmat = ell_to_tr_matrix.T.dot(dmat.T).T
+
+            del ell_to_tr_matrix, rows, cols
+
+            # From transverse-radial binning to multipoles matrix
+            assert xi.size == nell_out * num_bins_r_trans
+            tr_to_ell_matrix = np.zeros((xi.size, dmat.shape[0]))
+
+            leg_ells = get_legendre_bins(
+                ells_out, num_bins_r_par, is_x_correlation)
+
+            for i in range(xi.size):
+                ell = i // num_bins_r_trans
+                j1 = i % num_bins_r_trans
+                tr_to_ell_matrix[i, j1::num_bins_r_trans] = leg_ells[ell]
+
+            dmat = tr_to_ell_matrix.dot(dmat)
+            del tr_to_ell_matrix
+
+            header_multipole.append({
+                'name': 'NL_MODEL',
+                'value': nell_model,
+                'comment': 'Number of model multipoles'})
     else:
         dmat = np.eye(len(xi))
         r_par_dmat = r_par.copy()
@@ -268,8 +383,14 @@ def main(cmdargs=None):
         'name': 'WL',
         'value': head['WL'],
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    },
-    ]
+    }, {
+        'name': "RMU_BIN",
+        'value': 'RMU_BIN' in head and head['RMU_BIN'] and not args.multipoles,
+        'comment': 'True if binned in r, mu'
+    }, {
+        'name': "NSAMPLES", 'value': nsamples, 'comment': 'Number of samples'
+    }
+    ] + header_multipole
     comment = [
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
@@ -309,7 +430,7 @@ def main(cmdargs=None):
         else:
             raise ValueError("Unknown correlation type: {}".format(args.blind_corr_type))
 
-        if corr_size == len(xi):
+        if corr_size == num_bins_r_par * num_bins_r_trans:
             # Read the blinding file and get the right template
             blinding_filename = blinding_dir + blinding_templates[blinding]['standard']
         else:
@@ -323,14 +444,19 @@ def main(cmdargs=None):
         hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
         diff_grid = np.array([float.fromhex(x) for x in hex_diff])
 
-        if corr_size == len(xi):
+        if corr_size == num_bins_r_par * num_bins_r_trans:
             diff = diff_grid
         else:
             # Interpolate the blinding template on the regular grid
             interp = scipy.interpolate.RectBivariateSpline(
-                    rp_interp_grid, rt_interp_grid,
-                    diff_grid.reshape(len(rp_interp_grid), len(rt_interp_grid)), kx=3, ky=3)
+                rp_interp_grid, rt_interp_grid,
+                diff_grid.reshape(len(rp_interp_grid), len(rt_interp_grid)),
+                kx=3, ky=3)
             diff = interp.ev(r_par, r_trans)
+
+        if args.multipoles:
+            diff = calculate_xi_ell(
+                ells_out, diff, [], num_bins_r_par, is_x_correlation)[0]
 
         # Check that the shapes match
         if np.shape(xi) != np.shape(diff):
