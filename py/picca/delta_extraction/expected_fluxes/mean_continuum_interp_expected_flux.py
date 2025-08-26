@@ -8,7 +8,6 @@ from scipy.interpolate import interp1d, RegularGridInterpolator
 
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.astronomical_objects.forest import Forest
-#from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux, defaults, accepted_options
 from picca.delta_extraction.expected_fluxes.dr16_fixed_fudge_expected_flux import Dr16FixedFudgeExpectedFlux, defaults, accepted_options
 from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options,
@@ -333,6 +332,11 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 continue
 
             log_lambda_rf = forest.log_lambda - np.log10(1 + forest.z)
+
+            # get the mean continuum
+            points = np.column_stack([np.full_like(log_lambda_rf, forest.z), log_lambda_rf])
+            forest_mean_cont = self.get_mean_cont(points)
+
             weights = self.compute_forest_weights(forest, forest.continuum)
             rf_wavelength_coeffs, rf_wavelength_bin = interp_coeff_lambda(
                 log_lambda_rf,
@@ -372,12 +376,15 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             combined_bin_plus_both = z_bin + 1 + self.z_bin_edges.size * (rf_wavelength_bin + 1)
 
             # Fill the B_matrix
-            w = np.where((forest.continuum > 0) &
+            w = np.where((forest.continuum != 0) &
                          (combined_bin < matrix_size) &
                          (combined_bin_plus_wavelength < matrix_size) &
                          (combined_bin_plus_z < matrix_size) &
                          (combined_bin_plus_both < matrix_size))
-            flux_over_cont = forest.flux[w] / forest.continuum[w]
+
+            # we should divide only by the qso multiplicative term, not the whole continuum, so we multiply back by the mean continuum
+            flux_over_cont = (forest.flux[w] / forest.continuum[w]) * forest_mean_cont[w]
+
             # diagonal elements
             B_matrix[combined_bin[w]] += weights[w] * z_coeffs * rf_wavelength_coeffs[w] * flux_over_cont
             # off-diagonal elements
@@ -387,11 +394,8 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
 
             # Fill the A_matrix
             # diagonal elements
-            w = np.where((combined_bin < matrix_size) &
-                         (combined_bin_plus_wavelength < matrix_size) &
-                         (combined_bin_plus_z < matrix_size) &
-                         (combined_bin_plus_both < matrix_size))
-            A_matrix[combined_bin, combined_bin] += weights * z_coeffs * z_coeffs * rf_wavelength_coeffs * rf_wavelength_coeffs
+
+            A_matrix[combined_bin[w], combined_bin[w]] += weights[w] * z_coeffs * z_coeffs * rf_wavelength_coeffs[w] * rf_wavelength_coeffs[w]
             # off-diagonal elements - wl
             aux = weights[w] * z_coeffs * z_coeffs * rf_wavelength_coeffs[w] * one_minus_rf_wavelength_coeffs[w]
             A_matrix[combined_bin[w], combined_bin_plus_wavelength[w]] += aux
