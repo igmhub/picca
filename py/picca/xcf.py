@@ -33,6 +33,8 @@ z_cut_max = None
 z_cut_min = None
 z_min_pixels = None
 z_max_pixels = None
+z_min_pairs = None
+z_max_pairs = None
 ang_max = None
 nside = None
 
@@ -243,10 +245,16 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
 
         if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
             (z_max_pixels is not None and z1[i] > z_max_pixels)):
-                continue
+            continue
 
         for j in range(len(z2)):
             if weights2[j] == 0:
+                continue
+
+            z = (z1[i] + z2[j]) / 2
+
+            if ((z_min_pairs is not None and z < z_min_pairs) or
+                (z_max_pairs is not None and z > z_max_pairs)):
                 continue
 
             if ang_correlation:
@@ -262,7 +270,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
 
             delta_times_weight = delta1[i] * weights1[i] * weights2[j]
             weights12 = weights1[i] * weights2[j]
-            z = (z1[i] + z2[j]) / 2
+
 
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
@@ -361,10 +369,17 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
         if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
             (z_max_pixels is not None and z1[i] > z_max_pixels)):
                 continue
-        
+
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
+
+            z = (z1[i] + z2[j]) / 2
+
+            if ((z_min_pairs is not None and z < z_min_pairs) or
+                (z_max_pairs is not None and z > z_max_pairs)):
+                continue
+
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
             if (r_par >= r_par_max or r_trans >= r_trans_max or
@@ -411,10 +426,17 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
         if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
             (z_max_pixels is not None and z1[i] > z_max_pixels)):
                 continue
-        
+
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
+
+            z = (z1[i] + z2[j]) / 2
+
+            if ((z_min_pairs is not None and z < z_min_pairs) or
+                (z_max_pairs is not None and z > z_max_pairs)):
+                continue
+
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
             if (r_par >= r_par_max or r_trans >= r_trans_max or
@@ -422,7 +444,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
                 continue
 
             weights12 = weights1[i] * weights2[j]
-            z = (z1[i] + z2[j]) / 2
+
 
             # this scale factor applies to all of the eta terms
             # it depends on i and j so it cannot be factored out

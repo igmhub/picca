@@ -33,6 +33,8 @@ z_cut_max = None
 z_cut_min = None
 z_min_pixels = None
 z_max_pixels = None
+z_min_pairs = None
+z_max_pairs = None
 r_trans_max = None
 ang_max = None
 nside = None
@@ -258,7 +260,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
     for i in range(z1.size):
         if weights1[i] == 0:
             continue
-        
+
         if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
             (z_max_pixels is not None and z1[i] > z_max_pixels)):
                 continue
@@ -272,14 +274,20 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
             if dv_kms < zerr_cut_kms:
                 continue
 
-        for j in range(z2.size): 
+        for j in range(z2.size):
             if weights2[j] == 0:
+                continue
+
+            z = (z1[i] + z2[j]) / 2
+
+            if ((z_min_pairs is not None and z < z_min_pairs) or
+                (z_max_pairs is not None and z > z_max_pairs)):
                 continue
 
             if ((z_min_pixels is not None and z2[j] < z_min_pixels) or
                 (z_max_pixels is not None and z2[j] > z_max_pixels)):
                 continue
-            
+
             if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
                 # mean redshift of quasar-pixel pair
                 z_qF = 0.5 * (z2[j] + z_qso_1)
@@ -288,7 +296,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
                 dv_kms *= constants.SPEED_LIGHT
                 if dv_kms < zerr_cut_kms:
                     continue
-            
+
             if ang_correlation:
                 r_par = r_comov1[i] / r_comov2[j]
                 if not x_correlation and r_par < 1.:
@@ -308,7 +316,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
             delta_times_weight2 = delta2[j] * weights2[j]
             delta_times_weight12 = delta_times_weight1 * delta_times_weight2
             weights12 = weights1[i] * weights2[j]
-            z = (z1[i] + z2[j]) / 2
+
 
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
@@ -439,6 +447,12 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             if weights2[j] == 0:
                 continue
 
+            z = (z1[i] + z2[j]) / 2
+
+            if ((z_min_pairs is not None and z < z_min_pairs) or
+                (z_max_pairs is not None and z > z_max_pairs)):
+                continue
+
             if ((z_min_pixels is not None and z2[j] < z_min_pixels) or
                 (z_max_pixels is not None and z2[j] > z_max_pixels)):
                     continue
@@ -451,7 +465,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                 dv_kms *= constants.SPEED_LIGHT
                 if dv_kms < zerr_cut_kms:
                     continue
-            
+
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
             if not x_correlation:
@@ -528,6 +542,12 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             if weights2[j] == 0:
                 continue
 
+            z = (z1[i] + z2[j]) / 2
+
+            if ((z_min_pairs is not None and z < z_min_pairs) or
+                (z_max_pairs is not None and z > z_max_pairs)):
+                continue
+
             if ((z_min_pixels is not None and z2[j] < z_min_pixels) or
                 (z_max_pixels is not None and z2[j] > z_max_pixels)):
                     continue
@@ -553,7 +573,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                     continue
 
             weights12 = weights1[i] * weights2[j]
-            z = (z1[i] + z2[j]) / 2
+
             # default cf.alpha = args.z_evol = 2.9
             # cf.alpha2 = cf.alpha for auto-correlation
             # and cf.alpha2 = args.z_evol2 = 2.9 for cross-correlation with other deltas

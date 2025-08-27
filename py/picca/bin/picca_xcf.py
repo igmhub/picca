@@ -160,19 +160,33 @@ def main(cmdargs=None):
         required=False,
         help=('Limit the maximum redshift of the quasars '
                 'used as sources for spectra'))
-    
-    parser.add_argument('--z-min-pixels', 
+
+    parser.add_argument('--z-min-pixels',
                         type=float,
                         default=None,
                         required=False,
                         help=('Limit the minimum redshift of the forest pixels that '
                               'contribute to the correlation function. If None, no cut is applied.'))
-    
-    parser.add_argument('--z-max-pixels', 
+
+    parser.add_argument('--z-max-pixels',
                         type=float,
                         default=None,
                         required=False,
                         help=('Limit the maximum redshift of the forest pixels that '
+                              'contribute to the correlation function. If None, no cut is applied.'))
+
+    parser.add_argument('--z-min-pairs',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Limit the minimum redshift of the absorber-tracer pairs that '
+                              'contribute to the correlation function. If None, no cut is applied.'))
+
+    parser.add_argument('--z-max-pairs',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Limit the maximum redshift of the  absorber-tracer pairs that '
                               'contribute to the correlation function. If None, no cut is applied.'))
 
 
@@ -294,6 +308,8 @@ def main(cmdargs=None):
     xcf.z_cut_min = args.z_cut_min
     xcf.z_min_pixels = args.z_min_pixels
     xcf.z_max_pixels = args.z_max_pixels
+    xcf.z_min_pairs = args.z_min_pairs
+    xcf.z_max_pairs = args.z_max_pairs
     xcf.r_trans_max = args.rt_max
     xcf.num_bins_r_par = args.np
     xcf.num_bins_r_trans = args.nt
@@ -303,7 +319,7 @@ def main(cmdargs=None):
     if (args.zerr_cut_deg is None) != (args.zerr_cut_kms is None):
         raise ValueError("Options --zerr-cut-deg and --zerr-cut-kms must be "
                          "specified together")
-    
+
     xcf.zerr_cut_deg = args.zerr_cut_deg
     xcf.zerr_cut_kms = args.zerr_cut_kms
 
