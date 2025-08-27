@@ -106,7 +106,7 @@ def main(cmdargs=None):
                         help=('Angular cut (in degrees) between a pixel and '
                               'the background quasar of the other pixel (to '
                               'avoid contamination from redshift errors).'))
-    
+
     parser.add_argument('--zerr-cut-kms',
                         type=float,
                         default=None,
@@ -148,21 +148,34 @@ def main(cmdargs=None):
         required=False,
         help=('Limit the maximum redshift of the quasars '
                 'used as sources for spectra'))
-    
-    parser.add_argument('--z-min-pixels', 
+
+    parser.add_argument('--z-min-pixels',
                         type=float,
                         default=None,
                         required=False,
                         help=('Limit the minimum redshift of the forest pixels that '
                               'contribute to the distortion matrix. If None, no cut is applied.'))
-    
-    parser.add_argument('--z-max-pixels', 
+
+    parser.add_argument('--z-max-pixels',
                         type=float,
                         default=None,
                         required=False,
                         help=('Limit the maximum redshift of the forest pixels that '
                               'contribute to the distortion matrix. If None, no cut is applied.'))
 
+    parser.add_argument('--z-min-pairs',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Limit the minimum redshift of the absorber pairs that '
+                              'contribute to the correlation function. If None, no cut is applied.'))
+
+    parser.add_argument('--z-max-pairs',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Limit the maximum redshift of the  absorber pairs that '
+                              'contribute to the correlation function. If None, no cut is applied.'))
 
     parser.add_argument(
         '--lambda-abs',
@@ -294,6 +307,8 @@ def main(cmdargs=None):
     cf.z_cut_min = args.z_cut_min
     cf.z_min_pixels = args.z_min_pixels
     cf.z_max_pixels = args.z_max_pixels
+    cf.z_min_pairs = args.z_min_pairs
+    cf.z_max_pairs = args.z_max_pairs
     cf.num_bins_r_par = args.np
     cf.num_bins_r_trans = args.nt
     cf.num_model_bins_r_par = args.np * args.coef_binning_model
