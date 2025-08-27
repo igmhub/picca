@@ -160,6 +160,21 @@ def main(cmdargs=None):
         required=False,
         help=('Limit the maximum redshift of the quasars '
                 'used as sources for spectra'))
+    
+    parser.add_argument('--z-min-pixels', 
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Limit the minimum redshift of the forest pixels that '
+                              'contribute to the correlation function. If None, no cut is applied.'))
+    
+    parser.add_argument('--z-max-pixels', 
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Limit the maximum redshift of the forest pixels that '
+                              'contribute to the correlation function. If None, no cut is applied.'))
+
 
     parser.add_argument(
         '--lambda-abs',
@@ -277,6 +292,8 @@ def main(cmdargs=None):
     xcf.r_par_min = args.rp_min
     xcf.z_cut_max = args.z_cut_max
     xcf.z_cut_min = args.z_cut_min
+    xcf.z_min_pixels = args.z_min_pixels
+    xcf.z_max_pixels = args.z_max_pixels
     xcf.r_trans_max = args.rt_max
     xcf.num_bins_r_par = args.np
     xcf.num_bins_r_trans = args.nt

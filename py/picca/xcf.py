@@ -31,6 +31,8 @@ r_par_min = None
 r_trans_max = None
 z_cut_max = None
 z_cut_min = None
+z_min_pixels = None
+z_max_pixels = None
 ang_max = None
 nside = None
 
@@ -239,6 +241,10 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
         if weights1[i] == 0:
             continue
 
+        if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
+            (z_max_pixels is not None and z1[i] > z_max_pixels)):
+                continue
+
         for j in range(len(z2)):
             if weights2[j] == 0:
                 continue
@@ -351,6 +357,11 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
     for i in range(z1.size):
         if weights1[i] == 0:
             continue
+
+        if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
+            (z_max_pixels is not None and z1[i] > z_max_pixels)):
+                continue
+        
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
@@ -396,6 +407,11 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
     for i in range(z1.size):
         if weights1[i] == 0:
             continue
+
+        if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
+            (z_max_pixels is not None and z1[i] > z_max_pixels)):
+                continue
+        
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue

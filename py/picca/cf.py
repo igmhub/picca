@@ -31,6 +31,8 @@ r_par_max = None
 r_par_min = None
 z_cut_max = None
 z_cut_min = None
+z_min_pixels = None
+z_max_pixels = None
 r_trans_max = None
 ang_max = None
 nside = None
@@ -256,6 +258,10 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
     for i in range(z1.size):
         if weights1[i] == 0:
             continue
+        
+        if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
+            (z_max_pixels is not None and z1[i] > z_max_pixels)):
+                continue
 
         if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
             # mean redshift of quasar-pixel pair
@@ -268,6 +274,10 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
 
         for j in range(z2.size): 
             if weights2[j] == 0:
+                continue
+
+            if ((z_min_pixels is not None and z2[j] < z_min_pixels) or
+                (z_max_pixels is not None and z2[j] > z_max_pixels)):
                 continue
             
             if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
@@ -412,6 +422,10 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
         if weights1[i] == 0:
             continue
 
+        if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
+            (z_max_pixels is not None and z1[i] > z_max_pixels)):
+                continue
+
         if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
             # mean redshift of quasar-pixel pair
             z_qF = 0.5 * (z1[i] + z_qso_2)
@@ -424,6 +438,10 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
+
+            if ((z_min_pixels is not None and z2[j] < z_min_pixels) or
+                (z_max_pixels is not None and z2[j] > z_max_pixels)):
+                    continue
 
             if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
                 # mean redshift of quasar-pixel pair
@@ -493,6 +511,10 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
         if weights1[i] == 0:
             continue
 
+        if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
+            (z_max_pixels is not None and z1[i] > z_max_pixels)):
+                continue
+
         if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
             # mean redshift of quasar-pixel pair
             z_qF = 0.5 * (z1[i] + z_qso_2)
@@ -505,6 +527,10 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
+
+            if ((z_min_pixels is not None and z2[j] < z_min_pixels) or
+                (z_max_pixels is not None and z2[j] > z_max_pixels)):
+                    continue
 
             if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
                 # mean redshift of quasar-pixel pair
