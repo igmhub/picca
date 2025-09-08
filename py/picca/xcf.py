@@ -366,19 +366,13 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
         if weights1[i] == 0:
             continue
 
-        #if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
-        #    (z_max_pixels is not None and z1[i] > z_max_pixels)):
-        #        continue
+        if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
+            (z_max_pixels is not None and z1[i] > z_max_pixels)):
+            continue
 
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
-
-            #z = (z1[i] + z2[j]) / 2
-
-            #if ((z_min_pairs is not None and z < z_min_pairs) or
-            #    (z_max_pairs is not None and z > z_max_pairs)):
-            #   continue
 
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
@@ -498,7 +492,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
             '''
             We write the full development here (see eq. 20,21,6 of dMdB20)
             xi^{distort}_A = sum_B D_AB xi^{true}_B
-            D_AB = 1/W_A sum_{ij in A} w_i w_j sum_{kp in B} ( Eta_ik )
+            D_AB = 1/W_A sum_{ij in A} w_i w_j sum_{kj in B} ( Eta_ik )
             Eta_ik = deltakron_ik - w_k/sw - w_k dll_i dll_k / swsll
 
             where dll_i = log_lambda_minus_mean_i
@@ -511,11 +505,11 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
 
             W_A D_AB
             = sum_{ij} w_i*w_j*
-                sum_{kp} ( deltakron_ik - w1_k/sw1 - w1_k*dll1_i*dll1_k / swsll1)
+                sum_{kj} ( deltakron_ik - w1_k/sw1 - w1_k*dll1_i*dll1_k / swsll1)
 
             = sum_{ij} w_i*w_j*(
                 1  (identity term)
-                - sum_k w1_k/sw1                            = - sum_p eta2_p
+                - sum_k w1_k/sw1                            = - sum_k eta2_k
                 - sum_k w1_k*dll1_i*dll1_k/swsll1           = - sum_k eta4_k*dll1_i
 
             in case of a selection of pairs per redshift bin,

@@ -430,41 +430,35 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
         if weights1[i] == 0:
             continue
 
-        #if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
-        #    (z_max_pixels is not None and z1[i] > z_max_pixels)):
-        #        continue
+        if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
+            (z_max_pixels is not None and z1[i] > z_max_pixels)):
+            continue
 
-        #if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
-        #    # mean redshift of quasar-pixel pair
-        #    z_qF = 0.5 * (z1[i] + z_qso_2)
-        #    # velocity separation between pixel 1 and backgroud quasar 2
-        #    dv_kms = np.abs(z1[i] - z_qso_2)/(1 + z_qF)
-        #    dv_kms *= constants.SPEED_LIGHT
-        #    if dv_kms < zerr_cut_kms:
-        #        continue
+        if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
+            # mean redshift of quasar-pixel pair
+            z_qF = 0.5 * (z1[i] + z_qso_2)
+            # velocity separation between pixel 1 and backgroud quasar 2
+            dv_kms = np.abs(z1[i] - z_qso_2)/(1 + z_qF)
+            dv_kms *= constants.SPEED_LIGHT
+            if dv_kms < zerr_cut_kms:
+                continue
 
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
 
-            #z = (z1[i] + z2[j]) / 2
+            if ((z_min_pixels is not None and z2[j] < z_min_pixels) or
+                (z_max_pixels is not None and z2[j] > z_max_pixels)):
+                continue
 
-            #if ((z_min_pairs is not None and z < z_min_pairs) or
-            #    (z_max_pairs is not None and z > z_max_pairs)):
-            #    continue
-
-            #if ((z_min_pixels is not None and z2[j] < z_min_pixels) or
-            #    (z_max_pixels is not None and z2[j] > z_max_pixels)):
-            #        continue
-
-            #if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
-            #    # mean redshift of quasar-pixel pair
-            #    z_qF = 0.5 * (z2[j] + z_qso_1)
-            #    # velocity separation between pixel 1 and backgroud quasar 2
-            #    dv_kms = np.abs(z2[j] - z_qso_1)/(1 + z_qF)
-            #    dv_kms *= constants.SPEED_LIGHT
-            #    if dv_kms < zerr_cut_kms:
-            #        continue
+            if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
+                # mean redshift of quasar-pixel pair
+                z_qF = 0.5 * (z2[j] + z_qso_1)
+                # velocity separation between pixel 1 and backgroud quasar 2
+                dv_kms = np.abs(z2[j] - z_qso_1)/(1 + z_qF)
+                dv_kms *= constants.SPEED_LIGHT
+                if dv_kms < zerr_cut_kms:
+                    continue
 
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
@@ -473,9 +467,9 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             if (r_par >= r_par_max or r_trans >= r_trans_max or
                     r_par < r_par_min):
                 continue
-            #if remove_same_half_plate_close_pairs and same_half_plate:
-            #    if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
-            #        continue
+            if remove_same_half_plate_close_pairs and same_half_plate:
+                if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
+                    continue
             num_pairs += 1
 
     if num_pairs == 0:
@@ -497,7 +491,6 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
     log_lambda_minus_mean2 = log_lambda2 - mean_log_lambda2
 
     # denominator third term in equation 6 of du Mas des Bourboux et al. 2020
-    # JG : is this what we want or do we need to apply selection ??
     sum_weights_square_log_lambda_minus_mean1 = (
         weights1 * log_lambda_minus_mean1**2).sum()
     sum_weights_square_log_lambda_minus_mean2 = (
