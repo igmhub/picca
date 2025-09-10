@@ -725,7 +725,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                         sum_weights_square_log_lambda_minus_mean2)
 
     # Now add all the contributions together
-    unique_bins_model = np.unique(all_bins_model) # includes bins outside of redshift bin
+    unique_bins_model = np.unique(all_model_bins) # includes bins outside of redshift bin
 
     num_selected_pairs = counter_of_selected_pairs
     for pair in range(num_selected_pairs):
