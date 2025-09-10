@@ -410,12 +410,17 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
     #-- Notice that the dtype is numba.int32
 
     # set default to -1 to make sure all used entries are well defined
-    all_bins = -1 * np.ones(num_pairs, dtype=int32)
-    all_bins_model = np.zeros(num_pairs, dtype=int32)
-    all_i = np.zeros(num_pairs, dtype=int32)
-    all_j = np.zeros(num_pairs, dtype=int32)
+    all_selected_data_bins = -1 * np.ones(num_pairs, dtype=int32)
+    all_selected_model_bins = np.zeros(num_pairs, dtype=int32)
+    all_selected_i = np.zeros(num_pairs, dtype=int32)
+    all_selected_j = np.zeros(num_pairs, dtype=int32)
+
+    # this can be a larger set than all_selected_model_bins
+    # when we are considering redshift bins
+    all_model_bins = np.zeros(num_pairs, dtype=int32)
 
     counter_of_selected_pairs = 0
+    counter_of_pairs = 0
     for i in range(z1.size):
         if weights1[i] == 0:
             continue
@@ -468,13 +473,15 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
             model_bins = int32(model_bins_r_trans +
                                num_model_bins_r_trans * model_bins_r_par)
 
+            all_model_bins[counter_of_pairs] = model_bins
+            counter_of_pairs += 1
 
             if i_selected and j_selected :
                 #-- This will be used later to fill the distortion matrix
-                all_bins_model[counter_of_selected_pairs] = model_bins
-                all_bins[counter_of_selected_pairs] = bins
-                all_i[counter_of_selected_pairs] = i
-                all_j[counter_of_selected_pairs] = j
+                all_selected_model_bins[counter_of_selected_pairs] = model_bins
+                all_selected_data_bins[counter_of_selected_pairs] = bins
+                all_selected_i[counter_of_selected_pairs] = i
+                all_selected_j[counter_of_selected_pairs] = j
                 counter_of_selected_pairs += 1
 
                 #-- Fill effective quantities (r_par, r_trans, z_eff, weight_eff)
@@ -523,30 +530,30 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
 
             # first eta, second term: weight/sum(weights)
             # second eta, first term: kronecker delta
-            if j_selected :
-                eta2[j + num_pixels2 * model_bins] +=  zfac *weights1[i] / sum_weights1
+
+            # we have to count those terms even if the pair(ij) is not in the redshift bin
+            eta2[j + num_pixels2 * model_bins] +=  zfac *weights1[i] / sum_weights1
 
             if order1 == 1:
                 # first eta, third term: (non-zero only for order=1)
                 #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
                 #   sum(weight*(Lambda-bar(Lambda)**2))
                 # second eta, first term: kronecker delta
-                if j_selected :
-                    eta4[j + num_pixels2 * model_bins] +=  zfac *(
-                        weights1[i] * log_lambda_minus_mean1[i] /
-                        sum_weights_square_log_lambda_minus_mean1)
+                eta4[j + num_pixels2 * model_bins] +=  zfac *(
+                    weights1[i] * log_lambda_minus_mean1[i] /
+                    sum_weights_square_log_lambda_minus_mean1)
 
     # Now add all the contributions together
-    unique_bins_model = np.unique(all_bins_model)
+    unique_model_bins = np.unique(all_model_bins) # includes bins outside of redshift bin
 
     num_selected_pairs = counter_of_selected_pairs
     for pair in range(num_selected_pairs):
-        i = all_i[pair]
-        j = all_j[pair]
-        bins = all_bins[pair]
+        i = all_selected_i[pair]
+        j = all_selected_j[pair]
+        bins = all_selected_data_bins[pair]
         if bins < 0 :
             raise IndexError("negative bin index")
-        model_bins = all_bins_model[pair]
+        model_bins = all_selected_model_bins[pair]
         weights12 = weights1[i] * weights2[j]
         # first eta, first term: kronecker delta
         # second eta, first term: kronecker delta
@@ -564,7 +571,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
         dmat[dmat_bin] +=  zfac *weights12
 
         # rest of the terms
-        for k in unique_bins_model:
+        for k in unique_model_bins : # includes bins outside of redshift bin
             dmat_bin = k + num_model_bins_r_par * num_model_bins_r_trans * bins
             dmat[dmat_bin] += (
                 weights12 *
