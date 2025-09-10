@@ -1,4 +1,6 @@
 """This module defines the method compute_continuum to compute the quasar continua"""
+import warnings
+
 import iminuit
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
@@ -92,7 +94,6 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     error = np.max([np.fabs(zero_point) / 2., 1e-6])
 
     # debugging code
-    import warnings
     warnings.filterwarnings("error", category=iminuit.util.IMinuitWarning)
     with warnings.catch_warnings():
         warnings.filterwarnings("error", category=iminuit.util.IMinuitWarning)
