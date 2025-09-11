@@ -33,6 +33,8 @@ z_cut_max = None
 z_cut_min = None
 z_min_pixels = None
 z_max_pixels = None
+z_min_pairs = None
+z_max_pairs = None
 r_trans_max = None
 ang_max = None
 nside = None
@@ -258,7 +260,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
     for i in range(z1.size):
         if weights1[i] == 0:
             continue
-        
+
         if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
             (z_max_pixels is not None and z1[i] > z_max_pixels)):
                 continue
@@ -272,14 +274,20 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
             if dv_kms < zerr_cut_kms:
                 continue
 
-        for j in range(z2.size): 
+        for j in range(z2.size):
             if weights2[j] == 0:
+                continue
+
+            z = (z1[i] + z2[j]) / 2
+
+            if ((z_min_pairs is not None and z < z_min_pairs) or
+                (z_max_pairs is not None and z > z_max_pairs)):
                 continue
 
             if ((z_min_pixels is not None and z2[j] < z_min_pixels) or
                 (z_max_pixels is not None and z2[j] > z_max_pixels)):
                 continue
-            
+
             if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
                 # mean redshift of quasar-pixel pair
                 z_qF = 0.5 * (z2[j] + z_qso_1)
@@ -288,7 +296,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
                 dv_kms *= constants.SPEED_LIGHT
                 if dv_kms < zerr_cut_kms:
                     continue
-            
+
             if ang_correlation:
                 r_par = r_comov1[i] / r_comov2[j]
                 if not x_correlation and r_par < 1.:
@@ -308,7 +316,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z_qso_
             delta_times_weight2 = delta2[j] * weights2[j]
             delta_times_weight12 = delta_times_weight1 * delta_times_weight2
             weights12 = weights1[i] * weights2[j]
-            z = (z1[i] + z2[j]) / 2
+
 
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
@@ -424,7 +432,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
 
         if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
             (z_max_pixels is not None and z1[i] > z_max_pixels)):
-                continue
+            continue
 
         if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
             # mean redshift of quasar-pixel pair
@@ -441,7 +449,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
 
             if ((z_min_pixels is not None and z2[j] < z_min_pixels) or
                 (z_max_pixels is not None and z2[j] > z_max_pixels)):
-                    continue
+                continue
 
             if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
                 # mean redshift of quasar-pixel pair
@@ -451,7 +459,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                 dv_kms *= constants.SPEED_LIGHT
                 if dv_kms < zerr_cut_kms:
                     continue
-            
+
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
             if not x_correlation:
@@ -502,18 +510,28 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
     eta8 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans)
 
     #-- Notice that the dtype is numba.int32
-    all_bins = np.zeros(num_pairs, dtype=int32)
-    all_bins_model = np.zeros(num_pairs, dtype=int32)
-    all_i = np.zeros(num_pairs, dtype=int32)
-    all_j = np.zeros(num_pairs, dtype=int32)
-    k = 0
+
+    # set default to -1 to make sure all used entries are well defined
+    all_selected_data_bins = -1*np.ones(num_pairs, dtype=int32)
+    all_selected_model_bins = np.zeros(num_pairs, dtype=int32)
+    all_selected_i = np.zeros(num_pairs, dtype=int32)
+    all_selected_j = np.zeros(num_pairs, dtype=int32)
+
+    # this can be a larger set than all_selected_model_bins
+    # when we are considering redshift bins
+    all_model_bins = np.zeros(num_pairs, dtype=int32)
+
+    counter_of_selected_pairs = 0
+    counter_of_pairs = 0
     for i in range(z1.size):
         if weights1[i] == 0:
             continue
 
+        i_selected = True
+
         if ((z_min_pixels is not None and z1[i] < z_min_pixels) or
             (z_max_pixels is not None and z1[i] > z_max_pixels)):
-                continue
+            i_selected = False # keep going because can contribute to continuum
 
         if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
             # mean redshift of quasar-pixel pair
@@ -522,15 +540,23 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             dv_kms = np.abs(z1[i] - z_qso_2)/(1 + z_qF)
             dv_kms *= constants.SPEED_LIGHT
             if dv_kms < zerr_cut_kms:
-                continue
+                i_selected = False # keep going because can contribute to continuum
 
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
 
+            z = (z1[i] + z2[j]) / 2
+
+            j_selected  = True
+
+            if ((z_min_pairs is not None and z < z_min_pairs) or
+                (z_max_pairs is not None and z > z_max_pairs)):
+                j_selected  = False # keep going because can contribute to continuum
+
             if ((z_min_pixels is not None and z2[j] < z_min_pixels) or
                 (z_max_pixels is not None and z2[j] > z_max_pixels)):
-                    continue
+                j_selected = False # keep going because can contribute to continuum
 
             if (zerr_cut_deg is not None) and (ang < zerr_cut_deg*np.pi/180.):
                 # mean redshift of quasar-pixel pair
@@ -539,7 +565,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                 dv_kms = np.abs(z2[j] - z_qso_1)/(1 + z_qF)
                 dv_kms *= constants.SPEED_LIGHT
                 if dv_kms < zerr_cut_kms:
-                    continue
+                    j_selected = False # keep going because can contribute to continuum
 
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
@@ -547,13 +573,13 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                 r_par = np.abs(r_par)
             if (r_par >= r_par_max or r_trans >= r_trans_max or
                     r_par < r_par_min):
-                continue
+                continue # outside of model range, so not in matrix
             if remove_same_half_plate_close_pairs and same_half_plate:
                 if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
-                    continue
+                    j_selected = False # keep going because can contribute to continuum
 
             weights12 = weights1[i] * weights2[j]
-            z = (z1[i] + z2[j]) / 2
+
             # default cf.alpha = args.z_evol = 2.9
             # cf.alpha2 = cf.alpha for auto-correlation
             # and cf.alpha2 = args.z_evol2 = 2.9 for cross-correlation with other deltas
@@ -576,24 +602,69 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             model_bins = int32(model_bins_r_trans +
                                num_model_bins_r_trans * model_bins_r_par)
 
-            #-- This will be used later to fill the distortion matrix
-            all_bins_model[k] = model_bins
-            all_bins[k] = bins
-            all_i[k] = i
-            all_j[k] = j
-            k += 1
+            all_model_bins[counter_of_pairs] = model_bins
+            counter_of_pairs += 1
 
-            #-- Fill effective quantities (r_par, r_trans, z_eff, weight_eff)
-            r_par_eff[model_bins] += weights12 * r_par
-            r_trans_eff[model_bins] += weights12 * r_trans
-            z_eff[model_bins] += weights12 * z
-            weight_eff[model_bins] += weights12
-            weights_dmat[bins] += weights12
+            if i_selected and j_selected :
+                #-- This will be used later to fill the distortion matrix
+                all_selected_model_bins[counter_of_selected_pairs] = model_bins
+                all_selected_data_bins[counter_of_selected_pairs] = bins
+                all_selected_i[counter_of_selected_pairs] = i
+                all_selected_j[counter_of_selected_pairs] = j
+                counter_of_selected_pairs += 1
+
+                #-- Fill effective quantities (r_par, r_trans, z_eff, weight_eff)
+                r_par_eff[model_bins] += weights12 * r_par
+                r_trans_eff[model_bins] += weights12 * r_trans
+                z_eff[model_bins] += weights12 * z
+                weight_eff[model_bins] += weights12
+                weights_dmat[bins] += weights12
 
             # Combining equation 21 and equation 6 of du Mas des Bourboux et al. 2020
             # we find an equation with 9 terms comming from the product of two eta
             # The variables below stand for 8 of these 9 terms (the first one is
             # pretty trivial)
+
+            '''
+            We write the full development here (see eq. 20,21,6 of dMdB20)
+            xi^{distort}_A = sum_B D_AB xi^{true}_B
+            D_AB = 1/W_A sum_{ij in A} w_i w_j sum_{kp in B} ( Eta_ik Eta_jp )
+            Eta_ik = deltakron_ik - w_k/sw - w_k dll_i dll_k / swsll
+
+            where dll_i = log_lambda_minus_mean_i
+            and swsll   = sum_weights_square_log_lambda_minus_mean
+            and sw      = sum_all_weight
+            The eta terms in the following do not correspond to the Eta of dMdB20
+            but come from the following development
+
+            Ignoring the z factor for now, and only for order1==1 and order2==1
+
+            W_A D_AB
+            = sum_{ij} w_i*w_j*
+                sum_{kp} ( deltakron_ik - w1_k/sw1 - w1_k*dll1_i*dll1_k / swsll1)
+                       * ( deltakron_jp - w2_p/sw2 - w2_p*dll2_j*dll2_p / swsll2)
+            = sum_{ij} w_i*w_j*(
+                1  (identity term)
+                - sum_p w2_p/sw2                            = - sum_p eta1_p
+                - sum_k w1_k/sw1                            = - sum_p eta2_p
+                + sum_kp (w1_k*w2_p)/(sw1*sw2)              = + sum_kp eta5_kp
+                - sum_p w2_p*dll2_j*dll2_p/swsll2           = - sum_p eta3_p*dll2_j
+                + sum_kp w1_k/sw1*w2_p*dll2_j*dll2_p/swsll2 = + sum_kp eta6_kp*dll2_j
+                - sum_k w1_k*dll1_i*dll1_k/swsll1           = - sum_k eta4_k*dll1_i
+                + sum_kp w2_p/sw2*w1_k*dll1_i*dll1_k/swsll1 = + sum_kp eta7_kp*dll1_i
+                + sum_kp w1_k*dll1_i*dll1_k/swsll1
+                         * w2_p*dll2_j*dll2_p/swsll2        = + sum_kp eta8_kp
+                                                                  *dll1_i*dll1_j
+            in case of a selection of pairs per redshift bin,
+            we want to select on i,j (indices of the deltas of the pairs)
+            but NOT k,p (indices of all the pairs in the forests used for continuum
+            fitting).
+            however the algorithm loops only once through the indices, so
+            we have to keep track of which term to keep and which term to discard
+            when outside of the selection
+
+            '''
+
 
             # first eta, first term: kronecker delta
             # second eta, second term: weight/sum(weights)
@@ -654,12 +725,16 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                         sum_weights_square_log_lambda_minus_mean2)
 
     # Now add all the contributions together
-    unique_bins_model = np.unique(all_bins_model)
-    for pair in range(num_pairs):
-        i = all_i[pair]
-        j = all_j[pair]
-        bins = all_bins[pair]
-        model_bins = all_bins_model[pair]
+    unique_bins_model = np.unique(all_model_bins) # includes bins outside of redshift bin
+
+    num_selected_pairs = counter_of_selected_pairs
+    for pair in range(num_selected_pairs):
+        i = all_selected_i[pair]
+        j = all_selected_j[pair]
+        bins = all_selected_data_bins[pair]
+        if bins < 0 :
+            raise IndexError("negative bin index")
+        model_bins = all_selected_model_bins[pair]
         weights12 = weights1[i] * weights2[j]
         # first eta, first term: kronecker delta
         # second eta, first term: kronecker delta
@@ -676,7 +751,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
         dmat[dmat_bin] += weights12 * zfac
 
         # rest of the terms
-        for k in unique_bins_model:
+        for k in unique_bins_model: # includes bins outside of redshift bin
             dmat_bin = k + num_model_bins_r_par * num_model_bins_r_trans * bins
             dmat[dmat_bin] += (
                 weights12 *
