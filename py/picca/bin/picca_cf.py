@@ -87,35 +87,28 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
-        "--np", type=int, default=50, required=False, help="Number of r-parallel bins"
+        "--np",
+        type=int,
+        default=50,
+        required=False,
+        help="Number of r-parallel bins",
     )
 
-    parser.add_argument('--nt',
-                        type=int,
-                        default=50,
-                        required=False,
-                        help='Number of r-transverse bins')
+    parser.add_argument(
+        '--nt',
+        type=int,
+        default=50,
+        required=False,
+        help='Number of r-transverse bins',
+    )
 
-    parser.add_argument('--rmu-binning', action="store_true",
-                        help=('Estimate in r,mu binning. np becomes mu bins.'
-                              ' nt becomes r bins. rp min max is always 0, 1')
-                        )
-
-    parser.add_argument('--zerr-cut-deg',
-                        type=float,
-                        default=None,
-                        required=False,
-                        help=('Angular cut (in degrees) between a pixel and '
-                              'the background quasar of the other pixel (to '
-                              'avoid contamination from redshift errors).'))
-    
-    parser.add_argument('--zerr-cut-kms',
-                        type=float,
-                        default=None,
-                        required=False,
-                        help=('Velocity cut (in km/s) between a pixel and the '
-                              'background quasar of the other pixel (to avoid '
-                              'contamination from redshift errors).'))
+    parser.add_argument(
+        '--rmu-binning',
+        action="store_true",
+        help=('Estimate in r,mu binning. np becomes mu bins.'
+              ' nt becomes r bins. rp min max is always 0, 1'
+        ),
+    )
 
     parser.add_argument(
         "--zerr-cut-deg",
