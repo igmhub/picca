@@ -33,8 +33,6 @@ r_par_min = None
 r_trans_max = None
 z_cut_max = None
 z_cut_min = None
-z_min_pixels = None
-z_max_pixels = None
 z_min_pairs = None
 z_max_pairs = None
 ang_max = None
@@ -290,11 +288,6 @@ def compute_xi_forest_pairs_fast(
         if weights1[i] == 0:
             continue
 
-        if (z_min_pixels is not None and z1[i] < z_min_pixels) or (
-            z_max_pixels is not None and z1[i] > z_max_pixels
-        ):
-            continue
-
         for j in range(len(z2)):
             if weights2[j] == 0:
                 continue
@@ -456,11 +449,6 @@ def compute_dmat_forest_pairs_fast(
         if weights1[i] == 0:
             continue
 
-        if (z_min_pixels is not None and z1[i] < z_min_pixels) or (
-            z_max_pixels is not None and z1[i] > z_max_pixels
-        ):
-            continue
-
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
@@ -517,11 +505,6 @@ def compute_dmat_forest_pairs_fast(
             continue
 
         i_selected = True
-
-        if (z_min_pixels is not None and z1[i] < z_min_pixels) or (
-            z_max_pixels is not None and z1[i] > z_max_pixels
-        ):
-            i_selected = False  # keep going because can contribute to continuum
 
         for j in range(z2.size):
             if weights2[j] == 0:

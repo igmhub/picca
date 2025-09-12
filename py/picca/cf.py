@@ -33,8 +33,6 @@ r_par_max = None
 r_par_min = None
 z_cut_max = None
 z_cut_min = None
-z_min_pixels = None
-z_max_pixels = None
 z_min_pairs = None
 z_max_pairs = None
 r_trans_max = None
@@ -330,11 +328,6 @@ def compute_xi_forest_pairs_fast(
         if weights1[i] == 0:
             continue
 
-        if (z_min_pixels is not None and z1[i] < z_min_pixels) or (
-            z_max_pixels is not None and z1[i] > z_max_pixels
-        ):
-            continue
-
         if (zerr_cut_deg is not None) and (ang < zerr_cut_deg * np.pi / 180.0):
             # mean redshift of quasar-pixel pair
             z_qF = 0.5 * (z1[i] + z_qso_2)
@@ -352,11 +345,6 @@ def compute_xi_forest_pairs_fast(
 
             if (z_min_pairs is not None and z < z_min_pairs) or (
                 z_max_pairs is not None and z > z_max_pairs
-            ):
-                continue
-
-            if (z_min_pixels is not None and z2[j] < z_min_pixels) or (
-                z_max_pixels is not None and z2[j] > z_max_pixels
             ):
                 continue
 
@@ -556,11 +544,6 @@ def compute_dmat_forest_pairs_fast(
         if weights1[i] == 0:
             continue
 
-        if (z_min_pixels is not None and z1[i] < z_min_pixels) or (
-            z_max_pixels is not None and z1[i] > z_max_pixels
-        ):
-            continue
-
         if (zerr_cut_deg is not None) and (ang < zerr_cut_deg * np.pi / 180.0):
             # mean redshift of quasar-pixel pair
             z_qF = 0.5 * (z1[i] + z_qso_2)
@@ -572,11 +555,6 @@ def compute_dmat_forest_pairs_fast(
 
         for j in range(z2.size):
             if weights2[j] == 0:
-                continue
-
-            if (z_min_pixels is not None and z2[j] < z_min_pixels) or (
-                z_max_pixels is not None and z2[j] > z_max_pixels
-            ):
                 continue
 
             if (zerr_cut_deg is not None) and (ang < zerr_cut_deg * np.pi / 180.0):
@@ -658,11 +636,6 @@ def compute_dmat_forest_pairs_fast(
 
         i_selected = True
 
-        if (z_min_pixels is not None and z1[i] < z_min_pixels) or (
-            z_max_pixels is not None and z1[i] > z_max_pixels
-        ):
-            i_selected = False  # keep going because can contribute to continuum
-
         if (zerr_cut_deg is not None) and (ang < zerr_cut_deg * np.pi / 180.0):
             # mean redshift of quasar-pixel pair
             z_qF = 0.5 * (z1[i] + z_qso_2)
@@ -682,11 +655,6 @@ def compute_dmat_forest_pairs_fast(
 
             if (z_min_pairs is not None and z < z_min_pairs) or (
                 z_max_pairs is not None and z > z_max_pairs
-            ):
-                j_selected = False  # keep going because can contribute to continuum
-
-            if (z_min_pixels is not None and z2[j] < z_min_pixels) or (
-                z_max_pixels is not None and z2[j] > z_max_pixels
             ):
                 j_selected = False  # keep going because can contribute to continuum
 

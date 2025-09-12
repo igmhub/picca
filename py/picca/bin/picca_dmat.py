@@ -178,28 +178,6 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
-        "--z-min-pixels",
-        type=float,
-        default=None,
-        required=False,
-        help=(
-            "Limit the minimum redshift of the forest pixels that "
-            "contribute to the distortion matrix. If None, no cut is applied."
-        ),
-    )
-
-    parser.add_argument(
-        "--z-max-pixels",
-        type=float,
-        default=None,
-        required=False,
-        help=(
-            "Limit the maximum redshift of the forest pixels that "
-            "contribute to the distortion matrix. If None, no cut is applied."
-        ),
-    )
-
-    parser.add_argument(
         "--z-min-pairs",
         type=float,
         default=None,
