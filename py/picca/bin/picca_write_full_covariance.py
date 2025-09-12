@@ -44,7 +44,9 @@ if __name__=='__main__':
                         type=str, 
                         required = True, 
                         nargs = '+', 
-                        help = 'Path(s) to correlation file(s) separated by spaces. Can be any number of correlations but must be at least one. The input order here will be the order the they are computed in the covariance and must match the order in the Vega ini files and in the "correlation-types" argument in the smooth covariance script.')
+                        help = 'Path(s) to correlation file(s) separated by spaces. Can be any number of correlations but must be at least one. 
+                        The input order here will be the order the they are computed in the covariance and must match the order in the Vega ini 
+                        files and in the "correlation-types" argument in the smooth covariance script.')
     
     parser.add_argument('-o', '--output', 
                         type=str, 
@@ -56,9 +58,7 @@ if __name__=='__main__':
     print('IMPORTANT')
     print(f'The order the correlations will be computed in the covariance is {args.correlations}. If this is not okay, terminate this script and adjust your input to the --correlations argument.')
 
-    # this enforces the ordering
     print('Computing covariance')
-    
     #args.correlations is already a list so it can be directly input to the read_corr function
     xi, weights = read_corr(args.correlations)
 
