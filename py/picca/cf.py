@@ -184,7 +184,7 @@ def compute_xi(healpixs):
                         delta2.fiberid, str
                     ):
                         raise RuntimeError(
-                            "Trying to figure out if two spectra"
+                            "Trying to figure out if two spectra "
                             "come from the same half plate but "
                             "combined reobservations were given"
                         )
