@@ -57,6 +57,7 @@ reject = None
 lock = None
 
 cosmo = None
+rmu_binning = False
 ang_correlation = False
 
 # variables for distortion matrix
@@ -117,8 +118,10 @@ def fill_neighs(healpixs):
 
             if not ang_correlation:
                 r_comov = np.array([obj.r_comov for obj in neighbours])
-                w &= (delta.r_comov[0] - r_comov) * np.cos(ang / 2.0) < r_par_max
-                w &= (delta.r_comov[-1] - r_comov) * np.cos(ang / 2.0) > r_par_min
+                f = r_trans_max if rmu_binning else 1
+                w &= (delta.r_comov[0] - r_comov) * np.cos(ang / 2.) < r_par_max * f
+                w &= (delta.r_comov[-1] - r_comov) * np.cos(ang / 2.) > r_par_min * f
+
             neighbours = np.array(neighbours)[w]
             delta.neighbours = np.array(
                 [
@@ -306,7 +309,12 @@ def compute_xi_forest_pairs_fast(
                 r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
                 r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
 
-            if r_par >= r_par_max or r_trans >= r_trans_max or r_par <= r_par_min:
+            if rmu_binning:
+                r_trans = np.sqrt(r_trans**2 + r_par**2)
+                r_par /= r_trans
+
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_par <= r_par_min):
                 continue
 
             delta_times_weight = delta1[i] * weights1[i] * weights2[j]
@@ -455,7 +463,11 @@ def compute_dmat_forest_pairs_fast(
 
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
-            if r_par >= r_par_max or r_trans >= r_trans_max or r_par <= r_par_min:
+            if rmu_binning:
+                r_trans = np.sqrt(r_trans**2 + r_par**2)
+                r_par /= r_trans
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_par <= r_par_min):
                 continue
             num_pairs += 1
 
@@ -521,8 +533,13 @@ def compute_dmat_forest_pairs_fast(
 
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
-            if r_par >= r_par_max or r_trans >= r_trans_max or r_par < r_par_min:
-                continue  # outside of model range, so not in matrix
+            if rmu_binning:
+                r_trans = np.sqrt(r_trans**2 + r_par**2)
+                r_par /= r_trans
+
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_par < r_par_min):
+                continue
 
             weights12 = weights1[i] * weights2[j]
 

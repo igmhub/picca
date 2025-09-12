@@ -90,9 +90,32 @@ def main(cmdargs=None):
         "--np", type=int, default=50, required=False, help="Number of r-parallel bins"
     )
 
-    parser.add_argument(
-        "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
-    )
+    parser.add_argument('--nt',
+                        type=int,
+                        default=50,
+                        required=False,
+                        help='Number of r-transverse bins')
+
+    parser.add_argument('--rmu-binning', action="store_true",
+                        help=('Estimate in r,mu binning. np becomes mu bins.'
+                              ' nt becomes r bins. rp min max is always 0, 1')
+                        )
+
+    parser.add_argument('--zerr-cut-deg',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Angular cut (in degrees) between a pixel and '
+                              'the background quasar of the other pixel (to '
+                              'avoid contamination from redshift errors).'))
+    
+    parser.add_argument('--zerr-cut-kms',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help=('Velocity cut (in km/s) between a pixel and the '
+                              'background quasar of the other pixel (to avoid '
+                              'contamination from redshift errors).'))
 
     parser.add_argument(
         "--zerr-cut-deg",
@@ -325,6 +348,11 @@ def main(cmdargs=None):
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
+    cf.rmu_binning = args.rmu_binning
+    if cf.rmu_binning:
+        args.rp_min = 0
+        args.rp_max = 1
+
     # setup variables in module cf
     cf.r_par_max = args.rp_max
     cf.r_trans_max = args.rt_max
@@ -452,85 +480,83 @@ def main(cmdargs=None):
     healpix_list = np.array(sorted(list(cpu_data.keys())))
 
     # normalize values
-    w = weights_list.sum(axis=0) > 0.0
+    sum_weights = weights_list.sum(axis=0)
+    w = sum_weights > 0
     r_par = (r_par_list * weights_list).sum(axis=0)
-    r_par[w] /= weights_list.sum(axis=0)[w]
+    r_par[w] /= sum_weights[w]
     r_trans = (r_trans_list * weights_list).sum(axis=0)
-    r_trans[w] /= weights_list.sum(axis=0)[w]
+    r_trans[w] /= sum_weights[w]
     z = (z_list * weights_list).sum(axis=0)
-    z[w] /= weights_list.sum(axis=0)[w]
+    z[w] /= sum_weights[w]
     num_pairs = num_pairs_list.sum(axis=0)
 
     # save data
-    results = fitsio.FITS(args.out, "rw", clobber=True)
-    header = [
-        {
-            "name": "RPMIN",
-            "value": cf.r_par_min,
-            "comment": "Minimum r-parallel [h^-1 Mpc]",
-        },
-        {
-            "name": "RPMAX",
-            "value": cf.r_par_max,
-            "comment": "Maximum r-parallel [h^-1 Mpc]",
-        },
-        {
-            "name": "RTMAX",
-            "value": cf.r_trans_max,
-            "comment": "Maximum r-transverse [h^-1 Mpc]",
-        },
-        {
-            "name": "NP",
-            "value": cf.num_bins_r_par,
-            "comment": "Number of bins in r-parallel",
-        },
-        {
-            "name": "NT",
-            "value": cf.num_bins_r_trans,
-            "comment": "Number of bins in r-transverse",
-        },
-        {
-            "name": "ZCUTMIN",
-            "value": cf.z_cut_min,
-            "comment": "Minimum redshift of pairs",
-        },
-        {
-            "name": "ZCUTMAX",
-            "value": cf.z_cut_max,
-            "comment": "Maximum redshift of pairs",
-        },
-        {"name": "NSIDE", "value": cf.nside, "comment": "Healpix nside"},
-        {
-            "name": "OMEGAM",
-            "value": args.fid_Om,
-            "comment": "Omega_matter(z=0) of fiducial LambdaCDM cosmology",
-        },
-        {
-            "name": "OMEGAR",
-            "value": args.fid_Or,
-            "comment": "Omega_radiation(z=0) of fiducial LambdaCDM cosmology",
-        },
-        {
-            "name": "OMEGAK",
-            "value": args.fid_Ok,
-            "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
-        },
-        {
-            "name": "WL",
-            "value": args.fid_wl,
-            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
-        },
-        {
-            "name": "BLINDING",
-            "value": blinding,
-            "comment": "String specifying the blinding strategy",
-        },
+    results = fitsio.FITS(args.out, 'rw', clobber=True)
+    header = [{
+        'name': 'RPMIN',
+        'value': cf.r_par_min,
+        'comment': 'Minimum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RPMAX',
+        'value': cf.r_par_max,
+        'comment': 'Maximum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RTMAX',
+        'value': cf.r_trans_max,
+        'comment': 'Maximum r-transverse [h^-1 Mpc]'
+    }, {
+        'name': 'NP',
+        'value': cf.num_bins_r_par,
+        'comment': 'Number of bins in r-parallel'
+    }, {
+        'name': 'NT',
+        'value': cf.num_bins_r_trans,
+        'comment': 'Number of bins in r-transverse'
+    }, {
+        'name': 'ZCUTMIN',
+        'value': cf.z_cut_min,
+        'comment': 'Minimum redshift of pairs'
+    }, {
+        'name': 'ZCUTMAX',
+        'value': cf.z_cut_max,
+        'comment': 'Maximum redshift of pairs'
+    }, {
+        'name': 'NSIDE',
+        'value': cf.nside,
+        'comment': 'Healpix nside'
+    }, {
+        'name': 'OMEGAM',
+        'value': args.fid_Om,
+        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAR',
+        'value': args.fid_Or,
+        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAK',
+        'value': args.fid_Ok,
+        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'WL',
+        'value': args.fid_wl,
+        'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    }, {
+        'name': "BLINDING",
+        'value': blinding,
+        'comment': 'String specifying the blinding strategy'
+    }, {
+        'name': "RMU_BIN",
+        'value': cf.rmu_binning,
+        'comment': 'True if binned in r, mu'
+    }
     ]
     results.write(
         [r_par, r_trans, z, num_pairs],
-        names=["RP", "RT", "Z", "NB"],
-        comment=["R-parallel", "R-transverse", "Redshift", "Number of pairs"],
-        units=["h^-1 Mpc", "h^-1 Mpc", "", ""],
+        names=['RP', 'RT', 'Z', 'NB'],
+        comment=['R-parallel' if not cf.rmu_binning else 'Mu',
+                 'R-transverse' if not cf.rmu_binning else 'Radial separation',
+                 'Redshift', 'Number of pairs'],
+        units=['h^-1 Mpc' if not cf.rmu_binning else '', 'h^-1 Mpc', '', ''],
         header=header,
         extname="ATTRI",
     )
@@ -546,8 +572,6 @@ def main(cmdargs=None):
         header=header2,
         extname="COR",
     )
-
-    results.close()
 
     t3 = time.time()
     userprint(f"picca_cf.py - Time total : {(t3-t0)/60:.3f} minutes")

@@ -61,6 +61,7 @@ cosmo = None
 reject = None
 lock = None
 x_correlation = False
+rmu_binning = False
 ang_correlation = False
 remove_same_half_plate_close_pairs = False
 
@@ -365,6 +366,9 @@ def compute_xi_forest_pairs_fast(
             else:
                 r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
                 r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
+                if rmu_binning:
+                    r_trans = np.sqrt(r_trans**2 + r_par**2)
+                    r_par /= r_trans
                 if not x_correlation:
                     r_par = np.abs(r_par)
 
@@ -568,6 +572,9 @@ def compute_dmat_forest_pairs_fast(
 
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
+            if rmu_binning:
+                r_trans = np.sqrt(r_trans**2 + r_par**2)
+                r_par /= r_trans
             if not x_correlation:
                 r_par = np.abs(r_par)
             if r_par >= r_par_max or r_trans >= r_trans_max or r_par < r_par_min:
@@ -669,6 +676,9 @@ def compute_dmat_forest_pairs_fast(
 
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
+            if rmu_binning:
+                r_trans = np.sqrt(r_trans**2 + r_par**2)
+                r_par /= r_trans
             if not x_correlation:
                 r_par = np.abs(r_par)
             if r_par >= r_par_max or r_trans >= r_trans_max or r_par < r_par_min:

@@ -25,14 +25,13 @@ from scipy.optimize import curve_fit
 from scipy.stats import binned_statistic
 
 from picca.constants import ABSORBER_IGM, SPEED_LIGHT
-from picca.pk1d.utils import (
-    MEANPK_FITRANGE_SNR,
-    fitfunc_variance_pk1d,
-)
+from picca.pk1d.utils import MEANPK_FITRANGE_SNR, fitfunc_variance_pk1d
 from picca.utils import userprint
 
 
-def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matrices=None):
+def read_pk1d(
+    filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matrices=None
+):
     """Read Pk1D data from a single file.
 
     Arguments
@@ -100,16 +99,22 @@ def read_pk1d(filename, kbin_edges, snrcut=None, zbins_snrcut=None, skymask_matr
             if skymask_matrices is not None:
                 chunk_table["Pk_raw_skycorr"] = chunk_table["Pk_raw"]
                 chunk_table["Pk_noise_skycorr"] = chunk_table["Pk_noise"]
-                w, = np.where(np.isclose(meanz_skymatrices, chunk_header["MEANZ"], atol=1.e-2))
-                if len(w)==1:
+                (w,) = np.where(
+                    np.isclose(meanz_skymatrices, chunk_header["MEANZ"], atol=1.0e-2)
+                )
+                if len(w) == 1:
                     correction_matrix = skymask_matrices[w[0]][1]
                     ll = len(chunk_table["Pk_raw"])
                     correction_matrix = np.copy(correction_matrix[0:ll, 0:ll])
-                    if len(chunk_table["Pk_raw"])!=correction_matrix.shape[0]:
-                        userprint(f"""file {filename} hdu {i+1}:"""
-                                  """Pk_raw doesnt match shape of skymatrix.""")
+                    if len(chunk_table["Pk_raw"]) != correction_matrix.shape[0]:
+                        userprint(
+                            f"""file {filename} hdu {i+1}:"""
+                            """Pk_raw doesnt match shape of skymatrix."""
+                        )
                     else:
-                        chunk_table["Pk_raw_skycorr"] = correction_matrix @ chunk_table["Pk_raw"]
+                        chunk_table["Pk_raw_skycorr"] = (
+                            correction_matrix @ chunk_table["Pk_raw"]
+                        )
                         chunk_table["Pk_noise_skycorr"] = (
                             correction_matrix @ chunk_table["Pk_noise"]
                         )
@@ -364,7 +369,9 @@ def compute_mean_pk1d(
                     nbins_z * nbins_k * nbins_k
                 )
             if compute_bootstrap_average:
-                cov_table["boot_average_covariance"] = np.zeros(nbins_z * nbins_k * nbins_k)
+                cov_table["boot_average_covariance"] = np.zeros(
+                    nbins_z * nbins_k * nbins_k
+                )
 
             k_index = np.full(len(p1d_table["k"]), -1, dtype=int)
             for ikbin, _ in enumerate(kbin_edges[:-1]):  # First loop 1) k bins
@@ -441,11 +448,11 @@ def compute_mean_pk1d(
                 np.outer(mean_p1d_table["N"][select], mean_p1d_table["N"][select])
             )
             index_cov = cov_table_regular_slice(izbin, nbins_k)
-            cov_table["zbin"][index_cov[0]:index_cov[1]] = zbin_array
-            cov_table["index_zbin"][index_cov[0]:index_cov[1]] = index_zbin_array
-            cov_table["k1"][index_cov[0]:index_cov[1]] = k1_array
-            cov_table["k2"][index_cov[0]:index_cov[1]] = k2_array
-            cov_table["N"][index_cov[0]:index_cov[1]] = n_array
+            cov_table["zbin"][index_cov[0] : index_cov[1]] = zbin_array
+            cov_table["index_zbin"][index_cov[0] : index_cov[1]] = index_zbin_array
+            cov_table["k1"][index_cov[0] : index_cov[1]] = k1_array
+            cov_table["k2"][index_cov[0] : index_cov[1]] = k2_array
+            cov_table["N"][index_cov[0] : index_cov[1]] = n_array
 
             if n_chunks[izbin] == 0:
                 p1d_weights_z, p1d_groups_z = [], []
@@ -551,22 +558,26 @@ def fill_average_pk(
             median_array,
             snrfit_array,
         ) = (*output_mean[izbin],)
-        index_mean = mean_p1d_table_regular_slice(izbin,nbins_k)
+        index_mean = mean_p1d_table_regular_slice(izbin, nbins_k)
 
-        mean_p1d_table["zbin"][index_mean[0]:index_mean[1]] = zbin_array
-        mean_p1d_table["index_zbin"][index_mean[0]:index_mean[1]] = index_zbin_array
-        mean_p1d_table["N"][index_mean[0]:index_mean[1]] = n_array
+        mean_p1d_table["zbin"][index_mean[0] : index_mean[1]] = zbin_array
+        mean_p1d_table["index_zbin"][index_mean[0] : index_mean[1]] = index_zbin_array
+        mean_p1d_table["N"][index_mean[0] : index_mean[1]] = n_array
         for icol, col in enumerate(p1d_table_cols):
-            mean_p1d_table["mean" + col][index_mean[0]:index_mean[1]] = mean_array[icol]
+            mean_p1d_table["mean" + col][index_mean[0] : index_mean[1]] = mean_array[
+                icol
+            ]
             mean_p1d_table["error" + col][index_mean[0] : index_mean[1]] = np.sqrt(
                 variance_array[icol]
             )
             mean_p1d_table["min" + col][index_mean[0] : index_mean[1]] = min_array[icol]
-            mean_p1d_table["max" + col][index_mean[0]:index_mean[1]] = max_array[icol]
+            mean_p1d_table["max" + col][index_mean[0] : index_mean[1]] = max_array[icol]
             if not nomedians:
-                mean_p1d_table["median" + col][index_mean[0]:index_mean[1]] = median_array[icol]
+                mean_p1d_table["median" + col][index_mean[0] : index_mean[1]] = (
+                    median_array[icol]
+                )
         if weight_method == "fit_snr":
-            snrfit_table[index_mean[0]:index_mean[1], :] = snrfit_array
+            snrfit_table[index_mean[0] : index_mean[1], :] = snrfit_array
 
 
 def compute_average_pk_redshift(
@@ -865,13 +876,19 @@ def compute_average_pk_redshift(
                 if apply_z_weights:
                     mean = np.average(p1d_table[col][select], weights=redshift_weights)
                     # simple analytic expression:
-                    variance = (np.std(p1d_table[col][select]) * (
-                        np.sqrt(np.sum(redshift_weights**2)) / np.sum(redshift_weights)
-                    ))**2
+                    variance = (
+                        np.std(p1d_table[col][select])
+                        * (
+                            np.sqrt(np.sum(redshift_weights**2))
+                            / np.sum(redshift_weights)
+                        )
+                    ) ** 2
                 else:
                     mean = np.mean(p1d_table[col][select])
                     # unbiased estimate: num_chunks-1
-                    variance = (np.std(p1d_table[col][select]) / np.sqrt(num_chunks - 1))**2
+                    variance = (
+                        np.std(p1d_table[col][select]) / np.sqrt(num_chunks - 1)
+                    ) ** 2
 
             else:
                 raise ValueError("Option for 'weight_method' argument not found")
@@ -966,7 +983,7 @@ def compute_and_fill_covariance(
         for izbin in range(nbins_z):
             covariance_array = output_cov[izbin]
             index_cov = cov_table_regular_slice(izbin, nbins_k)
-            cov_table["covariance"][index_cov[0]:index_cov[1]] = covariance_array
+            cov_table["covariance"][index_cov[0] : index_cov[1]] = covariance_array
 
     if compute_bootstrap:
         userprint("Computing covariance matrix with bootstrap method")
@@ -1248,7 +1265,9 @@ def compute_cov(
     if len(p1d_groups) == 0:
         return np.full(nbins_k * nbins_k, np.nan)
 
-    mean_pk_from_groups = np.nansum(p1d_weights * p1d_groups, axis=0)/np.nansum(p1d_weights, axis=0)
+    mean_pk_from_groups = np.nansum(p1d_weights * p1d_groups, axis=0) / np.nansum(
+        p1d_weights, axis=0
+    )
     mean_pk_groups_product = np.outer(mean_pk_from_groups, mean_pk_from_groups)
 
     sum_p1d_weights = np.nansum(p1d_weights, axis=0)
@@ -1274,7 +1293,7 @@ def compute_cov(
 
     del p1d_groups, p1d_weights
 
-    covariance_matrix = ((weights_sum_product /weights_product_sum) - 1)**(-1) * (
+    covariance_matrix = ((weights_sum_product / weights_product_sum) - 1) ** (-1) * (
         (p1d_groups_product_sum / weights_product_sum) - mean_pk_groups_product
     )
 
@@ -1513,7 +1532,8 @@ def run_postproc_pk1d(
 
     with Pool(ncpu) as pool:
         output_readpk1d = pool.starmap(
-            read_pk1d, [[f, kbin_edges, snrcut, zbins_snrcut, skymask_matrices] for f in files]
+            read_pk1d,
+            [[f, kbin_edges, snrcut, zbins_snrcut, skymask_matrices] for f in files],
         )
 
     output_readpk1d = [x for x in output_readpk1d if x is not None]
@@ -1776,7 +1796,6 @@ def average_mean_pk1d_files(
             )
 
             if weighted_mean:
-                weights = 1 / masked_all_error_boot_covariance**2
                 combination_cov_table["boot_covariance"] = np.ma.average(
                     masked_all_boot_covariance, axis=0, weights=weights
                 ).filled(np.nan)
@@ -1787,6 +1806,19 @@ def average_mean_pk1d_files(
             combination_cov_table["error_boot_covariance"] = np.ma.average(
                 masked_all_error_boot_covariance, axis=0
             ).filled(np.nan) / np.sqrt(len(cov_tables))
+
+        if "boot_average_covariance" in cov_tables[0].colnames:
+            all_boot_average_covariance = np.array(
+                [cov_table["boot_average_covariance"] for cov_table in cov_tables]
+            )
+
+            masked_all_boot_average_covariance = np.ma.masked_array(
+                all_boot_average_covariance, np.isnan(all_boot_average_covariance)
+            )
+
+            combination_cov_table["boot_average_covariance"] = np.ma.average(
+                masked_all_boot_average_covariance, axis=0
+            ).filled(np.nan)
 
     output_file = os.path.join(output_path, mean_p1d_names[0].split("/")[-1])
     write_mean_pk1d(
