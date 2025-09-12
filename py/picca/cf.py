@@ -951,7 +951,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 dmatcounter = round(counter.value * 100.0 / num_data, 2)
                 if counter.value % 1000 == 0:
                     userprint(
-                        ("computing metal dmat {} {}: " "{}%").format(
+                        "computing metal dmat {} {}: {}%".format(
                             abs_igm1, abs_igm2, dmatcounter
                         )
                     )
