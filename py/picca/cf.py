@@ -983,7 +983,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                         delta2.fiberid, str
                     ):
                         raise RuntimeError(
-                            "Trying to figure out if two spectra"
+                            "Trying to figure out if two spectra "
                             "come from the same half plate but "
                             "combined reobservations were given"
                         )
