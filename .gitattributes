@@ -1,0 +1,7 @@
+*.py text=auto
+*.cfg text=auto
+*.ini text=auto
+*.yml text=auto
+*.md text=auto
+*.toml text=auto
+pylintrc text=auto
