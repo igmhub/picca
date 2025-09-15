@@ -311,8 +311,7 @@ def main(cmdargs):
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl,
-                            blinding=blinding)
+                            wl=args.fid_wl,)
 
     # read data 1
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,

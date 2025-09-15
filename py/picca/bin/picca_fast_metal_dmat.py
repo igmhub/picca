@@ -472,8 +472,7 @@ def main(cmdargs=None):
     cf.cosmo = constants.Cosmo(Om=args.fid_Om,
                                Or=args.fid_Or,
                                Ok=args.fid_Ok,
-                               wl=args.fid_wl,
-                               blinding=blinding)
+                               wl=args.fid_wl,)
 
     t0 = time.time()
 
