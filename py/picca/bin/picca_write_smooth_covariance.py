@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 
+"""
+Smooth the covariance matrix calculated from the 'write_full_covariance' script.
+This script is an updated version of: /global/cfs/projectdirs/desi/science/lya/y1-kp6/iron-tests/correlations/scripts/write_smooth_covariance_flex_size.py
+"""
+
 import numpy as np
 import fitsio
 import argparse
+import time
 
 def smooth_corrmat_asym(corrmat,rp0,rt0,rp1,rt1,drt=4.0,drp=4.0):
 
@@ -154,11 +160,13 @@ if __name__=='__main__':
     
     
     args = parser.parse_args()
+    #start time
+    t1 = time.time()
     
     table=fitsio.read(args.input_cov) # like iron-5-2-1-global-cov.fits"
-    print(table.dtype.names)
+    #print(table.dtype.names)
     cov=table["COV"]
-    print(cov.shape)
+    print(f'Covariance shape: {cov.shape}')
     
     
     block_edges = [0,]
@@ -213,6 +221,7 @@ if __name__=='__main__':
         )
     
     print('Smoothing covariance')
+    t2 = time.time()
     
     for i in range(len(blocks)) :
         for j in range(i,len(blocks)) :
@@ -232,4 +241,7 @@ if __name__=='__main__':
     table["COV"]=cov
     fitsio.write(args.output_cov,table,clobber=True)
     
-    print('Done')
+    t3 = time.time()
+
+    print(f'Time spent smoothing covariance: {(t3 - t2)/60:.3f} minutes')
+    print(f'Total time: {(t3 - t1)/60:.3f} minutes')
