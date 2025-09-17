@@ -1,6 +1,9 @@
 """This module defines the method compute_continuum to compute the quasar continua"""
+import warnings
+
 import iminuit
 import numpy as np
+from scipy.interpolate import RegularGridInterpolator
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.least_squares.least_squares_cont_model import LeastsSquaresContModel
@@ -19,7 +22,7 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     forest: Forest
     A forest instance where the continuum will be computed
 
-    get_mean_cont: scipy.interpolate.interp1d
+    get_mean_cont: scipy.interpolate.interp1d or scipy.interpolate.RegularGridInterpolator
     Interpolation function to compute the unabsorbed mean quasar continua.
 
     get_eta: scipy.interpolate.interp1d
@@ -54,7 +57,13 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
     the chi2 of the fit, and the number of datapoints used in the fit.
     """
     # get mean continuum
-    mean_cont = get_mean_cont(forest.log_lambda - np.log10(1 + forest.z))
+    if isinstance(get_mean_cont, RegularGridInterpolator):
+        log_lambda = forest.log_lambda - np.log10(1 + forest.z)
+        points = np.column_stack([np.full_like(log_lambda, forest.z), log_lambda])
+        mean_cont = get_mean_cont(points)
+    else:
+        # get mean continuum as a function of log_lambda
+        mean_cont = get_mean_cont(forest.log_lambda - np.log10(1 + forest.z))
 
     # add transmission correction
     # (previously computed using method add_optical_depth)
@@ -82,16 +91,22 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
 
     zero_point = (forest.flux * forest.ivar).sum() / forest.ivar.sum()
     slope = 0.0
+    error = np.max([np.fabs(zero_point) / 2., 1e-6])
 
-    minimizer = iminuit.Minuit(leasts_squares,
-                               zero_point=zero_point,
-                               slope=slope)
-    minimizer.errors["zero_point"] = zero_point / 2.
-    minimizer.errors["slope"] = zero_point / 2.
-    minimizer.errordef = 1.
-    minimizer.print_level = 0
-    minimizer.fixed["slope"] = order == 0
-    minimizer.migrad()
+    # debugging code
+    warnings.filterwarnings("error", category=iminuit.util.IMinuitWarning)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", category=iminuit.util.IMinuitWarning)
+
+        minimizer = iminuit.Minuit(leasts_squares,
+                                zero_point=zero_point,
+                                slope=slope)
+        minimizer.errors["zero_point"] = error
+        minimizer.errors["slope"] = error
+        minimizer.errordef = 1.
+        minimizer.print_level = 0
+        minimizer.fixed["slope"] = order == 0
+        minimizer.migrad()
 
     bad_continuum_reason = None
     cont_model = leasts_squares.get_continuum_model(
@@ -101,6 +116,8 @@ def compute_continuum(forest, get_mean_cont, get_eta, get_var_lss, get_fudge,
         bad_continuum_reason = "minuit didn't converge"
     if np.any(cont_model < 0):
         bad_continuum_reason = "negative continuum"
+    if np.all(cont_model == 0):
+        bad_continuum_reason = "zero continuum"
 
     if bad_continuum_reason is None:
         continuum_fit_parameters = (minimizer.values["zero_point"],
