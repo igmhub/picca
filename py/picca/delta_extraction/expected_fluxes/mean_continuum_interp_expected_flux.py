@@ -100,19 +100,19 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         self.interpolation_type = config.get("interpolation type")
         if self.interpolation_type is None:
             raise ExpectedFluxError(
-                "Missing argument 'interpolation type' required by MeanContinuum2dExpectedFlux"
+                "Missing argument 'interpolation type' required by MeanContinuumInterpExpectedFlux"
             )
         if self.interpolation_type not in ACCEPTED_INTERPOLATION_TYPES:
             raise ExpectedFluxError(
                 f"Invalid interpolation type '{self.interpolation_type}' "
-                f"required by MeanContinuum2dExpectedFlux. "
+                f"required by MeanContinuumInterpExpectedFlux. "
                 f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
 
         if self.interpolation_type == "2D":
             limit_z_string = config.get("limit z")
             if limit_z_string is None:
                 raise ExpectedFluxError(
-                    "Missing argument 'limit z' required by MeanContinuum2dExpectedFlux"
+                    "Missing argument 'limit z' required by MeanContinuumInterpExpectedFlux"
                 )
             limit_z = limit_z_string.split(",")
             if limit_z[0].startswith("(") or limit_z[0].startswith("["):
