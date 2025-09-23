@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Compute the wick covariance for the auto-correlation of forests
 
 The wick covariance is computed as explained in Delubac et al. 2015
@@ -6,7 +5,7 @@ The wick covariance is computed as explained in Delubac et al. 2015
 import sys
 import argparse
 import multiprocessing
-from multiprocessing import Pool, Lock, cpu_count, Value
+from multiprocessing import Lock, cpu_count, Value
 import fitsio
 import numpy as np
 from scipy.interpolate import interp1d
@@ -35,7 +34,7 @@ def calc_wick_terms(healpixs):
     return wick_data
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes the wick covariance for the auto-correlation of forests"""
     parser = argparse.ArgumentParser(
@@ -115,7 +114,7 @@ def main(cmdargs):
         default=0.,
         required=False,
         help=('Limit the minimum redshift of the quasars '
-                'used as sources for spectra'))
+              'used as sources for spectra'))
 
     parser.add_argument(
         '--z-max-sources',
@@ -123,29 +122,30 @@ def main(cmdargs):
         default=10.,
         required=False,
         help=('Limit the maximum redshift of the quasars '
-                'used as sources for spectra'))
+              'used as sources for spectra'))
 
     parser.add_argument(
         '--lambda-abs',
         type=str,
         default='LYA',
         required=False,
-        help=('Name of the absorption in picca.constants defining the redshift '
-              'of the delta'))
+        help=('Name of the absorption in picca.constants defining the redshift'
+              ' of the delta'))
 
     parser.add_argument(
         '--lambda-abs2',
         type=str,
         default=None,
         required=False,
-        help=('Name of the absorption in picca.constants defining the redshift '
-              'of the 2nd delta'))
+        help=('Name of the absorption in picca.constants defining the redshift'
+              ' of the 2nd delta'))
 
-    parser.add_argument('--z-ref',
-                        type=float,
-                        default=2.25,
-                        required=False,
-                        help='Reference redshift')
+    parser.add_argument(
+        '--z-ref',
+        type=float,
+        default=2.25,
+        required=False,
+        help='Reference redshift')
 
     parser.add_argument(
         '--z-evol',
@@ -186,7 +186,8 @@ def main(cmdargs):
         type=float,
         default=-1.,
         required=False,
-        help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
+        help='Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    )
 
     parser.add_argument('--no-project',
                         action='store_true',
@@ -270,12 +271,13 @@ def main(cmdargs):
                         required=False,
                         help='Maximum number of spectra to read')
 
-    parser.add_argument('--rebin-factor',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Rebin factor for deltas. If not None, deltas will '
-                             'be rebinned by that factor')
+    parser.add_argument(
+        '--rebin-factor',
+        type=int,
+        default=None,
+        required=False,
+        help='Rebin factor for deltas. If not None, deltas will '
+             'be rebinned by that factor')
 
     args = parser.parse_args(cmdargs)
 
@@ -315,17 +317,19 @@ def main(cmdargs):
                             blinding=blinding)
 
     # read data 1
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  cf.nside,
-                                                  cf.lambda_abs,
-                                                  cf.alpha,
-                                                  cf.z_ref,
-                                                  cosmo,
-                                                  max_num_spec=args.nspec,
-                                                  nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor,
-                                                  z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources)
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir,
+        cf.nside,
+        cf.lambda_abs,
+        cf.alpha,
+        cf.z_ref,
+        cosmo,
+        max_num_spec=args.nspec,
+        nproc=args.nproc,
+        rebin_factor=args.rebin_factor,
+        z_min_qso=args.z_min_sources,
+        z_max_qso=args.z_max_sources
+    )
     for deltas in data.values():
         for delta in deltas:
             delta.fname = 'D1'
@@ -352,21 +356,19 @@ def main(cmdargs):
         delta_log_lambda = header['DLL']
         num_pairs_variance_1d = hdul[1]['nv1d'][:]
         variance_1d = hdul[1]['v1d'][:]
-        log_lambda = (log_lambda_min +
-                      delta_log_lambda * np.arange(len(variance_1d)))
+        n = len(variance_1d)
+        log_lambda = log_lambda_min + delta_log_lambda * np.arange(n)
+        w = num_pairs_variance_1d > 0
         cf.get_variance_1d[fname] = interp1d(
-            log_lambda[num_pairs_variance_1d > 0],
-            variance_1d[num_pairs_variance_1d > 0],
-            kind='nearest',
-            fill_value='extrapolate')
+            log_lambda[w], variance_1d[w],
+            kind='cubic', fill_value='extrapolate')
 
         num_pairs1d = hdul[1]['nb1d'][:]
+        w = num_pairs1d > 0
         xi_1d = hdul[1]['c1d'][:]
         cf.xi_1d[fname] = interp1d(
-            (log_lambda - log_lambda_min)[num_pairs1d > 0],
-            xi_1d[num_pairs1d > 0],
-            kind='nearest',
-            fill_value='extrapolate')
+            (log_lambda - log_lambda_min)[w], xi_1d[w],
+            kind='cubic', fill_value='extrapolate')
         hdul.close()
 
     # Load correlation functions
@@ -395,7 +397,7 @@ def main(cmdargs):
         cf.xi_wick[fname] = xi.copy()
         hdul.close()
 
-    ### Read data 2
+    # Read data 2
     if args.in_dir2 or args.lambda_abs2:
 
         if args.lambda_abs2 or args.unfold_cf:
@@ -431,7 +433,8 @@ def main(cmdargs):
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
-        cf.ang_max = utils.compute_ang_max(cosmo, cf.r_trans_max, z_min, z_min2)
+        cf.ang_max = utils.compute_ang_max(
+            cosmo, cf.r_trans_max, z_min, z_min2)
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
 
@@ -441,7 +444,7 @@ def main(cmdargs):
     cpu_data = {}
     for index, healpix in enumerate(sorted(data)):
         num_processor = index % args.nproc
-        if not num_processor in cpu_data:
+        if num_processor not in cpu_data:
             cpu_data[num_processor] = []
         cpu_data[num_processor].append(healpix)
 
@@ -449,7 +452,7 @@ def main(cmdargs):
     context = multiprocessing.get_context('fork')
     pool = context.Pool(processes=min(args.nproc, len(cpu_data.values())))
     userprint(" \nStarting\n")
-    if args.nproc>1:
+    if args.nproc > 1:
         wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
     else:
         wick_data = [calc_wick_terms(arg) for arg in sorted(cpu_data.values())]
@@ -557,7 +560,7 @@ def main(cmdargs):
             'value': blinding,
             'comment': 'String specifying the blinding strategy'
         }
-        ]
+    ]
     comment = [
         'Sum of weight', 'Covariance', 'Nomber of pairs', 'T1', 'T2', 'T3',
         'T4', 'T5', 'T6'
@@ -569,8 +572,3 @@ def main(cmdargs):
         header=header,
         extname='COV')
     results.close()
-
-
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)
