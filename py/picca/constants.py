@@ -155,7 +155,7 @@ class Cosmo(object):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,verbose=True):
+    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,blinding=False,verbose=True):
         """Initializes the methods for this instance
 
         Args:
@@ -177,7 +177,7 @@ class Cosmo(object):
         # make what we are doing more clear.
         H0 = 100.0
 
-        if verbose:
+        if verbose and blinding == "none":
             userprint("ATTENTION: Analysis is not blinded!")
             userprint(f"Om={Om}, Or={Or}, wl={wl}")
 
