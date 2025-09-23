@@ -1,4 +1,5 @@
 """This module defines the class TrueContinuum"""
+from importlib import resources
 import logging
 import multiprocessing
 
@@ -6,7 +7,6 @@ import fitsio
 import numpy as np
 from scipy.interpolate import interp1d
 import healpy
-from pkg_resources import resource_filename
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
@@ -391,32 +391,34 @@ class TrueContinuum(ExpectedFlux):
         if self.raw_statistics_filename != "":
             filename = self.raw_statistics_filename
         else:
-            filename = resource_filename(
-                'picca', 'delta_extraction') + '/expected_fluxes/raw_stats/'
+            file_path_aux = ""
             if Forest.wave_solution == "log":
-                filename += 'colore_v9_lya_log.fits.gz'
+                file_path_aux += 'colore_v9_lya_log.fits.gz'
             elif Forest.wave_solution == "lin" and np.isclose(
                     10**Forest.log_lambda_grid[1] -
                     10**Forest.log_lambda_grid[0],
                     0.8,
                     rtol=0.1):
-                filename += 'colore_v9_lya_lin_0.8.fits.gz'
+                file_path_aux += 'colore_v9_lya_lin_0.8.fits.gz'
             elif Forest.wave_solution == "lin" and np.isclose(
                     10**Forest.log_lambda_grid[1] -
                     10**Forest.log_lambda_grid[0],
                     2.4,
                     rtol=0.1):
-                filename += 'colore_v9_lya_lin_2.4.fits.gz'
+                file_path_aux += 'colore_v9_lya_lin_2.4.fits.gz'
             elif Forest.wave_solution == "lin" and np.isclose(
                     10**Forest.log_lambda_grid[1] -
                     10**Forest.log_lambda_grid[0],
                     3.2,
                     rtol=0.1):
-                filename += 'colore_v9_lya_lin_3.2.fits.gz'
+                file_path_aux += 'colore_v9_lya_lin_3.2.fits.gz'
             else:
                 raise ExpectedFluxError(
                     "Couldn't find compatible raw satistics file. Provide a "
                     "custom one using 'raw statistics file' field.")
+            with resources.path("picca.delta_extraction.expected_fluxes.raw_stats",
+                                file_path_aux) as file_path:
+                filename = str(file_path)
         self.logger.info(
             f'Reading raw statistics var_lss and mean_flux from file: {filename}'
         )

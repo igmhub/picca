@@ -7,7 +7,9 @@ import h5py
 import sys
 import unittest
 import shutil, tempfile
-from pkg_resources import resource_filename
+
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+PICCA_BASE = THIS_DIR.replace("py/picca/tests", "")
 
 ### Make ConfigParser case sensitive
 class CaseConfigParser(ConfigParser.ConfigParser):
@@ -253,8 +255,7 @@ class AbstractTest(unittest.TestCase):
         """
         cls._branchFiles = tempfile.mkdtemp() + "/"
         cls.produce_folder(cls)
-        cls.picca_base = resource_filename('picca',
-                                           './').replace('py/picca/./', '')
+        cls.picca_base = PICCA_BASE
         cls.send_requirements(cls.load_requirements(cls.picca_base))
         np.random.seed(42)
         cls._masterFiles = cls.picca_base + '/py/picca/tests/data/'
