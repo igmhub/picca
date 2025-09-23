@@ -8,7 +8,6 @@ import h5py
 import sys
 import unittest
 import shutil, tempfile
-from importlib import resources
 
 ### Make ConfigParser case sensitive
 class CaseConfigParser(ConfigParser.ConfigParser):
