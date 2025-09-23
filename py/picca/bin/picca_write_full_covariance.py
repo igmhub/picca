@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 """
 Compute and write out the full (unsmoothed) covariance matrix given some correlation functions.
@@ -42,7 +42,8 @@ def read_corr(files):
     return xi, weights
 
 
-if __name__ == "__main__":
+def main(cmdargs=None):
+    
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Writes the full covariance matrix for the given correlation functions.",
