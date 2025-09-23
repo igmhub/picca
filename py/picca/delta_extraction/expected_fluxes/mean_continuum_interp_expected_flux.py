@@ -25,7 +25,7 @@ ACCEPTED_INTERPOLATION_TYPES = ["1D", "2D"]
 
 
 class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
-    """Class to the expected flux as done in the DR16 SDSS analysys
+    """Class to compute the expected flux as done in the DR16 SDSS analysis
     The mean expected flux is calculated iteratively as explained in
     du Mas des Bourboux et al. (2020) except that the we don't use
     the stacking technique to compute the mean quasar continuum.
@@ -539,71 +539,3 @@ def interp_coeff_z(z, z_grid):
     coeff = (z_high - z) / (z_high - z_low)
 
     return coeff, z_bin
-
-
-@numba.njit()
-def compute_mean_cont_1d(log_lambda_rest_frame_grid, log_lambda, flux,
-                         continuum, redshift, weight):
-    """Compute the mean quasar continuum over the whole sample.
-    Then updates the value of self.get_mean_cont to contain it
-    The mean continuum is computed as a function of the rest-frame
-    wavelength.
-
-    Arguments
-    ---------
-    log_lambda_rest_frame_grid: np.ndarray
-    A 1D array of rest-frame wavelengths (in Angstroms) where the continuum is defined.
-
-    log_lambda: np.ndarray
-    A 1D array of observed wavelengths (in Angstroms).
-
-    flux: np.ndarray
-    A 1D array of observed fluxes.
-
-    continuum: np.ndarray
-    A 1D array of quasar continua.
-
-    redshift: float
-    The redshift of the quasar.
-
-    weight: np.ndarray
-    A 1D array of weights for each pixel.
-    """
-    A_matrix = np.zeros(
-        (log_lambda_rest_frame_grid.size, log_lambda_rest_frame_grid.size))
-    B_matrix = np.zeros(log_lambda_rest_frame_grid.size)
-
-    log_lambda_rf = log_lambda - np.log10(1 + redshift)
-    coeffs, rf_wavelength_bin = interp_coeff_lambda(log_lambda_rf,
-                                                    log_lambda_rest_frame_grid)
-
-    w = np.where(continuum > 0)
-    B_matrix[
-        rf_wavelength_bin[w]] += weight[w] * coeffs[w] * flux[w] / continuum[w]
-
-    w = np.where((continuum > 0) &
-                 (rf_wavelength_bin < log_lambda_rest_frame_grid.size - 1))
-    B_matrix[rf_wavelength_bin[w] +
-             1] += weight[w] * (1 - coeffs[w]) * flux[w] / continuum[w]
-
-    # diagonal elements
-    #A_matrix[rf_wavelength_bin, rf_wavelength_bin] += weight * coeffs * coeffs
-    for index in range(rf_wavelength_bin.size):
-        A_matrix[rf_wavelength_bin[index], rf_wavelength_bin[index]] += weight[
-            index] * coeffs[index] * coeffs[index]
-
-    # Off-diagonal elements
-    #A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w]] += weight[w] * coeffs[w] * (1 - coeffs[w])
-    #A_matrix[rf_wavelength_bin[w], rf_wavelength_bin[w] + 1] += weight[w] * coeffs[w] * (1 - coeffs[w])
-    #A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w] + 1] += weight[w] * (1 - coeffs[w]) * (1 - coeffs[w])
-    w = np.where(rf_wavelength_bin < log_lambda_rest_frame_grid.size - 1)
-    for index in w[0]:
-        A_matrix[rf_wavelength_bin[index] + 1,
-                 rf_wavelength_bin[index]] += weight[index] * coeffs[index] * (
-                     1 - coeffs[index])
-        A_matrix[rf_wavelength_bin[index], rf_wavelength_bin[index] +
-                 1] += weight[index] * coeffs[index] * (1 - coeffs[index])
-        A_matrix[rf_wavelength_bin[index] + 1, rf_wavelength_bin[index] +
-                 1] += weight[index] * (1 - coeffs[index]) * (1 - coeffs[index])
-    
-    return A_matrix, B_matrix
