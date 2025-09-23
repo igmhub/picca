@@ -1,5 +1,5 @@
 numpy>=2.0.0
-scipy>=1.14.0
+scipy==1.15.3
 iminuit>=2.26.0
 healpy>=1.17.1
 fitsio>=1.2.4
