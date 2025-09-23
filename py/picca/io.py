@@ -245,7 +245,9 @@ def read_blinding(in_dir):
     return blinding
 
 
-def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
+def read_delta_file(
+        filename, z_min_qso=0, z_max_qso=10, rebin_factor=None, wick_mode=None
+):
     """Extracts deltas from a single file.
     Args:
         filename: str
@@ -256,6 +258,9 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
             Specifies the maximum redshift for QSOs
         rebin_factor: int - default: None
             Factor to rebin the lambda grid by. If None, no rebinning is done.
+        wick_mode: None or str - default: None
+            If string should be D1 or D2. Will remove attributes that are not
+            needed for wick calculation
     Returns:
         deltas:
             A dictionary with the data. Keys are the healpix numbers of each
@@ -265,43 +270,56 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
     hdul = fitsio.FITS(filename)
     # If there is an extension called lambda format is image
     if 'LAMBDA' in hdul:
-        deltas = Delta.from_image(hdul, z_min_qso=z_min_qso, z_max_qso=z_max_qso)
+        deltas = Delta.from_image(
+            hdul, z_min_qso=z_min_qso, z_max_qso=z_max_qso)
     else:
-        deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:] if z_min_qso<hdu.read_header()['Z']<z_max_qso]
+        deltas = []
+        for hdu in hdul[1:]:
+            z_qso = hdu.read_header()['Z']
+            if (z_min_qso < z_qso) & (z_qso < z_max_qso):
+                deltas.append(Delta.from_fitsio(hdu))
 
-# Rebin
+    if wick_mode is not None:
+        for delta in deltas:
+            delta.fname = wick_mode
+            for item in [
+                    'cont', 'delta', 'order', 'ivar', 'exposures_diff',
+                    'mean_snr', 'mean_reso', 'mean_z', 'delta_log_lambda'
+            ]:
+                setattr(delta, item, None)
+
     if rebin_factor is not None:
-        if 'LAMBDA' in hdul:
-            card = 'LAMBDA'
-        else:
-            card = 1
+        card = 'LAMBDA' if 'LAMBDA' in hdul else 1
 
         if hdul[card].read_header()['WAVE_SOLUTION'] != 'lin':
-            raise ValueError('Delta rebinning only implemented for linear \
-                    lambda bins')
-        
+            raise ValueError('Delta rebinning only implemented for linear'
+                             'lambda bins')
+
         dwave = hdul[card].read_header()['DELTA_LAMBDA']
-            
+
         for i in range(len(deltas)):
             deltas[i].rebin(rebin_factor, dwave=dwave)
-            
+
     hdul.close()
 
     return deltas
 
 
-def read_deltas(in_dir,
-                nside,
-                lambda_abs,
-                alpha,
-                z_ref,
-                cosmo,
-                max_num_spec=None,
-                no_project=False,
-                nproc=None,
-                rebin_factor=None,
-                z_min_qso=0,
-                z_max_qso=10):
+def read_deltas(
+    in_dir,
+    nside,
+    lambda_abs,
+    alpha,
+    z_ref,
+    cosmo,
+    max_num_spec=None,
+    no_project=False,
+    nproc=None,
+    rebin_factor=None,
+    wick_mode=None,
+    z_min_qso=0,
+    z_max_qso=10
+):
     """Reads deltas and computes their redshifts.
 
     Fills the fields delta.z and multiplies the weights by
@@ -332,6 +350,9 @@ def read_deltas(in_dir,
             Number of cpus for parallelization. If None, uses all available.
         rebin_factor: int - default: None
             Factor to rebin the lambda grid by. If None, no rebinning is done.
+        wick_mode: None or str - default: None
+            If string should be D1 or D2. Will remove attributes that are not
+            needed for wick calculation
         z_min_qso: float - default: 0
             Specifies the minimum redshift for QSOs
         z_max_qso: float - default: 10
@@ -352,18 +373,21 @@ def read_deltas(in_dir,
     in_dir = os.path.expandvars(in_dir)
 
     if len(in_dir) > 8 and in_dir[-8:] == '.fits.gz':
-        files += sorted(glob.glob(in_dir))
+        files += glob.glob(in_dir)
     elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
-        files += sorted(glob.glob(in_dir))
+        files += glob.glob(in_dir)
     else:
-        files += sorted(glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
-                                                            '/*.fits.gz'))
+        tmp = in_dir + '/*.fits'
+        files += glob.glob(tmp) + glob.glob(tmp + '.gz')
+        del tmp
     files = sorted(files)
 
     if rebin_factor is not None:
         userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
 
-    arguments = [(f, z_min_qso, z_max_qso, rebin_factor) for f in files]
+    arguments = [
+        (f, z_min_qso, z_max_qso, rebin_factor, wick_mode) for f in files
+    ]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
     pool.close()
@@ -399,7 +423,7 @@ def read_deltas(in_dir,
         z_min = min(z_min, z.min())
         z_max = max(z_max, z.max())
         delta.z = z
-        if not cosmo is None:
+        if cosmo is not None:
             delta.r_comov = cosmo.get_r_comov(z)
             delta.dist_m = cosmo.get_dist_m(z)
         delta.weights *= ((1 + z) / (1 + z_ref))**(alpha - 1)
@@ -407,7 +431,7 @@ def read_deltas(in_dir,
         if not no_project:
             delta.project()
 
-        if not healpix in data:
+        if healpix not in data:
             data[healpix] = []
         data[healpix].append(delta)
 
