@@ -64,4 +64,4 @@ picca = [
 
 #Covariance scripts
 "picca_write_full_covariance.py" = "picca.bin.picca_write_full_covariance:main"
-"picca_write_full_smooth_covariance.py" = "picca.bin.picca_write_smooth_covariance:main"
+"picca_write_smooth_covariance.py" = "picca.bin.picca_write_smooth_covariance:main"
