@@ -7,7 +7,6 @@ import fitsio
 import numpy as np
 from scipy.interpolate import interp1d
 import healpy
-from importlib import resources
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
