@@ -189,10 +189,10 @@ def main(cmdargs=None):
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology'
     )
 
-    parser.add_argument('--no-project',
-                        action='store_true',
-                        required=False,
-                        help='Do not project out continuum fitting modes')
+    # parser.add_argument('--no-project',
+    #                     action='store_true',
+    #                     required=False,
+    #                     help='Projection is not applicable to wick.')
 
     parser.add_argument('--max-diagram',
                         type=int,
@@ -321,7 +321,7 @@ def main(cmdargs=None):
         cf.z_ref,
         cosmo,
         max_num_spec=args.nspec,
-        # no_project=args.no_project,
+        no_project=True,
         nproc=args.nproc,
         rebin_factor=args.rebin_factor,
         wick_mode='D1',
@@ -433,6 +433,10 @@ def main(cmdargs=None):
             cpu_data[num_processor] = []
         cpu_data[num_processor].append(healpix)
 
+    userprint(" \nCompiling\n")
+    # cf.reject = 1
+    # _ = calc_wick_terms(cpu_data.values()[0])
+    # cf.reject = args.rej
     # compute the covariance matrix
     userprint(" \nStarting\n")
     if args.nproc > 1:
