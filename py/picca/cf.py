@@ -1267,12 +1267,6 @@ def compute_xi_1d(healpix):
     num_pairs1d = np.zeros(num_pixels**2, dtype=np.int64)
 
     for delta in data[healpix]:
-        with lock:
-            xicounter = round(counter.value * 100.0 / num_data, 2)
-            if counter.value % 1000 == 0:
-                userprint(("computing xi: {}%").format(xicounter))
-            counter.value += 1
-
         select = delta.log_lambda <= log_lambda_max
         select &= delta.log_lambda >= log_lambda_min
         bins = (
@@ -1308,12 +1302,6 @@ def compute_xi_1d_cross(healpix):
     num_pairs1d = np.zeros(num_pixels**2, dtype=np.int64)
 
     for delta1 in data[healpix]:
-        with lock:
-            xicounter = round(counter.value * 100.0 / num_data, 2)
-            if counter.value % 1000 == 0:
-                userprint(("computing xi: {}%").format(xicounter))
-            counter.value += 1
-
         select1 = delta1.log_lambda <= log_lambda_max
         select1 &= delta1.log_lambda >= log_lambda_min
         bins1 = (

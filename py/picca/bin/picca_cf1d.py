@@ -4,7 +4,7 @@ forest.
 import sys
 import argparse
 import multiprocessing
-from multiprocessing import Pool, Lock, cpu_count, Value
+from multiprocessing import cpu_count
 import numpy as np
 import fitsio
 
@@ -161,7 +161,7 @@ def main(cmdargs=None):
     if args.lambda_max is not None:
         cf.log_lambda_max = np.log10(args.lambda_max)
     cf.delta_log_lambda = args.dll
-    
+
     cf.x_correlation = False
 
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
@@ -249,10 +249,6 @@ def main(cmdargs=None):
 
 
     # Compute the correlation function, use pool to parallelize
-    cf.counter = Value('i', 0)
-    cf.lock = Lock()
-    context = multiprocessing.get_context('fork')
-
     if cf.x_correlation:
         healpixs = sorted([
             key for key in list(cf.data.keys()) if key in list(cf.data2.keys())
@@ -260,7 +256,8 @@ def main(cmdargs=None):
     else:
         healpixs = sorted(list(cf.data.keys()))
 
-    if args.nproc>1:
+    if args.nproc > 1:
+        context = multiprocessing.get_context('fork')
         with context.Pool(processes=args.nproc) as pool:
             correlation_function_data = pool.map(corr_func, healpixs)
     else:
