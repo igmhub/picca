@@ -658,18 +658,21 @@ class Delta(QSO):
         num_bins = np.ceil(((wave[-1] - wave[0]) / dwave + 1) / factor)
 
         edges = np.arange(num_bins) * dwave * factor + start
+        new_wave = (edges[1:] + edges[:-1]) / 2
 
         new_indx = np.searchsorted(edges, wave)
 
-        binned_delta = np.bincount(new_indx, weights=self.delta*self.weights,
-                                   minlength=edges.size+1)[1:-1]
-        binned_weight = np.bincount(new_indx, weights=self.weights, minlength=edges.size+1)[1:-1]
+        binned_weight = np.bincount(
+            new_indx, weights=self.weights, minlength=edges.size + 1)[1:-1]
 
         mask = binned_weight != 0
-        binned_delta[mask] /= binned_weight[mask]
 
-        new_wave = (edges[1:] + edges[:-1]) / 2
+        if self.delta is not None:
+            binned_delta = np.bincount(
+                new_indx, weights=self.delta * self.weights,
+                minlength=edges.size + 1)[1:-1]
+            binned_delta[mask] /= binned_weight[mask]
+            self.delta = binned_delta[mask]
 
         self.log_lambda = np.log10(new_wave[mask])
-        self.delta = binned_delta[mask]
         self.weights = binned_weight[mask]
