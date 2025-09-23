@@ -1,4 +1,5 @@
 import configparser as ConfigParser
+from importlib import resources
 from picca.utils import userprint
 import fitsio
 import os
@@ -7,7 +8,7 @@ import h5py
 import sys
 import unittest
 import shutil, tempfile
-from pkg_resources import resource_filename
+from importlib import resources
 
 ### Make ConfigParser case sensitive
 class CaseConfigParser(ConfigParser.ConfigParser):
@@ -253,8 +254,8 @@ class AbstractTest(unittest.TestCase):
         """
         cls._branchFiles = tempfile.mkdtemp() + "/"
         cls.produce_folder(cls)
-        cls.picca_base = resource_filename('picca',
-                                           './').replace('py/picca/./', '')
+        with resources.path('picca', '.') as picca_path:
+            cls.picca_base = str(picca_path).replace('py/picca/./', '')
         cls.send_requirements(cls.load_requirements(cls.picca_base))
         np.random.seed(42)
         cls._masterFiles = cls.picca_base + '/py/picca/tests/data/'
