@@ -128,7 +128,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             num_z_bins = config.getint("num z bins")
             if num_z_bins is None or num_z_bins < 1:
                 raise ExpectedFluxError(
-                    "Missing argument 'num z bins' required by MeanContinuum2dExpectedFlux"
+                    "Missing argument 'num z bins' required by MeanContinuumInterpExpectedFlux"
                 )
             self.num_z_bins = num_z_bins
 
@@ -161,7 +161,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         else:  # pragma: no cover
             raise ExpectedFluxError(
                 f"Invalid interpolation type '{self.interpolation_type}' "
-                f"required by MeanContinuum2dExpectedFlux. "
+                f"required by MeanContinuumInterpExpectedFlux. "
                 f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
 
     def compute_mean_cont(self,
@@ -182,7 +182,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         else:  # pragma: no cover
             raise ExpectedFluxError(
                 f"Invalid interpolation type '{self.interpolation_type}' "
-                f"required by MeanContinuum2dExpectedFlux. "
+                f"required by MeanContinuumInterpExpectedFlux. "
                 f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
 
     def compute_mean_cont_1d(self,
@@ -304,20 +304,6 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                     "Negative coefficients found in the redshift interpolation. "
                     "This should not happen, please report this issue.")
             if any(weights < 0):
-                print("\n################################")
-                print("################################")
-                print("log_lambda weight ivar continuum eta var_lss fudge")
-                for weight, ivar, continuum, log_lambda in zip(
-                        weights, forest.ivar, forest.continuum,
-                        forest.log_lambda):
-                    var_lss = self.get_var_lss(log_lambda)
-                    eta = self.get_eta(log_lambda)
-                    fudge = self.get_fudge(log_lambda)
-                    print(
-                        f"{log_lambda:.4f} {weight:.4f} {ivar:.4f} {continuum:.4f} "
-                        f"{eta:.4f} {var_lss:.4f} {fudge:.4f}"
-                    )
-
                 raise ExpectedFluxError(
                     "Negative weights found in the forest weights. "
                     "This should not happen, please report this issue.")
@@ -492,7 +478,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         else:  # pragma: no cover
             raise ExpectedFluxError(
                 f"Invalid interpolation type '{self.interpolation_type}' "
-                f"required by MeanContinuum2dExpectedFlux. "
+                f"required by MeanContinuumInterpExpectedFlux. "
                 f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
 
 
@@ -535,7 +521,7 @@ def interp_coeff_z(z, z_grid):
     z: float
     Redshift
 
-    z: np.ndarray
+    z_grid: np.ndarray
     Redshift grid where the interpolation is defined
 
     Returns
@@ -568,8 +554,20 @@ def compute_mean_cont_1d(log_lambda_rest_frame_grid, log_lambda, flux,
     log_lambda_rest_frame_grid: np.ndarray
     A 1D array of rest-frame wavelengths (in Angstroms) where the continuum is defined.
 
-    which_cont: Function or lambda
-    Should return what to use as continuum given a forest
+    log_lambda: np.ndarray
+    A 1D array of observed wavelengths (in Angstroms).
+
+    flux: np.ndarray
+    A 1D array of observed fluxes.
+
+    continuum: np.ndarray
+    A 1D array of quasar continua.
+
+    redshift: float
+    The redshift of the quasar.
+
+    weight: np.ndarray
+    A 1D array of weights for each pixel.
     """
     A_matrix = np.zeros(
         (log_lambda_rest_frame_grid.size, log_lambda_rest_frame_grid.size))
@@ -595,6 +593,9 @@ def compute_mean_cont_1d(log_lambda_rest_frame_grid, log_lambda, flux,
             index] * coeffs[index] * coeffs[index]
 
     # Off-diagonal elements
+    #A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w]] += weight[w] * coeffs[w] * (1 - coeffs[w])
+    #A_matrix[rf_wavelength_bin[w], rf_wavelength_bin[w] + 1] += weight[w] * coeffs[w] * (1 - coeffs[w])
+    #A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w] + 1] += weight[w] * (1 - coeffs[w]) * (1 - coeffs[w])
     w = np.where(rf_wavelength_bin < log_lambda_rest_frame_grid.size - 1)
     for index in w[0]:
         A_matrix[rf_wavelength_bin[index] + 1,
@@ -604,8 +605,5 @@ def compute_mean_cont_1d(log_lambda_rest_frame_grid, log_lambda, flux,
                  1] += weight[index] * coeffs[index] * (1 - coeffs[index])
         A_matrix[rf_wavelength_bin[index] + 1, rf_wavelength_bin[index] +
                  1] += weight[index] * (1 - coeffs[index]) * (1 - coeffs[index])
-    #A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w]] += weight[w] * coeffs[w] * (1 - coeffs[w])
-    #A_matrix[rf_wavelength_bin[w], rf_wavelength_bin[w] + 1] += weight[w] * coeffs[w] * (1 - coeffs[w])
-    #A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w] + 1] += weight[w] * (1 - coeffs[w]) * (1 - coeffs[w])
-
+    
     return A_matrix, B_matrix
