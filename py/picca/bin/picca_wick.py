@@ -306,10 +306,6 @@ def main(cmdargs=None):
     blinding = io.read_blinding(args.in_dir)
 
     # load cosmology
-    if (args.fid_Or != 0.) or (args.fid_Ok != 0.) or (args.fid_wl != -1.):
-        userprint(("ERROR: Cosmology with other than Omega_m set are not yet "
-                   "implemented"))
-        sys.exit()
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
@@ -325,19 +321,14 @@ def main(cmdargs=None):
         cf.z_ref,
         cosmo,
         max_num_spec=args.nspec,
+        # no_project=args.no_project,
         nproc=args.nproc,
         rebin_factor=args.rebin_factor,
+        wick_mode='D1',
         z_min_qso=args.z_min_sources,
         z_max_qso=args.z_max_sources
     )
-    for deltas in data.values():
-        for delta in deltas:
-            delta.fname = 'D1'
-            for item in [
-                    'cont', 'delta', 'order', 'ivar', 'exposures_diff',
-                    'mean_snr', 'mean_reso', 'mean_z', 'delta_log_lambda'
-            ]:
-                setattr(delta, item, None)
+
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -420,16 +411,10 @@ def main(cmdargs=None):
             max_num_spec=args.nspec,
             nproc=args.nproc,
             rebin_factor=args.rebin_factor,
+            wick_mode='D2',
             z_min_qso=args.z_min_sources,
             z_max_qso=args.z_max_sources)
-        for deltas in data.values():
-            for delta in deltas:
-                delta.fname = 'D2'
-                for item in [
-                        'cont', 'delta', 'order', 'ivar', 'exposures_diff',
-                        'mean_snr', 'mean_reso', 'mean_z', 'delta_log_lambda'
-                ]:
-                    setattr(delta, item, None)
+
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
@@ -449,15 +434,16 @@ def main(cmdargs=None):
         cpu_data[num_processor].append(healpix)
 
     # compute the covariance matrix
-    context = multiprocessing.get_context('fork')
-    pool = context.Pool(processes=min(args.nproc, len(cpu_data.values())))
     userprint(" \nStarting\n")
     if args.nproc > 1:
-        wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
+        context = multiprocessing.get_context('fork')
+        # context.Pool(processes=min(args.nproc, len(cpu_data.values())))
+        with context.Pool(processes=args.nproc) as pool:
+            wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
     else:
-        wick_data = [calc_wick_terms(arg) for arg in sorted(cpu_data.values())]
+        wick_data = list(map(calc_wick_terms, sorted(cpu_data.values())))
+
     userprint(" \nFinished\n")
-    pool.close()
 
     # merge the results from the different CPUs
     wick_data = list(wick_data)
