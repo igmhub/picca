@@ -62,4 +62,5 @@ picca = [
 "picca_compute_fvoigt_hcd.py" = "picca.bin.picca_compute_fvoigt_hcd:main"
 "picca_compute_fvoigt.py" = "picca.bin.picca_compute_fvoigt:main"
 # Wick
+"picca_cf1d.py" = "picca.bin.picca_cf1d:main"
 "picca_wick.py" = "picca.bin.picca_wick:main"

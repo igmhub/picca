@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Compute the 1D auto or cross-correlation between delta field from the same
 forest.
 """
@@ -32,7 +31,7 @@ def corr_func(p):
     return correlation_function_data
 
 
-def main(cmdargs):
+def main(cmdargs=None):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Compute the 1D auto or cross-correlation between delta field from the same
     forest."""
@@ -371,8 +370,3 @@ def main(cmdargs):
     results.close()
 
     userprint("all done")
-
-
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
-    main(cmdargs)
