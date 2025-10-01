@@ -7,7 +7,6 @@ import scipy as sp
 import numpy as np
 from scipy import interpolate
 from scipy.constants import speed_of_light as speed_light
-from pkg_resources import resource_filename
 from picca.utils import userprint
 
 # TODO: this constant is unused. They should be removed at some point
@@ -17,10 +16,6 @@ SMALL_ANGLE_CUT_OFF = 2./3600.*np.pi/180. # 2 arcsec
 
 SPEED_LIGHT = speed_light/1000. # [km/s]
 
-# different strategies are explained in
-# https://desi.lbl.gov/trac/wiki/keyprojects/y1kp6/Blinding
-ACCEPTED_BLINDING_STRATEGIES = ["none", "minimal", "strategyB", "strategyC",
-    "strategyBC", "corr_yshift"]
 
 class Cosmo(object):
     """This class defines the fiducial cosmology
@@ -182,31 +177,9 @@ class Cosmo(object):
         # make what we are doing more clear.
         H0 = 100.0
 
-        # Blind data
-        if blinding == "none":
-            if verbose:
-                userprint("ATTENTION: Analysis is not blinded!")
-        else:
-            userprint(f"ATTENTION: Analysis is blinded with strategy {blinding}")
-
-        if blinding not in  ["strategyB", "strategyBC"]:
-            if verbose:
-                userprint(f"Om={Om}, Or={Or}, wl={wl}")
-        else:
-            userprint("The specified cosmology is "
-                      f"not used: Om={Om}, Or={Or}, wl={wl}")
-            # blind test small
-            filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
-            # blind test large
-            #filename = "DR16_blind_test_small/DR16_blind_test_large.fits"
-            # load Om
-            filename = resource_filename('picca', 'fitter2')+'/models/{}'.format(filename)
-            hdu = fitsio.FITS(filename)
-            Om = hdu[1].read_header()['OM']
-            Or = hdu[1].read_header()['OR']
-            wl = hdu[1].read_header()['W']
-            H0 = hdu[1].read_header()['H0']
-            hdu.close()
+        if verbose and blinding == "none":
+            userprint("ATTENTION: Analysis is not blinded!")
+            userprint(f"Om={Om}, Or={Or}, wl={wl}")
 
         # Ignore evolution of neutrinos from matter to radiation
         Ol = 1. - Ok - Om - Or
