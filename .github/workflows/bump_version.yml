@@ -45,7 +45,7 @@ jobs:
       run: echo "No version bump requested"
       
     - name: Push changes
-      uses: ad-m/github-push-action@master
+      uses: ad-m/github-push-action@main
       with:
         github_token: ${{ secrets.PAT_MW_TOKEN_ACTION }}
         tags: true
