@@ -297,6 +297,13 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
+        "--distance-template",
+        type=str,
+        required=False,
+        help=("Template cosmology to use in distance calculations. "),
+    )
+
+    parser.add_argument(
         "--rej",
         type=float,
         default=1.0,
@@ -392,6 +399,7 @@ def main(cmdargs=None):
         Ok=args.fid_Ok,
         wl=args.fid_wl,
         blinding=blinding,
+        template=args.distance_template
     )
 
     t0 = time.time()
