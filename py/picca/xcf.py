@@ -31,8 +31,6 @@ num_model_bins_r_trans = None
 r_par_max = None
 r_par_min = None
 r_trans_max = None
-z_cut_max = None
-z_cut_min = None
 z_min_pairs = None
 z_max_pairs = None
 ang_max = None
@@ -122,17 +120,7 @@ def fill_neighs(healpixs):
                 w &= (delta.r_comov[0] - r_comov) * np.cos(ang / 2.) < r_par_max * f
                 w &= (delta.r_comov[-1] - r_comov) * np.cos(ang / 2.) > r_par_min * f
 
-            neighbours = np.array(neighbours)[w]
-            delta.neighbours = np.array(
-                [
-                    obj
-                    for obj in neighbours
-                    if (
-                        (delta.z[-1] + obj.z_qso) / 2.0 >= z_cut_min
-                        and (delta.z[-1] + obj.z_qso) / 2.0 < z_cut_max
-                    )
-                ]
-            )
+            delta.neighbours = np.array(neighbours)[w]
 
 
 def compute_xi(healpixs):

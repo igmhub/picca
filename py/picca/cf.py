@@ -31,8 +31,6 @@ num_model_bins_r_trans = None
 num_model_bins_r_par = None
 r_par_max = None
 r_par_min = None
-z_cut_max = None
-z_cut_min = None
 z_min_pairs = None
 z_max_pairs = None
 r_trans_max = None
@@ -126,22 +124,13 @@ def fill_neighs(healpixs):
             w = ang < ang_max
             neighbours = np.array(neighbours)[w]
             if data2 is not None:
-                delta.neighbours = [
-                    other_delta
-                    for other_delta in neighbours
-                    if (
-                        (other_delta.z[-1] + delta.z[-1]) / 2.0 >= z_cut_min
-                        and (other_delta.z[-1] + delta.z[-1]) / 2.0 < z_cut_max
-                    )
-                ]
+                delta.neighbours = neighbours
             else:
                 delta.neighbours = [
                     other_delta
                     for other_delta in neighbours
                     if (
                         delta.ra > other_delta.ra
-                        and (other_delta.z[-1] + delta.z[-1]) / 2.0 >= z_cut_min
-                        and (other_delta.z[-1] + delta.z[-1]) / 2.0 < z_cut_max
                     )
                 ]
 

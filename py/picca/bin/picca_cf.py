@@ -135,30 +135,6 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
-        "--z-cut-min",
-        type=float,
-        default=0.0,
-        required=False,
-        help=(
-            "Use only pairs of forest x object with the mean "
-            "of the last absorber redshift and the object "
-            "redshift larger than z-cut-min"
-        ),
-    )
-
-    parser.add_argument(
-        "--z-cut-max",
-        type=float,
-        default=10.0,
-        required=False,
-        help=(
-            "Use only pairs of forest x object with the mean "
-            "of the last absorber redshift and the object "
-            "redshift smaller than z-cut-max"
-        ),
-    )
-
-    parser.add_argument(
         "--z-min-sources",
         type=float,
         default=0.0,
@@ -350,8 +326,6 @@ def main(cmdargs=None):
     cf.r_par_max = args.rp_max
     cf.r_trans_max = args.rt_max
     cf.r_par_min = args.rp_min
-    cf.z_cut_max = args.z_cut_max
-    cf.z_cut_min = args.z_cut_min
     cf.z_min_pairs = args.z_min_pairs
     cf.z_max_pairs = args.z_max_pairs
     cf.num_bins_r_par = args.np
@@ -506,12 +480,12 @@ def main(cmdargs=None):
         'value': cf.num_bins_r_trans,
         'comment': 'Number of bins in r-transverse'
     }, {
-        'name': 'ZCUTMIN',
-        'value': cf.z_cut_min,
+        'name': 'ZMIN',
+        'value': cf.z_min_pairs,
         'comment': 'Minimum redshift of pairs'
     }, {
-        'name': 'ZCUTMAX',
-        'value': cf.z_cut_max,
+        'name': 'ZMAX',
+        'value': cf.z_max_pairs,
         'comment': 'Maximum redshift of pairs'
     }, {
         'name': 'NSIDE',
