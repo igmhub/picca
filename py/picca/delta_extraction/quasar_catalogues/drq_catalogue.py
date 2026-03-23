@@ -274,7 +274,7 @@ class DrqCatalogue(QuasarCatalogue):
                 f"message: {str(error)}"
             ) from error
 
-        w = np.in1d(catalogue["THING_ID"], drq_catalogue["THING_ID"])
+        w = np.isin(catalogue["THING_ID"], drq_catalogue["THING_ID"])
         self.logger.progress(f"Found {np.sum(w)} spectra with required THING_ID")
         w &= catalogue["PLATEQUALITY"] == "good"
         self.logger.progress(f"Found {np.sum(w)} spectra with 'good' plate")

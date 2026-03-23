@@ -77,7 +77,7 @@ def main(cmdargs):
     # Add unshared healpix as empty data
     for key in sorted(list(data.keys())):
         key2 = (key + 1) % 2
-        w = np.logical_not(np.in1d(data[key2]['HEALPID'], data[key]['HEALPID']))
+        w = np.logical_not(np.isin(data[key2]['HEALPID'], data[key]['HEALPID']))
         if w.sum() > 0:
             new_healpix = data[key2]['HEALPID'][w]
             num_new_healpix = new_healpix.size

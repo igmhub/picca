@@ -209,7 +209,7 @@ def main(cmdargs):
                     sys.exit()
 
                 w = np.logical_not(
-                    np.in1d(data[type_corr1]['HEALPID'],
+                    np.isin(data[type_corr1]['HEALPID'],
                             data[type_corr2]['HEALPID']))
                 if w.sum() != 0:
                     userprint("WARNING: HEALPID are different by {} for {}:{} "
