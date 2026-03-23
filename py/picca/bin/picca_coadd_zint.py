@@ -382,8 +382,12 @@ def coadd_dmats(input_files,output_file):
     return
 
 def main(cmdargs):
-    """Coadds correlation function from different redshift intervals"""
-    parser = argparse.ArgumentParser()
+    """This script is deprecated and will be removed in future versions. 
+    Coadds correlation function from different redshift intervals"""
+    parser = argparse.ArgumentParser(
+        description=("This script is deprecated and will be removed in future versions." 
+                     " Coadds correlation function from different redshift intervals")
+    )
 
     parser.add_argument("--data",
                         type=str,
