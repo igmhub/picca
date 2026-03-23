@@ -368,6 +368,14 @@ def main(cmdargs=None):
         'value': num_bins_r_trans,
         'comment': 'Number of bins in r-transverse'
     }, {
+        'name': 'ZMIN',
+        'value': head['ZMIN'],
+        'comment': 'Minimum redshift of pairs'
+    }, {
+        'name': 'ZMAX',
+        'value': head['ZMAX'],
+        'comment': 'Maximum redshift of pairs'
+    }, {
         'name': 'OMEGAM',
         'value': head['OMEGAM'],
         'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
