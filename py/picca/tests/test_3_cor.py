@@ -44,6 +44,8 @@ def reset_cf():
     picca.cf.num_model_bins_r_par = None
     picca.cf.r_par_max = None
     picca.cf.r_par_min = None
+    picca.cf.z_min_pairs = None
+    picca.cf.z_max_pairs = None
     picca.cf.r_trans_max = None
     picca.cf.ang_max = None
     picca.cf.nside = None
@@ -90,6 +92,8 @@ def reset_xcf():
     picca.xcf.num_model_bins_r_trans = None
     picca.xcf.r_par_max = None
     picca.xcf.r_par_min = None
+    picca.xcf.z_min_pairs = None
+    picca.xcf.z_max_pairs = None
     picca.xcf.r_trans_max = None
     picca.xcf.ang_max = None
     picca.xcf.nside = None
@@ -767,257 +771,248 @@ class TestCor(AbstractTest):
 
         return
 
-    # TODO: Update this with new z-cuts
-    # def test_cf_zcuts(self):
-    #     """
-    #         Test correlation function
-    #     """
-    #     importlib.reload(picca.cf)
+    def test_cf_zcuts(self):
+        """
+            Test correlation function
+        """
+        importlib.reload(picca.cf)
 
-    #     userprint("\n")
-    #     ### Send
-    #     cmd = "picca_cf.py"
-    #     cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-    #     cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
-    #     cmd += " --rp-min +0.0"
-    #     cmd += " --rp-max +60.0"
-    #     cmd += " --rt-max +60.0"
-    #     cmd += " --np 15"
-    #     cmd += " --nt 15"
-    #     cmd += " --nproc 1"
-    #     cmd += ' --remove-same-half-plate-close-pairs'
-    #     cmd += " --z-cut-min 2.25"
-    #     cmd += " --z-cut-max 2.3"
-    #     cmd += " --z-min-sources 2.3"
-    #     cmd += " --z-max-sources 2.5"
-    #     print(repr(cmd))
-    #     picca.bin.picca_cf.main(cmd.split()[1:])
+        userprint("\n")
+        ### Send
+        cmd = "picca_cf.py"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
+        cmd += " --rp-min +0.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --z-min-pairs 2.25"
+        cmd += " --z-max-pairs 2.3"
+        cmd += " --z-min-sources 2.3"
+        cmd += " --z-max-sources 2.5"
+        print(repr(cmd))
+        picca.bin.picca_cf.main(cmd.split()[1:])
 
-    #     ### Test
-    #     if self._test:
-    #         path1 = self._masterFiles + "/test_cor/cf_zcuts.fits.gz"
-    #         path2 = self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
-    #         self.compare_fits(path1, path2, "picca_cf.py")
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/cf_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
+            self.compare_fits(path1, path2, "picca_cf.py")
 
-    #     return
+        return
 
-    # TODO: Update this with new z-cuts
-    # def test_cf_image_data_zcuts(self):
-    #     """
-    #         Test correlation function reading image data
-    #     """
-    #     importlib.reload(picca.cf)
+    def test_cf_image_data_zcuts(self):
+        """
+            Test correlation function reading image data
+        """
+        importlib.reload(picca.cf)
 
-    #     userprint("\n")
-    #     ### Send
-    #     cmd = "picca_cf.py"
-    #     cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA_image/"
-    #     cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
-    #     cmd += " --rp-min +0.0"
-    #     cmd += " --rp-max +60.0"
-    #     cmd += " --rt-max +60.0"
-    #     cmd += " --np 15"
-    #     cmd += " --nt 15"
-    #     cmd += " --nproc 1"
-    #     cmd += " --z-cut-min 2.25"
-    #     cmd += " --z-cut-max 2.3"
-    #     cmd += " --z-min-sources 2.3"
-    #     cmd += " --z-max-sources 2.5"
-    #     print(repr(cmd))
-    #     picca.bin.picca_cf.main(cmd.split()[1:])
+        userprint("\n")
+        ### Send
+        cmd = "picca_cf.py"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA_image/"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
+        cmd += " --rp-min +0.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --nproc 1"
+        cmd += " --z-min-pairs 2.25"
+        cmd += " --z-max-pairs 2.3"
+        cmd += " --z-min-sources 2.3"
+        cmd += " --z-max-sources 2.5"
+        print(repr(cmd))
+        picca.bin.picca_cf.main(cmd.split()[1:])
 
-    #     ### Test
-    #     if self._test:
-    #         path1 = self._masterFiles + "/test_cor/cf_image_zcuts.fits.gz"
-    #         path2 = self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
-    #         self.compare_fits(path1, path2, "picca_cf.py")
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/cf_image_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/cf_zcuts.fits.gz"
+            self.compare_fits(path1, path2, "picca_cf.py")
 
-    #     return
+        return
 
-    # TODO: Update this with new z-cuts
-    # def test_dmat_zcuts(self):
-    #     """
-    #         Test distortion matrix
-    #     """
-    #     importlib.reload(picca.cf)
+    def test_dmat_zcuts(self):
+        """
+            Test distortion matrix
+        """
+        importlib.reload(picca.cf)
 
-    #     userprint("\n")
-    #     ### Send
-    #     cmd = "picca_dmat.py"
-    #     cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-    #     cmd += " --out " + self._branchFiles + "/Products/Correlations/dmat_zcuts.fits.gz"
-    #     cmd += " --rp-min +0.0"
-    #     cmd += " --rp-max +60.0"
-    #     cmd += " --rt-max +60.0"
-    #     cmd += " --np 15"
-    #     cmd += " --nt 15"
-    #     cmd += " --rej 0.99"
-    #     cmd += " --nproc 1"
-    #     cmd += ' --remove-same-half-plate-close-pairs'
-    #     cmd += " --z-cut-min 2.25"
-    #     cmd += " --z-cut-max 2.3"
-    #     cmd += " --z-min-sources 2.3"
-    #     cmd += " --z-max-sources 2.5"
-    #     cmd += ' --no-redshift-evolution'
+        userprint("\n")
+        ### Send
+        cmd = "picca_dmat.py"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/dmat_zcuts.fits.gz"
+        cmd += " --rp-min +0.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --rej 0.99"
+        cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --z-min-pairs 2.25"
+        cmd += " --z-max-pairs 2.3"
+        cmd += " --z-min-sources 2.3"
+        cmd += " --z-max-sources 2.5"
+        cmd += ' --no-redshift-evolution'
 
-    #     print(repr(cmd))
-    #     picca.bin.picca_dmat.main(cmd.split()[1:])
+        print(repr(cmd))
+        picca.bin.picca_dmat.main(cmd.split()[1:])
 
-    #     ### Test
-    #     if self._test:
-    #         path1 = self._masterFiles + "/test_cor/dmat_zcuts.fits.gz"
-    #         path2 = self._branchFiles + "/Products/Correlations/dmat_zcuts.fits.gz"
-    #         self.compare_fits(path1, path2, "picca_dmat.py")
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/dmat_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/dmat_zcuts.fits.gz"
+            self.compare_fits(path1, path2, "picca_dmat.py")
 
-    #     return
+        return
 
-    # TODO: Update this with new z-cuts
-    # def test_cf_cross_zcuts(self):
-    #     """
-    #         Test export of cross correlation function
-    #     """
-    #     importlib.reload(picca.cf)
+    def test_cf_cross_zcuts(self):
+        """
+            Test export of cross correlation function
+        """
+        importlib.reload(picca.cf)
 
-    #     userprint("\n")
-    #     ### Send
-    #     cmd = "picca_cf.py"
-    #     cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-    #     cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
-    #     cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_cross_zcuts.fits.gz"
-    #     cmd += " --rp-min -60.0"
-    #     cmd += " --rp-max +60.0"
-    #     cmd += " --rt-max +60.0"
-    #     cmd += " --np 30"
-    #     cmd += " --nt 15"
-    #     cmd += " --nproc 1"
-    #     cmd += ' --remove-same-half-plate-close-pairs'
-    #     cmd += " --unfold-cf"
-    #     cmd += " --z-cut-min 2.25"
-    #     cmd += " --z-cut-max 2.3"
-    #     cmd += " --z-min-sources 2.3"
-    #     cmd += " --z-max-sources 2.5"
-    #     print(repr(cmd))
-    #     picca.bin.picca_cf.main(cmd.split()[1:])
+        userprint("\n")
+        ### Send
+        cmd = "picca_cf.py"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_cross_zcuts.fits.gz"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
+        cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --unfold-cf"
+        cmd += " --z-min-pairs 2.25"
+        cmd += " --z-max-pairs 2.3"
+        cmd += " --z-min-sources 2.3"
+        cmd += " --z-max-sources 2.5"
+        print(repr(cmd))
+        picca.bin.picca_cf.main(cmd.split()[1:])
 
-    #     ### Test
-    #     if self._test:
-    #         path1 = self._masterFiles + "/test_cor/cf_cross_zcuts.fits.gz"
-    #         path2 = self._branchFiles + "/Products/Correlations/cf_cross_zcuts.fits.gz"
-    #         self.compare_fits(path1, path2, "picca_cf.py")
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/cf_cross_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/cf_cross_zcuts.fits.gz"
+            self.compare_fits(path1, path2, "picca_cf.py")
 
-    #     return
+        return
 
-    # TODO: Update this with new z-cuts
-    # def test_dmat_cross_zcuts(self):
-    #     """
-    #         Test cross distortion matrix
-    #     """
-    #     importlib.reload(picca.cf)
+    def test_dmat_cross_zcuts(self):
+        """
+            Test cross distortion matrix
+        """
+        importlib.reload(picca.cf)
 
+        userprint("\n")
+        ### Send
+        cmd = "picca_dmat.py"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/dmat_cross_zcuts.fits.gz"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
+        cmd += " --rej 0.99"
+        cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --unfold-cf"
+        cmd += " --z-min-pairs 2.25"
+        cmd += " --z-max-pairs 2.3"
+        cmd += " --z-min-sources 2.3"
+        cmd += " --z-max-sources 2.5"
+        cmd += ' --no-redshift-evolution'
 
-    #     userprint("\n")
-    #     ### Send
-    #     cmd = "picca_dmat.py"
-    #     cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-    #     cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
-    #     cmd += " --out " + self._branchFiles + "/Products/Correlations/dmat_cross_zcuts.fits.gz"
-    #     cmd += " --rp-min -60.0"
-    #     cmd += " --rp-max +60.0"
-    #     cmd += " --rt-max +60.0"
-    #     cmd += " --np 30"
-    #     cmd += " --nt 15"
-    #     cmd += " --rej 0.99"
-    #     cmd += " --nproc 1"
-    #     cmd += ' --remove-same-half-plate-close-pairs'
-    #     cmd += " --unfold-cf"
-    #     cmd += " --z-cut-min 2.25"
-    #     cmd += " --z-cut-max 2.3"
-    #     cmd += " --z-min-sources 2.3"
-    #     cmd += " --z-max-sources 2.5"
-    #     cmd += ' --no-redshift-evolution'
+        print(repr(cmd))
+        picca.bin.picca_dmat.main(cmd.split()[1:])
 
-    #     print(repr(cmd))
-    #     picca.bin.picca_dmat.main(cmd.split()[1:])
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/dmat_cross_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/dmat_cross_zcuts.fits.gz"
+            self.compare_fits(path1, path2, "picca_dmat.py")
 
-    #     ### Test
-    #     if self._test:
-    #         path1 = self._masterFiles + "/test_cor/dmat_cross_zcuts.fits.gz"
-    #         path2 = self._branchFiles + "/Products/Correlations/dmat_cross_zcuts.fits.gz"
-    #         self.compare_fits(path1, path2, "picca_dmat.py")
+        return
 
-    #     return
+    def test_xcf_zcuts(self):
+        """
+            Test cross correlation function
+        """
 
-    # TODO: Update this with new z-cuts
-    # def test_xcf_zcuts(self):
-    #     """
-    #         Test cross correlation function
-    #     """
+        userprint("\n")
+        ### Send
+        cmd = "picca_xcf.py"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf_zcuts.fits.gz"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
+        cmd += " --nproc 1"
+        cmd += " --z-evol-obj 1."
+        cmd += " --z-min-pairs 2.25"
+        cmd += " --z-max-pairs 2.3"
+        cmd += " --z-min-sources 2.3"
+        cmd += " --z-max-sources 2.5"
+        print(repr(cmd))
+        picca.bin.picca_xcf.main(cmd.split()[1:])
 
-    #     userprint("\n")
-    #     ### Send
-    #     cmd = "picca_xcf.py"
-    #     cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-    #     cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
-    #     cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf_zcuts.fits.gz"
-    #     cmd += " --rp-min -60.0"
-    #     cmd += " --rp-max +60.0"
-    #     cmd += " --rt-max +60.0"
-    #     cmd += " --np 30"
-    #     cmd += " --nt 15"
-    #     cmd += " --nproc 1"
-    #     cmd += " --z-evol-obj 1."
-    #     cmd += " --z-cut-min 2.25"
-    #     cmd += " --z-cut-max 2.3"
-    #     cmd += " --z-min-sources 2.3"
-    #     cmd += " --z-max-sources 2.5"
-    #     print(repr(cmd))
-    #     picca.bin.picca_xcf.main(cmd.split()[1:])
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/xcf_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/xcf_zcuts.fits.gz"
+            self.compare_fits(path1, path2, "picca_xcf.py")
 
-    #     ### Test
-    #     if self._test:
-    #         path1 = self._masterFiles + "/test_cor/xcf_zcuts.fits.gz"
-    #         path2 = self._branchFiles + "/Products/Correlations/xcf_zcuts.fits.gz"
-    #         self.compare_fits(path1, path2, "picca_xcf.py")
+        return
 
-    #     return
+    def test_xdmat_zcuts(self):
+        """
+            Test cross distortion matrix
+        """
+        importlib.reload(picca.xcf)
 
-    # TODO: Update this with new z-cuts
-    # def test_xdmat_zcuts(self):
-    #     """
-    #         Test cross distortion matrix
-    #     """
-    #     importlib.reload(picca.xcf)
+        userprint("\n")
+        ### Send
+        cmd = "picca_xdmat.py"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
+        cmd += " --out " + self._branchFiles + "/Products/Correlations/xdmat_zcuts.fits.gz"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
+        cmd += " --rej 0.99"
+        cmd += " --nproc 1"
+        cmd += " --z-evol-obj 1."
+        cmd += " --z-min-pairs 2.25"
+        cmd += " --z-max-pairs 2.3"
+        cmd += " --z-min-sources 2.3"
+        cmd += " --z-max-sources 2.5"
+        cmd += ' --no-redshift-evolution'
+        print(repr(cmd))
+        picca.bin.picca_xdmat.main(cmd.split()[1:])
 
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_cor/xdmat_zcuts.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/xdmat_zcuts.fits.gz"
+            self.compare_fits(path1, path2, "picca_xdmat.py")
 
-    #     userprint("\n")
-    #     ### Send
-    #     cmd = "picca_xdmat.py"
-    #     cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
-    #     cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
-    #     cmd += " --out " + self._branchFiles + "/Products/Correlations/xdmat_zcuts.fits.gz"
-    #     cmd += " --rp-min -60.0"
-    #     cmd += " --rp-max +60.0"
-    #     cmd += " --rt-max +60.0"
-    #     cmd += " --np 30"
-    #     cmd += " --nt 15"
-    #     cmd += " --rej 0.99"
-    #     cmd += " --nproc 1"
-    #     cmd += " --z-evol-obj 1."
-    #     cmd += " --z-cut-min 2.25"
-    #     cmd += " --z-cut-max 2.3"
-    #     cmd += " --z-min-sources 2.3"
-    #     cmd += " --z-max-sources 2.5"
-    #     cmd += ' --no-redshift-evolution'
-    #     print(repr(cmd))
-    #     picca.bin.picca_xdmat.main(cmd.split()[1:])
-
-    #     ### Test
-    #     if self._test:
-    #         path1 = self._masterFiles + "/test_cor/xdmat_zcuts.fits.gz"
-    #         path2 = self._branchFiles + "/Products/Correlations/xdmat_zcuts.fits.gz"
-    #         self.compare_fits(path1, path2, "picca_xdmat.py")
-
-    #     return
+        return
 
     def test_export_xcf(self):
         """
