@@ -28,7 +28,7 @@ print(args.qso_catalog)
 qso_catalog = Table.read(args.qso_catalog)
 print(f'{len(qso_catalog)} entries found in QSO catalog')
 
-w = np.in1d(spall['THING_ID'], qso_catalog['THING_ID'])
+w = np.isin(spall['THING_ID'], qso_catalog['THING_ID'])
 spall_qso = spall[w]
 #-- Columns required for picca_deltas.py for spec, spplate formats and usage of multiple observations
 spall_qso.keep_columns(

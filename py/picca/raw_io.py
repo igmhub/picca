@@ -73,7 +73,7 @@ def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lam
 
     hdul = fitsio.FITS(filename)
     thingid = hdul['METADATA']['MOCKID'][:]
-    if np.in1d(thingid, objs_thingid).sum() == 0:
+    if np.isin(thingid, objs_thingid).sum() == 0:
         hdul.close()
         return
     if 'RA' in hdul['METADATA'].get_colnames() and 'DEC' in hdul['METADATA'].get_colnames():
@@ -116,7 +116,7 @@ def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lam
                  (lambda_rest_frame < lambda_max_rest_frame)] = 1
     num_pixels = np.sum(valid_pixels, axis=1)
     w = num_pixels >= 50
-    w &= np.in1d(thingid, objs_thingid)
+    w &= np.isin(thingid, objs_thingid)
     if w.sum() == 0:
         hdul.close()
         return
