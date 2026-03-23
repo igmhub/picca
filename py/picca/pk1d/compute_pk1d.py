@@ -326,7 +326,7 @@ def fill_masked_pixels(
     lambda_or_log_lambda_index += 0.5
     lambda_or_log_lambda_index = np.array(lambda_or_log_lambda_index, dtype=int)
     index_all = range(lambda_or_log_lambda_index[-1] + 1)
-    index_ok = np.in1d(index_all, lambda_or_log_lambda_index)
+    index_ok = np.isin(index_all, lambda_or_log_lambda_index)
 
     delta_new = np.zeros(len(index_all))
     delta_new[index_ok] = delta
