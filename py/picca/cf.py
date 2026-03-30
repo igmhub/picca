@@ -1323,7 +1323,7 @@ def compute_xi_1d_cross(healpix):
         weights1 = delta1.weights[select1]
 
         thingids = [delta2.thingid for delta2 in data2[healpix]]
-        neighbours = data2[healpix][np.in1d(thingids, [delta1.thingid])]
+        neighbours = data2[healpix][np.isin(thingids, [delta1.thingid])]
         for delta2 in neighbours:
             select2 = delta2.log_lambda <= log_lambda_max
             select2 &= delta2.log_lambda >= log_lambda_min

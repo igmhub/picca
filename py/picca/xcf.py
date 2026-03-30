@@ -965,7 +965,7 @@ def compute_wick_terms(healpixs):
                 thingid4 = np.array([obj4.thingid for obj4 in neighbours])
 
                 if max_diagram == 5:
-                    w = np.in1d(delta1.neighbours, delta3.neighbours)
+                    w = np.isin(delta1.neighbours, delta3.neighbours)
                     if w.sum() == 0:
                         continue
                     aux_ang12 = ang12[w]
@@ -973,7 +973,7 @@ def compute_wick_terms(healpixs):
                     aux_weights2 = weights2[w]
                     aux_thingid2 = thingid2[w]
 
-                    w = np.in1d(delta3.neighbours, delta1.neighbours)
+                    w = np.isin(delta3.neighbours, delta1.neighbours)
                     if w.sum() == 0:
                         continue
                     ang34 = ang34[w]
