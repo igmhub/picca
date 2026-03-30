@@ -8,6 +8,7 @@ import numpy as np
 from scipy import interpolate
 from scipy.constants import speed_of_light as speed_light
 from picca.utils import userprint
+import camb
 
 # TODO: this constant is unused. They should be removed at some point
 BOSS_LAMBDA_MIN = 3600. # [Angstrom]
@@ -155,7 +156,8 @@ class Cosmo(object):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,blinding=False,verbose=True):
+    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,blinding=False
+                 ,verbose=True, template=None):
         """Initializes the methods for this instance
 
         Args:
@@ -170,6 +172,10 @@ class Cosmo(object):
             H0: float - default: 100.0
                 Hubble constant at redshift 0 (in km/s/Mpc)
         """
+
+        #initialise template (if not None)
+        self._use_template = False
+        self._init_template(template)
 
         # WARNING: This is introduced due to historical issues in how this class
         # is coded. Using H0=100 implies that we are returning the distances
@@ -188,7 +194,10 @@ class Cosmo(object):
         z_max = 10.
         delta_z = z_max/num_bins
         z = np.arange(num_bins, dtype=float)*delta_z
-        hubble = H0*np.sqrt(Ol*(1. + z)**(3.*(1. + wl)) +
+        if self._use_template:
+            hubble = self._camb_results.hubble_parameter(z) / self._h_camb
+        else:
+            hubble = H0*np.sqrt(Ol*(1. + z)**(3.*(1. + wl)) +
                             Ok*(1. + z)**2 +
                             Om*(1. + z)**3 +
                             Or*(1. + z)**4)
@@ -222,6 +231,13 @@ class Cosmo(object):
         dist_v = np.power(z*self.get_dist_m(z)**2*self.get_dist_hubble(z),
                           1./3.)
         self.get_dist_v = interpolate.interp1d(z, dist_v)
+
+    def _init_template(self, template):
+        if template is not None:
+            pars = camb.read_ini(template)
+            self._camb_results = camb.get_results(pars)
+            self._h_camb = pars.H0 / 100
+            self._use_template = True
 
 ### Absorber names and wavelengths [Angstrom]
 ABSORBER_IGM = {
