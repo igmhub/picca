@@ -140,7 +140,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         elif "ZCATALOG" in extnames:
             extension = "ZCATALOG"
         else:
-            # TODO: this is a patch that should be removed before merging with master
+            # TODO: this is a patch that should be removed before merging with main
             # The extension=1 line should be removed and the raise uncommented
             extension = 1
             #raise QuasarCatalogueError(
