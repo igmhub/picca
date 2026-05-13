@@ -383,9 +383,9 @@ def read_deltas(in_dir,
         raise KeyError("Did not find FITORDER in header, setting order=1 for the polynomial "
                        "used for the continuum fitting.\n")
         
-    except OSError:
-        raise OSError(f"Could not find delta attributes file at {delta_attributes}. This "
-                      "is required to read the order of the polynomial used for the continuum fitting.\n")
+    #except OSError:
+    #    raise OSError(f"Could not find delta attributes file at {delta_attributes}. This "
+    #                  "is required to read the order of the polynomial used for the continuum fitting.\n")
 
     arguments = [(f, z_min_qso, z_max_qso, rebin_factor, order) for f in files]
     pool = Pool(processes=nproc)

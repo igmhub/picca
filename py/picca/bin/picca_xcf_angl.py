@@ -234,6 +234,18 @@ def main(cmdargs):
                         default=None,
                         required=False,
                         help='Maximum number of spectra to read')
+    
+    parser.add_argument(
+        "--delta-attributes",
+        type=str,
+        default=None,
+        required=False,
+        help=(
+            "Filename for the delta attributes file. This will be used to read the "
+            "order of the polynomial used for the continuum fitting, which is needed "
+            "for the projection of the delta field. If None, the order will be set to 1"
+        ),
+    )
 
     args = parser.parse_args(cmdargs)
     if args.nproc is None:
@@ -272,7 +284,8 @@ def main(cmdargs):
         max_num_spec=args.nspec,
         no_project=args.no_project,
         z_min_qso=args.z_min_sources,
-        z_max_qso=args.z_max_sources)
+        z_max_qso=args.z_max_sources,
+        delta_attributes=args.delta_attributes)
     xcf.data = data
     xcf.num_data = num_data
     userprint("")
