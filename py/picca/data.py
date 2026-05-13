@@ -369,7 +369,7 @@ class Delta(QSO):
         self.fname = None
 
     @classmethod
-    def from_fitsio(cls, hdu, pk1d_type=False, order=1):
+    def from_fitsio(cls, hdu, pk1d_type=False, order=None):
         """Initialize instance from a fits file.
 
         Args:
@@ -378,7 +378,7 @@ class Delta(QSO):
             pk1d_type: bool - default: False
                 Specifies if the fits file is formatted for the 1D Power
                 Spectrum analysis
-            order: int - default: 1
+            order: int - default: None
                 Order of the polynomial used for the continuum fitting
         Returns:
             a Delta instance
@@ -511,7 +511,7 @@ class Delta(QSO):
                    mean_reso, mean_z, delta_log_lambda)
 
     @classmethod
-    def from_image(cls, hdul, pk1d_type=False, z_min_qso=0, z_max_qso=10, order=1):
+    def from_image(cls, hdul, pk1d_type=False, z_min_qso=0, z_max_qso=10, order=None):
         """Initialize instance from an ascii file.
 
         Args:
@@ -524,7 +524,7 @@ class Delta(QSO):
                 Specifies the minimum redshift for QSOs
             z_max_qso: float - default: 10
                 Specifies the maximum redshift for QSOs
-            order: int - default: 1
+            order: int - default: None
                 Order of the polynomial used for the continuum fitting
         Returns:
             a Delta instance

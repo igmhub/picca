@@ -245,7 +245,7 @@ def read_blinding(in_dir):
     return blinding
 
 
-def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None, order=1):
+def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None, order=None):
     """Extracts deltas from a single file.
     Args:
         filename: str
