@@ -172,9 +172,8 @@ class AbstractTest(unittest.TestCase):
                         print(f"\nOriginal file: {orig_file}")
                         print(f"New file: {new_file}")
                         print(f"\n For header {hdu_name}")
-                        print(f"Missing key {nkey}")
-                        #self.assertTrue(nkey in new_header)
-                        continue
+                        print(f"key {nkey} missing in new header")
+                        self.assertTrue(nkey in new_header)
 
                     if orig_header[key] == new_header[nkey] : continue
                     if np.isreal(orig_header[key]) :
