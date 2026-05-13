@@ -243,7 +243,8 @@ def main(cmdargs):
         help=(
             "Filename for the delta attributes file. This will be used to read the "
             "order of the polynomial used for the continuum fitting, which is needed "
-            "for the projection of the delta field. If None, the order will be set to 1"
+            "for the projection of the delta field. If None, it will look for the file at the "
+            "standard location and crush if not found "
         ),
     )
 
