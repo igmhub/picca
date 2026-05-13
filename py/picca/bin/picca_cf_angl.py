@@ -189,7 +189,7 @@ def main(cmdargs):
                         help='Maximum number of spectra to read')
     
     parser.add_argument(
-        "--delta-attributes",
+        "--in-attributes",
         type=str,
         default=None,
         required=False,
@@ -234,7 +234,7 @@ def main(cmdargs):
                                                   no_project=args.no_project,
                                                   z_min_qso=args.z_min_sources,
                                                   z_max_qso=args.z_max_sources,
-                                                  delta_attributes=args.delta_attributes)
+                                                  delta_attributes=args.in_attributes)
     cf.data = data
     cf.num_data = num_data
     del z_min, z_max
@@ -263,7 +263,7 @@ def main(cmdargs):
             no_project=args.no_project,
             z_min_qso=args.z_min_sources,
             z_max_qso=args.z_max_sources,
-            delta_attributes=args.delta_attributes)
+            delta_attributes=args.in_attributes)
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2

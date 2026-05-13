@@ -167,7 +167,7 @@ class TestCor(AbstractTest):
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf1d.fits.gz"
         cmd += " --nproc 1"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_cf1d.main(cmd.split()[1:])
 
@@ -191,7 +191,7 @@ class TestCor(AbstractTest):
         cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf1d_cross.fits.gz"
         cmd += " --nproc 1"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_cf1d.main(cmd.split()[1:])
 
@@ -214,7 +214,7 @@ class TestCor(AbstractTest):
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_angl.fits.gz"
         cmd += " --nproc 1"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_cf_angl.main(cmd.split()[1:])
 
@@ -244,7 +244,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_cf.main(cmd.split()[1:])
 
@@ -273,7 +273,7 @@ class TestCor(AbstractTest):
         cmd += " --np 15"
         cmd += " --nt 15"
         cmd += " --nproc 1"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_cf.main(cmd.split()[1:])
 
@@ -303,7 +303,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --rebin-factor 3"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_cf.main(cmd.split()[1:])
 
@@ -335,7 +335,7 @@ class TestCor(AbstractTest):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += ' --no-redshift-evolution'
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
 
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
@@ -367,7 +367,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         
         print(repr(cmd))
         picca.bin.picca_metal_dmat.main(cmd.split()[1:])
@@ -428,7 +428,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_wick.main(cmd.split()[1:])
 
@@ -475,7 +475,7 @@ class TestCor(AbstractTest):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_cf.main(cmd.split()[1:])
 
@@ -510,7 +510,7 @@ class TestCor(AbstractTest):
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
         cmd += ' --no-redshift-evolution'
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
 
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
@@ -547,7 +547,7 @@ class TestCor(AbstractTest):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_metal_dmat.main(cmd.split()[1:])
 
@@ -621,7 +621,7 @@ class TestCor(AbstractTest):
         cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
         cmd += " --nproc 1"
         cmd += " --z-evol-obj 1."
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_xcf_angl.main(cmd.split()[1:])
 
@@ -651,7 +651,7 @@ class TestCor(AbstractTest):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --z-evol-obj 1."
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_xcf.main(cmd.split()[1:])
 
@@ -685,7 +685,7 @@ class TestCor(AbstractTest):
         cmd += " --nproc 1"
         cmd += " --z-evol-obj 1."
         cmd += ' --no-redshift-evolution'
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_xdmat.main(cmd.split()[1:])
 
@@ -716,7 +716,7 @@ class TestCor(AbstractTest):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         cmd += " --z-evol-obj 1."
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_metal_xdmat.main(cmd.split()[1:])
 
@@ -776,7 +776,7 @@ class TestCor(AbstractTest):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         cmd += " --z-evol-obj 1."
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_xwick.main(cmd.split()[1:])
 
@@ -803,7 +803,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_cf_angl.main(cmd.split()[1:])
 
@@ -837,7 +837,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_cf.main(cmd.split()[1:])
 
@@ -870,7 +870,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_cf.main(cmd.split()[1:])
 
@@ -906,7 +906,7 @@ class TestCor(AbstractTest):
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
         cmd += ' --no-redshift-evolution'
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
@@ -943,7 +943,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_metal_dmat.main(cmd.split()[1:])
 
@@ -1010,7 +1010,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_wick.main(cmd.split()[1:])
 
@@ -1046,7 +1046,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_cf.main(cmd.split()[1:])
 
@@ -1085,7 +1085,7 @@ class TestCor(AbstractTest):
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
         cmd += ' --no-redshift-evolution'
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         
         print(repr(cmd))
         picca.bin.picca_dmat.main(cmd.split()[1:])
@@ -1126,7 +1126,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_metal_dmat.main(cmd.split()[1:])
 
@@ -1191,7 +1191,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_xcf_angl.main(cmd.split()[1:])
 
@@ -1225,7 +1225,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_xcf.main(cmd.split()[1:])
 
@@ -1263,7 +1263,7 @@ class TestCor(AbstractTest):
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
         cmd += ' --no-redshift-evolution'
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_xdmat.main(cmd.split()[1:])
 
@@ -1298,7 +1298,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_metal_xdmat.main(cmd.split()[1:])
 
@@ -1334,7 +1334,7 @@ class TestCor(AbstractTest):
         cmd += " --z-cut-max 2.3"
         cmd += " --z-min-sources 2.3"
         cmd += " --z-max-sources 2.5"
-        cmd += " --delta-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
+        cmd += " --in-attributes " + self._masterFiles + "/test_delta/delta_attributes.fits.gz"
         print(repr(cmd))
         picca.bin.picca_xwick.main(cmd.split()[1:])
 

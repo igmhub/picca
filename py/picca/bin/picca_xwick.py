@@ -255,7 +255,7 @@ def main(cmdargs):
                              'be rebinned by that factor')
     
     parser.add_argument(
-        "--delta-attributes",
+        "--in-attributes",
         type=str,
         default=None,
         required=False,
@@ -312,7 +312,7 @@ def main(cmdargs):
                                                   rebin_factor=args.rebin_factor,
                                                   z_min_qso=args.z_min_sources,
                                                   z_max_qso=args.z_max_sources,
-                                                  delta_attributes=args.delta_attributes)
+                                                  delta_attributes=args.in_attributes)
     for deltas in data.values():
         for delta in deltas:
             delta.fname = 'D1'

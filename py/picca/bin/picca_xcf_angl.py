@@ -236,7 +236,7 @@ def main(cmdargs):
                         help='Maximum number of spectra to read')
     
     parser.add_argument(
-        "--delta-attributes",
+        "--in-attributes",
         type=str,
         default=None,
         required=False,
@@ -286,7 +286,7 @@ def main(cmdargs):
         no_project=args.no_project,
         z_min_qso=args.z_min_sources,
         z_max_qso=args.z_max_sources,
-        delta_attributes=args.delta_attributes)
+        delta_attributes=args.in_attributes)
     xcf.data = data
     xcf.num_data = num_data
     userprint("")
