@@ -374,19 +374,11 @@ def read_deltas(in_dir,
     if delta_attributes is None:
         delta_attributes = in_dir + "../Log/delta_attributes.fits.gz"
         userprint(f"WARNING: delta_attributes file not given, setting to {delta_attributes}\n")
-    try:
-        userprint(f"Reading delta attributes from {delta_attributes}\n")
-        with fitsio.FITS(delta_attributes) as hdul:
-            order = hdul["FIT_METADATA"].read_header()['FITORDER']
-            userprint(f"Setting order={order} for the polynomial used for the continuum fitting\n")
-    except KeyError:
-        raise KeyError("Did not find FITORDER in header, setting order=1 for the polynomial "
-                       "used for the continuum fitting.\n")
-        
-    #except OSError:
-    #    raise OSError(f"Could not find delta attributes file at {delta_attributes}. This "
-    #                  "is required to read the order of the polynomial used for the continuum fitting.\n")
-
+    userprint(f"Reading delta attributes from {delta_attributes}\n")
+    with fitsio.FITS(delta_attributes) as hdul:
+        order = hdul["FIT_METADATA"].read_header()['FITORDER']
+        userprint(f"Setting order={order} for the polynomial used for the continuum fitting\n")
+    
     arguments = [(f, z_min_qso, z_max_qso, rebin_factor, order) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
