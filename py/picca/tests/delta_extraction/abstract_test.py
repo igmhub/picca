@@ -169,6 +169,9 @@ class AbstractTest(unittest.TestCase):
                     if key=="TILE" and "TILEID" in new_header :
                         nkey="TILEID"
                     if not nkey in new_header :
+                        print(f"\nOriginal file: {orig_file}")
+                        print(f"New file: {new_file}")
+                        print(f"\n For header {hdu_name}")
                         print(f"Missing key {nkey}")
                         self.assertTrue(nkey in new_header)
 
@@ -184,13 +187,15 @@ class AbstractTest(unittest.TestCase):
                     )
                     self.assertTrue(False)
 
-                # it's ok to have new keys in new code, so no need to check the other way around
-                # for key in new_header:
-                #    if key not in orig_header:
-                #        print(f"\nOriginal file: {orig_file}")
-                #        print(f"New file: {new_file}")
-                #        print(f"key {key} missing in orig header")
-                #    self.assertTrue(key in orig_header)
+                # it's not ok to have new keys in new code, so we need to check the other way around
+                # if we add new keys, we should update the test files to have them, so they are tested as well
+                for key in new_header:
+                   if key not in orig_header:
+                       print(f"\nOriginal file: {orig_file}")
+                       print(f"New file: {new_file}")
+                       print(f"\n For header {hdu_name}")
+                       print(f"key {key} missing in orig header")
+                   self.assertTrue(key in orig_header)
 
                 # check data
                 orig_data = orig_hdul[hdu_name].data
