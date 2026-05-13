@@ -245,7 +245,7 @@ def read_blinding(in_dir):
     return blinding
 
 
-def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
+def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None, order=1):
     """Extracts deltas from a single file.
     Args:
         filename: str
@@ -256,6 +256,8 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
             Specifies the maximum redshift for QSOs
         rebin_factor: int - default: None
             Factor to rebin the lambda grid by. If None, no rebinning is done.
+        order: int - default: 1
+            Order of the polynomial used for the continuum fitting. This is needed for the projection of the
     Returns:
         deltas:
             A dictionary with the data. Keys are the healpix numbers of each
@@ -265,11 +267,12 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None):
     hdul = fitsio.FITS(filename)
     # If there is an extension called lambda format is image
     if 'LAMBDA' in hdul:
-        deltas = Delta.from_image(hdul, z_min_qso=z_min_qso, z_max_qso=z_max_qso)
+        deltas = Delta.from_image(hdul, z_min_qso=z_min_qso, z_max_qso=z_max_qso, order=order)
     else:
-        deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:] if z_min_qso<hdu.read_header()['Z']<z_max_qso]
+        deltas = [Delta.from_fitsio(hdu, order=order) 
+                  for hdu in hdul[1:] if z_min_qso<hdu.read_header()['Z']<z_max_qso]
 
-# Rebin
+    # Rebin
     if rebin_factor is not None:
         if 'LAMBDA' in hdul:
             card = 'LAMBDA'
@@ -301,7 +304,8 @@ def read_deltas(in_dir,
                 nproc=None,
                 rebin_factor=None,
                 z_min_qso=0,
-                z_max_qso=10):
+                z_max_qso=10,
+                delta_attributes=None):
     """Reads deltas and computes their redshifts.
 
     Fills the fields delta.z and multiplies the weights by
@@ -335,7 +339,11 @@ def read_deltas(in_dir,
         z_min_qso: float - default: 0
             Specifies the minimum redshift for QSOs
         z_max_qso: float - default: 10
-            Specifies the maximum redshift for QSOs
+            Specifies thet maximum redshift for QSOs
+        delta_attributes: str or None - default: None
+            Filename for the delta attributes file. This will be used to read the
+            order of the polynomial used for the continuum fitting, which is needed
+            for the projection of the delta field. If None, the order will be set to 1
 
     Returns:
         The following variables:
@@ -363,7 +371,23 @@ def read_deltas(in_dir,
     if rebin_factor is not None:
         userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
 
-    arguments = [(f, z_min_qso, z_max_qso, rebin_factor) for f in files]
+    if delta_attributes is None:
+        delta_attributes = in_dir + "../Log/delta_attributes.fits.gz"
+        userprint(f"WARNING: delta_attributes file not given, setting to {delta_attributes}\n")
+    try:
+        userprint(f"Reading delta attributes from {delta_attributes}\n")
+        with fitsio.FITS(delta_attributes) as hdul:
+            order = hdul["FIT_METADATA"].read_header()['FITORDER']
+            userprint(f"Setting order={order} for the polynomial used for the continuum fitting\n")
+    except KeyError:
+        raise KeyError("Did not find FITORDER in header, setting order=1 for the polynomial "
+                       "used for the continuum fitting.\n")
+        
+    except OSError:
+        raise OSError(f"Could not find delta attributes file at {delta_attributes}. This "
+                      "is required to read the order of the polynomial used for the continuum fitting.\n")
+
+    arguments = [(f, z_min_qso, z_max_qso, rebin_factor, order) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
     pool.close()

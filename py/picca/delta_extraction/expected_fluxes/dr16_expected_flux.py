@@ -4,6 +4,7 @@ import multiprocessing
 import time
 
 import iminuit
+import fitsio
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -661,7 +662,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 "ACCEPTED_FIT",
             ]
 
-            results.write(values, names=names, extname='FIT_METADATA')
+            header = fitsio.FITSHDR()
+            header.add_record({
+                "name": "FITORDER",
+                "value": self.order,
+                "comment": "order of the polynomial used for continuum fitting",
+            })
+
+            results.write(values, names=names,  header=header, extname='FIT_METADATA')
             results["FIT_METADATA"].write_comment("Quasar continuum in wavelength bins")
             results["FIT_METADATA"].write_checksum()
 

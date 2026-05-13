@@ -343,6 +343,18 @@ def main(cmdargs=None):
         "be rebinned by that factor",
     )
 
+    parser.add_argument(
+        "--delta-attributes",
+        type=str,
+        default=None,
+        required=False,
+        help=(
+            "Filename for the delta attributes file. This will be used to read the "
+            "order of the polynomial used for the continuum fitting, which is needed "
+            "for the projection of the delta field. If None, the order will be set to 1"
+        ),
+    )
+
     args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
@@ -407,6 +419,7 @@ def main(cmdargs=None):
         rebin_factor=args.rebin_factor,
         z_min_qso=args.z_min_sources,
         z_max_qso=args.z_max_sources,
+        delta_attributes=args.delta_attributes,
     )
     del z_max
     cf.data = data
@@ -440,6 +453,7 @@ def main(cmdargs=None):
             rebin_factor=args.rebin_factor,
             z_min_qso=args.z_min_sources,
             z_max_qso=args.z_max_sources,
+            delta_attributes=args.delta_attributes,
         )
         del z_max2
         cf.data2 = data2
