@@ -373,7 +373,7 @@ def read_deltas(in_dir,
         userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
 
     if delta_attributes is None:
-        delta_attributes = in_dir + "../Log/delta_attributes.fits.gz"
+        delta_attributes = in_dir + "/../Log/delta_attributes.fits.gz"
         userprint(f"WARNING: delta_attributes file not given, setting to {delta_attributes}")
     userprint(f"Reading delta attributes from {delta_attributes}")
     try:
@@ -397,7 +397,7 @@ def read_deltas(in_dir,
         except KeyError as e:
             userprint(f"WARNING: KeyError encountered: {str(e)}")
             userprint("WARNING: Attempting to find FITORDER from the delta config file")
-            config_file = in_dir + "../.config.ini"
+            config_file = in_dir + "/../.config.ini"
             config = ConfigParser()
             config.read(config_file)
             order = config["expected"].getint("order")
@@ -411,7 +411,7 @@ def read_deltas(in_dir,
         userprint(f"WARNING: OSError encountered: {str(e)}")
         userprint("WARNING: Attempting to find FITORDER from the delta config file")
         userprint(f"WARNING: This is deprecated and will lead to an error in the future, please pass a delta_attributes file")
-        config_file = in_dir + "../.config.ini"
+        config_file = in_dir + "/../.config.ini"
         config = ConfigParser()
         config.read(config_file)
         order = config["expected"].getint("order")
