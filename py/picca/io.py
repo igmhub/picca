@@ -28,6 +28,90 @@ from .pk1d.prep_pk1d import exp_diff, spectral_resolution
 from .pk1d.prep_pk1d import spectral_resolution_desi
 
 
+def find_order(in_dir, delta_attributes):
+    """Finds the order of the polynomial used for the continuum fitting from the delta_attributes file
+
+    Args:
+        in_dir: str
+            Directory to spectra files. If mode is "spec-mock-1D", then it is
+            the filename of the fits file contianing the mock spectra
+        delta_attributes: str or None - default: None
+            Filename for the delta attributes file. This will be used to read the
+            order of the polynomial used for the continuum fitting, which is needed
+            for the projection of the delta field. If None, the code will look for it 
+            at the standard position. 
+
+    Returns:
+        order: int or None
+            Order of the log10(lambda) polynomial for the continuum fit. 
+            None will result in an error if the deltas are projected or if the distortion 
+            matrix is computed
+    """
+    if delta_attributes is None:
+        delta_attributes = in_dir + "/../Log/delta_attributes.fits.gz"
+        userprint(f"WARNING: delta_attributes file not given, setting to {delta_attributes}")
+    userprint(f"Reading delta attributes from {delta_attributes}")
+    try:
+        with fitsio.FITS(delta_attributes) as hdul:
+            order = hdul["FIT_METADATA"].read_header()['FITORDER']
+            userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
+    # this exception clause deals with deprecated delta_attributes files that do not have the FITORDER keyword
+    # in the FIT_METADATA header. It attemps to find it elsewhere
+    # This should be removed after a while, and simply crash
+    except KeyError as e:
+        userprint(f"WARNING: KeyError encountered: {str(e)}")
+        userprint(F"WARNING: Checking for FITORDER in the STACK_DELTAS extension")
+        userprint(f"WARNING: This is deprecated and will lead to an error in the future, please update your delta_attributes file")
+        try:
+            # first we try to find it in the STACK_DELTAS header, which is where it used to be in older versions of picca
+            with fitsio.FITS(delta_attributes) as hdul:
+                order = hdul["STACK_DELTAS"].read_header()['FITORDER']
+                userprint("WARNING: Found FITORDER in STACK_DELTAS header, continuing the analysis")
+                userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
+        # otherwise we try to find it in the delta config file
+        except KeyError as e:
+            userprint(f"WARNING: KeyError encountered: {str(e)}")
+            userprint("WARNING: Attempting to find FITORDER from the delta config file")
+            config_file = in_dir + "/../.config.ini"
+            config = ConfigParser()
+            config.read(config_file)
+            if "expected flux" in config and "order" in config["expected flux"]:
+                order = config["expected flux"].getint("order")
+                userprint("WARNING: Found `order` in delta config file, continuing the analysis")
+                userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
+            else:
+                order = None
+                userprint("WARNING: `order` not found in delta config file")
+                userprint(
+                    "WARNING: Setting order=None, this will lead to an error if the deltas are projected" \
+                    "or if the distortion matrix is computed")
+                userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
+    # this exception clause deals with the case where the delta_attributes file is not found at all, 
+    # which can happen if the user used non-standard placing of the logs. It attempts to find the order 
+    # in the delta config file, but this is deprecated and should be removed after a while
+    # This should be removed after a while, and simply crash
+    except OSError as e:
+        userprint(f"WARNING: OSError encountered: {str(e)}")
+        userprint("WARNING: Attempting to find FITORDER from the delta config file")
+        userprint(f"WARNING: This is deprecated and will lead to an error in the future, please pass a delta_attributes file")
+        config_file = in_dir + "/../.config.ini"
+        config = ConfigParser()
+        config.read(config_file)
+        if "expected flux" in config and "order" in config["expected flux"]:
+            order = config["expected flux"].getint("order")
+            userprint("WARNING: Found `order` in delta config file, continuing the analysis")
+            userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
+        else:
+            order = None
+            userprint("WARNING: `order` not found in delta config file")
+            userprint(
+                "WARNING: Setting order=None, this will lead to an error if the deltas are projected" \
+                "or if the distortion matrix is computed")
+            userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
+
+    return order
+            
+
 def read_dlas(filename,obj_id_name='THING_ID'):
     """Reads the DLA catalog from a fits file.
 
@@ -257,8 +341,10 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None, orde
             Specifies the maximum redshift for QSOs
         rebin_factor: int - default: None
             Factor to rebin the lambda grid by. If None, no rebinning is done.
-        order: int - default: 1
-            Order of the polynomial used for the continuum fitting. This is needed for the projection of the
+        order: 0, 1 or None - default: None
+            Order of the log10(lambda) polynomial for the continuum fit
+            None will result in the code crashing if the deltas are projected
+            or if they are used to compute the distortion matrix
     Returns:
         deltas:
             A dictionary with the data. Keys are the healpix numbers of each
@@ -344,7 +430,8 @@ def read_deltas(in_dir,
         delta_attributes: str or None - default: None
             Filename for the delta attributes file. This will be used to read the
             order of the polynomial used for the continuum fitting, which is needed
-            for the projection of the delta field. If None, the order will be set to 1
+            for the projection of the delta field. If None, the code will look for it 
+            at the standard position. 
 
     Returns:
         The following variables:
@@ -372,67 +459,7 @@ def read_deltas(in_dir,
     if rebin_factor is not None:
         userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
 
-    if delta_attributes is None:
-        delta_attributes = in_dir + "/../Log/delta_attributes.fits.gz"
-        userprint(f"WARNING: delta_attributes file not given, setting to {delta_attributes}")
-    userprint(f"Reading delta attributes from {delta_attributes}")
-    try:
-        with fitsio.FITS(delta_attributes) as hdul:
-            order = hdul["FIT_METADATA"].read_header()['FITORDER']
-            userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
-    # this exception clause deals with deprecated delta_attributes files that do not have the FITORDER keyword
-    # in the FIT_METADATA header. It attemps to find it elsewhere
-    # This should be removed after a while, and simply crash
-    except KeyError as e:
-        userprint(f"WARNING: KeyError encountered: {str(e)}")
-        userprint(F"WARNING: Checking for FITORDER in the STACK_DELTAS extension")
-        userprint(f"WARNING: This is deprecated and will lead to an error in the future, please update your delta_attributes file")
-        try:
-            # first we try to find it in the STACK_DELTAS header, which is where it used to be in older versions of picca
-            with fitsio.FITS(delta_attributes) as hdul:
-                order = hdul["STACK_DELTAS"].read_header()['FITORDER']
-                userprint("WARNING: Found FITORDER in STACK_DELTAS header, continuing the analysis")
-                userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
-        # otherwise we try to find it in the delta config file
-        except KeyError as e:
-            userprint(f"WARNING: KeyError encountered: {str(e)}")
-            userprint("WARNING: Attempting to find FITORDER from the delta config file")
-            config_file = in_dir + "/../.config.ini"
-            config = ConfigParser()
-            config.read(config_file)
-            if "expected flux" in config and "order" in config["expected flux"]:
-                order = config["expected flux"].getint("order")
-                userprint("WARNING: Found `order` in delta config file, continuing the analysis")
-                userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
-            else:
-                order = None
-                userprint("WARNING: `order` not found in delta config file")
-                userprint(
-                    "WARNING: Setting order=None, this will lead to an error if the deltas are projected" \
-                    "or if the distortion matrix is computed")
-                userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
-    # this exception clause deals with the case where the delta_attributes file is not found at all, 
-    # which can happen if the user used non-standard placing of the logs. It attempts to find the order 
-    # in the delta config file, but this is deprecated and should be removed after a while
-    # This should be removed after a while, and simply crash
-    except OSError as e:
-        userprint(f"WARNING: OSError encountered: {str(e)}")
-        userprint("WARNING: Attempting to find FITORDER from the delta config file")
-        userprint(f"WARNING: This is deprecated and will lead to an error in the future, please pass a delta_attributes file")
-        config_file = in_dir + "/../.config.ini"
-        config = ConfigParser()
-        config.read(config_file)
-        if "expected flux" in config and "order" in config["expected flux"]:
-            order = config["expected flux"].getint("order")
-            userprint("WARNING: Found `order` in delta config file, continuing the analysis")
-            userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
-        else:
-            order = None
-            userprint("WARNING: `order` not found in delta config file")
-            userprint(
-                "WARNING: Setting order=None, this will lead to an error if the deltas are projected" \
-                "or if the distortion matrix is computed")
-            userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
+    order = find_order(in_dir, delta_attributes)
 
     arguments = [(f, z_min_qso, z_max_qso, rebin_factor, order) for f in files]
     pool = Pool(processes=nproc)
