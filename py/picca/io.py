@@ -400,9 +400,17 @@ def read_deltas(in_dir,
             config_file = in_dir + "/../.config.ini"
             config = ConfigParser()
             config.read(config_file)
-            order = config["expected"].getint("order")
-            userprint("WARNING: Found `order` in delta config file, continuing the analysis")
-            userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
+            if "expected flux" in config and "order" in config["expected flux"]:
+                order = config["expected flux"].getint("order")
+                userprint("WARNING: Found `order` in delta config file, continuing the analysis")
+                userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
+            else:
+                order = None
+                userprint("WARNING: `order` not found in delta config file")
+                userprint(
+                    "WARNING: Setting order=None, this will lead to an error if the distortion matrix"
+                    " is computed")
+                userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
     # this exception clause deals with the case where the delta_attributes file is not found at all, 
     # which can happen if the user used non-standard placing of the logs. It attempts to find the order 
     # in the delta config file, but this is deprecated and should be removed after a while
@@ -414,10 +422,18 @@ def read_deltas(in_dir,
         config_file = in_dir + "/../.config.ini"
         config = ConfigParser()
         config.read(config_file)
-        order = config["expected"].getint("order")
-        userprint("WARNING: Found `order` in delta config file, continuing the analysis")
-        userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
-        
+        if "expected flux" in config and "order" in config["expected flux"]:
+            order = config["expected flux"].getint("order")
+            userprint("WARNING: Found `order` in delta config file, continuing the analysis")
+            userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
+        else:
+            order = None
+            userprint("WARNING: `order` not found in delta config file")
+            userprint(
+                "WARNING: Setting order=None, this will lead to an error if the distortion matrix"
+                " is computed")
+            userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
+
     arguments = [(f, z_min_qso, z_max_qso, rebin_factor, order) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
