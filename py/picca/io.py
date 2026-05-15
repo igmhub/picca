@@ -408,8 +408,8 @@ def read_deltas(in_dir,
                 order = None
                 userprint("WARNING: `order` not found in delta config file")
                 userprint(
-                    "WARNING: Setting order=None, this will lead to an error if the distortion matrix"
-                    " is computed")
+                    "WARNING: Setting order=None, this will lead to an error if the deltas are projected" \
+                    "or if the distortion matrix is computed")
                 userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
     # this exception clause deals with the case where the delta_attributes file is not found at all, 
     # which can happen if the user used non-standard placing of the logs. It attempts to find the order 
@@ -430,8 +430,8 @@ def read_deltas(in_dir,
             order = None
             userprint("WARNING: `order` not found in delta config file")
             userprint(
-                "WARNING: Setting order=None, this will lead to an error if the distortion matrix"
-                " is computed")
+                "WARNING: Setting order=None, this will lead to an error if the deltas are projected" \
+                "or if the distortion matrix is computed")
             userprint(f"Setting order={order} for the polynomial used for the continuum fitting")
 
     arguments = [(f, z_min_qso, z_max_qso, rebin_factor, order) for f in files]

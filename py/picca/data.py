@@ -250,8 +250,10 @@ class Delta(QSO):
             Quasar continuum
         delta: array of floats
             Mean transmission fluctuation (delta field)
-        order: 0 or 1
+        order: 0, 1 or None
             Order of the log10(lambda) polynomial for the continuum fit
+            None will result in the code crashing if the deltas are projected
+            or if they are used to compute the distortion matrix
         ivar: array of floats
             Inverse variance associated to each flux
         exposures_diff: array of floats
@@ -320,8 +322,10 @@ class Delta(QSO):
                 Quasar continuum
             delta: array of floats
                 Mean transmission fluctuation (delta field)
-            order: 0 or 1
+            order: 0, 1 or None
                 Order of the log10(lambda) polynomial for the continuum fit
+                None will result in the code crashing if the deltas are projected
+                or if they are used to compute the distortion matrix
             ivar: array of floats
                 Inverse variance associated to each flux
             exposures_diff: array of floats
@@ -379,7 +383,9 @@ class Delta(QSO):
                 Specifies if the fits file is formatted for the 1D Power
                 Spectrum analysis
             order: int - default: None
-                Order of the polynomial used for the continuum fitting
+                Order of the log10(lambda) polynomial for the continuum fit
+                None will result in the code crashing if the deltas are projected
+                or if they are used to compute the distortion matrix
         Returns:
             a Delta instance
         """
@@ -525,7 +531,9 @@ class Delta(QSO):
             z_max_qso: float - default: 10
                 Specifies the maximum redshift for QSOs
             order: int - default: None
-                Order of the polynomial used for the continuum fitting
+                Order of the log10(lambda) polynomial for the continuum fit
+                None will result in the code crashing if the deltas are projected
+                or if they are used to compute the distortion matrix
         Returns:
             a Delta instance
         """
@@ -617,6 +625,13 @@ class Delta(QSO):
         The projection gets rid of the distortion caused by the continuum
         fitiing. See equations 5 and 6 of du Mas des Bourboux et al. 2020
         """
+        if self.order is None:
+            raise RuntimeError(
+                "Trying to project but "
+                "order is not defined for the deltas. "
+                "Check previous warning to solve this issue"
+            )
+
         # 2nd term in equation 6
         sum_weights = np.sum(self.weights)
         if sum_weights > 0.0:
