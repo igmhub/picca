@@ -250,8 +250,10 @@ class Delta(QSO):
             Quasar continuum
         delta: array of floats
             Mean transmission fluctuation (delta field)
-        order: 0 or 1
+        order: 0, 1 or None
             Order of the log10(lambda) polynomial for the continuum fit
+            None will result in the code crashing if the deltas are projected
+            or if they are used to compute the distortion matrix
         ivar: array of floats
             Inverse variance associated to each flux
         exposures_diff: array of floats
@@ -320,8 +322,10 @@ class Delta(QSO):
                 Quasar continuum
             delta: array of floats
                 Mean transmission fluctuation (delta field)
-            order: 0 or 1
+            order: 0, 1 or None
                 Order of the log10(lambda) polynomial for the continuum fit
+                None will result in the code crashing if the deltas are projected
+                or if they are used to compute the distortion matrix
             ivar: array of floats
                 Inverse variance associated to each flux
             exposures_diff: array of floats
@@ -369,7 +373,7 @@ class Delta(QSO):
         self.fname = None
 
     @classmethod
-    def from_fitsio(cls, hdu, pk1d_type=False):
+    def from_fitsio(cls, hdu, pk1d_type=False, order=None):
         """Initialize instance from a fits file.
 
         Args:
@@ -378,6 +382,10 @@ class Delta(QSO):
             pk1d_type: bool - default: False
                 Specifies if the fits file is formatted for the 1D Power
                 Spectrum analysis
+            order: int - default: None
+                Order of the log10(lambda) polynomial for the continuum fit
+                None will result in the code crashing if the deltas are projected
+                or if they are used to compute the distortion matrix
         Returns:
             a Delta instance
         """
@@ -459,10 +467,6 @@ class Delta(QSO):
         ra = header['RA']
         dec = header['DEC']
         z_qso = header['Z']
-        try:
-            order = header['ORDER']
-        except KeyError:
-            order = 1
 
         return cls(los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
@@ -513,7 +517,7 @@ class Delta(QSO):
                    mean_reso, mean_z, delta_log_lambda)
 
     @classmethod
-    def from_image(cls, hdul, pk1d_type=False, z_min_qso=0, z_max_qso=10):
+    def from_image(cls, hdul, pk1d_type=False, z_min_qso=0, z_max_qso=10, order=None):
         """Initialize instance from an ascii file.
 
         Args:
@@ -526,6 +530,10 @@ class Delta(QSO):
                 Specifies the minimum redshift for QSOs
             z_max_qso: float - default: 10
                 Specifies the maximum redshift for QSOs
+            order: int - default: None
+                Order of the log10(lambda) polynomial for the continuum fit
+                None will result in the code crashing if the deltas are projected
+                or if they are used to compute the distortion matrix
         Returns:
             a Delta instance
         """
@@ -584,18 +592,14 @@ class Delta(QSO):
         ra = hdul["METADATA"]["RA"][:]
         dec = hdul["METADATA"]["DEC"][:]
         z_qso = hdul["METADATA"]["Z"][:]
-        try:
-            order = hdul["METADATA"]["ORDER"][:]
-        except (KeyError, ValueError):
-            order = np.full(N_forests, 1)
-
+        
         deltas = []
         for (los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i, log_lambda,
-            weights_i, cont_i, delta_i, order_i, ivar_i, exposures_diff_i, mean_snr_i,
+            weights_i, cont_i, delta_i, ivar_i, exposures_diff_i, mean_snr_i,
             mean_reso_i, mean_z_i, resolution_matrix_i,
             mean_resolution_matrix_i, mean_reso_pix_i, w_i
         ) in zip(los_id, ra, dec, z_qso, plate, mjd, fiberid, repeat(log_lambda),
-                   weights, cont, delta, order, ivar, exposures_diff, mean_snr,
+                   weights, cont, delta, ivar, exposures_diff, mean_snr,
                    mean_reso, mean_z, resolution_matrix,
                    mean_resolution_matrix, mean_reso_pix, w):
             if z_qso_i >= z_min_qso and z_qso_i <= z_max_qso:        
@@ -604,7 +608,7 @@ class Delta(QSO):
                     weights_i[w_i] if weights_i is not None else None, 
                     cont_i[w_i], 
                     delta_i[w_i],
-                    order_i, 
+                    order, 
                     ivar_i[w_i] if ivar_i is not None else None,
                     exposures_diff_i[w_i] if exposures_diff_i is not None else None, 
                     mean_snr_i, mean_reso_i, mean_z_i,
@@ -621,6 +625,13 @@ class Delta(QSO):
         The projection gets rid of the distortion caused by the continuum
         fitiing. See equations 5 and 6 of du Mas des Bourboux et al. 2020
         """
+        if self.order is None:
+            raise RuntimeError(
+                "Trying to project but "
+                "order is not defined for the deltas. "
+                "Check previous warning to solve this issue"
+            )
+
         # 2nd term in equation 6
         sum_weights = np.sum(self.weights)
         if sum_weights > 0.0:

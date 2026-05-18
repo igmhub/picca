@@ -387,14 +387,6 @@ class ExpectedFlux:
         results: fitsio.FITS
         The open fits file
         """
-        header = fitsio.FITSHDR()
-        if hasattr(self, 'order'):
-            header.add_record({
-                "name": "FITORDER",
-                "value": self.order,
-                "comment": "",
-            })
-
         results.write([
             Forest.log_lambda_grid,
             self.get_stack_delta(Forest.log_lambda_grid),
@@ -402,7 +394,6 @@ class ExpectedFlux:
         ],
                       names=['LOGLAM', 'STACK', 'WEIGHT'],
                       units=['log(Angstrom)', '', ''],
-                      header=header,
                       extname='STACK_DELTAS')
         results['STACK_DELTAS'].write_comment("Delta mean properties")
         results['STACK_DELTAS'].write_checksum()
