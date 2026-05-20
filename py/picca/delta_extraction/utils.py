@@ -87,7 +87,7 @@ ABSORBER_IGM = {
 }
 
 ACCEPTED_BLINDING_STRATEGIES = [
-    "none", "desi_m2", "desi_y1", "desi_y3"]
+    "none", "desi_m2", "desi_y1", "desi_y3", "desi_dr3"]
 
 def class_from_string(class_name, module_name):
     """Return a class from a string. The class must be saved in a module
