@@ -405,9 +405,10 @@ def main(cmdargs=None):
 
     # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
-        blinding_dir = '/global/cfs/projectdirs/desi/science/lya/y1-kp6/blinding/'
-        blinding_templates = {'desi_y3': {'standard': 'y3_blinding_v3_standard_18_12_2022.h5',
-                                          'grid': 'y3_blinding_v3_regular_grid_18_12_2022.h5'}}
+        #blinding_dir = '/global/cfs/projectdirs/desi/science/lya/y1-kp6/blinding/'
+        blinding_dir = '/global/cfs/projectdirs/desi/science/lya/lya_bao_blinding/'
+        blinding_templates = {'desi_dr3': {'standard': 'dr3_blinding_v4_standard_21_05_2026.h5',
+                                          'grid': 'dr3_blinding_v4_regular_grid_21_05_2026.h5'}}
 
         if blinding in blinding_templates:
             userprint(f"Blinding using seed for {blinding}")
@@ -436,6 +437,8 @@ def main(cmdargs=None):
         else:
             # Read the regular grid blinding file and get the right template
             blinding_filename = blinding_dir + blinding_templates[blinding]['grid']
+
+        userprint('INFO: Will read blinding template from', blinding_filename)
 
         if not os.path.isfile(blinding_filename):
             raise RuntimeError("Missing blinding file. Make sure you are running at"
