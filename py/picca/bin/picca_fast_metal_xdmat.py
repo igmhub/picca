@@ -198,8 +198,9 @@ def main(cmdargs=None):
      a list of IGM absorption."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Computes metal matrices for the cross-correlation '
-                     'delta x object for a list of IGM absorption.'))
+        description=('This script is deprecated and will be removed in future versions. '
+                     'Use Vega functionality instead.')
+    )
 
     parser.add_argument('--out',
                         type=str,
@@ -286,24 +287,6 @@ def main(cmdargs=None):
                         default=10,
                         required=False,
                         help='Max redshift for object field')
-
-    parser.add_argument(
-        '--z-cut-min',
-        type=float,
-        default=0.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift larger than '
-              'z-cut-min'))
-
-    parser.add_argument(
-        '--z-cut-max',
-        type=float,
-        default=10.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift smaller than '
-              'z-cut-max'))
 
     parser.add_argument('--z-min-sources',
                         type=float,
@@ -414,8 +397,6 @@ def main(cmdargs=None):
     xcf.r_par_max = args.rp_max
     xcf.r_par_min = args.rp_min
     xcf.r_trans_max = args.rt_max
-    xcf.z_cut_max = args.z_cut_max
-    xcf.z_cut_min = args.z_cut_min
     xcf.num_bins_r_par = args.np * args.coef_binning_model
     xcf.num_bins_r_trans = args.nt * args.coef_binning_model
     xcf.num_model_bins_r_par = args.np * args.coef_binning_model
@@ -532,14 +513,6 @@ def main(cmdargs=None):
         'name': 'COEFMOD',
         'value': args.coef_binning_model,
         'comment': 'Coefficient for model binning'
-    }, {
-        'name': 'ZCUTMIN',
-        'value': xcf.z_cut_min,
-        'comment': 'Minimum redshift of pairs'
-    }, {
-        'name': 'ZCUTMAX',
-        'value': xcf.z_cut_max,
-        'comment': 'Maximum redshift of pairs'
     }, {
         'name': 'OMEGAM',
         'value': args.fid_Om,

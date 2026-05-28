@@ -149,6 +149,19 @@ def main(cmdargs):
                         default=None,
                         required=False,
                         help='Maximum number of spectra to read')
+    
+    parser.add_argument(
+        "--in-attributes",
+        type=str,
+        default=None,
+        required=False,
+        help=(
+            "Filename for the delta attributes file. This will be used to read the "
+            "order of the polynomial used for the continuum fitting, which is needed "
+            "for the projection of the delta field. If None, it will look for the file at the "
+            "standard location and crash if not found "
+        ),
+    )
 
     args = parser.parse_args(cmdargs)
 
@@ -181,7 +194,8 @@ def main(cmdargs):
                                                   max_num_spec=args.nspec,
                                                   no_project=args.no_project,
                                                   z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources)
+                                                  z_max_qso=args.z_max_sources,
+                                                  delta_attributes=args.in_attributes)
     cf.data = data
     cf.num_data = num_data
     del z_min, z_max
@@ -201,7 +215,8 @@ def main(cmdargs):
             max_num_spec=args.nspec,
             no_project=args.no_project,
             z_min_qso=args.z_min_sources,
-            z_max_qso=args.z_max_sources)
+            z_max_qso=args.z_max_sources,
+            delta_attributes=args.in_attributes)
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2
@@ -217,7 +232,8 @@ def main(cmdargs):
             args.z_ref,
             cosmo=None,
             max_num_spec=args.nspec,
-            no_project=args.no_project)
+            no_project=args.no_project,
+            delta_attributes=args.in_attributes)
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2

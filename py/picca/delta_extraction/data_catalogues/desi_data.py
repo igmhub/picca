@@ -250,8 +250,11 @@ class DesiData(Data):
                 self.blinding = "desi_m2"
             elif all(self.catalogue["LASTNIGHT"] < 20220801):
                 self.blinding = "desi_y1"
-            else:
+            elif all(self.catalogue["LASTNIGHT"] < 20240410):
                 self.blinding = "desi_y3"
+            else:
+                self.blinding = "desi_dr3"
+        self.logger.progress(f"Will use blinding strategy {self.blinding}")
 
         if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
             raise DataError(

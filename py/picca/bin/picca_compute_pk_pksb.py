@@ -14,7 +14,11 @@ from picca.utils import userprint
 from picca.constants import SPEED_LIGHT
 
 def main(cmdargs):
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description=("This script is deprecated and will be removed in future versions."
+                     " Use the make_template.py script in Vega instead.")
+    )
 
     parser.add_argument('-i','--ini', type=str, required=True,
         help='Input config file for CAMB')

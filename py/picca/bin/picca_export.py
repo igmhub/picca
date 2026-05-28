@@ -368,6 +368,14 @@ def main(cmdargs=None):
         'value': num_bins_r_trans,
         'comment': 'Number of bins in r-transverse'
     }, {
+        'name': 'ZMIN',
+        'value': head['ZMIN'],
+        'comment': 'Minimum redshift of pairs'
+    }, {
+        'name': 'ZMAX',
+        'value': head['ZMAX'],
+        'comment': 'Maximum redshift of pairs'
+    }, {
         'name': 'OMEGAM',
         'value': head['OMEGAM'],
         'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
@@ -405,9 +413,9 @@ def main(cmdargs=None):
 
     # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
-        blinding_dir = '/global/cfs/projectdirs/desi/science/lya/y1-kp6/blinding/'
-        blinding_templates = {'desi_y3': {'standard': 'y3_blinding_v3_standard_18_12_2022.h5',
-                                          'grid': 'y3_blinding_v3_regular_grid_18_12_2022.h5'}}
+        blinding_dir = '/global/cfs/projectdirs/desi/science/lya/lya_blinding/bao/'
+        blinding_templates = {'desi_dr3': {'standard': 'dr3_blinding_v4_standard_28_05_2026.h5',
+                                           'grid': 'dr3_blinding_v4_regular_grid_28_05_2026.h5'}}
 
         if blinding in blinding_templates:
             userprint(f"Blinding using seed for {blinding}")

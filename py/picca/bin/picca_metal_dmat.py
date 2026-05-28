@@ -113,24 +113,6 @@ def main(cmdargs=None):
               'model'))
 
     parser.add_argument(
-        '--z-cut-min',
-        type=float,
-        default=0.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift larger than '
-              'z-cut-min'))
-
-    parser.add_argument(
-        '--z-cut-max',
-        type=float,
-        default=10.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift smaller than '
-              'z-cut-max'))
-
-    parser.add_argument(
         '--z-min-sources',
         type=float,
         default=0.,
@@ -285,6 +267,19 @@ def main(cmdargs=None):
                     required=False,
                     help='compute only the metal correlations used by Vega'
                        'i.e. 4 LyaxSi matrices and CIVxCIV')
+    
+    parser.add_argument(
+        "--in-attributes",
+        type=str,
+        default=None,
+        required=False,
+        help=(
+            "Filename for the delta attributes file. This will be used to read the "
+            "order of the polynomial used for the continuum fitting, which is needed "
+            "for the projection of the delta field. If None, it will look for the file at the "
+            "standard location and crash if not found "
+        ),
+    )
 
     args = parser.parse_args(cmdargs)
 
@@ -297,8 +292,6 @@ def main(cmdargs=None):
     cf.r_par_max = args.rp_max
     cf.r_trans_max = args.rt_max
     cf.r_par_min = args.rp_min
-    cf.z_cut_max = args.z_cut_max
-    cf.z_cut_min = args.z_cut_min
     cf.num_bins_r_par = args.np * args.coef_binning_model
     cf.num_bins_r_trans = args.nt * args.coef_binning_model
     cf.num_model_bins_r_par = args.np * args.coef_binning_model
@@ -337,7 +330,8 @@ def main(cmdargs=None):
                                                   nproc=args.nproc,
                                                   rebin_factor=args.rebin_factor,
                                                   z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources)
+                                                  z_max_qso=args.z_max_sources,
+                                                  delta_attributes=args.in_attributes)
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -371,7 +365,8 @@ def main(cmdargs=None):
             nproc=args.nproc,
             rebin_factor=args.rebin_factor,
             z_min_qso=args.z_min_sources,
-            z_max_qso=args.z_max_sources)
+            z_max_qso=args.z_max_sources,
+            delta_attributes=args.in_attributes)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
@@ -508,16 +503,6 @@ def main(cmdargs=None):
             'name': 'COEFMOD',
             'value': args.coef_binning_model,
             'comment': 'Coefficient for model binning'
-        },
-        {
-            'name': 'ZCUTMIN',
-            'value': cf.z_cut_min,
-            'comment': 'Minimum redshift of pairs'
-        },
-        {
-            'name': 'ZCUTMAX',
-            'value': cf.z_cut_max,
-            'comment': 'Maximum redshift of pairs'
         },
         {
             'name': 'REJ',

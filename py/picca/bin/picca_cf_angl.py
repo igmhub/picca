@@ -90,24 +90,6 @@ def main(cmdargs):
                         help='Number of angular bins')
 
     parser.add_argument(
-        '--z-cut-min',
-        type=float,
-        default=0.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift larger than '
-              'z-cut-min'))
-
-    parser.add_argument(
-        '--z-cut-max',
-        type=float,
-        default=10.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift smaller than '
-              'z-cut-max'))
-
-    parser.add_argument(
         '--z-min-sources',
         type=float,
         default=0.,
@@ -187,6 +169,19 @@ def main(cmdargs):
                         default=None,
                         required=False,
                         help='Maximum number of spectra to read')
+    
+    parser.add_argument(
+        "--in-attributes",
+        type=str,
+        default=None,
+        required=False,
+        help=(
+            "Filename for the delta attributes file. This will be used to read the "
+            "order of the polynomial used for the continuum fitting, which is needed "
+            "for the projection of the delta field. If None, it will look for the file at the "
+            "standard location and crash if not found "
+        ),
+    )
 
     args = parser.parse_args(cmdargs)
 
@@ -197,8 +192,6 @@ def main(cmdargs):
     cf.r_par_min = args.wr_min
     cf.r_par_max = args.wr_max
     cf.r_trans_max = args.ang_max
-    cf.z_cut_max = args.z_cut_max
-    cf.z_cut_min = args.z_cut_min
     cf.num_bins_r_par = args.np
     cf.num_bins_r_trans = args.nt
     cf.nside = args.nside
@@ -220,7 +213,8 @@ def main(cmdargs):
                                                   max_num_spec=args.nspec,
                                                   no_project=args.no_project,
                                                   z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources)
+                                                  z_max_qso=args.z_max_sources,
+                                                  delta_attributes=args.in_attributes)
     cf.data = data
     cf.num_data = num_data
     del z_min, z_max
@@ -248,7 +242,8 @@ def main(cmdargs):
             max_num_spec=args.nspec,
             no_project=args.no_project,
             z_min_qso=args.z_min_sources,
-            z_max_qso=args.z_max_sources)
+            z_max_qso=args.z_max_sources,
+            delta_attributes=args.in_attributes)
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2
@@ -305,14 +300,6 @@ def main(cmdargs):
         'name': 'NT',
         'value': cf.num_bins_r_trans,
         'comment': 'Number of bins in angle'
-    }, {
-        'name': 'ZCUTMIN',
-        'value': cf.z_cut_min,
-        'comment': 'Minimum redshift of pairs'
-    }, {
-        'name': 'ZCUTMAX',
-        'value': cf.z_cut_max,
-        'comment': 'Maximum redshift of pairs'
     }, {
         'name': 'NSIDE',
         'value': cf.nside,

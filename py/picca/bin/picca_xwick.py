@@ -112,24 +112,6 @@ def main(cmdargs):
                         help='Max redshift for object field')
 
     parser.add_argument(
-        '--z-cut-min',
-        type=float,
-        default=0.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift larger than '
-              'z-cut-min'))
-
-    parser.add_argument(
-        '--z-cut-max',
-        type=float,
-        default=10.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift smaller than '
-              'z-cut-max'))
-
-    parser.add_argument(
         '--z-min-sources',
         type=float,
         default=0.,
@@ -253,6 +235,19 @@ def main(cmdargs):
                         required=False,
                         help='Rebin factor for deltas. If not None, deltas will '
                              'be rebinned by that factor')
+    
+    parser.add_argument(
+        "--in-attributes",
+        type=str,
+        default=None,
+        required=False,
+        help=(
+            "Filename for the delta attributes file. This will be used to read the "
+            "order of the polynomial used for the continuum fitting, which is needed "
+            "for the projection of the delta field. If None, it will look for the file at the "
+            "standard location and crash if not found "
+        ),
+    )
 
     args = parser.parse_args(cmdargs)
     if args.nproc is None:
@@ -262,8 +257,6 @@ def main(cmdargs):
     xcf.r_par_min = args.rp_min
     xcf.r_par_max = args.rp_max
     xcf.r_trans_max = args.rt_max
-    xcf.z_cut_min = args.z_cut_min
-    xcf.z_cut_max = args.z_cut_max
     xcf.num_bins_r_par = args.np
     xcf.num_bins_r_trans = args.nt
     xcf.nside = args.nside
@@ -298,7 +291,8 @@ def main(cmdargs):
                                                   nproc=args.nproc,
                                                   rebin_factor=args.rebin_factor,
                                                   z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources)
+                                                  z_max_qso=args.z_max_sources,
+                                                  delta_attributes=args.in_attributes)
     for deltas in data.values():
         for delta in deltas:
             delta.fname = 'D1'
@@ -379,8 +373,6 @@ def main(cmdargs):
         cf.data = xcf.data
         cf.ang_max = xcf.ang_max
         cf.nside = xcf.nside
-        cf.z_cut_max = xcf.z_cut_max
-        cf.z_cut_min = xcf.z_cut_min
 
     ### Send
     xcf.counter = Value('i', 0)
@@ -460,16 +452,6 @@ def main(cmdargs):
             'name': 'NT',
             'value': xcf.num_bins_r_trans,
             'comment': 'Number of bins in r-transverse'
-        },
-        {
-            'name': 'ZCUTMIN',
-            'value': xcf.z_cut_min,
-            'comment': 'Minimum redshift of pairs'
-        },
-        {
-            'name': 'ZCUTMAX',
-            'value': xcf.z_cut_max,
-            'comment': 'Maximum redshift of pairs'
         },
         {
             'name': 'REJ',
