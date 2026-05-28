@@ -365,6 +365,12 @@ def compute_dmat(healpixs):
                     userprint(("computing xi: {}%").format(xicounter))
                 counter.value += 1
             order1 = delta1.order
+            if order1 is None:
+                raise RuntimeError(
+                    "Trying to compute the distortion matrix but "
+                    "order is not defined for the deltas. "
+                    "Check previous warning to solve this issue"
+                )
             r_comov1 = delta1.r_comov
             dist_m1 = delta1.dist_m
             weights1 = delta1.weights

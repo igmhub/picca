@@ -267,6 +267,19 @@ def main(cmdargs=None):
                     required=False,
                     help='compute only the metal correlations used by Vega'
                        'i.e. 4 LyaxSi matrices and CIVxCIV')
+    
+    parser.add_argument(
+        "--in-attributes",
+        type=str,
+        default=None,
+        required=False,
+        help=(
+            "Filename for the delta attributes file. This will be used to read the "
+            "order of the polynomial used for the continuum fitting, which is needed "
+            "for the projection of the delta field. If None, it will look for the file at the "
+            "standard location and crash if not found "
+        ),
+    )
 
     args = parser.parse_args(cmdargs)
 
@@ -317,7 +330,8 @@ def main(cmdargs=None):
                                                   nproc=args.nproc,
                                                   rebin_factor=args.rebin_factor,
                                                   z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources)
+                                                  z_max_qso=args.z_max_sources,
+                                                  delta_attributes=args.in_attributes)
     del z_max
     cf.data = data
     cf.num_data = num_data
@@ -351,7 +365,8 @@ def main(cmdargs=None):
             nproc=args.nproc,
             rebin_factor=args.rebin_factor,
             z_min_qso=args.z_min_sources,
-            z_max_qso=args.z_max_sources)
+            z_max_qso=args.z_max_sources,
+            delta_attributes=args.in_attributes)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2

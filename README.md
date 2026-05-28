@@ -2,7 +2,7 @@
 
 
 # picca
-[![Coverage Status](https://coveralls.io/repos/github/igmhub/picca/badge.svg?branch=master)](https://coveralls.io/github/igmhub/picca?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/igmhub/picca/badge.svg?branch=main)](https://coveralls.io/github/igmhub/picca?branch=main)
 
 Package for Igm Cosmological-Correlations Analyses.
 
@@ -169,8 +169,8 @@ Before submitting a PR please make sure to:
 
 New scripts should be added to `pyproject.toml` file under the [project.scripts] section.
 
-When merging PRs (or committing to master directly):
-- by default the patch version is increased via a github action, so every change of master will generate a new version
+When merging PRs (or committing to main directly):
+- by default the patch version is increased via a github action, so every change of main will generate a new version
 This behaviour can be changed by adding one of the following to the commit-msg of the merge commit:
 - by specifying [bump minor] or [bump major] a new minor or major version will be generated instead, but tags and releases need to be created manually (and are auto-pushed to pypi when they are created)
 - by specifying [no bump] the version bump can be circumvented altogether when some other behaviour is wanted, in that case bump2version should be run manually

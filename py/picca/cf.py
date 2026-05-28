@@ -430,6 +430,12 @@ def compute_dmat(healpixs):
                 counter.value += 1
 
             order1 = delta1.order
+            if order1 is None:
+                raise RuntimeError(
+                    "Trying to compute the distortion matrix but "
+                    "order is not defined for the deltas. "
+                    "Check previous warning to solve this issue"
+                )
             r_comov1 = delta1.r_comov
             dist_m1 = delta1.dist_m
             weights1 = delta1.weights
@@ -455,6 +461,12 @@ def compute_dmat(healpixs):
                 else:
                     same_half_plate = False
                 order2 = delta2.order
+                if order2 is None:
+                    raise RuntimeError(
+                        "Trying to compute the distortion matrix but "
+                        "order is not defined for the deltas. "
+                        "Check previous warning to solve this issue"
+                    )
                 ang = delta1.get_angle_between(delta2)
                 r_comov2 = delta2.r_comov
                 dist_m2 = delta2.dist_m

@@ -2,7 +2,7 @@ name: Bump version
 on: 
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - '.github/**'
       - 'README.md'
