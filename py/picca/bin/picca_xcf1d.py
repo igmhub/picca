@@ -93,24 +93,6 @@ def main(cmdargs):
                         help='Max redshift for object field')
 
     parser.add_argument(
-        '--z-cut-min',
-        type=float,
-        default=0.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift larger than '
-              'z-cut-min'))
-
-    parser.add_argument(
-        '--z-cut-max',
-        type=float,
-        default=10.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift smaller than '
-              'z-cut-max'))
-
-    parser.add_argument(
         '--z-min-sources',
         type=float,
         default=0.,
@@ -211,8 +193,6 @@ def main(cmdargs):
     xcf.r_par_min = args.wr_min
     xcf.r_par_max = args.wr_max
     xcf.r_trans_max = 1.e-6
-    xcf.z_cut_min = args.z_cut_min
-    xcf.z_cut_max = args.z_cut_max
     xcf.num_bins_r_par = args.np
     xcf.num_bins_r_trans = 1
     xcf.nside = args.nside
@@ -318,14 +298,6 @@ def main(cmdargs):
         'name': 'NP',
         'value': xcf.num_bins_r_par,
         'comment': 'Number of bins in wavelength ratio'
-    }, {
-        'name': 'ZCUTMIN',
-        'value': xcf.z_cut_min,
-        'comment': 'Minimum redshift of pairs'
-    }, {
-        'name': 'ZCUTMAX',
-        'value': xcf.z_cut_max,
-        'comment': 'Maximum redshift of pairs'
     }, {
         'name': 'NSIDE',
         'value': xcf.nside,

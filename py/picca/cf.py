@@ -31,8 +31,6 @@ num_model_bins_r_trans = None
 num_model_bins_r_par = None
 r_par_max = None
 r_par_min = None
-z_cut_max = None
-z_cut_min = None
 z_min_pairs = None
 z_max_pairs = None
 r_trans_max = None
@@ -126,22 +124,13 @@ def fill_neighs(healpixs):
             w = ang < ang_max
             neighbours = np.array(neighbours)[w]
             if data2 is not None:
-                delta.neighbours = [
-                    other_delta
-                    for other_delta in neighbours
-                    if (
-                        (other_delta.z[-1] + delta.z[-1]) / 2.0 >= z_cut_min
-                        and (other_delta.z[-1] + delta.z[-1]) / 2.0 < z_cut_max
-                    )
-                ]
+                delta.neighbours = neighbours
             else:
                 delta.neighbours = [
                     other_delta
                     for other_delta in neighbours
                     if (
                         delta.ra > other_delta.ra
-                        and (other_delta.z[-1] + delta.z[-1]) / 2.0 >= z_cut_min
-                        and (other_delta.z[-1] + delta.z[-1]) / 2.0 < z_cut_max
                     )
                 ]
 
@@ -560,27 +549,9 @@ def compute_dmat_forest_pairs_fast(
         if weights1[i] == 0:
             continue
 
-        if (zerr_cut_deg is not None) and (ang < zerr_cut_deg * np.pi / 180.0):
-            # mean redshift of quasar-pixel pair
-            z_qF = 0.5 * (z1[i] + z_qso_2)
-            # velocity separation between pixel 1 and backgroud quasar 2
-            dv_kms = np.abs(z1[i] - z_qso_2) / (1 + z_qF)
-            dv_kms *= constants.SPEED_LIGHT
-            if dv_kms < zerr_cut_kms:
-                continue
-
         for j in range(z2.size):
             if weights2[j] == 0:
                 continue
-
-            if (zerr_cut_deg is not None) and (ang < zerr_cut_deg * np.pi / 180.0):
-                # mean redshift of quasar-pixel pair
-                z_qF = 0.5 * (z2[j] + z_qso_1)
-                # velocity separation between pixel 1 and backgroud quasar 2
-                dv_kms = np.abs(z2[j] - z_qso_1) / (1 + z_qF)
-                dv_kms *= constants.SPEED_LIGHT
-                if dv_kms < zerr_cut_kms:
-                    continue
 
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)

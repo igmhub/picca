@@ -113,24 +113,6 @@ def main(cmdargs=None):
               'model'))
 
     parser.add_argument(
-        '--z-cut-min',
-        type=float,
-        default=0.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift larger than '
-              'z-cut-min'))
-
-    parser.add_argument(
-        '--z-cut-max',
-        type=float,
-        default=10.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift smaller than '
-              'z-cut-max'))
-
-    parser.add_argument(
         '--z-min-sources',
         type=float,
         default=0.,
@@ -310,8 +292,6 @@ def main(cmdargs=None):
     cf.r_par_max = args.rp_max
     cf.r_trans_max = args.rt_max
     cf.r_par_min = args.rp_min
-    cf.z_cut_max = args.z_cut_max
-    cf.z_cut_min = args.z_cut_min
     cf.num_bins_r_par = args.np * args.coef_binning_model
     cf.num_bins_r_trans = args.nt * args.coef_binning_model
     cf.num_model_bins_r_par = args.np * args.coef_binning_model
@@ -523,16 +503,6 @@ def main(cmdargs=None):
             'name': 'COEFMOD',
             'value': args.coef_binning_model,
             'comment': 'Coefficient for model binning'
-        },
-        {
-            'name': 'ZCUTMIN',
-            'value': cf.z_cut_min,
-            'comment': 'Minimum redshift of pairs'
-        },
-        {
-            'name': 'ZCUTMAX',
-            'value': cf.z_cut_max,
-            'comment': 'Maximum redshift of pairs'
         },
         {
             'name': 'REJ',

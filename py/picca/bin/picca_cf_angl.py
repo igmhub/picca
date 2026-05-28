@@ -90,24 +90,6 @@ def main(cmdargs):
                         help='Number of angular bins')
 
     parser.add_argument(
-        '--z-cut-min',
-        type=float,
-        default=0.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift larger than '
-              'z-cut-min'))
-
-    parser.add_argument(
-        '--z-cut-max',
-        type=float,
-        default=10.,
-        required=False,
-        help=('Use only pairs of forest x object with the mean of the last '
-              'absorber redshift and the object redshift smaller than '
-              'z-cut-max'))
-
-    parser.add_argument(
         '--z-min-sources',
         type=float,
         default=0.,
@@ -210,8 +192,6 @@ def main(cmdargs):
     cf.r_par_min = args.wr_min
     cf.r_par_max = args.wr_max
     cf.r_trans_max = args.ang_max
-    cf.z_cut_max = args.z_cut_max
-    cf.z_cut_min = args.z_cut_min
     cf.num_bins_r_par = args.np
     cf.num_bins_r_trans = args.nt
     cf.nside = args.nside
@@ -320,14 +300,6 @@ def main(cmdargs):
         'name': 'NT',
         'value': cf.num_bins_r_trans,
         'comment': 'Number of bins in angle'
-    }, {
-        'name': 'ZCUTMIN',
-        'value': cf.z_cut_min,
-        'comment': 'Minimum redshift of pairs'
-    }, {
-        'name': 'ZCUTMAX',
-        'value': cf.z_cut_max,
-        'comment': 'Maximum redshift of pairs'
     }, {
         'name': 'NSIDE',
         'value': cf.nside,
