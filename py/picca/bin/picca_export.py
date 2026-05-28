@@ -405,7 +405,6 @@ def main(cmdargs=None):
 
     # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
-        #blinding_dir = '/global/cfs/projectdirs/desi/science/lya/y1-kp6/blinding/'
         blinding_dir = '/global/cfs/projectdirs/desi/science/lya/lya_blinding/bao/'
         blinding_templates = {'desi_dr3': {'standard': 'dr3_blinding_v4_standard_28_05_2026.h5',
                                            'grid': 'dr3_blinding_v4_regular_grid_28_05_2026.h5'}}
