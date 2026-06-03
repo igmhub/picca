@@ -4,6 +4,7 @@
 This module follow the procedure described in sections 3.5 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
+
 import argparse
 import multiprocessing
 import time
@@ -99,10 +100,14 @@ def main(cmdargs=None):
         "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
     )
 
-    parser.add_argument('--rmu-binning', action="store_true",
-                        help=('Estimate in r,mu binning. np becomes mu bins.'
-                              ' nt becomes r bins. rp min max is always 0, 1')
-                        )
+    parser.add_argument(
+        "--rmu-binning",
+        action="store_true",
+        help=(
+            "Estimate in r,mu binning. np becomes mu bins."
+            " nt becomes r bins. rp min max is always 0, 1"
+        ),
+    )
 
     parser.add_argument(
         "--coef-binning-model",
@@ -397,7 +402,7 @@ def main(cmdargs=None):
         Ok=args.fid_Ok,
         wl=args.fid_wl,
         blinding=blinding,
-        template=args.distance_template
+        template=args.distance_template,
     )
 
     t0 = time.time()
@@ -568,36 +573,38 @@ def main(cmdargs=None):
             "value": args.fid_Or,
             "comment": "Omega_radiation(z=0) of fiducial LambdaCDM cosmology",
         },
+        {"name": "NPUSED", "value": num_pairs_used, "comment": "Number of used pairs"},
         {
-            'name': 'NPUSED',
-            'value': num_pairs_used,
-            'comment': 'Number of used pairs'
-        }, {
-            'name': 'OMEGAM',
-            'value': args.fid_Om,
-            'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAR',
-            'value': args.fid_Or,
-            'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAK',
-            'value': args.fid_Ok,
-            'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'WL',
-            'value': args.fid_wl,
-            'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-        }, {
-            'name': "BLINDING",
-            'value': blinding,
-            'comment': 'String specifying the blinding strategy'
-        }, {
-            'name': "RMU_BIN",
-            'value': cf.rmu_binning,
-            'comment': 'True if binned in r, mu'
-        }
-        ]
+            "name": "OMEGAM",
+            "value": args.fid_Om,
+            "comment": "Omega_matter(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "OMEGAR",
+            "value": args.fid_Or,
+            "comment": "Omega_radiation(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "OMEGAK",
+            "value": args.fid_Ok,
+            "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "WL",
+            "value": args.fid_wl,
+            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "BLINDING",
+            "value": blinding,
+            "comment": "String specifying the blinding strategy",
+        },
+        {
+            "name": "RMU_BIN",
+            "value": cf.rmu_binning,
+            "comment": "True if binned in r, mu",
+        },
+    ]
     dmat_name = "DM"
     if blinding != "none":
         dmat_name += "_BLIND"

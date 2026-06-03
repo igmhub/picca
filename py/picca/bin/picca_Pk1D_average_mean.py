@@ -1,8 +1,11 @@
 #!/usr/bin/env python
-"""Compute the averaged 1D power spectrum
-"""
+"""Compute the averaged 1D power spectrum"""
 
-import sys, glob, argparse, ast
+import argparse
+import ast
+import glob
+import sys
+
 from picca.pk1d import postproc_pk1d
 from picca.utils import userprint
 

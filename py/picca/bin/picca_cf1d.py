@@ -2,14 +2,16 @@
 """Compute the 1D auto or cross-correlation between delta field from the same
 forest.
 """
-import sys
+
 import argparse
 import multiprocessing
-from multiprocessing import Pool, Lock, cpu_count, Value
-import numpy as np
-import fitsio
+import sys
+from multiprocessing import Lock, Pool, Value, cpu_count
 
-from picca import constants, cf, io
+import fitsio
+import numpy as np
+
+from picca import cf, constants, io
 from picca.utils import userprint
 
 
@@ -38,118 +40,137 @@ def main(cmdargs):
     forest."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Compute the 1D auto or cross-correlation between delta '
-                     'field from the same forest.'))
-
-    parser.add_argument('--out',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Output file name')
-
-    parser.add_argument('--in-dir',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Directory to delta files')
-
-    parser.add_argument('--in-dir2',
-                        type=str,
-                        default=None,
-                        required=False,
-                        help='Directory to 2nd delta files')
-
-    parser.add_argument('--lambda-min',
-                        type=float,
-                        default=None,
-                        required=False,
-                        help='Lower limit on observed wavelength [Angstrom] (default: minimum available in data)')
-
-    parser.add_argument('--lambda-max',
-                        type=float,
-                        default=None,
-                        required=False,
-                        help='Upper limit on observed wavelength [Angstrom] (default: maximum available in data)')
-
-    parser.add_argument('--z-min-sources',
-                        type=float,
-                        default=0.,
-                        required=False,
-                        help=('Limit the minimum redshift of the quasars '
-                              'used as sources for spectra'))
-
-    parser.add_argument('--z-max-sources',
-                        type=float,
-                        default=10.,
-                        required=False,
-                        help=('Limit the maximum redshift of the quasars '
-                              'used as sources for spectra'))
-
-    parser.add_argument('--dll',
-                        type=float,
-                        default=3.e-4,
-                        required=False,
-                        help='Loglam bin size')
+        description=(
+            "Compute the 1D auto or cross-correlation between delta "
+            "field from the same forest."
+        ),
+    )
 
     parser.add_argument(
-        '--lambda-abs',
+        "--out", type=str, default=None, required=True, help="Output file name"
+    )
+
+    parser.add_argument(
+        "--in-dir",
         type=str,
-        default='LYA',
-        required=False,
-        help=('Name of the absorption in picca.constants defining the redshift '
-              'of the delta'))
+        default=None,
+        required=True,
+        help="Directory to delta files",
+    )
 
     parser.add_argument(
-        '--lambda-abs2',
+        "--in-dir2",
         type=str,
         default=None,
         required=False,
-        help=('Name of the absorption in picca.constants defining the redshift '
-              'of the 2nd delta (if not give, same as 1st delta)'))
-
-    parser.add_argument('--z-ref',
-                        type=float,
-                        default=2.25,
-                        required=False,
-                        help='Reference redshift')
+        help="Directory to 2nd delta files",
+    )
 
     parser.add_argument(
-        '--z-evol',
+        "--lambda-min",
         type=float,
-        default=1.,
+        default=None,
         required=False,
-        help='Exponent of the redshift evolution of the delta field')
+        help="Lower limit on observed wavelength [Angstrom] (default: minimum available in data)",
+    )
 
     parser.add_argument(
-        '--z-evol2',
+        "--lambda-max",
         type=float,
-        default=1.,
+        default=None,
         required=False,
-        help='Exponent of the redshift evolution of the 2nd delta field')
+        help="Upper limit on observed wavelength [Angstrom] (default: maximum available in data)",
+    )
 
-    parser.add_argument('--no-project',
-                        action='store_true',
-                        required=False,
-                        help='Do not project out continuum fitting modes')
+    parser.add_argument(
+        "--z-min-sources",
+        type=float,
+        default=0.0,
+        required=False,
+        help=(
+            "Limit the minimum redshift of the quasars " "used as sources for spectra"
+        ),
+    )
 
-    parser.add_argument('--nside',
-                        type=int,
-                        default=16,
-                        required=False,
-                        help='Healpix nside')
+    parser.add_argument(
+        "--z-max-sources",
+        type=float,
+        default=10.0,
+        required=False,
+        help=(
+            "Limit the maximum redshift of the quasars " "used as sources for spectra"
+        ),
+    )
 
-    parser.add_argument('--nproc',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Number of processors')
+    parser.add_argument(
+        "--dll", type=float, default=3.0e-4, required=False, help="Loglam bin size"
+    )
 
-    parser.add_argument('--nspec',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Maximum number of spectra to read')
-    
+    parser.add_argument(
+        "--lambda-abs",
+        type=str,
+        default="LYA",
+        required=False,
+        help=(
+            "Name of the absorption in picca.constants defining the redshift "
+            "of the delta"
+        ),
+    )
+
+    parser.add_argument(
+        "--lambda-abs2",
+        type=str,
+        default=None,
+        required=False,
+        help=(
+            "Name of the absorption in picca.constants defining the redshift "
+            "of the 2nd delta (if not give, same as 1st delta)"
+        ),
+    )
+
+    parser.add_argument(
+        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
+    )
+
+    parser.add_argument(
+        "--z-evol",
+        type=float,
+        default=1.0,
+        required=False,
+        help="Exponent of the redshift evolution of the delta field",
+    )
+
+    parser.add_argument(
+        "--z-evol2",
+        type=float,
+        default=1.0,
+        required=False,
+        help="Exponent of the redshift evolution of the 2nd delta field",
+    )
+
+    parser.add_argument(
+        "--no-project",
+        action="store_true",
+        required=False,
+        help="Do not project out continuum fitting modes",
+    )
+
+    parser.add_argument(
+        "--nside", type=int, default=16, required=False, help="Healpix nside"
+    )
+
+    parser.add_argument(
+        "--nproc", type=int, default=None, required=False, help="Number of processors"
+    )
+
+    parser.add_argument(
+        "--nspec",
+        type=int,
+        default=None,
+        required=False,
+        help="Maximum number of spectra to read",
+    )
+
     parser.add_argument(
         "--in-attributes",
         type=str,
@@ -175,7 +196,7 @@ def main(cmdargs):
     if args.lambda_max is not None:
         cf.log_lambda_max = np.log10(args.lambda_max)
     cf.delta_log_lambda = args.dll
-    
+
     cf.x_correlation = False
 
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
@@ -185,17 +206,19 @@ def main(cmdargs):
         cf.lambda_abs2 = constants.ABSORBER_IGM[args.lambda_abs]
 
     ### Read data 1
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  cf.nside,
-                                                  cf.lambda_abs,
-                                                  args.z_evol,
-                                                  args.z_ref,
-                                                  cosmo=None,
-                                                  max_num_spec=args.nspec,
-                                                  no_project=args.no_project,
-                                                  z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources,
-                                                  delta_attributes=args.in_attributes)
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir,
+        cf.nside,
+        cf.lambda_abs,
+        args.z_evol,
+        args.z_ref,
+        cosmo=None,
+        max_num_spec=args.nspec,
+        no_project=args.no_project,
+        z_min_qso=args.z_min_sources,
+        z_max_qso=args.z_max_sources,
+        delta_attributes=args.in_attributes,
+    )
     cf.data = data
     cf.num_data = num_data
     del z_min, z_max
@@ -216,7 +239,8 @@ def main(cmdargs):
             no_project=args.no_project,
             z_min_qso=args.z_min_sources,
             z_max_qso=args.z_max_sources,
-            delta_attributes=args.in_attributes)
+            delta_attributes=args.in_attributes,
+        )
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2
@@ -233,56 +257,61 @@ def main(cmdargs):
             cosmo=None,
             max_num_spec=args.nspec,
             no_project=args.no_project,
-            delta_attributes=args.in_attributes)
+            delta_attributes=args.in_attributes,
+        )
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2
 
-
-    #here we are trying to guess reasonable lambda bounds from the data
+    # here we are trying to guess reasonable lambda bounds from the data
     if args.lambda_min is None:
-        cf.log_lambda_min=np.min([d.log_lambda[0] for hp in cf.data.values() for d in hp])
+        cf.log_lambda_min = np.min(
+            [d.log_lambda[0] for hp in cf.data.values() for d in hp]
+        )
         if args.in_dir2:
-            log_lambda_min2=np.min([d.log_lambda[0] for hp in cf.data2.values() for d in hp])
-            cf.log_lambda_min=np.min([cf.log_lambda_min,log_lambda_min2])
+            log_lambda_min2 = np.min(
+                [d.log_lambda[0] for hp in cf.data2.values() for d in hp]
+            )
+            cf.log_lambda_min = np.min([cf.log_lambda_min, log_lambda_min2])
         print(f"lambda_min={10**cf.log_lambda_min:.3f}")
     if args.lambda_max is None:
-        cf.log_lambda_max=np.max([d.log_lambda[-1] for hp in cf.data.values() for d in hp])
+        cf.log_lambda_max = np.max(
+            [d.log_lambda[-1] for hp in cf.data.values() for d in hp]
+        )
         if args.in_dir2:
-            log_lambda_max2=np.max([d.log_lambda[-1] for hp in cf.data2.values() for d in hp])
-            cf.log_lambda_max=np.max([cf.log_lambda_max,log_lambda_max2])
+            log_lambda_max2 = np.max(
+                [d.log_lambda[-1] for hp in cf.data2.values() for d in hp]
+            )
+            cf.log_lambda_max = np.max([cf.log_lambda_max, log_lambda_max2])
         print(f"lambda_max={10**cf.log_lambda_max:.3f}")
-    
 
-    cf.num_pixels = int((cf.log_lambda_max - cf.log_lambda_min) /
-                        cf.delta_log_lambda + 1 + 0.5)  #+1e-7 to fix cases where the division is an integer, but numerically slightly below that int,  
-    
-
+    cf.num_pixels = int(
+        (cf.log_lambda_max - cf.log_lambda_min) / cf.delta_log_lambda + 1 + 0.5
+    )  # +1e-7 to fix cases where the division is an integer, but numerically slightly below that int,
 
     # Convert lists to arrays
     cf.data = {key: np.array(value) for key, value in cf.data.items()}
     if cf.x_correlation:
         cf.data2 = {key: np.array(value) for key, value in cf.data2.items()}
 
-
     # Compute the correlation function, use pool to parallelize
-    cf.counter = Value('i', 0)
+    cf.counter = Value("i", 0)
     cf.lock = Lock()
-    context = multiprocessing.get_context('fork')
+    context = multiprocessing.get_context("fork")
 
     if cf.x_correlation:
-        healpixs = sorted([
-            key for key in list(cf.data.keys()) if key in list(cf.data2.keys())
-        ])
+        healpixs = sorted(
+            [key for key in list(cf.data.keys()) if key in list(cf.data2.keys())]
+        )
     else:
         healpixs = sorted(list(cf.data.keys()))
 
-    if args.nproc>1:
+    if args.nproc > 1:
         with context.Pool(processes=args.nproc) as pool:
             correlation_function_data = pool.map(corr_func, healpixs)
     else:
         correlation_function_data = [corr_func(h) for h in healpixs]
-    userprint('\n')
+    userprint("\n")
 
     # group data from parallelisation
     correlation_function_data = np.array(correlation_function_data)
@@ -335,11 +364,11 @@ def main(cmdargs):
     num_pairs_list = num_pairs_list[w]
 
     rebin = np.bincount(dbin, weights=xi * weights_list)
-    xi_1d[:len(rebin)] = rebin
+    xi_1d[: len(rebin)] = rebin
     rebin = np.bincount(dbin, weights=weights_list)
-    weights_1d[:len(rebin)] = rebin
+    weights_1d[: len(rebin)] = rebin
     rebin = np.bincount(dbin, weights=num_pairs_list)
-    num_pairs1d[:len(rebin)] = rebin
+    num_pairs1d[: len(rebin)] = rebin
 
     w = weights_1d > 0
     xi_1d[w] /= weights_1d[w]
@@ -347,48 +376,60 @@ def main(cmdargs):
     # Save results
     userprint("writing")
 
-    results = fitsio.FITS(args.out, 'rw', clobber=True)
+    results = fitsio.FITS(args.out, "rw", clobber=True)
     header = [
         {
-            'name': 'LLMIN',
-            'value': cf.log_lambda_min,
-            'comment': 'Minimum log10 lambda [log Angstrom]'
+            "name": "LLMIN",
+            "value": cf.log_lambda_min,
+            "comment": "Minimum log10 lambda [log Angstrom]",
         },
         {
-            'name': 'LLMAX',
-            'value': cf.log_lambda_max,
-            'comment': 'Maximum log10 lambda [log Angstrom]'
+            "name": "LLMAX",
+            "value": cf.log_lambda_max,
+            "comment": "Maximum log10 lambda [log Angstrom]",
         },
         {
-            'name': 'DLL',
-            'value': cf.delta_log_lambda,
-            'comment': 'Loglam bin size [log Angstrom]'
+            "name": "DLL",
+            "value": cf.delta_log_lambda,
+            "comment": "Loglam bin size [log Angstrom]",
         },
     ]
     comment = [
-        'Variance', 'Sum of weight for variance', 'Sum of pairs for variance',
-        'Correlation', 'Sum of weight for correlation',
-        'Sum of pairs for correlation'
+        "Variance",
+        "Sum of weight for variance",
+        "Sum of pairs for variance",
+        "Correlation",
+        "Sum of weight for correlation",
+        "Sum of pairs for correlation",
     ]
-    results.write([
-        variance_1d, weights_variance_1d, num_pairs_variance_1d, xi_1d,
-        weights_1d, num_pairs1d
-    ],
-                  names=['v1d', 'wv1d', 'nv1d', 'c1d', 'nc1d', 'nb1d'],
-                  header=header,
-                  comment=comment,
-                  extname='1DCOR')
+    results.write(
+        [
+            variance_1d,
+            weights_variance_1d,
+            num_pairs_variance_1d,
+            xi_1d,
+            weights_1d,
+            num_pairs1d,
+        ],
+        names=["v1d", "wv1d", "nv1d", "c1d", "nc1d", "nb1d"],
+        header=header,
+        comment=comment,
+        extname="1DCOR",
+    )
 
-    comment = ['Covariance', 'Sum of weight', 'Number of pairs']
-    results.write([xi_list_2d, weights_list_2d, num_pairs_list_2d],
-                  names=['DA', 'WE', 'NB'],
-                  comment=comment,
-                  extname='2DCOR')
+    comment = ["Covariance", "Sum of weight", "Number of pairs"]
+    results.write(
+        [xi_list_2d, weights_list_2d, num_pairs_list_2d],
+        names=["DA", "WE", "NB"],
+        comment=comment,
+        extname="2DCOR",
+    )
     results.close()
 
     userprint("all done")
 
 
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)
     main(cmdargs)

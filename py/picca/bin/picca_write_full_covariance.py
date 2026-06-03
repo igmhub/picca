@@ -43,7 +43,7 @@ def read_corr(files):
 
 
 def main(cmdargs=None):
-    
+
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Writes the full covariance matrix for the given correlation functions.",

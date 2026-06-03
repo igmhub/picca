@@ -72,7 +72,7 @@ def smooth_corrmat_asym(
 
 
 def main(cmdargs=None):
-    
+
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Smoothes the covariance matrix.",

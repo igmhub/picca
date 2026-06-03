@@ -3,15 +3,17 @@
 
 The wick covariance is computed as explained in Delubac et al. 2015
 """
-import sys
+
 import argparse
 import multiprocessing
-from multiprocessing import Pool, Lock, cpu_count, Value
+import sys
+from multiprocessing import Lock, Pool, Value, cpu_count
+
 import fitsio
 import numpy as np
 from scipy.interpolate import interp1d
 
-from picca import constants, io, utils, xcf, cf
+from picca import cf, constants, io, utils, xcf
 from picca.utils import userprint
 
 
@@ -40,202 +42,233 @@ def main(cmdargs):
     forests."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Compute the wick covariance for the cross-correlation of '
-                     'object x forests.'))
-
-    parser.add_argument('--out',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Output file name')
-
-    parser.add_argument('--in-dir',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Directory to delta files')
-
-    parser.add_argument('--drq',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Catalog of objects in DRQ format')
+        description=(
+            "Compute the wick covariance for the cross-correlation of "
+            "object x forests."
+        ),
+    )
 
     parser.add_argument(
-                        '--mode',
-                        type=str,
-                        default='sdss',
-                        choices=['sdss','desi'],
-                        required=False,
-                        help='type of catalog supplied, default sdss')
-
-    parser.add_argument('--rp-min',
-                        type=float,
-                        default=-200.,
-                        required=False,
-                        help='Min r-parallel [h^-1 Mpc]')
-
-    parser.add_argument('--rp-max',
-                        type=float,
-                        default=200.,
-                        required=False,
-                        help='Max r-parallel [h^-1 Mpc]')
-
-    parser.add_argument('--rt-max',
-                        type=float,
-                        default=200.,
-                        required=False,
-                        help='Max r-transverse [h^-1 Mpc]')
-
-    parser.add_argument('--np',
-                        type=int,
-                        default=100,
-                        required=False,
-                        help='Number of r-parallel bins')
-
-    parser.add_argument('--nt',
-                        type=int,
-                        default=50,
-                        required=False,
-                        help='Number of r-transverse bins')
-
-    parser.add_argument('--z-min-obj',
-                        type=float,
-                        default=0,
-                        required=False,
-                        help='Min redshift for object field')
-
-    parser.add_argument('--z-max-obj',
-                        type=float,
-                        default=10,
-                        required=False,
-                        help='Max redshift for object field')
+        "--out", type=str, default=None, required=True, help="Output file name"
+    )
 
     parser.add_argument(
-        '--z-min-sources',
-        type=float,
-        default=0.,
-        required=False,
-        help=('Limit the minimum redshift of the quasars '
-                'used as sources for spectra'))
-
-    parser.add_argument(
-        '--z-max-sources',
-        type=float,
-        default=10.,
-        required=False,
-        help=('Limit the maximum redshift of the quasars '
-                'used as sources for spectra'))
-
-    parser.add_argument(
-        '--lambda-abs',
+        "--in-dir",
         type=str,
-        default='LYA',
-        required=False,
-        help=('Name of the absorption in picca.constants defining the redshift '
-              'of the delta'))
-
-    parser.add_argument('--z-ref',
-                        type=float,
-                        default=2.25,
-                        required=False,
-                        help='Reference redshift')
+        default=None,
+        required=True,
+        help="Directory to delta files",
+    )
 
     parser.add_argument(
-        '--z-evol-del',
+        "--drq",
+        type=str,
+        default=None,
+        required=True,
+        help="Catalog of objects in DRQ format",
+    )
+
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default="sdss",
+        choices=["sdss", "desi"],
+        required=False,
+        help="type of catalog supplied, default sdss",
+    )
+
+    parser.add_argument(
+        "--rp-min",
+        type=float,
+        default=-200.0,
+        required=False,
+        help="Min r-parallel [h^-1 Mpc]",
+    )
+
+    parser.add_argument(
+        "--rp-max",
+        type=float,
+        default=200.0,
+        required=False,
+        help="Max r-parallel [h^-1 Mpc]",
+    )
+
+    parser.add_argument(
+        "--rt-max",
+        type=float,
+        default=200.0,
+        required=False,
+        help="Max r-transverse [h^-1 Mpc]",
+    )
+
+    parser.add_argument(
+        "--np", type=int, default=100, required=False, help="Number of r-parallel bins"
+    )
+
+    parser.add_argument(
+        "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
+    )
+
+    parser.add_argument(
+        "--z-min-obj",
+        type=float,
+        default=0,
+        required=False,
+        help="Min redshift for object field",
+    )
+
+    parser.add_argument(
+        "--z-max-obj",
+        type=float,
+        default=10,
+        required=False,
+        help="Max redshift for object field",
+    )
+
+    parser.add_argument(
+        "--z-min-sources",
+        type=float,
+        default=0.0,
+        required=False,
+        help=(
+            "Limit the minimum redshift of the quasars " "used as sources for spectra"
+        ),
+    )
+
+    parser.add_argument(
+        "--z-max-sources",
+        type=float,
+        default=10.0,
+        required=False,
+        help=(
+            "Limit the maximum redshift of the quasars " "used as sources for spectra"
+        ),
+    )
+
+    parser.add_argument(
+        "--lambda-abs",
+        type=str,
+        default="LYA",
+        required=False,
+        help=(
+            "Name of the absorption in picca.constants defining the redshift "
+            "of the delta"
+        ),
+    )
+
+    parser.add_argument(
+        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
+    )
+
+    parser.add_argument(
+        "--z-evol-del",
         type=float,
         default=2.9,
         required=False,
-        help='Exponent of the redshift evolution of the delta field')
+        help="Exponent of the redshift evolution of the delta field",
+    )
 
     parser.add_argument(
-        '--z-evol-obj',
+        "--z-evol-obj",
         type=float,
         default=1.44,
         required=False,
-        help='Exponent of the redshift evolution of the object field')
+        help="Exponent of the redshift evolution of the object field",
+    )
 
     parser.add_argument(
-        '--fid-Om',
+        "--fid-Om",
         type=float,
         default=0.315,
         required=False,
-        help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
+        help="Omega_matter(z=0) of fiducial LambdaCDM cosmology",
+    )
 
     parser.add_argument(
-        '--fid-Or',
+        "--fid-Or",
         type=float,
-        default=0.,
+        default=0.0,
         required=False,
-        help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
-
-    parser.add_argument('--fid-Ok',
-                        type=float,
-                        default=0.,
-                        required=False,
-                        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+        help="Omega_radiation(z=0) of fiducial LambdaCDM cosmology",
+    )
 
     parser.add_argument(
-        '--fid-wl',
+        "--fid-Ok",
         type=float,
-        default=-1.,
+        default=0.0,
         required=False,
-        help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
-
-    parser.add_argument('--max-diagram',
-                        type=int,
-                        default=4,
-                        required=False,
-                        help='Maximum diagram to compute')
+        help="Omega_k(z=0) of fiducial LambdaCDM cosmology",
+    )
 
     parser.add_argument(
-        '--cf1d',
+        "--fid-wl",
+        type=float,
+        default=-1.0,
+        required=False,
+        help="Equation of state of dark energy of fiducial LambdaCDM cosmology",
+    )
+
+    parser.add_argument(
+        "--max-diagram",
+        type=int,
+        default=4,
+        required=False,
+        help="Maximum diagram to compute",
+    )
+
+    parser.add_argument(
+        "--cf1d",
         type=str,
         required=True,
-        help=('1D auto-correlation of pixels from the same forest file: '
-              'picca_cf1d.py'))
+        help=(
+            "1D auto-correlation of pixels from the same forest file: " "picca_cf1d.py"
+        ),
+    )
 
     parser.add_argument(
-        '--cf',
+        "--cf",
         type=str,
         default=None,
         required=False,
-        help=('3D auto-correlation of pixels from different forests: '
-              'picca_cf.py'))
+        help=("3D auto-correlation of pixels from different forests: " "picca_cf.py"),
+    )
 
     parser.add_argument(
-        '--rej',
+        "--rej",
         type=float,
-        default=1.,
+        default=1.0,
         required=False,
-        help=('Fraction of rejected object-forests pairs: -1=no rejection, '
-              '1=all rejection'))
+        help=(
+            "Fraction of rejected object-forests pairs: -1=no rejection, "
+            "1=all rejection"
+        ),
+    )
 
-    parser.add_argument('--nside',
-                        type=int,
-                        default=16,
-                        required=False,
-                        help='Healpix nside')
+    parser.add_argument(
+        "--nside", type=int, default=16, required=False, help="Healpix nside"
+    )
 
-    parser.add_argument('--nproc',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Number of processors')
+    parser.add_argument(
+        "--nproc", type=int, default=None, required=False, help="Number of processors"
+    )
 
-    parser.add_argument('--nspec',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Maximum number of spectra to read')
+    parser.add_argument(
+        "--nspec",
+        type=int,
+        default=None,
+        required=False,
+        help="Maximum number of spectra to read",
+    )
 
-    parser.add_argument('--rebin-factor',
-                        type=int,
-                        default=None,
-                        required=False,
-                        help='Rebin factor for deltas. If not None, deltas will '
-                             'be rebinned by that factor')
-    
+    parser.add_argument(
+        "--rebin-factor",
+        type=int,
+        default=None,
+        required=False,
+        help="Rebin factor for deltas. If not None, deltas will "
+        "be rebinned by that factor",
+    )
+
     parser.add_argument(
         "--in-attributes",
         type=str,
@@ -271,34 +304,46 @@ def main(cmdargs):
     blinding = io.read_blinding(args.in_dir)
 
     # load fiducial cosmology
-    if (args.fid_Or != 0.) or (args.fid_Ok != 0.) or (args.fid_wl != -1.):
-        userprint(("ERROR: Cosmology with other than Omega_m set are not yet "
-                   "implemented"))
+    if (args.fid_Or != 0.0) or (args.fid_Ok != 0.0) or (args.fid_wl != -1.0):
+        userprint(
+            ("ERROR: Cosmology with other than Omega_m set are not yet " "implemented")
+        )
         sys.exit()
-    cosmo = constants.Cosmo(Om=args.fid_Om,
-                            Or=args.fid_Or,
-                            Ok=args.fid_Ok,
-                            wl=args.fid_wl,)
+    cosmo = constants.Cosmo(
+        Om=args.fid_Om,
+        Or=args.fid_Or,
+        Ok=args.fid_Ok,
+        wl=args.fid_wl,
+    )
 
     ### Read deltas
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  args.nside,
-                                                  xcf.lambda_abs,
-                                                  args.z_evol_del,
-                                                  args.z_ref,
-                                                  cosmo=cosmo,
-                                                  max_num_spec=args.nspec,
-                                                  nproc=args.nproc,
-                                                  rebin_factor=args.rebin_factor,
-                                                  z_min_qso=args.z_min_sources,
-                                                  z_max_qso=args.z_max_sources,
-                                                  delta_attributes=args.in_attributes)
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir,
+        args.nside,
+        xcf.lambda_abs,
+        args.z_evol_del,
+        args.z_ref,
+        cosmo=cosmo,
+        max_num_spec=args.nspec,
+        nproc=args.nproc,
+        rebin_factor=args.rebin_factor,
+        z_min_qso=args.z_min_sources,
+        z_max_qso=args.z_max_sources,
+        delta_attributes=args.in_attributes,
+    )
     for deltas in data.values():
         for delta in deltas:
-            delta.fname = 'D1'
+            delta.fname = "D1"
             for item in [
-                    'cont', 'delta', 'order', 'ivar', 'exposures_diff',
-                    'mean_snr', 'mean_reso', 'mean_z', 'delta_log_lambda'
+                "cont",
+                "delta",
+                "order",
+                "ivar",
+                "exposures_diff",
+                "mean_snr",
+                "mean_reso",
+                "mean_z",
+                "delta_log_lambda",
             ]:
                 setattr(delta, item, None)
     xcf.data = data
@@ -310,19 +355,26 @@ def main(cmdargs):
     ### Find the redshift range
     if args.z_min_obj is None:
         r_comov_min = cosmo.get_r_comov(z_min)
-        r_comov_min = max(0., r_comov_min + xcf.r_par_min)
+        r_comov_min = max(0.0, r_comov_min + xcf.r_par_min)
         args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
         sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
     if args.z_max_obj is None:
         r_comov_max = cosmo.get_r_comov(z_max)
-        r_comov_max = max(0., r_comov_max + xcf.r_par_max)
+        r_comov_max = max(0.0, r_comov_max + xcf.r_par_max)
         args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
         sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
 
     ### Read objects
-    objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
-                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo, mode=args.mode)
+    objs, z_min2 = io.read_objects(
+        args.drq,
+        args.nside,
+        args.z_min_obj,
+        args.z_max_obj,
+        args.z_evol_obj,
+        args.z_ref,
+        cosmo,
+        mode=args.mode,
+    )
     xcf.objs = objs
     sys.stderr.write("\n")
     userprint("done, npix = {}".format(len(objs)))
@@ -334,38 +386,42 @@ def main(cmdargs):
     # Load 1d correlation functions
     hdul = fitsio.FITS(args.cf1d)
     header = hdul[1].read_header()
-    log_lambda_min = header['LLMIN']
-    delta_log_lambda = header['DLL']
-    num_pairs_variance_1d = hdul[1]['nv1d'][:]
-    variance_1d = hdul[1]['v1d'][:]
+    log_lambda_min = header["LLMIN"]
+    delta_log_lambda = header["DLL"]
+    num_pairs_variance_1d = hdul[1]["nv1d"][:]
+    variance_1d = hdul[1]["v1d"][:]
     log_lambda = log_lambda_min + delta_log_lambda * np.arange(variance_1d.size)
-    xcf.get_variance_1d['D1'] = interp1d(log_lambda[num_pairs_variance_1d > 0],
-                                         variance_1d[num_pairs_variance_1d > 0],
-                                         kind='nearest',
-                                         fill_value='extrapolate')
+    xcf.get_variance_1d["D1"] = interp1d(
+        log_lambda[num_pairs_variance_1d > 0],
+        variance_1d[num_pairs_variance_1d > 0],
+        kind="nearest",
+        fill_value="extrapolate",
+    )
 
-    num_pairs1d = hdul[1]['nb1d'][:]
-    xi_1d = hdul[1]['c1d'][:]
-    xcf.xi_1d['D1'] = interp1d((log_lambda - log_lambda_min)[num_pairs1d > 0],
-                               xi_1d[num_pairs1d > 0],
-                               kind='nearest',
-                               fill_value='extrapolate')
+    num_pairs1d = hdul[1]["nb1d"][:]
+    xi_1d = hdul[1]["c1d"][:]
+    xcf.xi_1d["D1"] = interp1d(
+        (log_lambda - log_lambda_min)[num_pairs1d > 0],
+        xi_1d[num_pairs1d > 0],
+        kind="nearest",
+        fill_value="extrapolate",
+    )
     hdul.close()
 
     # Load correlation functions
     if not args.cf is None:
         hdul = fitsio.FITS(args.cf)
         header = hdul[1].read_header()
-        assert cf.num_bins_r_par == header['NP']
-        assert cf.num_bins_r_trans == header['NT']
-        assert cf.r_par_min == header['RPMIN']
-        assert cf.r_par_max == header['RPMAX']
-        assert cf.r_trans_max == header['RTMAX']
-        xi = hdul[2]['DA'][:]
-        weights = hdul[2]['WE'][:]
+        assert cf.num_bins_r_par == header["NP"]
+        assert cf.num_bins_r_trans == header["NT"]
+        assert cf.r_par_min == header["RPMIN"]
+        assert cf.r_par_max == header["RPMAX"]
+        assert cf.r_trans_max == header["RTMAX"]
+        xi = hdul[2]["DA"][:]
+        weights = hdul[2]["WE"][:]
         xi = (xi * weights).sum(axis=0)
         weights = weights.sum(axis=0)
-        w = weights > 0.
+        w = weights > 0.0
         xi[w] /= weights[w]
         xcf.xi_wick = xi.copy()
         hdul.close()
@@ -375,7 +431,7 @@ def main(cmdargs):
         cf.nside = xcf.nside
 
     ### Send
-    xcf.counter = Value('i', 0)
+    xcf.counter = Value("i", 0)
     xcf.lock = Lock()
 
     cpu_data = {}
@@ -392,7 +448,7 @@ def main(cmdargs):
             cf.fill_neighs(healpixs)
 
     # compute the covariance matrix
-    context = multiprocessing.get_context('fork')
+    context = multiprocessing.get_context("fork")
     pool = context.Pool(processes=min(args.nproc, len(cpu_data.values())))
     userprint(" \nStarting\n")
     wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
@@ -411,97 +467,99 @@ def main(cmdargs):
     t5 = np.array([item[8] for item in wick_data]).sum(axis=0)
     t6 = np.array([item[9] for item in wick_data]).sum(axis=0)
     weights = weights_wick * weights_wick[:, None]
-    w = weights > 0.
+    w = weights > 0.0
     t1[w] /= weights[w]
     t2[w] /= weights[w]
     t3[w] /= weights[w]
     t4[w] /= weights[w]
     t5[w] /= weights[w]
     t6[w] /= weights[w]
-    t1 *= 1. * npairs_used / npairs
-    t2 *= 1. * npairs_used / npairs
-    t3 *= 1. * npairs_used / npairs
-    t4 *= 1. * npairs_used / npairs
-    t5 *= 1. * npairs_used / npairs
-    t6 *= 1. * npairs_used / npairs
+    t1 *= 1.0 * npairs_used / npairs
+    t2 *= 1.0 * npairs_used / npairs
+    t3 *= 1.0 * npairs_used / npairs
+    t4 *= 1.0 * npairs_used / npairs
+    t5 *= 1.0 * npairs_used / npairs
+    t6 *= 1.0 * npairs_used / npairs
     t_tot = t1 + t2 + t3 + t4 + t5 + t6
 
-    results = fitsio.FITS(args.out, 'rw', clobber=True)
+    results = fitsio.FITS(args.out, "rw", clobber=True)
     header = [
         {
-            'name': 'RPMIN',
-            'value': xcf.r_par_min,
-            'comment': 'Minimum r-parallel [h^-1 Mpc]'
+            "name": "RPMIN",
+            "value": xcf.r_par_min,
+            "comment": "Minimum r-parallel [h^-1 Mpc]",
         },
         {
-            'name': 'RPMAX',
-            'value': xcf.r_par_max,
-            'comment': 'Maximum r-parallel [h^-1 Mpc]'
+            "name": "RPMAX",
+            "value": xcf.r_par_max,
+            "comment": "Maximum r-parallel [h^-1 Mpc]",
         },
         {
-            'name': 'RTMAX',
-            'value': xcf.r_trans_max,
-            'comment': 'Maximum r-transverse [h^-1 Mpc]'
+            "name": "RTMAX",
+            "value": xcf.r_trans_max,
+            "comment": "Maximum r-transverse [h^-1 Mpc]",
         },
         {
-            'name': 'NP',
-            'value': xcf.num_bins_r_par,
-            'comment': 'Number of bins in r-parallel'
+            "name": "NP",
+            "value": xcf.num_bins_r_par,
+            "comment": "Number of bins in r-parallel",
         },
         {
-            'name': 'NT',
-            'value': xcf.num_bins_r_trans,
-            'comment': 'Number of bins in r-transverse'
+            "name": "NT",
+            "value": xcf.num_bins_r_trans,
+            "comment": "Number of bins in r-transverse",
+        },
+        {"name": "REJ", "value": xcf.reject, "comment": "Rejection factor"},
+        {"name": "NPALL", "value": npairs, "comment": "Number of pairs"},
+        {"name": "NPUSED", "value": npairs_used, "comment": "Number of used pairs"},
+        {
+            "name": "OMEGAM",
+            "value": args.fid_Om,
+            "comment": "Omega_matter(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            'name': 'REJ',
-            'value': xcf.reject,
-            'comment': 'Rejection factor'
+            "name": "OMEGAR",
+            "value": args.fid_Or,
+            "comment": "Omega_radiation(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            'name': 'NPALL',
-            'value': npairs,
-            'comment': 'Number of pairs'
+            "name": "OMEGAK",
+            "value": args.fid_Ok,
+            "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
         },
         {
-            'name': 'NPUSED',
-            'value': npairs_used,
-            'comment': 'Number of used pairs'
-        }, {
-            'name': 'OMEGAM',
-            'value': args.fid_Om,
-            'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAR',
-            'value': args.fid_Or,
-            'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'OMEGAK',
-            'value': args.fid_Ok,
-            'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
-        }, {
-            'name': 'WL',
-            'value': args.fid_wl,
-            'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-        }, {
-            'name': "BLINDING",
-            'value': blinding,
-            'comment': 'String specifying the blinding strategy'
-        }
-        ]
+            "name": "WL",
+            "value": args.fid_wl,
+            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "BLINDING",
+            "value": blinding,
+            "comment": "String specifying the blinding strategy",
+        },
+    ]
     comment = [
-        'Sum of weight', 'Covariance', 'Nomber of pairs', 'T1', 'T2', 'T3',
-        'T4', 'T5', 'T6'
+        "Sum of weight",
+        "Covariance",
+        "Nomber of pairs",
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
     ]
     results.write(
         [t_tot, weights_wick, num_pairs_wick, t1, t2, t3, t4, t5, t6],
-        names=['CO', 'WALL', 'NB', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+        names=["CO", "WALL", "NB", "T1", "T2", "T3", "T4", "T5", "T6"],
         comment=comment,
         header=header,
-        extname='COV')
+        extname="COV",
+    )
     results.close()
 
 
-if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)
     main(cmdargs)

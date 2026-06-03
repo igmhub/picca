@@ -1,17 +1,19 @@
 #!/usr/bin/env python
-"""Compute the metal matrices
-"""
-import sys
-import os
-import time
-import argparse
-import numpy as np
-import fitsio
+"""Compute the metal matrices"""
 
-from picca import constants, cf, io
+import argparse
+import os
+import sys
+import time
+
+import fitsio
+import numpy as np
+
+from picca import cf, constants, io
 from picca.utils import userprint
 
-DEFAULT_SI_METALS = ['SiIII(1207)','SiII(1190)','SiII(1193)','SiII(1260)']
+DEFAULT_SI_METALS = ["SiIII(1207)", "SiII(1190)", "SiII(1193)", "SiII(1260)"]
+
 
 def read_stack_deltas_table(filename):
     """
@@ -25,13 +27,15 @@ def read_stack_deltas_table(filename):
     return fitsio.read(filename, "STACK_DELTAS")
 
 
-def calc_fast_metal_dmat(in_lambda_abs_1,
-                         in_lambda_abs_2,
-                         out_lambda_abs_1,
-                         out_lambda_abs_2,
-                         stack_table_1,
-                         stack_table_2,
-                         rebin_factor=None):
+def calc_fast_metal_dmat(
+    in_lambda_abs_1,
+    in_lambda_abs_2,
+    out_lambda_abs_1,
+    out_lambda_abs_2,
+    stack_table_1,
+    stack_table_2,
+    rebin_factor=None,
+):
     """Computes the metal distortion matrix.
 
     Args:
@@ -74,41 +78,53 @@ def calc_fast_metal_dmat(in_lambda_abs_1,
     weight2 = stack_table_2["WEIGHT"]
     if rebin_factor is not None:
         size1 = loglam1.size
-        loglam1 = loglam1[:(size1 // rebin_factor) * rebin_factor].reshape(
-            (size1 // rebin_factor), rebin_factor).mean(-1)
-        weight1 = weight1[:(size1 // rebin_factor) * rebin_factor].reshape(
-            (size1 // rebin_factor), rebin_factor).mean(-1)
+        loglam1 = (
+            loglam1[: (size1 // rebin_factor) * rebin_factor]
+            .reshape((size1 // rebin_factor), rebin_factor)
+            .mean(-1)
+        )
+        weight1 = (
+            weight1[: (size1 // rebin_factor) * rebin_factor]
+            .reshape((size1 // rebin_factor), rebin_factor)
+            .mean(-1)
+        )
         size2 = loglam2.size
-        loglam2 = loglam2[:(size2 // rebin_factor) * rebin_factor].reshape(
-            (size2 // rebin_factor), rebin_factor).mean(-1)
-        weight2 = weight2[:(size2 // rebin_factor) * rebin_factor].reshape(
-            (size2 // rebin_factor), rebin_factor).mean(-1)
+        loglam2 = (
+            loglam2[: (size2 // rebin_factor) * rebin_factor]
+            .reshape((size2 // rebin_factor), rebin_factor)
+            .mean(-1)
+        )
+        weight2 = (
+            weight2[: (size2 // rebin_factor) * rebin_factor]
+            .reshape((size2 // rebin_factor), rebin_factor)
+            .mean(-1)
+        )
 
     # input
-    input_z1 = (10**loglam1) / constants.ABSORBER_IGM[in_lambda_abs_1] - 1.
-    input_z2 = (10**loglam2) / constants.ABSORBER_IGM[in_lambda_abs_2] - 1.
+    input_z1 = (10**loglam1) / constants.ABSORBER_IGM[in_lambda_abs_1] - 1.0
+    input_z2 = (10**loglam2) / constants.ABSORBER_IGM[in_lambda_abs_2] - 1.0
     input_r1 = cf.cosmo.get_r_comov(input_z1)
     input_r2 = cf.cosmo.get_r_comov(input_z2)
     # all pairs
     input_rp = (
-        input_r1[:, None] -
-        input_r2[None, :]).ravel()  # same sign as line 676 of cf.py (1-2)
+        input_r1[:, None] - input_r2[None, :]
+    ).ravel()  # same sign as line 676 of cf.py (1-2)
     if not cf.x_correlation:
         input_rp = np.abs(input_rp)
-    input_dist  = ((input_r1[:, None]+input_r2[None, :])/2).ravel()
+    input_dist = ((input_r1[:, None] + input_r2[None, :]) / 2).ravel()
 
     # output
-    output_z1 = (10**loglam1) / constants.ABSORBER_IGM[out_lambda_abs_1] - 1.
-    output_z2 = (10**loglam2) / constants.ABSORBER_IGM[out_lambda_abs_2] - 1.
+    output_z1 = (10**loglam1) / constants.ABSORBER_IGM[out_lambda_abs_1] - 1.0
+    output_z2 = (10**loglam2) / constants.ABSORBER_IGM[out_lambda_abs_2] - 1.0
     output_r1 = cf.cosmo.get_r_comov(output_z1)
     output_r2 = cf.cosmo.get_r_comov(output_z2)
     # all pairs
     output_rp = (
-        output_r1[:, None] -
-        output_r2[None, :]).ravel()  # same sign as line 676 of cf.py (1-2)
+        output_r1[:, None] - output_r2[None, :]
+    ).ravel()  # same sign as line 676 of cf.py (1-2)
     if not cf.x_correlation:
         output_rp = np.abs(output_rp)
-    output_dist = ((output_r1[:, None]+output_r2[None, :])/2).ravel()
+    output_dist = ((output_r1[:, None] + output_r2[None, :]) / 2).ravel()
 
     # weights
     # alpha_in: in (1+z)^(alpha_in-1) is a scaling used to model how the metal contribution
@@ -123,25 +139,25 @@ def calc_fast_metal_dmat(in_lambda_abs_1,
     # so here we have to apply both scalings (in the original code :
     # alpha_in is applied in cf.calc_metal_dmat and alpha_out in io.read_deltas)
     weights = (
-        (weight1 * ((1 + input_z1)**(alpha_in_1 + alpha_out_1 - 2)))[:, None] *
-        (weight2 *
-         ((1 + input_z2)**(alpha_in_2 + alpha_out_2 - 2)))[None, :]).ravel()
+        (weight1 * ((1 + input_z1) ** (alpha_in_1 + alpha_out_1 - 2)))[:, None]
+        * (weight2 * ((1 + input_z2) ** (alpha_in_2 + alpha_out_2 - 2)))[None, :]
+    ).ravel()
 
     # r_par distortion matrix
-    rpbins   = cf.r_par_min \
-        + (cf.r_par_max-cf.r_par_min)/cf.num_bins_r_par*np.arange(cf.num_bins_r_par+1)
+    rpbins = cf.r_par_min + (
+        cf.r_par_max - cf.r_par_min
+    ) / cf.num_bins_r_par * np.arange(cf.num_bins_r_par + 1)
 
     # I checked the orientation of the matrix
-    rp_1d_dmat, _, _ = np.histogram2d(output_rp,
-                                      input_rp,
-                                      bins=(rpbins, rpbins),
-                                      weights=weights)
+    rp_1d_dmat, _, _ = np.histogram2d(
+        output_rp, input_rp, bins=(rpbins, rpbins), weights=weights
+    )
     # normalize
-    sum_rp_1d_dmat = np.sum(rp_1d_dmat,axis=0)
-    rp_1d_dmat    /= (sum_rp_1d_dmat+(sum_rp_1d_dmat==0))
+    sum_rp_1d_dmat = np.sum(rp_1d_dmat, axis=0)
+    rp_1d_dmat /= sum_rp_1d_dmat + (sum_rp_1d_dmat == 0)
 
     # independently, we compute the r_trans distortion matrix
-    rtbins   = cf.r_trans_max/cf.num_bins_r_trans*np.arange(cf.num_bins_r_trans+1)
+    rtbins = cf.r_trans_max / cf.num_bins_r_trans * np.arange(cf.num_bins_r_trans + 1)
     # we have input_dist , output_dist and weight.
     # we don't need to store the absolute comoving distances but the ratio between output and input.
     # we rebin that to compute the rest faster.
@@ -151,26 +167,40 @@ def calc_fast_metal_dmat(in_lambda_abs_1,
     # solid angle contibuting for each distance propto theta_max**2 = (r_trans_max/dist)**2 propto 1/dist**2
     # we weight the distances with this additional factor
     # using the input or the output distance in the solid angle weight gives virtually the same result
-    #distance_ratio_weights,distance_ratio_bins = np.histogram(output_dist/input_dist,bins=4*rtbins.size,weights=weights/input_dist**2*(input_rp<cf.r_par_max)*(input_rp>cf.r_par_min))
+    # distance_ratio_weights,distance_ratio_bins = np.histogram(output_dist/input_dist,bins=4*rtbins.size,weights=weights/input_dist**2*(input_rp<cf.r_par_max)*(input_rp>cf.r_par_min))
     # we also select only distance ratio for which the input_rp (that of the true separation of the absorbers) is small, so that this
     # fast matrix calculation is accurate where it matters the most
-    distance_ratio_weights,distance_ratio_bins = np.histogram(output_dist/input_dist,bins=4*rtbins.size,weights=weights/input_dist**2*(np.abs(input_rp)<20.))
-    distance_ratios=(distance_ratio_bins[1:]+distance_ratio_bins[:-1])/2.
+    distance_ratio_weights, distance_ratio_bins = np.histogram(
+        output_dist / input_dist,
+        bins=4 * rtbins.size,
+        weights=weights / input_dist**2 * (np.abs(input_rp) < 20.0),
+    )
+    distance_ratios = (distance_ratio_bins[1:] + distance_ratio_bins[:-1]) / 2.0
 
     # now we need to scan as a function of separation angles, or equivalently rt.
-    rt_bin_centers = (rtbins[:-1]+rtbins[1:])/2.
-    rt_bin_half_size = (rtbins[1]-rtbins[0])/2.
+    rt_bin_centers = (rtbins[:-1] + rtbins[1:]) / 2.0
+    rt_bin_half_size = (rtbins[1] - rtbins[0]) / 2.0
     # we are oversampling the correlation function rt grid to correctly compute bin migration.
-    oversample  = 7
-    delta_rt    = np.linspace(-rt_bin_half_size,rt_bin_half_size*(1-2./oversample),oversample)[None,:] # the -2/oversample term is needed to get a even-spaced grid
-    rt_1d_dmat  = np.zeros((cf.num_bins_r_trans,cf.num_bins_r_trans))
-    for i,rt in enumerate(rt_bin_centers) :
+    oversample = 7
+    delta_rt = np.linspace(
+        -rt_bin_half_size, rt_bin_half_size * (1 - 2.0 / oversample), oversample
+    )[
+        None, :
+    ]  # the -2/oversample term is needed to get a even-spaced grid
+    rt_1d_dmat = np.zeros((cf.num_bins_r_trans, cf.num_bins_r_trans))
+    for i, rt in enumerate(rt_bin_centers):
         # the weight is proportional to rt+delta_rt to get the correct solid angle effect inside the bin (but it's almost a negligible effect)
-        rt_1d_dmat[:,i],_ = np.histogram((distance_ratios[:,None]*(rt+delta_rt)[None,:]).ravel(),bins=rtbins,weights=(distance_ratio_weights[:,None]*(rt+delta_rt)[None,:]).ravel())
+        rt_1d_dmat[:, i], _ = np.histogram(
+            (distance_ratios[:, None] * (rt + delta_rt)[None, :]).ravel(),
+            bins=rtbins,
+            weights=(
+                distance_ratio_weights[:, None] * (rt + delta_rt)[None, :]
+            ).ravel(),
+        )
 
     # normalize
-    sum_rt_1d_dmat = np.sum(rt_1d_dmat,axis=0)
-    rt_1d_dmat    /= (sum_rt_1d_dmat+(sum_rt_1d_dmat==0))
+    sum_rt_1d_dmat = np.sum(rt_1d_dmat, axis=0)
+    rt_1d_dmat /= sum_rt_1d_dmat + (sum_rt_1d_dmat == 0)
 
     # now that we have both distortion along r_par and r_trans, we have to combine them
     # we just multiply the two matrices, with indices splitted for rt and rp
@@ -178,40 +208,44 @@ def calc_fast_metal_dmat(in_lambda_abs_1,
     # rt_index   = full_index%cf.num_bins_r_trans
     # rp_index  = full_index//cf.num_bins_r_trans
     num_bins_total = cf.num_bins_r_par * cf.num_bins_r_trans
-    dmat = np.zeros((num_bins_total,num_bins_total))
-    pp   = np.arange(num_bins_total,dtype=int)
-    for k in range(num_bins_total) :
-        dmat[k,pp] = rt_1d_dmat[k%cf.num_bins_r_trans,pp%cf.num_bins_r_trans] * rp_1d_dmat[k//cf.num_bins_r_trans,pp//cf.num_bins_r_trans]
+    dmat = np.zeros((num_bins_total, num_bins_total))
+    pp = np.arange(num_bins_total, dtype=int)
+    for k in range(num_bins_total):
+        dmat[k, pp] = (
+            rt_1d_dmat[k % cf.num_bins_r_trans, pp % cf.num_bins_r_trans]
+            * rp_1d_dmat[k // cf.num_bins_r_trans, pp // cf.num_bins_r_trans]
+        )
 
     # compute effective z,rp,rt
-    sum_out_weight, _    = np.histogram(output_rp, bins=rpbins, weights=weights)
-    sum_out_weight_rp, _ = np.histogram(output_rp,
-                                        bins=rpbins,
-                                        weights=weights *
-                                        (output_rp[None, :].ravel()))
+    sum_out_weight, _ = np.histogram(output_rp, bins=rpbins, weights=weights)
+    sum_out_weight_rp, _ = np.histogram(
+        output_rp, bins=rpbins, weights=weights * (output_rp[None, :].ravel())
+    )
 
     # return the redshift of the actual absorber, which is the average of input_z1
     # and input_z2
     sum_out_weight_z, _ = np.histogram(
         output_rp,
         bins=rpbins,
-        weights=weights *
-        (((input_z1[:, None] + input_z2[None, :]) / 2.).ravel()))
+        weights=weights * (((input_z1[:, None] + input_z2[None, :]) / 2.0).ravel()),
+    )
 
     r_par_eff_1d = sum_out_weight_rp / (sum_out_weight + (sum_out_weight == 0))
-    z_eff_1d     = sum_out_weight_z / (sum_out_weight + (sum_out_weight == 0))
+    z_eff_1d = sum_out_weight_z / (sum_out_weight + (sum_out_weight == 0))
 
     # r_trans has no weights here
-    r1 = np.arange(cf.num_bins_r_trans)     * cf.r_trans_max / cf.num_bins_r_trans
-    r2 = (1+np.arange(cf.num_bins_r_trans)) * cf.r_trans_max / cf.num_bins_r_trans
-    r_trans_eff_1d = (2*(r2**3-r1**3))/(3*(r2**2-r1**2)) # this is to account for the solid angle effect on the mean
+    r1 = np.arange(cf.num_bins_r_trans) * cf.r_trans_max / cf.num_bins_r_trans
+    r2 = (1 + np.arange(cf.num_bins_r_trans)) * cf.r_trans_max / cf.num_bins_r_trans
+    r_trans_eff_1d = (2 * (r2**3 - r1**3)) / (
+        3 * (r2**2 - r1**2)
+    )  # this is to account for the solid angle effect on the mean
 
     full_index = np.arange(num_bins_total)
-    rt_index   = full_index%cf.num_bins_r_trans
-    rp_index   = full_index//cf.num_bins_r_trans
+    rt_index = full_index % cf.num_bins_r_trans
+    rp_index = full_index // cf.num_bins_r_trans
 
-    r_par_eff_2d   = r_par_eff_1d[rp_index]
-    z_eff_2d       = z_eff_1d[rp_index]
+    r_par_eff_2d = r_par_eff_1d[rp_index]
+    z_eff_2d = z_eff_1d[rp_index]
     r_trans_eff_2d = r_trans_eff_1d[rt_index]
 
     return dmat, r_par_eff_2d, r_trans_eff_2d, z_eff_2d
@@ -223,200 +257,234 @@ def main(cmdargs=None):
     absorption."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('This script is deprecated and will be removed in future versions. '
-                     'Use Vega functionality instead.')
+        description=(
+            "This script is deprecated and will be removed in future versions. "
+            "Use Vega functionality instead."
+        ),
     )
 
-    parser.add_argument('--out',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Output file name')
+    parser.add_argument(
+        "--out", type=str, default=None, required=True, help="Output file name"
+    )
 
     parser.add_argument(
-        '-i',
-        '--in-attributes',
+        "-i",
+        "--in-attributes",
         type=str,
         default=None,
         required=True,
-        help='Path to delta_attributes.fits.gz file with hdu STACK_DELTAS'
-        ' containing table with at least rows "LOGLAM" and "WEIGHT"')
-
-    parser.add_argument('--in-attributes2',
-                        type=str,
-                        default=None,
-                        required=False,
-                        help='Path to 2nd delta_attributes.fits.gz file')
+        help="Path to delta_attributes.fits.gz file with hdu STACK_DELTAS"
+        ' containing table with at least rows "LOGLAM" and "WEIGHT"',
+    )
 
     parser.add_argument(
-        '--delta-dir',
+        "--in-attributes2",
         type=str,
         default=None,
         required=False,
-        help='Path to directory with delta*.gz to get the blinding info'
-        ' (default is trying to guess from attributes file)')
-
-    parser.add_argument('--rp-min',
-                        type=float,
-                        default=0.,
-                        required=False,
-                        help='Min r-parallel [h^-1 Mpc]')
-
-    parser.add_argument('--rp-max',
-                        type=float,
-                        default=200.,
-                        required=False,
-                        help='Max r-parallel [h^-1 Mpc]')
-
-    parser.add_argument('--rt-max',
-                        type=float,
-                        default=200.,
-                        required=False,
-                        help='Max r-transverse [h^-1 Mpc]')
-
-    parser.add_argument('--np',
-                        type=int,
-                        default=50,
-                        required=False,
-                        help='Number of r-parallel bins')
-
-    parser.add_argument('--nt',
-                        type=int,
-                        default=50,
-                        required=False,
-                        help='Number of r-transverse bins')
+        help="Path to 2nd delta_attributes.fits.gz file",
+    )
 
     parser.add_argument(
-        '--coef-binning-model',
+        "--delta-dir",
+        type=str,
+        default=None,
+        required=False,
+        help="Path to directory with delta*.gz to get the blinding info"
+        " (default is trying to guess from attributes file)",
+    )
+
+    parser.add_argument(
+        "--rp-min",
+        type=float,
+        default=0.0,
+        required=False,
+        help="Min r-parallel [h^-1 Mpc]",
+    )
+
+    parser.add_argument(
+        "--rp-max",
+        type=float,
+        default=200.0,
+        required=False,
+        help="Max r-parallel [h^-1 Mpc]",
+    )
+
+    parser.add_argument(
+        "--rt-max",
+        type=float,
+        default=200.0,
+        required=False,
+        help="Max r-transverse [h^-1 Mpc]",
+    )
+
+    parser.add_argument(
+        "--np", type=int, default=50, required=False, help="Number of r-parallel bins"
+    )
+
+    parser.add_argument(
+        "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
+    )
+
+    parser.add_argument(
+        "--coef-binning-model",
         type=int,
         default=1,
         required=False,
-        help=('Coefficient multiplying np and nt to get finner binning for the '
-              'model'))
-
-    parser.add_argument('--z-min-sources',
-                        type=float,
-                        default=0.,
-                        required=False,
-                        help=('Limit the minimum redshift of the quasars '
-                              'used as sources for spectra'))
-
-    parser.add_argument('--z-max-sources',
-                        type=float,
-                        default=10.,
-                        required=False,
-                        help=('Limit the maximum redshift of the quasars '
-                              'used as sources for spectra'))
+        help=(
+            "Coefficient multiplying np and nt to get finner binning for the " "model"
+        ),
+    )
 
     parser.add_argument(
-        '--lambda-abs',
-        type=str,
-        default='LYA',
+        "--z-min-sources",
+        type=float,
+        default=0.0,
         required=False,
-        help=('Name of the absorption in picca.constants defining the redshift '
-              'of the delta'))
+        help=(
+            "Limit the minimum redshift of the quasars " "used as sources for spectra"
+        ),
+    )
 
     parser.add_argument(
-        '--lambda-abs2',
+        "--z-max-sources",
+        type=float,
+        default=10.0,
+        required=False,
+        help=(
+            "Limit the maximum redshift of the quasars " "used as sources for spectra"
+        ),
+    )
+
+    parser.add_argument(
+        "--lambda-abs",
+        type=str,
+        default="LYA",
+        required=False,
+        help=(
+            "Name of the absorption in picca.constants defining the redshift "
+            "of the delta"
+        ),
+    )
+
+    parser.add_argument(
+        "--lambda-abs2",
         type=str,
         default=None,
         required=False,
-        help=('Name of the absorption in picca.constants defining the redshift '
-              'of the 2nd delta'))
+        help=(
+            "Name of the absorption in picca.constants defining the redshift "
+            "of the 2nd delta"
+        ),
+    )
 
     parser.add_argument(
-        '--abs-igm',
+        "--abs-igm",
         type=str,
         default=[],
         required=True,
-        nargs='*',
-        help=('List of names of metal absorption in picca.constants present in '
-              'forest'))
+        nargs="*",
+        help=(
+            "List of names of metal absorption in picca.constants present in " "forest"
+        ),
+    )
 
     parser.add_argument(
-        '--abs-igm2',
+        "--abs-igm2",
         type=str,
         default=[],
         required=False,
-        nargs='*',
-        help=('List of names of metal absorption in picca.constants present in '
-              '2nd forest'))
-
-    parser.add_argument('--z-ref',
-                        type=float,
-                        default=2.25,
-                        required=False,
-                        help='Reference redshift')
+        nargs="*",
+        help=(
+            "List of names of metal absorption in picca.constants present in "
+            "2nd forest"
+        ),
+    )
 
     parser.add_argument(
-        '--z-evol',
+        "--z-ref", type=float, default=2.25, required=False, help="Reference redshift"
+    )
+
+    parser.add_argument(
+        "--z-evol",
         type=float,
         default=2.9,
         required=False,
-        help='Exponent of the redshift evolution of the delta field')
+        help="Exponent of the redshift evolution of the delta field",
+    )
 
     parser.add_argument(
-        '--z-evol2',
+        "--z-evol2",
         type=float,
         default=2.9,
         required=False,
-        help='Exponent of the redshift evolution of the 2nd delta field')
+        help="Exponent of the redshift evolution of the 2nd delta field",
+    )
 
     parser.add_argument(
-        '--metal-alpha',
+        "--metal-alpha",
         type=float,
-        default=1.,
+        default=1.0,
         required=False,
-        help='Exponent of the redshift evolution of the metal delta field')
+        help="Exponent of the redshift evolution of the metal delta field",
+    )
 
     parser.add_argument(
-        '--fid-Om',
+        "--fid-Om",
         type=float,
         default=0.315,
         required=False,
-        help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
+        help="Omega_matter(z=0) of fiducial LambdaCDM cosmology",
+    )
 
     parser.add_argument(
-        '--fid-Or',
+        "--fid-Or",
         type=float,
-        default=0.,
+        default=0.0,
         required=False,
-        help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
-
-    parser.add_argument('--fid-Ok',
-                        type=float,
-                        default=0.,
-                        required=False,
-                        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+        help="Omega_radiation(z=0) of fiducial LambdaCDM cosmology",
+    )
 
     parser.add_argument(
-        '--fid-wl',
+        "--fid-Ok",
         type=float,
-        default=-1.,
+        default=0.0,
         required=False,
-        help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
+        help="Omega_k(z=0) of fiducial LambdaCDM cosmology",
+    )
 
     parser.add_argument(
-        '--unfold-cf',
-        action='store_true',
+        "--fid-wl",
+        type=float,
+        default=-1.0,
         required=False,
-        help='rp can be positive or negative depending on the relative '
-        'position between absorber1 and absorber2')
+        help="Equation of state of dark energy of fiducial LambdaCDM cosmology",
+    )
 
     parser.add_argument(
-        '--rebin-factor',
+        "--unfold-cf",
+        action="store_true",
+        required=False,
+        help="rp can be positive or negative depending on the relative "
+        "position between absorber1 and absorber2",
+    )
+
+    parser.add_argument(
+        "--rebin-factor",
         type=int,
         default=None,
         required=False,
-        help='Rebin factor for deltas. If not None, deltas will '
-        'be rebinned by that factor')
+        help="Rebin factor for deltas. If not None, deltas will "
+        "be rebinned by that factor",
+    )
 
-    parser.add_argument('--relevant-metals',
-                    action='store_true',
-                    required=False,
-                    help='compute only the metal correlations used by Vega'
-                       'i.e. 4 LyaxSi matrices and CIVxCIV')
-    
+    parser.add_argument(
+        "--relevant-metals",
+        action="store_true",
+        required=False,
+        help="compute only the metal correlations used by Vega"
+        "i.e. 4 LyaxSi matrices and CIVxCIV",
+    )
 
     args = parser.parse_args(cmdargs)
 
@@ -452,10 +520,12 @@ def main(cmdargs=None):
     blinding = io.read_blinding(args.delta_dir)
 
     # load fiducial cosmology
-    cf.cosmo = constants.Cosmo(Om=args.fid_Om,
-                               Or=args.fid_Or,
-                               Ok=args.fid_Ok,
-                               wl=args.fid_wl,)
+    cf.cosmo = constants.Cosmo(
+        Om=args.fid_Om,
+        Or=args.fid_Or,
+        Ok=args.fid_Ok,
+        wl=args.fid_wl,
+    )
 
     t0 = time.time()
 
@@ -468,9 +538,7 @@ def main(cmdargs=None):
         stack_table2 = stack_table1  # reference to first one
 
     t1 = time.time()
-    userprint(
-        f'picca_fast_metal_dmat.py - Time reading data: {(t1-t0)/60:.3f} minutes'
-    )
+    userprint(f"picca_fast_metal_dmat.py - Time reading data: {(t1-t0)/60:.3f} minutes")
 
     abs_igm = [args.lambda_abs] + args.abs_igm
     userprint(f"abs_igm = {abs_igm}")
@@ -501,8 +569,9 @@ def main(cmdargs=None):
                 continue
 
             if args.relevant_metals:
-                if not (abs_igm1 == "LYA" and abs_igm2 in DEFAULT_SI_METALS) \
-                and not (abs_igm1 == "CIV(eff)" and abs_igm1 == abs_igm2):
+                if not (abs_igm1 == "LYA" and abs_igm2 in DEFAULT_SI_METALS) and not (
+                    abs_igm1 == "CIV(eff)" and abs_igm1 == abs_igm2
+                ):
                     continue
 
             userprint("Computing", abs_igm1, abs_igm2)
@@ -515,7 +584,8 @@ def main(cmdargs=None):
                 args.lambda_abs2,
                 stack_table1,
                 stack_table2,
-                rebin_factor=args.rebin_factor)
+                rebin_factor=args.rebin_factor,
+            )
 
             # add these results to the list ofor the different metal absorption
             dmat_all.append(dmat)
@@ -526,74 +596,83 @@ def main(cmdargs=None):
 
     t2 = time.time()
     userprint(
-        f'picca_fast_metal_dmat.py - Time computing all metal matrices : {(t2-t1)/60:.3f} minutes'
+        f"picca_fast_metal_dmat.py - Time computing all metal matrices : {(t2-t1)/60:.3f} minutes"
     )
 
     # save the results
-    results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [{
-        'name': 'RPMIN',
-        'value': cf.r_par_min,
-        'comment': 'Minimum r-parallel [h^-1 Mpc]'
-    }, {
-        'name': 'RPMAX',
-        'value': cf.r_par_max,
-        'comment': 'Maximum r-parallel [h^-1 Mpc]'
-    }, {
-        'name': 'RTMAX',
-        'value': cf.r_trans_max,
-        'comment': 'Maximum r-transverse [h^-1 Mpc]'
-    }, {
-        'name': 'NP',
-        'value': cf.num_bins_r_par,
-        'comment': 'Number of bins in r-parallel'
-    }, {
-        'name': 'NT',
-        'value': cf.num_bins_r_trans,
-        'comment': ' Number of bins in r-transverse'
-    }, {
-        'name': 'COEFMOD',
-        'value': args.coef_binning_model,
-        'comment': 'Coefficient for model binning'
-    }, {
-        'name': 'REJ',
-        'value': cf.reject,
-        'comment': 'Rejection factor'
-    }, {
-        'name': 'ALPHAMET',
-        'value': args.metal_alpha,
-        'comment': 'Evolution of metal bias'
-    }, {
-        'name': 'OMEGAM',
-        'value': args.fid_Om,
-        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'OMEGAR',
-        'value': args.fid_Or,
-        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'OMEGAK',
-        'value': args.fid_Ok,
-        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name':
-            'WL',
-        'value':
-            args.fid_wl,
-        'comment':
-            'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    }, {
-        'name': "BLINDING",
-        'value': blinding,
-        'comment': 'String specifying the blinding strategy'
-    }]
+    results = fitsio.FITS(args.out, "rw", clobber=True)
+    header = [
+        {
+            "name": "RPMIN",
+            "value": cf.r_par_min,
+            "comment": "Minimum r-parallel [h^-1 Mpc]",
+        },
+        {
+            "name": "RPMAX",
+            "value": cf.r_par_max,
+            "comment": "Maximum r-parallel [h^-1 Mpc]",
+        },
+        {
+            "name": "RTMAX",
+            "value": cf.r_trans_max,
+            "comment": "Maximum r-transverse [h^-1 Mpc]",
+        },
+        {
+            "name": "NP",
+            "value": cf.num_bins_r_par,
+            "comment": "Number of bins in r-parallel",
+        },
+        {
+            "name": "NT",
+            "value": cf.num_bins_r_trans,
+            "comment": " Number of bins in r-transverse",
+        },
+        {
+            "name": "COEFMOD",
+            "value": args.coef_binning_model,
+            "comment": "Coefficient for model binning",
+        },
+        {"name": "REJ", "value": cf.reject, "comment": "Rejection factor"},
+        {
+            "name": "ALPHAMET",
+            "value": args.metal_alpha,
+            "comment": "Evolution of metal bias",
+        },
+        {
+            "name": "OMEGAM",
+            "value": args.fid_Om,
+            "comment": "Omega_matter(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "OMEGAR",
+            "value": args.fid_Or,
+            "comment": "Omega_radiation(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "OMEGAK",
+            "value": args.fid_Ok,
+            "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "WL",
+            "value": args.fid_wl,
+            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "BLINDING",
+            "value": blinding,
+            "comment": "String specifying the blinding strategy",
+        },
+    ]
     len_names = np.array([len(name) for name in names]).max()
-    names = np.array(names, dtype='S' + str(len_names))
-    results.write([np.array(names)],
-                  names=['ABS_IGM'],
-                  header=header,
-                  comment=['Absorption name'],
-                  extname='ATTRI')
+    names = np.array(names, dtype="S" + str(len_names))
+    results.write(
+        [np.array(names)],
+        names=["ABS_IGM"],
+        header=header,
+        comment=["Absorption name"],
+        extname="ATTRI",
+    )
 
     dmat_name = "DM_"
     if blinding != "none":
@@ -604,38 +683,35 @@ def main(cmdargs=None):
     out_comment = []
     out_units = []
     for index, name in enumerate(names):
-        out_names += ['RP_' + name]
+        out_names += ["RP_" + name]
         out_list += [r_par_all[index]]
-        out_comment += ['R-parallel']
-        out_units += ['h^-1 Mpc']
+        out_comment += ["R-parallel"]
+        out_units += ["h^-1 Mpc"]
 
-        out_names += ['RT_' + name]
+        out_names += ["RT_" + name]
         out_list += [r_trans_all[index]]
-        out_comment += ['R-transverse']
-        out_units += ['h^-1 Mpc']
+        out_comment += ["R-transverse"]
+        out_units += ["h^-1 Mpc"]
 
-        out_names += ['Z_' + name]
+        out_names += ["Z_" + name]
         out_list += [z_all[index]]
-        out_comment += ['Redshift']
-        out_units += ['']
+        out_comment += ["Redshift"]
+        out_units += [""]
 
         out_names += [dmat_name + name]
         out_list += [dmat_all[index]]
-        out_comment += ['Distortion matrix']
-        out_units += ['']
+        out_comment += ["Distortion matrix"]
+        out_units += [""]
 
-        #out_names += ['WDM_' + name]
-        #out_list += [weights_dmat_all[index]]
-        #out_comment += ['Sum of weight']
-        #out_units += ['']
+        # out_names += ['WDM_' + name]
+        # out_list += [weights_dmat_all[index]]
+        # out_comment += ['Sum of weight']
+        # out_units += ['']
 
-    results.write(out_list,
-                  names=out_names,
-                  comment=out_comment,
-                  units=out_units,
-                  extname='MDMAT')
+    results.write(
+        out_list, names=out_names, comment=out_comment, units=out_units, extname="MDMAT"
+    )
     results.close()
 
     t3 = time.time()
-    userprint(
-        f'picca_fast_metal_dmat.py - Time total : {(t3-t0)/60:.3f} minutes')
+    userprint(f"picca_fast_metal_dmat.py - Time total : {(t3-t0)/60:.3f} minutes")
