@@ -5,6 +5,7 @@ import argparse
 import glob
 import multiprocessing as mp
 import os
+import sys
 from functools import partial
 
 import fitsio
@@ -199,3 +200,8 @@ def main(cmdargs=None):
     else:
         with mp.Pool(args.num_processors) as pool:
             pool.map(func, files)
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

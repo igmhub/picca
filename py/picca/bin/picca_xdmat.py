@@ -8,6 +8,7 @@ Bourboux et al. 2020 (In prep) to compute the distortion matrix
 
 import argparse
 import multiprocessing
+import sys
 import time
 from multiprocessing import Lock, Value, cpu_count
 
@@ -613,3 +614,8 @@ def main(cmdargs=None):
 
     t3 = time.time()
     userprint(f"picca_xdmat.py - Time total: {(t3-t0)/60:.3f} minutes")
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

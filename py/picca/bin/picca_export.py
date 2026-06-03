@@ -561,3 +561,8 @@ def main(cmdargs=None):
         extname="DMATTRI",
     )
     results.close()
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

@@ -72,3 +72,8 @@ def main(cmdargs=None):
         args.output_path,
         weighted_mean=False,
     )
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

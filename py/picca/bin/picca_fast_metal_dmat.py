@@ -715,3 +715,8 @@ def main(cmdargs=None):
 
     t3 = time.time()
     userprint(f"picca_fast_metal_dmat.py - Time total : {(t3-t0)/60:.3f} minutes")
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

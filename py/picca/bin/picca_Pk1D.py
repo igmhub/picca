@@ -4,6 +4,7 @@
 import argparse
 import glob
 import os
+import sys
 from multiprocessing import Pool
 
 import fitsio
@@ -728,3 +729,8 @@ def main(cmdargs=None):
     else:
         [process_all_files((i, f, args)) for i, f in enumerate(files)]
     userprint("all done ")
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

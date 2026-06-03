@@ -3,6 +3,7 @@
 
 import argparse
 import os
+import sys
 
 import numpy as np
 
@@ -388,3 +389,8 @@ def main(cmdargs=None):
         compute_bootstrap_average=args.bootstrap_average,
         number_bootstrap_average=args.nbootstrap_average,
     )
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

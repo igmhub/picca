@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import sys
 
 import numpy as np
 from scipy.constants import speed_of_light
@@ -226,4 +227,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

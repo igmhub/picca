@@ -8,6 +8,7 @@ section 2.4 of du Mas des Bourboux et al. 2020 (In prep).
 
 import argparse
 import logging
+import sys
 import time
 
 from picca.delta_extraction.survey import Survey
@@ -71,3 +72,8 @@ def main(cmdargs=None):
     t1 = time.time()
     module_logger.info(f"Total time ellapsed: {t1-t0}")
     module_logger.info("Done")
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

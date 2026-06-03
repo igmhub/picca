@@ -7,6 +7,7 @@ This script is an updated version of:
 """
 
 import argparse
+import sys
 import time
 
 import fitsio
@@ -311,3 +312,8 @@ def main(cmdargs=None):
 
     print(f"Time spent smoothing covariance: {(t3 - t2)/60:.3f} minutes")
     print(f"Total time: {(t3 - t1)/60:.3f} minutes")
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

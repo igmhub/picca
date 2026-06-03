@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
+import sys
 
 from picca import raw_io
 
-if __name__ == "__main__":
 
+def main(cmdargs=None):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Script to convert noiseless transmission files to delta picca files",
@@ -143,3 +144,8 @@ if __name__ == "__main__":
         use_old_weights=args.use_old_weights,
         use_splines=args.use_splines,
     )
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)
