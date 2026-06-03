@@ -4,7 +4,7 @@
 import argparse
 import multiprocessing
 import sys
-from multiprocessing import Lock, Pool, Value, cpu_count
+from multiprocessing import Lock, Value, cpu_count
 
 import fitsio
 import numpy as np

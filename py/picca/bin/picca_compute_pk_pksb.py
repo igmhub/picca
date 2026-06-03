@@ -79,13 +79,13 @@ def main(cmdargs):
     userprint("INFO: running CAMB on {}".format(args.ini))
     pars = camb.read_ini(os.path.expandvars(args.ini))
     pars.Transfer.kmax = maxkh
-    if not args.z_ref is None:
+    if args.z_ref is not None:
         pars.Transfer.PK_redshifts[0] = args.z_ref
-    if not args.H0 is None:
+    if args.H0 is not None:
         pars.H0 = args.H0
-    if not args.fid_Ok is None:
+    if args.fid_Ok is not None:
         pars.omk = args.fid_Ok
-    if not args.fid_wl is None:
+    if args.fid_wl is not None:
         pars.DarkEnergy.w = args.fid_wl
 
     results = camb.get_results(pars)

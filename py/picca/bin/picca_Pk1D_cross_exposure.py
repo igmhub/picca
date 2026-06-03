@@ -189,7 +189,7 @@ def main(cmdargs=None):
 
     os.makedirs(args.out_dir, exist_ok=True)
 
-    files = glob.glob(os.path.join(args.in_dir, f"Pk1D-*.fits.gz"))
+    files = glob.glob(os.path.join(args.in_dir, "Pk1D-*.fits.gz"))
 
     func = partial(treat_pk_file, args.out_dir)
 

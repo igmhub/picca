@@ -138,7 +138,7 @@ def main(cmdargs):
             "DR": args.DR_file,
             "RD": args.RD_file,
         }
-    elif not args.xDD_file is None:
+    elif args.xDD_file is not None:
         # TODO: Test if picca_co.py and export_co.py work for cross
         corr = "CROSS"
         correlation_files = {
@@ -214,7 +214,7 @@ def main(cmdargs):
     data["corr_RR"] = xi_random_random
 
     # Compute covariance matrix
-    if not args.cov is None:
+    if args.cov is not None:
         userprint("INFO: Read covariance from file")
         hdul = fitsio.FITS(args.cov)
         data["CO"] = hdul[1]["CO"][:]

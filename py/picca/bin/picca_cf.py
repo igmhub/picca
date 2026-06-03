@@ -8,7 +8,7 @@ Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 import argparse
 import multiprocessing
 import time
-from multiprocessing import Lock, Pool, Value, cpu_count
+from multiprocessing import Lock, Value, cpu_count
 
 import fitsio
 import numpy as np

@@ -4,7 +4,6 @@
 import argparse
 import glob
 import os
-from array import array
 from multiprocessing import Pool
 
 import fitsio

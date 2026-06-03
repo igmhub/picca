@@ -325,7 +325,7 @@ def main(cmdargs=None):
     elif args.snr_cut_scheme == "fixed":
         snrcut = np.array([args.snrcut])
         zbins_snrcut = None
-    elif args.snr_cut_scheme == None:
+    elif args.snr_cut_scheme is None:
         snrcut = None
         zbins_snrcut = None
     else:

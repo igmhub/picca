@@ -7,7 +7,7 @@ The wick covariance is computed as explained in Delubac et al. 2015
 import argparse
 import multiprocessing
 import sys
-from multiprocessing import Lock, Pool, Value, cpu_count
+from multiprocessing import Lock, Value, cpu_count
 
 import fitsio
 import numpy as np
@@ -498,7 +498,7 @@ def main(cmdargs):
     cpu_data = {}
     for index, healpix in enumerate(sorted(data)):
         num_processor = index % args.nproc
-        if not num_processor in cpu_data:
+        if num_processor not in cpu_data:
             cpu_data[num_processor] = []
         cpu_data[num_processor].append(healpix)
 

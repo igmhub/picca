@@ -10,7 +10,7 @@ import argparse
 import multiprocessing
 import time
 from functools import partial
-from multiprocessing import Lock, Pool, Value, cpu_count
+from multiprocessing import Lock, Value, cpu_count
 
 import fitsio
 import numpy as np
@@ -427,7 +427,7 @@ def main(cmdargs=None):
     cpu_data = {}
     for index, healpix in enumerate(sorted(list(data.keys()))):
         num_processor = index % args.nproc
-        if not num_processor in cpu_data:
+        if num_processor not in cpu_data:
             cpu_data[num_processor] = []
         cpu_data[num_processor].append(healpix)
 

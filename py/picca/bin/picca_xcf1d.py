@@ -6,7 +6,7 @@ delta field as a function of wavelength ratio
 import argparse
 import multiprocessing
 import sys
-from multiprocessing import Pool, cpu_count
+from multiprocessing import cpu_count
 
 import fitsio
 import numpy as np
