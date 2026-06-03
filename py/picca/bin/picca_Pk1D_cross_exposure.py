@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Compute the individual cross-exposure 1D power spectra"""
 
 import argparse

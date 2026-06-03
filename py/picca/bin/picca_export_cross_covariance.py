@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Compute the cross-covariance matrix between two correlations."""
 
 import argparse

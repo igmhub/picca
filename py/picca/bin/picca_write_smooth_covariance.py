@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Smooth the covariance matrix calculated from the 'write_full_covariance' script.

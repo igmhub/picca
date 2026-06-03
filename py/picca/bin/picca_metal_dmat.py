@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
 """Compute the auto and cross-correlation of delta fields for a list of IGM
 absorption.
 

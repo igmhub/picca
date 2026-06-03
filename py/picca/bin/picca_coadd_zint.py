@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Coadd correlation function from different redshift intervals"""
 
 import argparse
