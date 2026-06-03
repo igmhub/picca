@@ -4,7 +4,6 @@
 import argparse
 import os
 
-import fitsio
 import numpy as np
 
 from picca.pk1d import postproc_pk1d, utils
