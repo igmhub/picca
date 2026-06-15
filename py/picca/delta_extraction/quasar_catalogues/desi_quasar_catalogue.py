@@ -176,13 +176,15 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         if 'SV3_DESI_TARGET' in catalogue.colnames:
             keep_columns += ['SV3_DESI_TARGET']
 
-        # LASTNIGHT is needed later on, but might not be in the input catalogue
-        keep_columns += ['LASTNIGHT']
-        if 'LASTNIGHT' not in catalogue.colnames:
-            if "LAST_NIGHT" in catalogue.colnames:
-                catalogue.rename_column("LAST_NIGHT", "LASTNIGHT")
-            elif "COADD_LASTNIGHT" in catalogue.colnames:
-                catalogue.rename_column("COADD_LASTNIGHT", "LASTNIGHT")
+        # LASTNIGHT might be used later on, but might not be in the catalogue
+        if 'LASTNIGHT' in catalogue.colnames:
+            keep_columns += ['LASTNIGHT']
+        elif "LAST_NIGHT" in catalogue.colnames:
+            catalogue.rename_column("LAST_NIGHT", "LASTNIGHT")
+            keep_columns += ['LASTNIGHT']
+        elif "COADD_LASTNIGHT" in catalogue.colnames:
+            catalogue.rename_column("COADD_LASTNIGHT", "LASTNIGHT")
+            keep_columns += ['LASTNIGHT']
 
         ## Sanity checks
         self.logger.progress('')
