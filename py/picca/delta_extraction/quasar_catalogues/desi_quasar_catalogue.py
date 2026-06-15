@@ -167,13 +167,6 @@ class DesiQuasarCatalogue(QuasarCatalogue):
                     "expected to be present but it is not.")
         if 'NIGHT' in catalogue.colnames:
             keep_columns += ['NIGHT']
-        # TODO: remove this once we settle on a name for LAST_NIGHT/LASTNIGHT
-        if "LAST_NIGHT" in catalogue.colnames:
-            catalogue.rename_column("LAST_NIGHT", "LASTNIGHT")
-        if "COADD_LASTNIGHT" in catalogue.colnames:
-            catalogue.rename_column("COADD_LASTNIGHT", "LASTNIGHT")
-        if 'LASTNIGHT' in catalogue.colnames:
-            keep_columns += ['LASTNIGHT']
         if 'SURVEY' in catalogue.colnames:
             keep_columns += ['SURVEY']
         if 'DESI_TARGET' in catalogue.colnames:
@@ -182,6 +175,14 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             keep_columns += ['SV1_DESI_TARGET']
         if 'SV3_DESI_TARGET' in catalogue.colnames:
             keep_columns += ['SV3_DESI_TARGET']
+
+        # LASTNIGHT is needed later on, but might not be in the input catalogue
+        keep_columns += ['LASTNIGHT']
+        if 'LASTNIGHT' not in catalogue.colnames:
+            if "LAST_NIGHT" in catalogue.colnames:
+                catalogue.rename_column("LAST_NIGHT", "LASTNIGHT")
+            elif "COADD_LASTNIGHT" in catalogue.colnames:
+                catalogue.rename_column("COADD_LASTNIGHT", "LASTNIGHT")
 
         ## Sanity checks
         self.logger.progress('')
