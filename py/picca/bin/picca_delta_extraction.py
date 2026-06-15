@@ -19,7 +19,7 @@ module_logger = logging.getLogger("picca.delta_extraction")
 def main(cmdargs=None):
     """Compute delta field"""
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=argparse.RawTextHelpFormatter,
         description=("Compute the delta field " "from a list of spectra"),
     )
 
@@ -28,7 +28,14 @@ def main(cmdargs=None):
         type=str,
         default=None,
         help=(
-            "Configuration file. To learn about all the available options "
+            "Configuration file.\n "
+            "Examples of configuration files can be found in "
+            "$PICCA/examples/delta_extraction/"
+            "\n"
+            "In particular, a full explanatory file for DESI is "
+            "$PICCA/examples/delta_extraction/desi_config_explanatory.ini"
+            "\n"
+            "For more details about all the available options "
             "check the configuration tutorial in "
             "$PICCA/tutorials/delta_extraction/picca_delta_extraction_tutorial.ipynb"
         ),
