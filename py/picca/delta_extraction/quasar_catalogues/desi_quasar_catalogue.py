@@ -182,9 +182,13 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         elif "LAST_NIGHT" in catalogue.colnames:
             catalogue.rename_column("LAST_NIGHT", "LASTNIGHT")
             keep_columns += ['LASTNIGHT']
-        elif "COADD_LASTNIGHT" in catalogue.colnames:
+        # When reading coadded data, one should use COADD_LASTNIGHT
+        if "COADD_LASTNIGHT" in catalogue.colnames:
+            if 'LASTNIGHT' in keep_columns:
+                catalogue.remove_column('LASTNIGHT')
+            else:
+                keep_columns += ['LASTNIGHT']
             catalogue.rename_column("COADD_LASTNIGHT", "LASTNIGHT")
-            keep_columns += ['LASTNIGHT']
 
         ## Sanity checks
         self.logger.progress('')
