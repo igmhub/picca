@@ -176,19 +176,14 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         if 'SV3_DESI_TARGET' in catalogue.colnames:
             keep_columns += ['SV3_DESI_TARGET']
 
-        # LASTNIGHT might be used later on, but might not be in the catalogue
-        if 'LASTNIGHT' in catalogue.colnames:
+        # We need COADD_LASTNIGHT to trigger the blinding
+        if 'COADD_LASTNIGHT' in catalogue.colnames:
+            # Internally we call it LASTNIGHT for historical reasons
             keep_columns += ['LASTNIGHT']
-        elif "LAST_NIGHT" in catalogue.colnames:
-            catalogue.rename_column("LAST_NIGHT", "LASTNIGHT")
-            keep_columns += ['LASTNIGHT']
-        # When reading coadded data, one should use COADD_LASTNIGHT
-        if "COADD_LASTNIGHT" in catalogue.colnames:
-            if 'LASTNIGHT' in keep_columns:
-                catalogue.remove_column('LASTNIGHT')
-            else:
-                keep_columns += ['LASTNIGHT']
             catalogue.rename_column("COADD_LASTNIGHT", "LASTNIGHT")
+        else:
+            raise QuasarCatalogueError(
+                "COADD_LASTNIGHT column missing in quasar catalogue")
 
         ## Sanity checks
         self.logger.progress('')
