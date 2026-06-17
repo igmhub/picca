@@ -429,9 +429,9 @@ def main(cmdargs=None):
             blind_corr_type = args.blind_corr_type
             # match name expected in blinding template file
             if blind_corr_type == 'qsoxlya':
-                blind_corr_type == 'lyaxqso'
+                blind_corr_type = 'lyaxqso'
             if blind_corr_type == 'qsoxlyb':
-                blind_corr_type == 'lybxqso'
+                blind_corr_type = 'lybxqso'
 
         # Check type of correlation and get size and regular binning
         if blind_corr_type in ['lyaxlya', 'lyaxlyb']:
