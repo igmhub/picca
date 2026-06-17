@@ -2,6 +2,7 @@
 files from DESI
 """
 import logging
+import os
 
 from astropy.table import Table
 import fitsio
@@ -71,6 +72,9 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         # add healpix info
         self.add_healpix()
 
+        # add uniqpix info
+        self.add_uniqpix()
+
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
         if self.max_num_spec is not None:
@@ -124,6 +128,30 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         ]
         self.catalogue["HEALPIX"] = healpix
         self.catalogue.sort("HEALPIX")
+
+    def add_uniqpix(self, pix2upix_file):
+        """Add uniqpix information to the catalogue"""
+        in_dir = self.config.get("input directory")
+        if in_dir is None:
+            raise QuasarCatalogueError("Missing argument 'input directory' required "
+                                       "by DesiQuasarCatalogue")
+        
+        self.catalogue["UNIQPIX"] = np.zeros(len(self.catalogue), dtype=np.int64)
+
+        for survey in np.unique(self.catalogue["SURVEY"]):
+            pix2upix_file = f"{in_dir}/{survey}/hpix2upix-{survey}-dark.fits"
+            if not os.path.exists(pix2upix_file):
+                self.logger.warning(f"Could not find pix2upix file {pix2upix_file}. "
+                                    "Skipping uniqpix assignment for this survey")
+                continue
+            hpix2upix = Table.read(pix2upix_file)
+            nside = hpix2upix.meta['NSIDE'] # nside=256
+            pos = np.where(self.catalogue["SURVEY"] == survey)[0]
+            hpix = healpy.ang2pix(
+                nside, self.catalogue["RA"][pos], self.catalogue["DEC"][pos], 
+                lonlat=True, nest=True)
+            upix = pix2upix['UNIQPIX'][hpix]
+            self.catalogue["UNIQPIX"][pos] = upix
 
     def read_catalogue(self):
         """Read the DESI quasar catalogue
