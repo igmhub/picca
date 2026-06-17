@@ -8,14 +8,10 @@ import itertools
 import fitsio
 import numpy as np
 
-from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
     DesiData,
-    DesiDataFileHandler,
     accepted_options,
     defaults,
-    merge_new_forest,
-    verify_exposures_shape,
 )
 from picca.delta_extraction.data_catalogues.desi_healpix_fast import DesiHealpixFileHandler, combine_results
 from picca.delta_extraction.errors import DataError
