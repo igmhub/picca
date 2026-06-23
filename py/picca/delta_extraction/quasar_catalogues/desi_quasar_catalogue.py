@@ -167,13 +167,6 @@ class DesiQuasarCatalogue(QuasarCatalogue):
                     "expected to be present but it is not.")
         if 'NIGHT' in catalogue.colnames:
             keep_columns += ['NIGHT']
-        # TODO: remove this once we settle on a name for LAST_NIGHT/LASTNIGHT
-        if "LAST_NIGHT" in catalogue.colnames:
-            catalogue.rename_column("LAST_NIGHT", "LASTNIGHT")
-        if "COADD_LASTNIGHT" in catalogue.colnames:
-            catalogue.rename_column("COADD_LASTNIGHT", "LASTNIGHT")
-        if 'LASTNIGHT' in catalogue.colnames:
-            keep_columns += ['LASTNIGHT']
         if 'SURVEY' in catalogue.colnames:
             keep_columns += ['SURVEY']
         if 'DESI_TARGET' in catalogue.colnames:
@@ -182,6 +175,32 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             keep_columns += ['SV1_DESI_TARGET']
         if 'SV3_DESI_TARGET' in catalogue.colnames:
             keep_columns += ['SV3_DESI_TARGET']
+
+        # We need COADD_LASTNIGHT to trigger the blinding for DR2 and beyond
+        # DR1 cutoff is June 13th, 2022
+        if 'COADD_LASTNIGHT' in catalogue.colnames:
+            max_date = catalogue['COADD_LASTNIGHT'].max()
+        elif 'LASTNIGHT' in catalogue.colnames:
+            max_date = catalogue['LASTNIGHT'].max()
+        else:
+            # No night information available (e.g. mocks)
+            max_date = 0
+
+        if max_date > 20220613:
+            # DR2+ : COADD_LASTNIGHT is required
+            if 'COADD_LASTNIGHT' not in catalogue.colnames:
+                raise QuasarCatalogueError(
+                    "COADD_LASTNIGHT column (required DR2+) missing from quasar catalogue")
+            # Internally we call it LASTNIGHT for historical reasons
+            catalogue.rename_column("COADD_LASTNIGHT", "LASTNIGHT")
+            keep_columns += ['LASTNIGHT']
+        else:
+            # DR1 or prior (<= 20220613) : COADD_LASTNIGHT or LASTNIGHT acceptable
+            if 'COADD_LASTNIGHT' in catalogue.colnames:
+                catalogue.rename_column("COADD_LASTNIGHT", "LASTNIGHT")
+                keep_columns += ['LASTNIGHT']
+            elif 'LASTNIGHT' in catalogue.colnames:
+                keep_columns += ['LASTNIGHT']
 
         ## Sanity checks
         self.logger.progress('')
