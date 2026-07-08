@@ -131,9 +131,9 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         self.catalogue["HEALPIX"] = healpix
         self.catalogue.sort("HEALPIX")
 
-    def add_uniqpix(self, pix2upix_file):
+    def add_uniqpix(self):
         """Add uniqpix information to the catalogue"""
-        self.logger.info("Adding uniqpix information to the catalogue")
+        self.logger.progress("Adding uniqpix information to the catalogue")
         in_dir = self.config.get("input directory")
         if in_dir is None:
             raise QuasarCatalogueError("Missing argument 'input directory' required "
@@ -156,7 +156,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             upix = pix2upix['UNIQPIX'][hpix]
             self.catalogue["UNIQPIX"][pos] = upix
 
-        self.logger.info("uniqpix information added to the catalogue")
+        self.logger.progress("uniqpix information added to the catalogue")
 
     def read_catalogue(self):
         """Read the DESI quasar catalogue
