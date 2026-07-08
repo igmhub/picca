@@ -153,7 +153,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             with open(pix2upix_file, "r") as f:
                 hpix2upix_dict = json.load(f)
             nside = hpix2upix_dict['NSIDE'] # nside=256
-            hpix2upix = hpix2upix_dict["HPIX2UPIX"]
+            hpix2upix = np.array(hpix2upix_dict["HPIX2UPIX"])
             pos = np.where(self.catalogue["SURVEY"] == survey)[0]
             hpix = healpy.ang2pix(
                 nside, self.catalogue["RA"][pos], self.catalogue["DEC"][pos], 
