@@ -51,7 +51,11 @@ class DesiUniqPix(DesiData):
         """
         self.logger = logging.getLogger(__name__)
 
-        # set 
+        # overwrite in-nside value
+        # this is hard-coded to 64 since it is the value used to compute the uniqpix values in the DESI data
+        config["in_nside"] = str(64)
+
+        # set add uniqpix flag
         config["add uniqpix"] = "True"
 
         super().__init__(config)
