@@ -148,6 +148,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
                 self.logger.warning(f"Could not find pix2upix file {pix2upix_file}. "
                                     "Skipping uniqpix assignment for this survey")
                 continue
+            self.logger.progress (f"Reading pix2upix file {pix2upix_file} for survey {survey}")
             hpix2upix = Table.read(pix2upix_file)
             nside = hpix2upix.meta['NSIDE'] # nside=256
             pos = np.where(self.catalogue["SURVEY"] == survey)[0]
