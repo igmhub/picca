@@ -75,7 +75,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
         # add uniqpix info
         if config.getboolean("add uniqpix"):
-            in_dir = self.config.get("input directory")
+            in_dir = config.get("input directory")
             if in_dir is None:
                 raise QuasarCatalogueError("Missing argument 'input directory' required "
                                         "by DesiQuasarCatalogue")
