@@ -75,7 +75,12 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
         # add uniqpix info
         if config.getboolean("add uniqpix"):
-            self.add_uniqpix()
+            in_dir = self.config.get("input directory")
+            if in_dir is None:
+                raise QuasarCatalogueError("Missing argument 'input directory' required "
+                                        "by DesiQuasarCatalogue")
+            
+            self.add_uniqpix(in_dir)
 
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
@@ -131,13 +136,9 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         self.catalogue["HEALPIX"] = healpix
         self.catalogue.sort("HEALPIX")
 
-    def add_uniqpix(self):
+    def add_uniqpix(self, in_dir):
         """Add uniqpix information to the catalogue"""
         self.logger.progress("Adding uniqpix information to the catalogue")
-        in_dir = self.config.get("input directory")
-        if in_dir is None:
-            raise QuasarCatalogueError("Missing argument 'input directory' required "
-                                       "by DesiQuasarCatalogue")
         
         self.catalogue["UNIQPIX"] = np.zeros(len(self.catalogue), dtype=np.int64)
 
@@ -153,7 +154,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             hpix = healpy.ang2pix(
                 nside, self.catalogue["RA"][pos], self.catalogue["DEC"][pos], 
                 lonlat=True, nest=True)
-            upix = pix2upix['UNIQPIX'][hpix]
+            upix = hpix2upix['UNIQPIX'][hpix]
             self.catalogue["UNIQPIX"][pos] = upix
 
         self.logger.progress("uniqpix information added to the catalogue")
