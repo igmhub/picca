@@ -51,6 +51,9 @@ class DesiUniqPix(DesiData):
         """
         self.logger = logging.getLogger(__name__)
 
+        # set 
+        config["add uniqpix"] = "True"
+
         super().__init__(config)
 
         #TODO: remove exception when this is implemented

@@ -18,6 +18,7 @@ accepted_options = update_accepted_options(
     ["catalogue", "in_nside", "keep surveys"])
 
 defaults = {
+    "add uniqpix": "False",
     "keep surveys": "all",
     "in_nside": "64",
 }
@@ -73,7 +74,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         self.add_healpix()
 
         # add uniqpix info
-        self.add_uniqpix()
+        if config.getboolean("add uniqpix"):
+            self.add_uniqpix()
 
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
@@ -131,6 +133,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
     def add_uniqpix(self, pix2upix_file):
         """Add uniqpix information to the catalogue"""
+        self.logger.info("Adding uniqpix information to the catalogue")
         in_dir = self.config.get("input directory")
         if in_dir is None:
             raise QuasarCatalogueError("Missing argument 'input directory' required "
@@ -152,6 +155,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
                 lonlat=True, nest=True)
             upix = pix2upix['UNIQPIX'][hpix]
             self.catalogue["UNIQPIX"][pos] = upix
+
+        self.logger.info("uniqpix information added to the catalogue")
 
     def read_catalogue(self):
         """Read the DESI quasar catalogue
