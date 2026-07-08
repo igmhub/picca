@@ -143,7 +143,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         self.catalogue["UNIQPIX"] = np.zeros(len(self.catalogue), dtype=np.int64)
 
         for survey in np.unique(self.catalogue["SURVEY"]):
-            pix2upix_file = f"{in_dir}/{survey}/hpix2upix-{survey}-dark.fits"
+            pix2upix_file = f"{in_dir}/{survey}/dark/hpix2upix-{survey}-dark.fits"
             if not os.path.exists(pix2upix_file):
                 self.logger.warning(f"Could not find pix2upix file {pix2upix_file}. "
                                     "Skipping uniqpix assignment for this survey")
