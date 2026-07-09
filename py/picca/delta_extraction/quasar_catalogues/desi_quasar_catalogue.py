@@ -139,12 +139,6 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
     def add_uniqpix(self, in_dir):
         """Add uniqpix information to the catalogue"""
-        # this follows the prescription from 
-        # https://desiutil.readthedocs.io/en/latest/_modules/desiutil/healpix.html#hpix2upix
-        self.catalogue["UNIQPIX"] = self.catalogue["HEALPIX"] + 4 * self.in_nside**2
-
-        """ 
-        # Old code to be
         self.logger.progress("Adding uniqpix information to the catalogue")
         
         self.catalogue["UNIQPIX"] = np.zeros(len(self.catalogue), dtype=np.int64)
@@ -162,13 +156,14 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             hpix2upix = np.array(hpix2upix_dict["HPIX2UPIX"])
             pos = np.where(self.catalogue["SURVEY"] == survey)[0]
             hpix = healpy.ang2pix(
-                nside, self.catalogue["RA"][pos], self.catalogue["DEC"][pos], 
-                lonlat=True, nest=True)
+                nside, 
+                np.pi / 2 - self.catalogue["DEC"][pos], 
+                self.catalogue["RA"][pos], 
+                nest=True)
             upix = hpix2upix[hpix]
             self.catalogue["UNIQPIX"][pos] = upix
 
         self.logger.progress("uniqpix information added to the catalogue")
-        """
 
     def read_catalogue(self):
         """Read the DESI quasar catalogue
