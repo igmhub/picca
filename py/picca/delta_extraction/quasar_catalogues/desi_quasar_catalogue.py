@@ -15,8 +15,7 @@ from picca.delta_extraction.quasar_catalogue import QuasarCatalogue, accepted_op
 from picca.delta_extraction.utils import update_accepted_options
 
 accepted_options = update_accepted_options(
-    accepted_options,
-    ["catalogue", "in_nside", "keep surveys"])
+    accepted_options, ["catalogue", "in_nside", "keep surveys"])
 
 defaults = {
     "add uniqpix": "False",
@@ -25,6 +24,7 @@ defaults = {
 }
 
 accepted_surveys = ["sv1", "sv2", "sv3", "main", "special", "all"]
+
 
 class DesiQuasarCatalogue(QuasarCatalogue):
     """Reads the z_truth catalogue from DESI
@@ -51,6 +51,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
     Only keep the entries in the catalogue that have a "SURVEY" specified in
     this list. Ignored if "SURVEY" column is not present in the catalogue.
     """
+
     def __init__(self, config):
         """Initialize class instance
 
@@ -78,9 +79,10 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         if config.getboolean("add uniqpix"):
             in_dir = config.get("input directory")
             if in_dir is None:
-                raise QuasarCatalogueError("Missing argument 'input directory' required "
-                                        "by DesiQuasarCatalogue")
-            
+                raise QuasarCatalogueError(
+                    "Missing argument 'input directory' required "
+                    "by DesiQuasarCatalogue")
+
             self.add_uniqpix(in_dir)
 
         # if there is a maximum number of spectra, make sure they are selected
@@ -103,7 +105,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         keep_surveys = config.get("keep surveys")
         if keep_surveys is None:
             raise QuasarCatalogueError(
-                "Missing argument 'keep surveys' required by DesiQuasarCatalogue")
+                "Missing argument 'keep surveys' required by DesiQuasarCatalogue"
+            )
         self.keep_surveys = keep_surveys.split()
         for survey in self.keep_surveys:
             if survey not in accepted_surveys:
@@ -140,26 +143,28 @@ class DesiQuasarCatalogue(QuasarCatalogue):
     def add_uniqpix(self, in_dir):
         """Add uniqpix information to the catalogue"""
         self.logger.progress("Adding uniqpix information to the catalogue")
-        
-        self.catalogue["UNIQPIX"] = np.zeros(len(self.catalogue), dtype=np.int64)
+
+        self.catalogue["UNIQPIX"] = np.zeros(len(self.catalogue),
+                                             dtype=np.int64)
 
         for survey in np.unique(self.catalogue["SURVEY"]):
             pix2upix_file = f"{in_dir}/{survey}/dark/hpix2upix-{survey}-dark.json"
             if not os.path.exists(pix2upix_file):
-                self.logger.warning(f"Could not find pix2upix file {pix2upix_file}. "
-                                    "Skipping uniqpix assignment for this survey")
+                self.logger.warning(
+                    f"Could not find pix2upix file {pix2upix_file}. "
+                    "Skipping uniqpix assignment for this survey")
                 continue
-            self.logger.progress (f"Reading pix2upix file {pix2upix_file} for survey {survey}")
-            with open(pix2upix_file, "r") as f:
+            self.logger.progress(
+                f"Reading pix2upix file {pix2upix_file} for survey {survey}")
+            with open(pix2upix_file, "r", encoding="utf-8") as f:
                 hpix2upix_dict = json.load(f)
-            nside = hpix2upix_dict['NSIDE'] # nside=256
+            nside = hpix2upix_dict['NSIDE']  # nside=256
             hpix2upix = np.array(hpix2upix_dict["HPIX2UPIX"])
             pos = np.where(self.catalogue["SURVEY"] == survey)[0]
-            hpix = healpy.ang2pix(
-                nside, 
-                np.pi / 2 - self.catalogue["DEC"][pos], 
-                self.catalogue["RA"][pos], 
-                nest=True)
+            hpix = healpy.ang2pix(nside,
+                                  np.pi / 2 - self.catalogue["DEC"][pos],
+                                  self.catalogue["RA"][pos],
+                                  nest=True)
             upix = hpix2upix[hpix]
             self.catalogue["UNIQPIX"][pos] = upix
 
@@ -226,25 +231,30 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         ## Sanity checks
         self.logger.progress('')
         w = np.ones(len(catalogue), dtype=bool)
-        self.logger.progress(f"start                 : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"start                 : nb object in cat = {np.sum(w)}")
 
         ## Redshift range
         w &= catalogue['Z'] >= self.z_min
-        self.logger.progress(f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
         w &= catalogue['Z'] < self.z_max
-        self.logger.progress(f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
+        self.logger.progress(
+            f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
 
         # Filter all the objects in the catalogue not belonging to the specified
         # surveys.
         if 'SURVEY' in keep_columns:
             w &= np.isin(catalogue["SURVEY"], self.keep_surveys)
-            self.logger.progress(f"and in selected surveys {self.keep_surveys}  "
-                                 f"       : nb object in cat = {np.sum(w)}")
+            self.logger.progress(
+                f"and in selected surveys {self.keep_surveys}  "
+                f"       : nb object in cat = {np.sum(w)}")
 
         # make sure we do not have an empty catalogue
         if np.sum(w) == 0:
-            raise QuasarCatalogueError("Empty quasar catalogue. Revise filtering "
-                                       "choices")
+            raise QuasarCatalogueError(
+                "Empty quasar catalogue. Revise filtering "
+                "choices")
 
         # Convert angles to radians
         np.radians(catalogue['RA'], out=catalogue['RA'])

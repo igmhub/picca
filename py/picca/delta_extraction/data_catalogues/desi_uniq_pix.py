@@ -3,15 +3,9 @@
 import logging
 import multiprocessing
 import time
-import itertools
-
-import fitsio
-import numpy as np
 
 from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
-    DesiData,
-    accepted_options,
-    defaults,
+    DesiData, accepted_options, defaults,
 )
 from picca.delta_extraction.data_catalogues.desi_healpix_fast import DesiHealpixFileHandler, combine_results
 from picca.delta_extraction.errors import DataError
@@ -62,7 +56,8 @@ class DesiUniqPix(DesiData):
 
         #TODO: remove exception when this is implemented
         if self.analysis_type == "PK 1D":
-            raise NotImplementedError("fast healpix reading is not implemented for PK 1D analyses")
+            raise NotImplementedError(
+                "fast healpix reading is not implemented for PK 1D analyses")
 
     def get_filename(self, survey, uniqpix, coadd_name):
         """Get the name of the file to read
@@ -108,17 +103,16 @@ class DesiUniqPix(DesiData):
 
         grouped_catalogue = self.catalogue.group_by(["UNIQPIX", "SURVEY"])
 
-        arguments = [
-            (self.get_filename(group["SURVEY"][0], group["UNIQPIX"][0], coadd_name), group)
-            for group in grouped_catalogue.groups
-        ]
+        arguments = [(self.get_filename(group["SURVEY"][0], group["UNIQPIX"][0],
+                                        coadd_name), group)
+                     for group in grouped_catalogue.groups]
 
         self.logger.info(f"reading data from {len(arguments)} files")
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
             with context.Pool(processes=self.num_processors) as pool:
-                imap_it = pool.imap(
-                    DesiHealpixFileHandler(self.logger), arguments)
+                imap_it = pool.imap(DesiHealpixFileHandler(self.logger),
+                                    arguments)
                 t0 = time.time()
                 self.logger.progress("Merging threads")
 
@@ -133,4 +127,3 @@ class DesiUniqPix(DesiData):
             raise DataError("No quasars found, stopping here")
 
         return is_mock
-
