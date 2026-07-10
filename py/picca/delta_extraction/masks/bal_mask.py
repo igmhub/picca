@@ -8,7 +8,9 @@ from numba import njit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
-from picca.delta_extraction.mask import Mask, accepted_options, defaults
+from picca.delta_extraction.mask import (
+    Mask, accepted_options, defaults, _add_mask_intervals, _create_deltas,
+    _finalize_deltas_to_mask)
 from picca.delta_extraction.utils import (
     SPEED_LIGHT, update_accepted_options, update_default_options)
 
@@ -93,6 +95,23 @@ def add_bal_rest_frame(los_id, los_id_array, min_velocities_array, max_velocitie
     log_lambda_max = np.log10(lambda_max)
 
     return log_lambda_min, log_lambda_max
+
+
+@njit()
+def _build_bal_intervals(min_velocities, max_velocities):
+    """Build rest-frame BAL intervals from velocity arrays."""
+    w = (min_velocities > 0) & (max_velocities > 0)
+    min_velocities = min_velocities[w]
+    max_velocities = max_velocities[w]
+
+    num_velocities = min_velocities.size
+    if num_velocities == 0:
+        return np.zeros(0), np.zeros(0)
+
+    lambda_max = np.outer(LINES['value'], 1 - min_velocities / SPEED_LIGHT).ravel()
+    lambda_min = np.outer(LINES['value'], 1 - max_velocities / SPEED_LIGHT).ravel()
+
+    return np.log10(lambda_min), np.log10(lambda_max)
 
 class BalMask(Mask):
     """Class to mask BALs
@@ -208,14 +227,27 @@ class BalMask(Mask):
             hdul.close()
 
         # compute info for each line of sight
-        self.los_ids = {
-            los_id: (
-                los_id,
-                self.cat[los_id_name],
-                self.cat[self.velocity_list[0]],
-                self.cat[self.velocity_list[1]])
-            for los_id in np.unique(self.cat[los_id_name])
-        }
+        self.los_ids = {}
+        los_id_array = self.cat[los_id_name]
+        min_velocities_array = self.cat[self.velocity_list[0]]
+        max_velocities_array = self.cat[self.velocity_list[1]]
+
+        sort_idx = np.argsort(los_id_array)
+        los_id_sorted = los_id_array[sort_idx]
+        min_velocities_sorted = min_velocities_array[sort_idx]
+        max_velocities_sorted = max_velocities_array[sort_idx]
+
+        unique_los_ids, first_idx = np.unique(los_id_sorted, return_index=True)
+        end_idx = np.empty(unique_los_ids.size, dtype=np.int64)
+        end_idx[:-1] = first_idx[1:]
+        end_idx[-1] = los_id_sorted.size
+
+        for los_id, start, stop in zip(unique_los_ids, first_idx, end_idx):
+            log_lambda_min, log_lambda_max = _build_bal_intervals(
+                min_velocities_sorted[start:stop].ravel(),
+                max_velocities_sorted[start:stop].ravel(),
+            )
+            self.los_ids[los_id] = (log_lambda_min, log_lambda_max)
 
         num_bals = len(self.los_ids)
         self.logger.progress(f'In catalog: {num_bals} BAL quasars')
@@ -233,26 +265,20 @@ class BalMask(Mask):
         -----
         MaskError if Forest.wave_solution is not 'log'
         """
-        if self.los_ids.get(forest.los_id) is None:
+        bal_intervals = self.los_ids.get(forest.los_id)
+        if bal_intervals is None:
             return
 
-        log_lambda_min, log_lambda_max = add_bal_rest_frame(
-            *self.los_ids.get(forest.los_id))
-
-        if len(log_lambda_min) == 0:
+        log_lambda_min, log_lambda_max = bal_intervals
+        if log_lambda_min.size == 0:
             return
 
         # find out which pixels to mask
-        w = np.ones(forest.log_lambda.size, dtype=bool)
         rest_frame_log_lambda = forest.log_lambda - np.log10(1. + forest.z)
-        mask_idx_ranges = np.searchsorted(
-            rest_frame_log_lambda,
-            [log_lambda_min, log_lambda_max]).T
-        # Make sure first index comes before the second
-        mask_idx_ranges.sort(axis=1)
-
-        for idx1, idx2 in mask_idx_ranges:
-            w[idx1:idx2] = 0
+        deltas = _create_deltas(rest_frame_log_lambda.size)
+        _add_mask_intervals(
+            deltas, rest_frame_log_lambda, log_lambda_min, log_lambda_max)
+        w = _finalize_deltas_to_mask(deltas)
 
         # do the actual masking
         for param in Forest.mask_fields:

@@ -4,7 +4,8 @@ import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
-from picca.delta_extraction.mask import Mask
+from picca.delta_extraction.mask import (
+    Mask, _add_mask_intervals, _create_deltas, _finalize_deltas_to_mask)
 from picca.delta_extraction.mask import ( # pylint: disable=unused-import
     accepted_options, defaults)
 from picca.delta_extraction.utils import update_accepted_options
@@ -58,6 +59,11 @@ class LinesMask(Mask):
 
             self.mask_rest_frame = mask[select_rest_frame_mask]
             self.mask_obs_frame = mask[select_obs_mask]
+
+            self._obs_log_wave_min = np.asarray(self.mask_obs_frame['log_wave_min'])
+            self._obs_log_wave_max = np.asarray(self.mask_obs_frame['log_wave_max'])
+            self._rest_log_wave_min = np.asarray(self.mask_rest_frame['log_wave_min'])
+            self._rest_log_wave_max = np.asarray(self.mask_rest_frame['log_wave_max'])
         except (OSError, ValueError) as error:
             raise MaskError(
                 "Error loading SkyMask. Unable to read mask file. "
@@ -78,19 +84,26 @@ class LinesMask(Mask):
         CorrectionError if Forest.wave_solution is not 'lin' or 'log'
         """
         # find masking array
-        w = np.ones(forest.log_lambda.size, dtype=bool)
-        mask_idx_ranges = np.searchsorted(forest.log_lambda,
-            [self.mask_obs_frame['log_wave_min'],
-            self.mask_obs_frame['log_wave_max']]).T
-        for idx1, idx2 in mask_idx_ranges:
-            w[idx1:idx2] = 0
+        deltas = _create_deltas(forest.log_lambda.size)
 
-        log_lambda_rest_frame = forest.log_lambda - np.log10(1.0 + forest.z)
-        mask_idx_ranges = np.searchsorted(log_lambda_rest_frame,
-            [self.mask_rest_frame['log_wave_min'],
-            self.mask_rest_frame['log_wave_max']]).T
-        for idx1, idx2 in mask_idx_ranges:
-            w[idx1:idx2] = 0
+        if self._obs_log_wave_min.size > 0:
+            _add_mask_intervals(
+                deltas,
+                forest.log_lambda,
+                self._obs_log_wave_min,
+                self._obs_log_wave_max,
+            )
+
+        if self._rest_log_wave_min.size > 0:
+            log_lambda_rest_frame = forest.log_lambda - np.log10(1.0 + forest.z)
+            _add_mask_intervals(
+                deltas,
+                log_lambda_rest_frame,
+                self._rest_log_wave_min,
+                self._rest_log_wave_max,
+            )
+
+        w = _finalize_deltas_to_mask(deltas)
 
         # do the actual masking
         for param in Forest.mask_fields:

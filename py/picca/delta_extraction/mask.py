@@ -1,6 +1,8 @@
 """This module defines the abstract class Mask from which all
 Masks must inherit
 """
+import numpy as np
+
 from picca.delta_extraction.errors import MaskError
 
 def _remove_pixels(forest, param, w):
@@ -12,6 +14,26 @@ def _remove_pixels(forest, param, w):
 def _set_ivar_to_zero(forest, param, w):
     if param == 'ivar':
         forest.ivar[~w] = 0
+
+
+def _create_deltas(num_pixels):
+    return np.zeros(num_pixels + 1, dtype=np.int32)
+
+
+def _add_mask_intervals(deltas, axis, interval_min, interval_max):
+    if interval_min.size == 0:
+        return
+
+    idx1 = np.searchsorted(axis, interval_min)
+    idx2 = np.searchsorted(axis, interval_max)
+    idx_start = np.minimum(idx1, idx2)
+    idx_stop = np.maximum(idx1, idx2)
+    np.add.at(deltas, idx_start, 1)
+    np.add.at(deltas, idx_stop, -1)
+
+
+def _finalize_deltas_to_mask(deltas):
+    return np.cumsum(deltas[:-1]) == 0
 
 accepted_options = ["keep pixels"]
 

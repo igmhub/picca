@@ -7,7 +7,9 @@ import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
-from picca.delta_extraction.mask import Mask, accepted_options, defaults
+from picca.delta_extraction.mask import (
+    Mask, accepted_options, defaults, _add_mask_intervals, _create_deltas,
+    _finalize_deltas_to_mask)
 from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options)
 
@@ -81,13 +83,24 @@ class AbsorberMask(Mask):
                 f"fields '{aux}' in HDU 'ABSORBERCAT'"
             ) from error
 
-        # group absorbers on the same line of sight together
+        # Group absorbers by LOS in one pass over sorted ids.
         self.los_ids = {}
-        for los_id in np.unique(cat[los_id_name]):
-            w = los_id == cat[los_id_name]
-            self.los_ids[los_id] = list(cat[los_id_name][w])
-        num_absorbers = np.sum(
-            [len(los_id) for los_id in self.los_ids.values()])
+        los_id_array = cat[los_id_name]
+        lambda_abs_array = cat["LAMBDA_ABS"]
+
+        sort_idx = np.argsort(los_id_array)
+        los_id_sorted = los_id_array[sort_idx]
+        lambda_abs_sorted = lambda_abs_array[sort_idx]
+
+        unique_los_ids, first_idx = np.unique(los_id_sorted, return_index=True)
+        end_idx = np.empty(unique_los_ids.size, dtype=np.int64)
+        end_idx[:-1] = first_idx[1:]
+        end_idx[-1] = los_id_sorted.size
+
+        for los_id, start, stop in zip(unique_los_ids, first_idx, end_idx):
+            self.los_ids[los_id] = np.log10(lambda_abs_sorted[start:stop])
+
+        num_absorbers = int(lambda_abs_array.size)
 
         self.logger.progress(f" In catalog: {num_absorbers} absorbers")
         self.logger.progress(f" In catalog: {len(self.los_ids)} forests have "
@@ -114,14 +127,19 @@ class AbsorberMask(Mask):
         -----
         CorrectionError if Forest.wave_solution is not 'log'
         """
-        # load DLAs
-        if self.los_ids.get(forest.los_id) is not None:
-            # find out which pixels to mask
-            w = np.ones(forest.log_lambda.size, dtype=bool)
-            for lambda_absorber in self.los_ids.get(forest.los_id):
-                w &= (np.fabs(1.e4 * (forest.log_lambda - np.log10(lambda_absorber))) >
-                      self.absorber_mask_width)
+        log_lambda_absorbers = self.los_ids.get(forest.los_id)
+        if log_lambda_absorbers is None:
+            return
 
-            # do the actual masking
-            for param in Forest.mask_fields:
-                self._masker(forest, param, w)
+        # Build absorber-centered intervals in log-lambda and mask them at once.
+        half_width = self.absorber_mask_width / 1.0e4
+        log_lambda_min = log_lambda_absorbers - half_width
+        log_lambda_max = log_lambda_absorbers + half_width
+
+        deltas = _create_deltas(forest.log_lambda.size)
+        _add_mask_intervals(deltas, forest.log_lambda, log_lambda_min, log_lambda_max)
+        w = _finalize_deltas_to_mask(deltas)
+
+        # do the actual masking
+        for param in Forest.mask_fields:
+            self._masker(forest, param, w)

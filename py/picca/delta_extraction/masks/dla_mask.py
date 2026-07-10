@@ -219,12 +219,26 @@ class DlaMask(Mask):
                 f"not have fields '{aux}' in HDU 'DLACAT'"
             ) from error
 
-        # group DLAs on the same line of sight together
+        # Group DLAs by LOS in a single pass over sorted ids.
         self.los_ids = {}
-        for los_id in np.unique(cat[los_id_name]):
-            w = los_id == cat[los_id_name]
-            self.los_ids[los_id] = list(zip(cat[z_colname][w], cat['NHI'][w]))
-        num_dlas = np.sum([len(los_id) for los_id in self.los_ids.values()])
+        los_id_array = cat[los_id_name]
+        z_array = cat[z_colname]
+        nhi_array = cat["NHI"]
+
+        sort_idx = np.argsort(los_id_array)
+        los_id_sorted = los_id_array[sort_idx]
+        z_sorted = z_array[sort_idx]
+        nhi_sorted = nhi_array[sort_idx]
+
+        unique_los_ids, first_idx = np.unique(los_id_sorted, return_index=True)
+        end_idx = np.empty(unique_los_ids.size, dtype=np.int64)
+        end_idx[:-1] = first_idx[1:]
+        end_idx[-1] = los_id_sorted.size
+
+        for los_id, start, stop in zip(unique_los_ids, first_idx, end_idx):
+            self.los_ids[los_id] = (z_sorted[start:stop], nhi_sorted[start:stop])
+
+        num_dlas = int(z_array.size)
 
         self.logger.progress(f'In catalog: {num_dlas} DLAs')
         self.logger.progress(f'In catalog: {len(self.los_ids)} forests have a DLA\n')
@@ -240,17 +254,24 @@ class DlaMask(Mask):
         mask_file = config.get("mask file")
         if mask_file is not None:
             try:
-                self.mask = Table.read(mask_file,
-                                       names=('type', 'wave_min', 'wave_max',
-                                              'frame'),
-                                       format='ascii')
-                self.mask = self.mask['frame'] == 'RF_DLA'
+                mask = Table.read(mask_file,
+                                  names=('type', 'wave_min', 'wave_max',
+                                         'frame'),
+                                  format='ascii')
+                self.mask = mask[mask['frame'] == 'RF_DLA']
             except (OSError, ValueError) as error:
                 raise MaskError(
                     f"ERROR: Error while reading mask_file file {mask_file}"
                 ) from error
         else:
             self.mask = Table(names=('type', 'wave_min', 'wave_max', 'frame'))
+
+        if len(self.mask) > 0:
+            self._rf_dla_mask_min = np.asarray(self.mask['wave_min'])
+            self._rf_dla_mask_max = np.asarray(self.mask['wave_max'])
+        else:
+            self._rf_dla_mask_min = np.zeros(0, dtype=np.float64)
+            self._rf_dla_mask_max = np.zeros(0, dtype=np.float64)
 
     def apply_mask(self, forest):
         """Apply the mask. The mask is done by removing the affected
@@ -265,25 +286,32 @@ class DlaMask(Mask):
         -----
         MaskError if Forest.wave_solution is not 'log'
         """
+        dla_data = self.los_ids.get(forest.los_id)
+        if dla_data is None:
+            return
+
         lambda_ = 10**forest.log_lambda
+        z_vals, nhi_vals = dla_data
 
-        # load DLAs
-        if self.los_ids.get(forest.los_id) is not None:
-            dla_transmission = np.ones(len(lambda_))
-            for (z_abs, nhi) in self.los_ids.get(forest.los_id):
-                dla_transmission *= dla_profile(lambda_, z_abs,
-                                                nhi)
+        # Accumulate optical depth and exponentiate once.
+        tau_total = np.zeros(lambda_.size)
+        for z_abs, nhi in zip(z_vals, nhi_vals):
+            tau_total += compute_tau(
+                lambda_, z_abs, nhi, LAMBDA_LYA, OSCILLATOR_STRENGTH_LYA, GAMMA_LYA)
+            tau_total += compute_tau(
+                lambda_, z_abs, nhi, LAMBDA_LYB, OSCILLATOR_STRENGTH_LYB, GAMMA_LYB)
+        dla_transmission = np.exp(-tau_total)
 
-            # find out which pixels to mask
-            w = dla_transmission > self.dla_mask_limit
-            if len(self.mask) > 0:
-                for mask_range in self.mask:
-                    for (z_abs, nhi) in self.los_ids.get(forest.los_id):
-                        w &= ((lambda_ / (1. + z_abs) < mask_range['wave_min'])
-                              | (lambda_ /
-                                 (1. + z_abs) > mask_range['wave_max']))
+        # find out which pixels to mask
+        w = dla_transmission > self.dla_mask_limit
+        if self._rf_dla_mask_min.size > 0:
+            for z_abs in z_vals:
+                rest_lambda = lambda_ / (1. + z_abs)
+                in_mask = ((rest_lambda[:, None] >= self._rf_dla_mask_min[None, :]) &
+                           (rest_lambda[:, None] <= self._rf_dla_mask_max[None, :])).any(axis=1)
+                w &= ~in_mask
 
-            # do the actual masking
-            forest.transmission_correction *= dla_transmission
-            for param in Forest.mask_fields:
-                self._masker(forest, param, w)
+        # do the actual masking
+        forest.transmission_correction *= dla_transmission
+        for param in Forest.mask_fields:
+            self._masker(forest, param, w)
