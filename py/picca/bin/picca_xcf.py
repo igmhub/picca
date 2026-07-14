@@ -1,14 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Compute the auto and cross-correlation between a catalog of objects and a
 delta field.
 
 This module follow the procedure described in sections 3.1 and 3.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
+
 import argparse
 import multiprocessing
+import sys
 import time
-from multiprocessing import Lock, Pool, Value, cpu_count
+from multiprocessing import Lock, Value, cpu_count
 
 import fitsio
 import numpy as np
@@ -109,16 +111,22 @@ def main(cmdargs=None):
         "--nt", type=int, default=50, required=False, help="Number of r-transverse bins"
     )
 
-    parser.add_argument('--rmu-binning', action="store_true",
-                        help=('Estimate in r,mu binning. np becomes mu bins.'
-                              ' nt becomes r bins. rp min max is always -1, 1')
-                        )
+    parser.add_argument(
+        "--rmu-binning",
+        action="store_true",
+        help=(
+            "Estimate in r,mu binning. np becomes mu bins."
+            " nt becomes r bins. rp min max is always -1, 1"
+        ),
+    )
 
-    parser.add_argument('--z-min-obj',
-                        type=float,
-                        default=0,
-                        required=False,
-                        help='Min redshift for object field')
+    parser.add_argument(
+        "--z-min-obj",
+        type=float,
+        default=0,
+        required=False,
+        help="Min redshift for object field",
+    )
 
     parser.add_argument(
         "--z-max-obj",
@@ -374,7 +382,7 @@ def main(cmdargs=None):
         Ok=args.fid_Ok,
         wl=args.fid_wl,
         blinding=blinding,
-        template=args.distance_template
+        template=args.distance_template,
     )
 
     t0 = time.time()
@@ -460,9 +468,9 @@ def main(cmdargs=None):
                 delta.delta -= mean_delta[bins]
 
     # shuffle forests and objects
-    if not args.shuffle_distrib_obj_seed is None:
+    if args.shuffle_distrib_obj_seed is not None:
         xcf.objs = utils.shuffle_distrib_forests(objs, args.shuffle_distrib_obj_seed)
-    if not args.shuffle_distrib_forest_seed is None:
+    if args.shuffle_distrib_forest_seed is not None:
         xcf.data = utils.shuffle_distrib_forests(
             xcf.data, args.shuffle_distrib_forest_seed
         )
@@ -509,72 +517,85 @@ def main(cmdargs=None):
     z[w] /= sum_weights[w]
     num_pairs = num_pairs_list.sum(axis=0)
 
-    results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [{
-        'name': 'RPMIN',
-        'value': xcf.r_par_min,
-        'comment': 'Minimum r-parallel [h^-1 Mpc]'
-    }, {
-        'name': 'RPMAX',
-        'value': xcf.r_par_max,
-        'comment': 'Maximum r-parallel [h^-1 Mpc]'
-    }, {
-        'name': 'RTMAX',
-        'value': xcf.r_trans_max,
-        'comment': 'Maximum r-transverse [h^-1 Mpc]'
-    }, {
-        'name': 'NP',
-        'value': xcf.num_bins_r_par,
-        'comment': 'Number of bins in r-parallel'
-    }, {
-        'name': 'NT',
-        'value': xcf.num_bins_r_trans,
-        'comment': 'Number of bins in r-transverse'
-    }, {
-        'name': 'ZMIN',
-        'value': xcf.z_min_pairs,
-        'comment': 'Minimum redshift of pairs'
-    }, {
-        'name': 'ZMAX',
-        'value': xcf.z_max_pairs,
-        'comment': 'Maximum redshift of pairs'
-    }, {
-        'name': 'NSIDE',
-        'value': xcf.nside,
-        'comment': 'Healpix nside'
-    }, {
-        'name': 'OMEGAM',
-        'value': args.fid_Om,
-        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'OMEGAR',
-        'value': args.fid_Or,
-        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'OMEGAK',
-        'value': args.fid_Ok,
-        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'WL',
-        'value': args.fid_wl,
-        'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    }, {
-        'name': "BLINDING",
-        'value': blinding,
-        'comment': 'String specifying the blinding strategy'
-    }, {
-        'name': "RMU_BIN",
-        'value': xcf.rmu_binning,
-        'comment': 'True if binned in r, mu'
-    }
+    results = fitsio.FITS(args.out, "rw", clobber=True)
+    header = [
+        {
+            "name": "RPMIN",
+            "value": xcf.r_par_min,
+            "comment": "Minimum r-parallel [h^-1 Mpc]",
+        },
+        {
+            "name": "RPMAX",
+            "value": xcf.r_par_max,
+            "comment": "Maximum r-parallel [h^-1 Mpc]",
+        },
+        {
+            "name": "RTMAX",
+            "value": xcf.r_trans_max,
+            "comment": "Maximum r-transverse [h^-1 Mpc]",
+        },
+        {
+            "name": "NP",
+            "value": xcf.num_bins_r_par,
+            "comment": "Number of bins in r-parallel",
+        },
+        {
+            "name": "NT",
+            "value": xcf.num_bins_r_trans,
+            "comment": "Number of bins in r-transverse",
+        },
+        {
+            "name": "ZMIN",
+            "value": xcf.z_min_pairs,
+            "comment": "Minimum redshift of pairs",
+        },
+        {
+            "name": "ZMAX",
+            "value": xcf.z_max_pairs,
+            "comment": "Maximum redshift of pairs",
+        },
+        {"name": "NSIDE", "value": xcf.nside, "comment": "Healpix nside"},
+        {
+            "name": "OMEGAM",
+            "value": args.fid_Om,
+            "comment": "Omega_matter(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "OMEGAR",
+            "value": args.fid_Or,
+            "comment": "Omega_radiation(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "OMEGAK",
+            "value": args.fid_Ok,
+            "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "WL",
+            "value": args.fid_wl,
+            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "BLINDING",
+            "value": blinding,
+            "comment": "String specifying the blinding strategy",
+        },
+        {
+            "name": "RMU_BIN",
+            "value": xcf.rmu_binning,
+            "comment": "True if binned in r, mu",
+        },
     ]
     results.write(
         [r_par, r_trans, z, num_pairs],
-        names=['RP', 'RT', 'Z', 'NB'],
-        comment=['R-parallel' if not xcf.rmu_binning else 'Mu',
-                 'R-transverse' if not xcf.rmu_binning else 'Radial separation',
-                 'Redshift', 'Number of pairs'],
-        units=['h^-1 Mpc' if not xcf.rmu_binning else '', 'h^-1 Mpc', '', ''],
+        names=["RP", "RT", "Z", "NB"],
+        comment=[
+            "R-parallel" if not xcf.rmu_binning else "Mu",
+            "R-transverse" if not xcf.rmu_binning else "Radial separation",
+            "Redshift",
+            "Number of pairs",
+        ],
+        units=["h^-1 Mpc" if not xcf.rmu_binning else "", "h^-1 Mpc", "", ""],
         header=header,
         extname="ATTRI",
     )
@@ -595,3 +616,8 @@ def main(cmdargs=None):
 
     t3 = time.time()
     userprint(f"picca_xcf.py - Time total: {(t3-t0)/60:.3f} minutes")
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

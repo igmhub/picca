@@ -1,8 +1,11 @@
-#!/usr/bin/env python
-"""Compute the averaged 1D power spectrum
-"""
+#!/usr/bin/env python3
+"""Compute the averaged 1D power spectrum"""
 
-import sys, glob, argparse, ast
+import argparse
+import ast
+import glob
+import sys
+
 from picca.pk1d import postproc_pk1d
 from picca.utils import userprint
 
@@ -69,3 +72,8 @@ def main(cmdargs=None):
         args.output_path,
         weighted_mean=False,
     )
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

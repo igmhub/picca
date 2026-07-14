@@ -5,9 +5,11 @@ Compute the mean transmission fluctuation field (delta field) for a list of
 spectra for the specified absorption line. Follow the procedure described in
 section 2.4 of du Mas des Bourboux et al. 2020 (In prep).
 """
-import logging
-import time
+
 import argparse
+import logging
+import sys
+import time
 
 from picca.delta_extraction.survey import Survey
 
@@ -17,19 +19,27 @@ module_logger = logging.getLogger("picca.delta_extraction")
 def main(cmdargs=None):
     """Compute delta field"""
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Compute the delta field '
-                     'from a list of spectra'))
+        formatter_class=argparse.RawTextHelpFormatter,
+        description=("Compute the delta field " "from a list of spectra"),
+    )
 
     parser.add_argument(
-        'config_file',
+        "config_file",
         type=str,
         default=None,
-        help=
-        ('Configuration file. To learn about all the available options '
-         'check the configuration tutorial in '
-         '$PICCA/tutorials/delta_extraction/picca_delta_extraction_tutorial.ipynb'
-        ))
+        help=(
+            "Configuration file.\n "
+            "Examples of configuration files can be found in "
+            "$PICCA/examples/delta_extraction/"
+            "\n"
+            "In particular, a full explanatory file for DESI is "
+            "$PICCA/examples/delta_extraction/desi_config_explanatory.ini"
+            "\n"
+            "For more details about all the available options "
+            "check the configuration tutorial in "
+            "$PICCA/tutorials/delta_extraction/picca_delta_extraction_tutorial.ipynb"
+        ),
+    )
 
     args = parser.parse_args(cmdargs)
 
@@ -69,3 +79,8 @@ def main(cmdargs=None):
     t1 = time.time()
     module_logger.info(f"Total time ellapsed: {t1-t0}")
     module_logger.info("Done")
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

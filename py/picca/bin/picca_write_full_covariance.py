@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Compute and write out the full (unsmoothed) covariance matrix given some correlation functions.
@@ -7,6 +7,7 @@ This script is an updated version of:
 """
 
 import argparse
+import sys
 import time
 from functools import reduce
 
@@ -43,7 +44,7 @@ def read_corr(files):
 
 
 def main(cmdargs=None):
-    
+
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Writes the full covariance matrix for the given correlation functions.",
@@ -98,3 +99,8 @@ def main(cmdargs=None):
     print()
     print(f"Time spent computing covariance: {(t3 - t2)/60:.3f} minutes")
     print(f"Total time: {(t4-t1)/60:.3f} minutes")
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

@@ -1,14 +1,18 @@
-#!/usr/bin/env python
-"""Compute the individual cross-exposure 1D power spectra
-"""
+#!/usr/bin/env python3
+"""Compute the individual cross-exposure 1D power spectra"""
 
-import os, argparse, glob
+import argparse
+import glob
+import multiprocessing as mp
+import os
+import sys
+from functools import partial
+
 import fitsio
 import numpy as np
-from picca.pk1d.compute_pk1d import compute_pk_cross_exposure, Pk1D
+
+from picca.pk1d.compute_pk1d import Pk1D, compute_pk_cross_exposure
 from picca.utils import userprint
-import multiprocessing as mp
-from functools import partial
 
 
 def treat_pk_file(out_dir, filename):
@@ -16,9 +20,9 @@ def treat_pk_file(out_dir, filename):
     Takes a single file containing the FFT of delta for
     multiple exposures and computes the cross-exposure power spectrum. The function
     returns nothing, but writes to disk a new fits file with all the information needed
-    to compute Pk_cross_exposure. This is done by looping over each targetid and chunkid, 
+    to compute Pk_cross_exposure. This is done by looping over each targetid and chunkid,
     and computing Pk_cross_exposure for each pair of exposures.
-    
+
     Arguments
     ---------
     out_dir: string
@@ -186,7 +190,7 @@ def main(cmdargs=None):
 
     os.makedirs(args.out_dir, exist_ok=True)
 
-    files = glob.glob(os.path.join(args.in_dir, f"Pk1D-*.fits.gz"))
+    files = glob.glob(os.path.join(args.in_dir, "Pk1D-*.fits.gz"))
 
     func = partial(treat_pk_file, args.out_dir)
 
@@ -196,3 +200,8 @@ def main(cmdargs=None):
     else:
         with mp.Pool(args.num_processors) as pool:
             pool.map(func, files)
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)

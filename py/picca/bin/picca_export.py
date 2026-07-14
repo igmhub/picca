@@ -1,21 +1,26 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Export auto and cross-correlation for the fitter."""
+
 import argparse
-import fitsio
-import numpy as np
-import scipy.interpolate
-import scipy.linalg
-import h5py
 import os.path
 import sys
 
+import fitsio
+import h5py
+import numpy as np
+import scipy.interpolate
+import scipy.linalg
 from numpy.polynomial.legendre import legvander
 from scipy.sparse import coo_array
 
 from picca.utils import (
-    smooth_cov, compute_cov, compute_cov_boot,
-    calculate_xi_ell, get_legendre_bins)
-from picca.utils import userprint
+    calculate_xi_ell,
+    compute_cov,
+    compute_cov_boot,
+    get_legendre_bins,
+    smooth_cov,
+    userprint,
+)
 
 # TODO: add tags here when we are allowed to unblind them
 UNBLINDABLE_STRATEGIES = ["none", "desi_m2", "desi_y1", "desi_y3"]
@@ -25,118 +30,143 @@ def main(cmdargs=None):
     """Export auto and cross-correlation for the fitter."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description='Export auto and cross-correlation for the fitter.')
+        description="Export auto and cross-correlation for the fitter.",
+    )
 
     parser.add_argument(
-        '--data',
+        "--data",
         type=str,
         default=None,
         required=True,
-        help='Correlation produced via picca_cf.py, picca_xcf.py, ...')
+        help="Correlation produced via picca_cf.py, picca_xcf.py, ...",
+    )
 
     parser.add_argument(
-        '--out',
-        type=str,
-        default=None,
-        required=True,
-        help='Output file name')
+        "--out", type=str, default=None, required=True, help="Output file name"
+    )
 
     parser.add_argument(
-        '--dmat',
-        type=str,
-        default=None,
-        required=False,
-        help=('Distortion matrix produced via picca_dmat.py, picca_xdmat.py... '
-              '(if not provided will be identity)'))
-
-    parser.add_argument('--multipoles', action="store_true",
-                        help='Use multipole extension')
-    parser.add_argument('--lmax-model', type=int, default=6,
-                        help=('Max multipole ell for the model if rmu-binning'
-                              '. Note odd multipoles are removed from auto.')
-                        )
-    parser.add_argument('--lmax-data', type=int, default=10,
-                        help=('Max multipole ell for the output if rmu-binning'
-                              '. Note odd multipoles are removed from auto.')
-                        )
-
-    parser.add_argument(
-        '--cov',
+        "--dmat",
         type=str,
         default=None,
         required=False,
-        help=('Covariance matrix (if not provided will be calculated by '
-              'subsampling)'))
+        help=(
+            "Distortion matrix produced via picca_dmat.py, picca_xdmat.py... "
+            "(if not provided will be identity)"
+        ),
+    )
 
     parser.add_argument(
-        '--cor',
+        "--multipoles", action="store_true", help="Use multipole extension"
+    )
+    parser.add_argument(
+        "--lmax-model",
+        type=int,
+        default=6,
+        help=(
+            "Max multipole ell for the model if rmu-binning"
+            ". Note odd multipoles are removed from auto."
+        ),
+    )
+    parser.add_argument(
+        "--lmax-data",
+        type=int,
+        default=10,
+        help=(
+            "Max multipole ell for the output if rmu-binning"
+            ". Note odd multipoles are removed from auto."
+        ),
+    )
+
+    parser.add_argument(
+        "--cov",
         type=str,
         default=None,
         required=False,
-        help=('Correlation matrix (if not provided will be calculated by '
-              'subsampling)'))
+        help=(
+            "Covariance matrix (if not provided will be calculated by " "subsampling)"
+        ),
+    )
 
     parser.add_argument(
-        '--remove-shuffled-correlation',
+        "--cor",
         type=str,
         default=None,
         required=False,
-        help='Remove a correlation from shuffling the distribution of los')
+        help=(
+            "Correlation matrix (if not provided will be calculated by " "subsampling)"
+        ),
+    )
 
     parser.add_argument(
-        '--num-boot-cov',
-        type=int, default=0,
-        help='Number of bootstrap realizations. <=0 turns it off.')
+        "--remove-shuffled-correlation",
+        type=str,
+        default=None,
+        required=False,
+        help="Remove a correlation from shuffling the distribution of los",
+    )
+
     parser.add_argument(
-        '--do-not-smooth-cov',
-        action='store_true',
+        "--num-boot-cov",
+        type=int,
+        default=0,
+        help="Number of bootstrap realizations. <=0 turns it off.",
+    )
+    parser.add_argument(
+        "--do-not-smooth-cov",
+        action="store_true",
         default=False,
-        help='Do not smooth the covariance matrix')
+        help="Do not smooth the covariance matrix",
+    )
     parser.add_argument(
-        '--smooth-per-r-par',
-        action='store_true',
+        "--smooth-per-r-par",
+        action="store_true",
         default=False,
-        help='Consider different correlation coefficients per r_par')
+        help="Consider different correlation coefficients per r_par",
+    )
 
     parser.add_argument(
-        '--blind-corr-type',
+        "--blind-corr-type",
         default=None,
-        choices=['lyaxlya', 'lyaxlyb', 'qsoxlya', 'qsoxlyb'],
-        help='Type of correlation. Required to apply blinding in DESI')
+        choices=["lyaxlya", "lyaxlyb", "qsoxlya", "qsoxlyb", "lyaxqso", "lybxqso"],
+        help="Type of correlation. Required to apply blinding in DESI",
+    )
 
     args = parser.parse_args(cmdargs)
 
     hdul = fitsio.FITS(args.data)
 
-    r_par = np.array(hdul[1]['RP'][:])
-    r_trans = np.array(hdul[1]['RT'][:])
-    z = np.array(hdul[1]['Z'][:])
-    num_pairs = np.array(hdul[1]['NB'][:])
-    weights = np.array(hdul[2]['WE'][:])
+    r_par = np.array(hdul[1]["RP"][:])
+    r_trans = np.array(hdul[1]["RT"][:])
+    z = np.array(hdul[1]["Z"][:])
+    num_pairs = np.array(hdul[1]["NB"][:])
+    weights = np.array(hdul[2]["WE"][:])
 
-    if 'DA_BLIND' in hdul[2].get_colnames():
-        xi = np.array(hdul[2]['DA_BLIND'][:])
-        data_name = 'DA_BLIND'
+    if "DA_BLIND" in hdul[2].get_colnames():
+        xi = np.array(hdul[2]["DA_BLIND"][:])
+        data_name = "DA_BLIND"
     else:
-        xi = np.array(hdul[2]['DA'][:])
-        data_name = 'DA'
+        xi = np.array(hdul[2]["DA"][:])
+        data_name = "DA"
 
     head = hdul[1].read_header()
-    num_bins_r_par = head['NP']
-    num_bins_r_trans = head['NT']
-    r_trans_max = head['RTMAX']
-    r_par_min = head['RPMIN']
-    r_par_max = head['RPMAX']
+    num_bins_r_par = head["NP"]
+    num_bins_r_trans = head["NT"]
+    r_trans_max = head["RTMAX"]
+    r_par_min = head["RPMIN"]
+    r_par_max = head["RPMAX"]
     nsamples = xi.shape[0]
 
     is_x_correlation = r_par_min < 0
 
     if "BLINDING" in head:
         blinding = head["BLINDING"]
-        if blinding == 'minimal':
-            blinding = 'corr_yshift'
-            userprint("The minimal strategy is no longer supported."
-                      "Automatically switch to corr_yshift.")
+        if blinding == "minimal":
+            blinding = "corr_yshift"
+            userprint(
+                "The minimal strategy is no longer supported."
+                "Automatically switch to corr_yshift."
+            )
     else:
         # if BLINDING keyword not present (old file), ignore blinding
         blinding = "none"
@@ -144,11 +174,11 @@ def main(cmdargs=None):
 
     if args.remove_shuffled_correlation is not None:
         hdul = fitsio.FITS(args.remove_shuffled_correlation)
-        xi_shuffled = hdul['COR'][data_name][:]
-        weight_shuffled = hdul['COR']['WE'][:]
+        xi_shuffled = hdul["COR"][data_name][:]
+        weight_shuffled = hdul["COR"]["WE"][:]
         xi_shuffled = (xi_shuffled * weight_shuffled).sum(axis=1)
         weight_shuffled = weight_shuffled.sum(axis=1)
-        w = weight_shuffled > 0.
+        w = weight_shuffled > 0.0
         xi_shuffled[w] /= weight_shuffled[w]
         hdul.close()
         xi -= xi_shuffled[:, None]
@@ -156,7 +186,7 @@ def main(cmdargs=None):
     if args.multipoles:
         userprint("Smoothing is turned off for multipoles")
         args.do_not_smooth_cov = True
-        assert head['RMU_BIN']
+        assert head["RMU_BIN"]
 
         ells_out = np.arange(args.lmax_data + 1)
         if not is_x_correlation:
@@ -181,39 +211,56 @@ def main(cmdargs=None):
         r_par = np.repeat(ells_out, num_bins_r_trans)
 
         xi, weights = calculate_xi_ell(
-            ells_out, xi, weights, num_bins_r_par, is_x_correlation)
+            ells_out, xi, weights, num_bins_r_par, is_x_correlation
+        )
         header_multipole = [
-            {'name': 'MLTPOLE',
-             'value': True,
-             'comment': 'Specifying if in multipoles.'},
-            {'name': 'NL_DATA',
-             'value': nell_out,
-             'comment': 'Number of output multipoles'}
+            {
+                "name": "MLTPOLE",
+                "value": True,
+                "comment": "Specifying if in multipoles.",
+            },
+            {
+                "name": "NL_DATA",
+                "value": nell_out,
+                "comment": "Number of output multipoles",
+            },
         ]
     else:
         ells_out = None
         header_multipole = [
-            {'name': 'MLTPOLE',
-             'value': False,
-             'comment': 'Specifying if in multipoles.'}]
+            {
+                "name": "MLTPOLE",
+                "value": False,
+                "comment": "Specifying if in multipoles.",
+            }
+        ]
 
     if args.cov is not None:
-        userprint(("INFO: The covariance-matrix will be read from file: "
-                   "{}").format(args.cov))
+        userprint(
+            ("INFO: The covariance-matrix will be read from file: " "{}").format(
+                args.cov
+            )
+        )
         hdul = fitsio.FITS(args.cov)
-        covariance = hdul[1]['CO'][:]
+        covariance = hdul[1]["CO"][:]
         hdul.close()
     elif args.cor is not None:
-        userprint(("INFO: The correlation-matrix will be read from file: "
-                   "{}").format(args.cor))
+        userprint(
+            ("INFO: The correlation-matrix will be read from file: " "{}").format(
+                args.cor
+            )
+        )
         hdul = fitsio.FITS(args.cor)
-        correlation = hdul[1]['CO'][:]
+        correlation = hdul[1]["CO"][:]
         hdul.close()
-        if ((correlation.min() < -1.) or (correlation.min() > 1.) or
-                (correlation.max() < -1.) or (correlation.max() > 1.) or
-                np.any(np.diag(correlation) != 1.)):
-            userprint(("WARNING: The correlation-matrix has some incorrect "
-                       "values"))
+        if (
+            (correlation.min() < -1.0)
+            or (correlation.min() > 1.0)
+            or (correlation.max() < -1.0)
+            or (correlation.max() > 1.0)
+            or np.any(np.diag(correlation) != 1.0)
+        ):
+            userprint(("WARNING: The correlation-matrix has some incorrect " "values"))
         var = np.diagonal(correlation)
         correlation = correlation / np.sqrt(var * var[:, None])
         covariance = compute_cov(xi, weights)
@@ -221,10 +268,12 @@ def main(cmdargs=None):
         covariance = correlation * np.sqrt(var * var[:, None])
     else:
         delta_r_par = (r_par_max - r_par_min) / num_bins_r_par
-        delta_r_trans = (r_trans_max - 0.) / num_bins_r_trans
+        delta_r_trans = (r_trans_max - 0.0) / num_bins_r_trans
 
         if args.num_boot_cov > 0:
-            userprint(f"INFO: Covariance with {args.num_boot_cov} bootstrap realizations.")
+            userprint(
+                f"INFO: Covariance with {args.num_boot_cov} bootstrap realizations."
+            )
             covariance = compute_cov_boot(xi, weights, nboots=args.num_boot_cov)
         else:
             covariance = compute_cov(xi, weights)
@@ -233,14 +282,18 @@ def main(cmdargs=None):
             userprint("INFO: The covariance will not be smoothed")
         else:
             userprint("INFO: The covariance will be smoothed")
-            if args.smooth_per_r_par :
+            if args.smooth_per_r_par:
                 userprint("INFO: with different correlation coefficients per r_par")
             covariance = smooth_cov(
-                None, None, r_par, r_trans,
+                None,
+                None,
+                r_par,
+                r_trans,
                 delta_r_trans=delta_r_trans,
                 delta_r_par=delta_r_par,
                 covariance=covariance,
-                per_r_par=args.smooth_per_r_par)
+                per_r_par=args.smooth_per_r_par,
+            )
 
     xi = (xi * weights).sum(axis=0)
     weights = weights.sum(axis=0)
@@ -256,25 +309,29 @@ def main(cmdargs=None):
         hdul = fitsio.FITS(args.dmat)
         head_dmat = hdul[1].read_header()
 
-        if data_name == "DA_BLIND" and 'DM_BLIND' in hdul[1].get_colnames():
-            dmat = np.array(hdul[1]['DM_BLIND'][:])
-            dmat_name = 'DM_BLIND'
+        if data_name == "DA_BLIND" and "DM_BLIND" in hdul[1].get_colnames():
+            dmat = np.array(hdul[1]["DM_BLIND"][:])
+            dmat_name = "DM_BLIND"
         elif data_name == "DA_BlIND":
-            userprint("Blinded correlations were given but distortion matrix "
-                      "is unblinded. These files should not mix. Exiting...")
+            userprint(
+                "Blinded correlations were given but distortion matrix "
+                "is unblinded. These files should not mix. Exiting..."
+            )
             sys.exit(1)
-        elif 'DM_BLIND' in hdul[1].get_colnames():
-            userprint("Non-blinded correlations were given but distortion matrix "
-                      "is blinded. These files should not mix. Exiting...")
+        elif "DM_BLIND" in hdul[1].get_colnames():
+            userprint(
+                "Non-blinded correlations were given but distortion matrix "
+                "is blinded. These files should not mix. Exiting..."
+            )
             sys.exit(1)
         else:
-            dmat = hdul[1]['DM'][:]
-            dmat_name = 'DM'
+            dmat = hdul[1]["DM"][:]
+            dmat_name = "DM"
 
         try:
-            r_par_dmat = hdul[2]['RP'][:]
-            r_trans_dmat = hdul[2]['RT'][:]
-            z_dmat = hdul[2]['Z'][:]
+            r_par_dmat = hdul[2]["RP"][:]
+            r_trans_dmat = hdul[2]["RT"][:]
+            z_dmat = hdul[2]["Z"][:]
         except IOError:
             r_par_dmat = r_par.copy()
             r_trans_dmat = r_trans.copy()
@@ -286,31 +343,32 @@ def main(cmdargs=None):
         hdul.close()
 
         if args.multipoles:
-            assert head_dmat['RMU_BIN']
-            nmu_dmat = head_dmat['NP'] * head_dmat['COEFMOD']
-            nr_dmat = head_dmat['NT'] * head_dmat['COEFMOD']
-            dr_dmat = head_dmat['RTMAX'] / nr_dmat
+            assert head_dmat["RMU_BIN"]
+            nmu_dmat = head_dmat["NP"] * head_dmat["COEFMOD"]
+            nr_dmat = head_dmat["NT"] * head_dmat["COEFMOD"]
+            dr_dmat = head_dmat["RTMAX"] / nr_dmat
             ells_model = np.arange(args.lmax_model + 1)
             if not is_x_correlation:
                 ells_model = ells_model[ells_model % 2 == 0]
             nell_model = ells_model.size
 
             # From model multipoles to transverse-radial interpolation matrix.
-            ell_to_tr_matrix = legvander(
-                r_par_dmat, args.lmax_model)[:, ells_model]
+            ell_to_tr_matrix = legvander(r_par_dmat, args.lmax_model)[:, ells_model]
             cols = np.floor(r_trans_dmat / dr_dmat).astype(int)
             cols = np.repeat(cols, nell_model) + np.tile(
-                np.arange(nell_model) * nr_dmat, cols.size)
+                np.arange(nell_model) * nr_dmat, cols.size
+            )
             rows = np.repeat(np.arange(dmat.shape[1]), nell_model)
             ell_to_tr_matrix = coo_array(
                 (ell_to_tr_matrix.ravel(), (rows, cols)),
-                shape=(dmat.shape[1], nell_model * nr_dmat))
+                shape=(dmat.shape[1], nell_model * nr_dmat),
+            )
 
             r_par_dmat = np.repeat(ells_model, nr_dmat)
             r_trans_dmat = np.tile(
-                r_trans_dmat.reshape(nmu_dmat, nr_dmat).mean(0), nell_model)
-            z_dmat = np.tile(
-                z_dmat.reshape(nmu_dmat, nr_dmat).mean(0), nell_model)
+                r_trans_dmat.reshape(nmu_dmat, nr_dmat).mean(0), nell_model
+            )
+            z_dmat = np.tile(z_dmat.reshape(nmu_dmat, nr_dmat).mean(0), nell_model)
             dmat = ell_to_tr_matrix.T.dot(dmat.T).T
 
             del ell_to_tr_matrix, rows, cols
@@ -319,8 +377,7 @@ def main(cmdargs=None):
             assert xi.size == nell_out * num_bins_r_trans
             tr_to_ell_matrix = np.zeros((xi.size, dmat.shape[0]))
 
-            leg_ells = get_legendre_bins(
-                ells_out, num_bins_r_par, is_x_correlation)
+            leg_ells = get_legendre_bins(ells_out, num_bins_r_par, is_x_correlation)
 
             for i in range(xi.size):
                 ell = i // num_bins_r_trans
@@ -330,126 +387,140 @@ def main(cmdargs=None):
             dmat = tr_to_ell_matrix.dot(dmat)
             del tr_to_ell_matrix
 
-            header_multipole.append({
-                'name': 'NL_MODEL',
-                'value': nell_model,
-                'comment': 'Number of model multipoles'})
+            header_multipole.append(
+                {
+                    "name": "NL_MODEL",
+                    "value": nell_model,
+                    "comment": "Number of model multipoles",
+                }
+            )
     else:
         dmat = np.eye(len(xi))
         r_par_dmat = r_par.copy()
         r_trans_dmat = r_trans.copy()
         z_dmat = z.copy()
-        dmat_name = 'DM_EMPTY'
+        dmat_name = "DM_EMPTY"
 
-    results = fitsio.FITS(args.out, 'rw', clobber=True)
+    results = fitsio.FITS(args.out, "rw", clobber=True)
     header = [
-    {
-        'name': "BLINDING",
-        'value': blinding,
-        'comment': 'String specifying the blinding strategy'
-    }, {
-        'name': 'RPMIN',
-        'value': r_par_min,
-        'comment': 'Minimum r-parallel'
-    }, {
-        'name': 'RPMAX',
-        'value': r_par_max,
-        'comment': 'Maximum r-parallel'
-    }, {
-        'name': 'RTMAX',
-        'value': r_trans_max,
-        'comment': 'Maximum r-transverse'
-    }, {
-        'name': 'NP',
-        'value': num_bins_r_par,
-        'comment': 'Number of bins in r-parallel'
-    }, {
-        'name': 'NT',
-        'value': num_bins_r_trans,
-        'comment': 'Number of bins in r-transverse'
-    }, {
-        'name': 'ZMIN',
-        'value': head['ZMIN'],
-        'comment': 'Minimum redshift of pairs'
-    }, {
-        'name': 'ZMAX',
-        'value': head['ZMAX'],
-        'comment': 'Maximum redshift of pairs'
-    }, {
-        'name': 'OMEGAM',
-        'value': head['OMEGAM'],
-        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'OMEGAR',
-        'value': head['OMEGAR'],
-        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'OMEGAK',
-        'value': head['OMEGAK'],
-        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
-    }, {
-        'name': 'WL',
-        'value': head['WL'],
-        'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    }, {
-        'name': "RMU_BIN",
-        'value': 'RMU_BIN' in head and head['RMU_BIN'] and not args.multipoles,
-        'comment': 'True if binned in r, mu'
-    }, {
-        'name': "NSAMPLES", 'value': nsamples, 'comment': 'Number of samples'
-    }
+        {
+            "name": "BLINDING",
+            "value": blinding,
+            "comment": "String specifying the blinding strategy",
+        },
+        {"name": "RPMIN", "value": r_par_min, "comment": "Minimum r-parallel"},
+        {"name": "RPMAX", "value": r_par_max, "comment": "Maximum r-parallel"},
+        {"name": "RTMAX", "value": r_trans_max, "comment": "Maximum r-transverse"},
+        {
+            "name": "NP",
+            "value": num_bins_r_par,
+            "comment": "Number of bins in r-parallel",
+        },
+        {
+            "name": "NT",
+            "value": num_bins_r_trans,
+            "comment": "Number of bins in r-transverse",
+        },
+        {"name": "ZMIN", "value": head["ZMIN"], "comment": "Minimum redshift of pairs"},
+        {"name": "ZMAX", "value": head["ZMAX"], "comment": "Maximum redshift of pairs"},
+        {
+            "name": "OMEGAM",
+            "value": head["OMEGAM"],
+            "comment": "Omega_matter(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "OMEGAR",
+            "value": head["OMEGAR"],
+            "comment": "Omega_radiation(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "OMEGAK",
+            "value": head["OMEGAK"],
+            "comment": "Omega_k(z=0) of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "WL",
+            "value": head["WL"],
+            "comment": "Equation of state of dark energy of fiducial LambdaCDM cosmology",
+        },
+        {
+            "name": "RMU_BIN",
+            "value": "RMU_BIN" in head and head["RMU_BIN"] and not args.multipoles,
+            "comment": "True if binned in r, mu",
+        },
+        {"name": "NSAMPLES", "value": nsamples, "comment": "Number of samples"},
     ] + header_multipole
     comment = [
-        'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
-        'Covariance matrix', 'Distortion matrix', 'Number of pairs'
+        "R-parallel",
+        "R-transverse",
+        "Redshift",
+        "Correlation",
+        "Covariance matrix",
+        "Distortion matrix",
+        "Number of pairs",
     ]
 
     # Check if we need to unblind
     if blinding in UNBLINDABLE_STRATEGIES:
         userprint(f"'{blinding}' correlations are not blinded.")
-        blinding = 'none'
-        data_name = 'DA'
-        dmat_name = 'DM'
+        blinding = "none"
+        data_name = "DA"
+        dmat_name = "DM"
 
     # Check if we need blinding and apply it
-    if 'BLIND' in data_name or blinding != 'none':
-        blinding_dir = '/global/cfs/projectdirs/desi/science/lya/lya_blinding/bao/'
-        blinding_templates = {'desi_dr3': {'standard': 'dr3_blinding_v4_standard_28_05_2026.h5',
-                                           'grid': 'dr3_blinding_v4_regular_grid_28_05_2026.h5'}}
+    if "BLIND" in data_name or blinding != "none":
+        blinding_dir = "/global/cfs/projectdirs/desi/science/lya/lya_blinding/bao/"
+        blinding_templates = {
+            "desi_dr3": {
+                "standard": "dr3_blinding_v4_standard_28_05_2026.h5",
+                "grid": "dr3_blinding_v4_regular_grid_28_05_2026.h5",
+            }
+        }
 
         if blinding in blinding_templates:
             userprint(f"Blinding using seed for {blinding}")
         else:
-            raise ValueError(f"Expected blinding to be one of {blinding_templates.keys()}."
-                             f" Found {blinding}.")
+            raise ValueError(
+                f"Expected blinding to be one of {blinding_templates.keys()}."
+                f" Found {blinding}."
+            )
 
         if args.blind_corr_type is None:
-            raise ValueError("Blinding requires argument --blind_corr_type.")
+            raise ValueError("Blinding requires argument --blind-corr-type.")
+        else:
+            blind_corr_type = args.blind_corr_type
+            # match name expected in blinding template file
+            if blind_corr_type == "qsoxlya":
+                blind_corr_type = "lyaxqso"
+            if blind_corr_type == "qsoxlyb":
+                blind_corr_type = "lybxqso"
 
         # Check type of correlation and get size and regular binning
-        if args.blind_corr_type in ['lyaxlya', 'lyaxlyb']:
+        if blind_corr_type in ["lyaxlya", "lyaxlyb"]:
             corr_size = 2500
-            rp_interp_grid = np.arange(2., 202., 4)
-            rt_interp_grid = np.arange(2., 202., 4)
-        elif args.blind_corr_type in ['qsoxlya', 'qsoxlyb']:
+            rp_interp_grid = np.arange(2.0, 202.0, 4)
+            rt_interp_grid = np.arange(2.0, 202.0, 4)
+        elif blind_corr_type in ["lyaxqso", "lybxqso"]:
             corr_size = 5000
             rp_interp_grid = np.arange(-197.99, 202.01, 4)
-            rt_interp_grid = np.arange(2., 202, 4)
+            rt_interp_grid = np.arange(2.0, 202, 4)
         else:
-            raise ValueError("Unknown correlation type: {}".format(args.blind_corr_type))
+            raise ValueError("Unknown correlation type: {}".format(blind_corr_type))
 
         if corr_size == num_bins_r_par * num_bins_r_trans:
             # Read the blinding file and get the right template
-            blinding_filename = blinding_dir + blinding_templates[blinding]['standard']
+            blinding_filename = blinding_dir + blinding_templates[blinding]["standard"]
         else:
             # Read the regular grid blinding file and get the right template
-            blinding_filename = blinding_dir + blinding_templates[blinding]['grid']
+            blinding_filename = blinding_dir + blinding_templates[blinding]["grid"]
 
         if not os.path.isfile(blinding_filename):
-            raise RuntimeError("Missing blinding file. Make sure you are running at"
-                               " NERSC or contact picca developers")
-        blinding_file = h5py.File(blinding_filename, 'r')
-        hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
+            raise RuntimeError(
+                "Missing blinding file. Make sure you are running at"
+                " NERSC or contact picca developers"
+            )
+        blinding_file = h5py.File(blinding_filename, "r")
+        hex_diff = np.array(blinding_file["blinding"][blind_corr_type]).astype(str)
         diff_grid = np.array([float.fromhex(x) for x in hex_diff])
 
         if corr_size == num_bins_r_par * num_bins_r_trans:
@@ -457,31 +528,50 @@ def main(cmdargs=None):
         else:
             # Interpolate the blinding template on the regular grid
             interp = scipy.interpolate.RectBivariateSpline(
-                rp_interp_grid, rt_interp_grid,
+                rp_interp_grid,
+                rt_interp_grid,
                 diff_grid.reshape(len(rp_interp_grid), len(rt_interp_grid)),
-                kx=3, ky=3)
+                kx=3,
+                ky=3,
+            )
             diff = interp.ev(r_par, r_trans)
 
         if args.multipoles:
             diff = calculate_xi_ell(
-                ells_out, diff, [], num_bins_r_par, is_x_correlation)[0]
+                ells_out, diff, [], num_bins_r_par, is_x_correlation
+            )[0]
 
         # Check that the shapes match
         if np.shape(xi) != np.shape(diff):
-            raise RuntimeError("Unknown binning or wrong correlation type. Cannot blind."
-                               " Please raise an issue or contact picca developers.")
+            raise RuntimeError(
+                "Unknown binning or wrong correlation type. Cannot blind."
+                " Please raise an issue or contact picca developers."
+            )
 
         # Add blinding
         xi = xi + diff
 
-    results.write([xi, r_par, r_trans, z, covariance, dmat, num_pairs],
-                  names=[data_name, 'RP', 'RT', 'Z', 'CO', dmat_name, 'NB'],
-                  comment=comment,
-                  header=header,
-                  extname='COR')
-    comment = ['R-parallel model', 'R-transverse model', 'Redshift model']
-    results.write([r_par_dmat, r_trans_dmat, z_dmat],
-                  names=['DMRP', 'DMRT', 'DMZ'],
-                  comment=comment,
-                  extname='DMATTRI')
+    results.write(
+        [xi, r_par, r_trans, z, covariance, dmat, num_pairs],
+        names=[data_name, "RP", "RT", "Z", "CO", dmat_name, "NB"],
+        comment=comment,
+        header=header,
+        extname="COR",
+    )
+    comment = ["R-parallel model", "R-transverse model", "Redshift model"]
+    results.write(
+        [r_par_dmat, r_trans_dmat, z_dmat],
+        names=["DMRP", "DMRT", "DMZ"],
+        comment=comment,
+        extname="DMATTRI",
+    )
     results.close()
+
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)
+
+if __name__ == "__main__":
+    cmdargs = sys.argv[1:]
+    main(cmdargs)
