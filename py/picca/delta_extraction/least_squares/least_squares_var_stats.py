@@ -61,6 +61,7 @@ class LeastsSquaresVarStats:
         forests,
         log_lambda_var_func_grid,
         min_num_qso_in_fit,
+        reduce_sum=None,
     ):
         """Initialize class instances
 
@@ -79,10 +80,19 @@ class LeastsSquaresVarStats:
         min_num_qso_in_fit: int
         Minimum number of quasars contributing to a bin of wavelength and pipeline
         variance in order to consider it in the fit
+
+        reduce_sum: callable or None - default: None
+        Hook used to combine the delta-statistics accumulators across parallel
+        workers before they are normalised. In the serial (or multiprocessing)
+        case a single worker holds all the forests, so this defaults to the
+        identity. MPI-enabled callers pass an Allreduce-sum so that the fitted
+        statistics are the sample-wide ones.
         """
         self.num_bins_variance = num_bins_variance
         self.log_lambda_var_func_grid = log_lambda_var_func_grid
         self.min_num_qso_in_fit = min_num_qso_in_fit
+        self.reduce_sum = reduce_sum if reduce_sum is not None else (
+            lambda array: array)
 
         # define an array to contain the possible values of pipeline variances
         # the measured pipeline variance of the deltas will be averaged using the
@@ -182,6 +192,14 @@ class LeastsSquaresVarStats:
 
             num_pixels += np.bincount(bins, minlength=mean_delta.size)
             num_qso[np.unique(bins)] += 1
+
+        # combine the per-worker partial sums into the global sample sums before
+        # normalising (no-op in the serial case, Allreduce-sum under MPI)
+        mean_delta = self.reduce_sum(mean_delta)
+        var_delta = self.reduce_sum(var_delta)
+        var2_delta = self.reduce_sum(var2_delta)
+        num_pixels = self.reduce_sum(num_pixels)
+        num_qso = self.reduce_sum(num_qso)
 
         # normalise and finish the computation of delta statistics
         w = num_pixels > 0

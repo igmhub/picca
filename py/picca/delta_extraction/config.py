@@ -370,9 +370,14 @@ class Config:
                               "is required")
         module_name = section.get("module name")
         if module_name is None:
-            module_name = re.sub('(?<!^)(?=[A-Z])', '_',
-                                 expected_flux_name).lower()
-            module_name = f"picca.delta_extraction.expected_fluxes.{module_name.lower()}"
+            # MPI variants (name ending in "Mpi") are generated on demand by a
+            # single factory module rather than living in one file each
+            if expected_flux_name.endswith("Mpi"):
+                module_name = "picca.delta_extraction.expected_fluxes.mpi"
+            else:
+                module_name = re.sub('(?<!^)(?=[A-Z])', '_',
+                                     expected_flux_name).lower()
+                module_name = f"picca.delta_extraction.expected_fluxes.{module_name.lower()}"
         try:
             (ExpectedFluxType, default_args,
              accepted_options) = class_from_string(expected_flux_name,
