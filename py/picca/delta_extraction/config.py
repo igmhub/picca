@@ -175,15 +175,19 @@ class Config:
         self.initialize_folders()
 
         # setup logger. Under MPI each rank writes its own log file so that the
-        # ranks do not clobber a single run.log (opened in write mode).
+        # ranks do not clobber a single run.log (opened in write mode), and only
+        # rank 0 writes to the console so that stdout stays a single clean stream.
         rank, mpi_size, _ = self.mpi_comm()
         log_file = self.log
+        add_console = True
         if mpi_size > 1:
             root, extension = os.path.splitext(self.log)
             log_file = f"{root}_rank{rank}{extension}"
+            add_console = rank == 0
         setup_logger(logging_level_console=self.logging_level_console,
                      log_file=log_file,
-                     logging_level_file=self.logging_level_file)
+                     logging_level_file=self.logging_level_file,
+                     add_console=add_console)
 
     def __format_corrections_section(self):
         """Format the corrections section of the parser into usable data
