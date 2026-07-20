@@ -174,9 +174,15 @@ class Config:
         # initialize folders where data will be saved
         self.initialize_folders()
 
-        # setup logger
+        # setup logger. Under MPI each rank writes its own log file so that the
+        # ranks do not clobber a single run.log (opened in write mode).
+        rank, mpi_size, _ = self.mpi_comm()
+        log_file = self.log
+        if mpi_size > 1:
+            root, extension = os.path.splitext(self.log)
+            log_file = f"{root}_rank{rank}{extension}"
         setup_logger(logging_level_console=self.logging_level_console,
-                     log_file=self.log,
+                     log_file=log_file,
                      logging_level_file=self.logging_level_file)
 
     def __format_corrections_section(self):
@@ -613,6 +619,28 @@ class Config:
                     self.config[section][key] = value.replace(
                         value[:pos], os.getenv(value[1:pos]))
 
+    def mpi_comm(self):
+        """Return ``(rank, size, barrier)`` for the current run.
+
+        Under MPI the whole program runs on every rank, so the steps that write
+        shared files (folder creation, the .config.ini backup, run.log) must be
+        coordinated. When this is not an MPI run -- the data 'type' does not end
+        in 'Mpi', or mpi4py is unavailable, or there is a single rank -- this
+        returns rank 0, size 1 and a no-op barrier, preserving the serial
+        behaviour exactly.
+        """
+        data_type = ""
+        if self.config.has_section("data"):
+            data_type = self.config["data"].get("type", "")
+        if not data_type.endswith("Mpi"):
+            return 0, 1, lambda: None
+        try:
+            from mpi4py import MPI
+        except ImportError:  # pragma: no cover
+            return 0, 1, lambda: None
+        comm = MPI.COMM_WORLD
+        return comm.Get_rank(), comm.Get_size(), comm.Barrier
+
     def initialize_folders(self):
         """Initialize output folders
 
@@ -621,21 +649,25 @@ class Config:
         ConfigError if the output path was already used and the
         overwrite is not selected
         """
-        if not os.path.exists(f"{self.out_dir}/.config.ini"):
-            os.makedirs(self.out_dir, exist_ok=True)
-            os.makedirs(self.out_dir + "Delta/", exist_ok=True)
-            os.makedirs(self.out_dir + "Log/", exist_ok=True)
-            self.write_config()
-        elif self.overwrite:
-            os.makedirs(self.out_dir + "Delta/", exist_ok=True)
-            os.makedirs(self.out_dir + "Log/", exist_ok=True)
-            self.write_config()
-        else:
+        # Under MPI every rank runs this; only rank 0 creates the folders and
+        # writes the .config.ini backup (the rename is not safe to race), and
+        # all ranks wait until it is done.
+        rank, _, barrier = self.mpi_comm()
+
+        if os.path.exists(f"{self.out_dir}/.config.ini") and not self.overwrite:
             raise ConfigError("Specified folder contains a previous run. "
                               "Pass overwrite option in configuration file "
                               "in order to ignore the previous run or "
                               "change the output path variable to point "
                               f"elsewhere. Folder: {self.out_dir}")
+
+        if rank == 0:
+            os.makedirs(self.out_dir, exist_ok=True)
+            os.makedirs(self.out_dir + "Delta/", exist_ok=True)
+            os.makedirs(self.out_dir + "Log/", exist_ok=True)
+            self.write_config()
+
+        barrier()
 
     def write_config(self):
         """This function writes the configuration options for later
