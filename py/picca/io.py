@@ -356,8 +356,10 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None, orde
     if 'LAMBDA' in hdul:
         deltas = Delta.from_image(hdul, z_min_qso=z_min_qso, z_max_qso=z_max_qso, order=order)
     else:
-        deltas = [Delta.from_fitsio(hdu, order=order) 
-                  for hdu in hdul[1:] if z_min_qso<hdu.read_header()['Z']<z_max_qso]
+        deltas = [Delta.from_fitsio(hdu, order=order)
+                  for hdu in hdul[1:]
+                  if hdu.get_extname() != "METADATA"
+                  and z_min_qso<hdu.read_header()['Z']<z_max_qso]
 
     # Rebin
     if rebin_factor is not None:
