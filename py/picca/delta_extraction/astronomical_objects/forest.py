@@ -574,7 +574,14 @@ class Forest(AstronomicalObject):
             {
                 'name': 'WAVE_SOLUTION',
                 'value': Forest.wave_solution,
-                'comment': "Chosen wavelength solution (linnear or logarithmic)"
+                # Comment kept short on purpose: these keyword names are longer
+                # than 8 chars so cfitsio writes them with the HIERARCH
+                # convention, which leaves little room on the 80-char card. A
+                # long comment overflows the card and makes cfitsio apply the
+                # long-string CONTINUE convention to the (short) string value,
+                # producing a malformed "'lin     &'" card that corrupts the
+                # header (crashes strict fitsio builds on write).
+                'comment': "wavelength solution (lin/log)"
             },
         ]
 
@@ -586,7 +593,7 @@ class Forest(AstronomicalObject):
                     'value':
                         Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0],
                     'comment':
-                        "Pixel step in log lambda [log(Angstrom)]"
+                        "log-lambda pixel step"
                 },
             ]
         elif Forest.wave_solution == "lin":
@@ -598,7 +605,7 @@ class Forest(AstronomicalObject):
                         10**Forest.log_lambda_grid[1] -
                         10**Forest.log_lambda_grid[0],
                     'comment':
-                        "Pixel step in lambda [Angstrom]"
+                        "lambda pixel step [Ang]"
                 },
             ]
         else:
