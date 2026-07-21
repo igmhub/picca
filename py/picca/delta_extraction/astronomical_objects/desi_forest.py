@@ -130,14 +130,32 @@ class DesiForest(Forest):
                 'value': self.targetid,
                 'comment': 'Object identification'
             },
+            {
+                'name': 'NIGHT',
+                'value': ",".join(str(night) for night in self.night),
+                'comment': "Observation night(s)"
+            },
+            {
+                'name': 'PETAL',
+                'value': ",".join(str(petal) for petal in self.petal),
+                'comment': 'Observation petal(s)'
+            },
+            {
+                'name': 'TILEID',
+                'value': ",".join(str(tileid) for tileid in self.tileid),
+                'comment': 'Observation tile(s)'
+            },
+            {
+                'name': 'EXPID',
+                'value': ",".join(str(expid) for expid in self.expid),
+                'comment': 'Observation expid(s)'
+            },
+            {
+                'name': 'FIBER',
+                'value': ",".join(str(fiber) for fiber in self.fiber),
+                'comment': 'Observation fiber(s)'
+            },
         ]
-        # The per-exposure metadata (NIGHT, PETAL, TILEID, EXPID, FIBER) is NOT
-        # written as header keywords: as comma-joined lists they overflow the
-        # 80-char FITS header card when an object has many exposures (they become
-        # long CONTINUE strings which, combined with the HIERARCH long keyword
-        # names, corrupt the header and crash cfitsio). It is instead stored as
-        # columns of the METADATA HDU (see get_metadata / _save_deltas_one_healpix_table),
-        # exactly as in the ImageHDU format.
 
         return header
 

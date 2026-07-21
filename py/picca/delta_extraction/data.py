@@ -229,18 +229,6 @@ def _save_deltas_one_healpix_table(out_dir, healpix, forests):
                       units=units,
                       extname=str(forest.los_id))
 
-    # Per-forest metadata is stored as columns in a METADATA HDU (one row per
-    # forest), exactly as in the ImageHDU format. This keeps variable-length
-    # entries such as the DESI per-exposure NIGHT/EXPID/... lists out of the
-    # FITS header cards, where long values overflow and corrupt the header.
-    results.write(
-        np.array(
-            [tuple(forest.get_metadata()) for forest in forests],
-            dtype=forests[0].get_metadata_dtype(),
-        ),
-        units=forests[0].get_metadata_units(),
-        extname="METADATA")
-
     results.close()
 
     return forests
