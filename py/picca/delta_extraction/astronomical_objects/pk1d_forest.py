@@ -208,10 +208,8 @@ class Pk1dForest(Forest):
             },
             {
                 'name': 'MEANRESO_PIX',
-                # short comment: MEANRESO_PIX is a >8-char (HIERARCH) keyword,
-                # keep the card within 80 chars (see Forest.get_header)
                 'value': self.mean_reso_pix,
-                'comment': 'mean resolution (pix)'
+                'comment': 'Mean resolution (pixels)'
             },
         ]
 
