@@ -206,16 +206,43 @@ class Survey:
         self.config = Config(config_file)
         self.num_processors = self.config.num_processors
 
+    def _read_shared(self, build):
+        """Build a list of shared input objects (corrections or masks) once and
+        make it available on every rank.
+
+        These objects (calibration/DLA/BAL catalogues, ...) are read from disk
+        in their constructors and then applied per forest, so every rank needs
+        them. Under MPI, however, letting every rank build them means every rank
+        reads the same files at the same time, which is slow on a parallel
+        filesystem. Instead rank 0 builds them and broadcasts the result. Serial
+        runs build locally, unchanged.
+
+        Arguments
+        ---------
+        build: callable
+        Zero-argument function that builds and returns the list of objects.
+        """
+        _, size, _ = self.config.mpi_comm()
+        if size == 1:
+            return build()
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
+        result = build() if comm.Get_rank() == 0 else None
+        return comm.bcast(result, root=0)
+
     def read_corrections(self):
         """Read the spectral corrections."""
-        self.corrections = []
         t0 = time.time()
         num_corrections = self.config.num_corrections
         self.logger.info(f"Reading corrections. There are {num_corrections} corrections")
 
-        for CorrectionType, correction_arguments in self.config.corrections:
-            correction = CorrectionType(correction_arguments)
-            self.corrections.append(correction)
+        def build_corrections():
+            corrections = []
+            for CorrectionType, correction_arguments in self.config.corrections:
+                corrections.append(CorrectionType(correction_arguments))
+            return corrections
+
+        self.corrections = self._read_shared(build_corrections)
 
         t1 = time.time()
         self.logger.info(f"Time spent reading Corrections: {t1-t0}")
@@ -249,14 +276,17 @@ class Survey:
 
     def read_masks(self):
         """Read the spectral masks."""
-        self.masks = []
         t0 = time.time()
         num_masks = self.config.num_masks
         self.logger.info(f"Reading masks. There are {num_masks} masks")
 
-        for MaskType, mask_arguments in self.config.masks:
-            mask = MaskType(mask_arguments)
-            self.masks.append(mask)
+        def build_masks():
+            masks = []
+            for MaskType, mask_arguments in self.config.masks:
+                masks.append(MaskType(mask_arguments))
+            return masks
+
+        self.masks = self._read_shared(build_masks)
 
         t1 = time.time()
         self.logger.info(f"Time spent reading masks: {t1-t0}")
