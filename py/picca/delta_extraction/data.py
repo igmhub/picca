@@ -223,29 +223,30 @@ def _save_deltas_one_healpix_table(out_dir, healpix, forests):
         header = forest.get_header()
         cols, names, units, comments = forest.get_data()
 
-        # Write the full header while the table still has no rows, then append
-        # the data. Growing the header *after* the data has been written forces
-        # cfitsio to shift the data down to insert a new 2880-byte header block;
-        # that shift fails ("FITSIO status 107: tried to move past end of file")
-        # on some fitsio/cfitsio builds when the per-forest header spans more
-        # than one block (as it does for PK 1D). Building the header on the empty
-        # table avoids the shift. This produces a file identical to the previous
-        # results.write(...) call (whose per-column 'comment' argument was in any
-        # case ignored by fitsio).
-        dtype = np.dtype([
-            (name, col.dtype) if np.ndim(col) == 1 else
-            (name, col.dtype, np.shape(col)[1:])
-            for name, col in zip(names, cols)
-        ])
-        data = np.empty(len(cols[0]), dtype=dtype)
-        for name, col in zip(names, cols):
-            data[name] = col
+        # FITS header keywords cannot store non-finite values. Passing a NaN or
+        # inf to fitsio makes the write abort with
+        # "FITSIO status = 107: tried to move past end of file". Some per-forest
+        # summary quantities can legitimately come out NaN for degenerate lines
+        # of sight (e.g. the PK1D mean resolution when the resolution is
+        # undefined), so replace any non-finite header value with an undefined
+        # FITS keyword (value None) before writing. Finite values are untouched,
+        # so this does not change the output for well-behaved forests.
+        for record in header:
+            value = record.get("value")
+            try:
+                is_finite = np.isfinite(value)
+            except (TypeError, ValueError):
+                # non-numeric values (e.g. strings) are always fine to write
+                is_finite = True
+            if not is_finite:
+                record["value"] = None
 
-        results.create_table_hdu(dtype=dtype,
-                                 units=units,
-                                 extname=str(forest.los_id))
-        results[-1].write_keys(header)
-        results[-1].append(data)
+        results.write(cols,
+                      names=names,
+                      header=header,
+                      comment=comments,
+                      units=units,
+                      extname=str(forest.los_id))
 
     results.close()
 
