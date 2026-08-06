@@ -177,6 +177,9 @@ class Config:
         # setup logger. Under MPI each rank writes its own log file so that the
         # ranks do not clobber a single run.log (opened in write mode), and only
         # rank 0 writes to the console so that stdout stays a single clean stream.
+        # Rank 0 additionally writes the aggregate run.log (self.log), which is
+        # the equivalent of the single-process run.log since rank 0 runs the full
+        # pipeline (reductions, iteration outputs, ...).
         rank, mpi_size, _ = self.mpi_comm()
         log_file = self.log
         add_console = True
@@ -184,6 +187,8 @@ class Config:
             root, extension = os.path.splitext(self.log)
             log_file = f"{root}_rank{rank}{extension}"
             add_console = rank == 0
+            if rank == 0:
+                log_file = [log_file, self.log]
         setup_logger(logging_level_console=self.logging_level_console,
                      log_file=log_file,
                      logging_level_file=self.logging_level_file,
