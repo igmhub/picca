@@ -176,6 +176,15 @@ class DesiHealpixMpi(DesiHealpix):
 
         return is_mock
 
+    def log_sample_size(self, label):
+        """Log the whole-run sample size (summed over all ranks) once, on rank
+        0, so the aggregate run.log reports the global count rather than each
+        rank's healpix-subset count. All ranks must call this (collective sum).
+        """
+        total = self.comm.allreduce(len(self.forests))
+        if self.mpi_rank == 0:
+            self.logger.progress(f"{label} has {total} forests")
+
     def find_nside(self):
         """Determine nside such that there are 500 objs per pixel on average.
 

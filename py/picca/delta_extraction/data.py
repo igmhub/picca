@@ -552,6 +552,21 @@ class Data:
                 "required by Data")
         self.delta_extraction_single_exposure = config.get("delta extraction single exposure")
 
+    def log_sample_size(self, label):
+        """Log the number of forests currently in the sample.
+
+        Base (serial) implementation reports the local count. MPI-aware readers
+        override this to report the global total summed over all ranks, logged
+        once, so that the aggregate run.log carries the whole-run sample size
+        rather than per-rank subset counts.
+
+        Arguments
+        ---------
+        label: str
+        Description of the sample (e.g. "Input sample", "Accepted sample")
+        """
+        self.logger.progress(f"{label} has {len(self.forests)} forests")
+
     def filter_bad_cont_forests(self):
         """Remove forests where continuum could not be computed"""
         remove_indexs = []
@@ -571,11 +586,11 @@ class Data:
         for index in sorted(remove_indexs, reverse=True):
             del self.forests[index]
 
-        self.logger.progress(f"Accepted sample has {len(self.forests)} forests")
+        self.log_sample_size("Accepted sample")
 
     def filter_forests(self):
         """Remove forests that do not meet quality standards"""
-        self.logger.progress(f"Input sample has {len(self.forests)} forests")
+        self.log_sample_size("Input sample")
 
         remove_indexs = []
         for index, forest in enumerate(self.forests):
@@ -606,8 +621,7 @@ class Data:
             del self.forests[index]
 
         self.logger.progress("Removed forests that are too short")
-        self.logger.progress(
-            f"Remaining sample has {len(self.forests)} forests")
+        self.log_sample_size("Remaining sample")
 
     def find_nside(self):
         """Determines nside such that there are 500 objs per pixel on average."""
