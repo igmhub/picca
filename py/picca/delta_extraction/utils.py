@@ -232,8 +232,8 @@ def setup_logger(logging_level_console=logging.DEBUG,
     the logging module (i.e. CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET).
     Additionally, the user-defined levels PROGRESS and WARNING_OK are allowed.
 
-    log_file: str, list of str, or None
-    Log file(s) for logging. A list writes the same records to several files.
+    log_file: str or None
+    Log file for logging
 
     logging_level_file: int or str - Default: logging.DEBUG
     Logging level for the file handler. If str, it should be a Level from
@@ -272,19 +272,15 @@ def setup_logger(logging_level_console=logging.DEBUG,
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
-    # create file handler(s) which log messages to file. log_file may be a
-    # single filename or a list of filenames (e.g. under MPI rank 0 writes both
-    # its own run_rank0.log and the aggregate run.log).
+    # create file handler which logs messages to file
     if log_file is not None:
-        log_files = [log_file] if isinstance(log_file, str) else log_file
-        for one_log_file in log_files:
-            if os.path.exists(one_log_file):
-                newfilename = f'{one_log_file}.{os.path.getmtime(one_log_file)}'
-                os.rename(one_log_file, newfilename)
-            file_handler = logging.FileHandler(one_log_file, mode="w")
-            file_handler.setLevel(logging_level_file)
-            file_handler.setFormatter(formatter)
-            logger.addHandler(file_handler)
+        if os.path.exists(log_file):
+            newfilename = f'{log_file}.{os.path.getmtime(log_file)}'
+            os.rename(log_file, newfilename)
+        file_handler = logging.FileHandler(log_file, mode="w")
+        file_handler.setLevel(logging_level_file)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
 
     # sets up numba logger
     #logging.getLogger('numba').setLevel(logging.WARNING)

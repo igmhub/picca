@@ -80,6 +80,10 @@ def main(cmdargs=None):
     module_logger.info(f"Total time ellapsed: {t1-t0}")
     module_logger.info("Done")
 
+    # under MPI, gather the per-rank logs into the aggregate run.log (no-op
+    # otherwise)
+    survey.config.aggregate_mpi_logs()
+
 
 if __name__ == "__main__":
     cmdargs = sys.argv[1:]
