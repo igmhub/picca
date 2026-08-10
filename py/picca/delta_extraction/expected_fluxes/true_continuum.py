@@ -533,6 +533,11 @@ class TrueContinuum(ExpectedFlux):
             var_lss[log_lambda_bins] += deltas**2 - var_pipe
             counts[log_lambda_bins] += 1
 
+        # combine the per-worker partial sums into the global sample sums
+        # (no-op in the serial case, Allreduce-sum under MPI)
+        var_lss = self.reduce_sum(var_lss)
+        counts = self.reduce_sum(counts)
+
         w = counts > 0
         var_lss[w] /= counts[w]
         self.get_var_lss = interp1d(Forest.log_lambda_grid[w],
