@@ -20,6 +20,11 @@ from picca.delta_extraction.mask import Mask
 from picca.delta_extraction.utils import class_from_string, setup_logger
 
 try:
+    from mpi4py import MPI
+except ImportError:  # pragma: no cover
+    MPI = None
+
+try:
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     PICCA_BASE = THIS_DIR.split("py/picca")[0]
     git_hash = git.Repo(PICCA_BASE).head.object.hexsha
@@ -641,11 +646,7 @@ class Config:
         data_type = ""
         if self.config.has_section("data"):
             data_type = self.config["data"].get("type", "")
-        if not data_type.endswith("Mpi"):
-            return 0, 1, lambda: None
-        try:
-            from mpi4py import MPI
-        except ImportError:  # pragma: no cover
+        if MPI is None or not data_type.endswith("Mpi"):
             return 0, 1, lambda: None
         comm = MPI.COMM_WORLD
         return comm.Get_rank(), comm.Get_size(), comm.Barrier

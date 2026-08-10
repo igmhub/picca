@@ -12,6 +12,11 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.config import Config
 from picca.delta_extraction.errors import DeltaExtractionError
 
+try:
+    from mpi4py import MPI
+except ImportError:  # pragma: no cover
+    MPI = None
+
 # create logger
 module_logger = logging.getLogger(__name__)
 
@@ -225,7 +230,6 @@ class Survey:
         _, size, _ = self.config.mpi_comm()
         if size == 1:
             return build()
-        from mpi4py import MPI
         comm = MPI.COMM_WORLD
         result = build() if comm.Get_rank() == 0 else None
         return comm.bcast(result, root=0)
