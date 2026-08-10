@@ -136,7 +136,9 @@ class DesiHealpixMpi(DesiHealpix):
             self.logger.info(
                 f"reading data from {len(arguments)} files "
                 f"decomposed by healpix over {self.mpi_size} MPI ranks")
-        self.logger.progress(
+        # per-rank diagnostic: keep it at debug so it does not clutter the
+        # serial-like run.log (it still reaches each rank's run_rank<n>.log)
+        self.logger.debug(
             f"rank {self.mpi_rank} owns {num_owned} files")
 
         reader = DesiHealpixFileHandler(self.analysis_type,
@@ -184,6 +186,21 @@ class DesiHealpixMpi(DesiHealpix):
         total = self.comm.allreduce(len(self.forests))
         if self.mpi_rank == 0:
             self.logger.progress(f"{label} has {total} forests")
+
+    def log_rejections(self, messages):
+        """Gather the per-forest rejection messages from every rank onto rank 0,
+        which logs them all to the aggregate run.log so it lists every rejected
+        forest. Non-root ranks still log their own to their run_rank<n>.log. All
+        ranks must call this (collective gather).
+        """
+        gathered = self.comm.gather(messages, root=0)
+        if self.mpi_rank == 0:
+            for rank_messages in gathered:
+                for message in rank_messages:
+                    self.logger.progress(message)
+        else:
+            for message in messages:
+                self.logger.progress(message)
 
     def find_nside(self):
         """Determine nside such that there are 500 objs per pixel on average.

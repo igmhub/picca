@@ -174,19 +174,21 @@ class Config:
         # initialize folders where data will be saved
         self.initialize_folders()
 
-        # setup logger. Under MPI each rank writes its own log file so that the
-        # ranks do not clobber a single run.log (opened in write mode), and only
-        # rank 0 writes to the console so that stdout stays a single clean stream.
-        # The aggregate run.log (self.log), which holds the same information as a
-        # serial run.log, is rebuilt from the per-rank files at the end of the
-        # run by aggregate_mpi_logs().
+        # setup logger. Under MPI rank 0 writes the aggregate run.log (self.log)
+        # -- which reads like a serial run.log because rank 0 logs the global
+        # reduced quantities (nside, sample sizes, variance functions, ...) and
+        # the per-forest rejection messages are gathered onto it (see
+        # Data.log_rejections). The other ranks write their own run_rank<n>.log
+        # for per-rank debugging, and only rank 0 writes to the console so that
+        # stdout stays a single clean stream.
         rank, mpi_size, _ = self.mpi_comm()
         log_file = self.log
         add_console = True
         if mpi_size > 1:
-            root, extension = os.path.splitext(self.log)
-            log_file = f"{root}_rank{rank}{extension}"
             add_console = rank == 0
+            if rank != 0:
+                root, extension = os.path.splitext(self.log)
+                log_file = f"{root}_rank{rank}{extension}"
         setup_logger(logging_level_console=self.logging_level_console,
                      log_file=log_file,
                      logging_level_file=self.logging_level_file,
@@ -647,32 +649,6 @@ class Config:
             return 0, 1, lambda: None
         comm = MPI.COMM_WORLD
         return comm.Get_rank(), comm.Get_size(), comm.Barrier
-
-    def aggregate_mpi_logs(self):
-        """Rebuild the aggregate run.log from the per-rank log files.
-
-        Under MPI each rank logs to its own run_rank<n>.log, so no single file
-        holds the whole run. This concatenates them (rank 0 first, then 1, 2,
-        ...) into self.log, so that run.log carries the same information as a
-        serial run. Called once at the very end of the program. No-op when not
-        running under MPI.
-        """
-        rank, size, barrier = self.mpi_comm()
-        if size == 1:
-            return
-        # make sure every rank has flushed its own run_rank<n>.log to disk
-        for handler in logging.getLogger("picca.delta_extraction").handlers:
-            handler.flush()
-        barrier()
-        if rank != 0:
-            return
-        root, extension = os.path.splitext(self.log)
-        with open(self.log, "w", encoding="utf-8") as aggregate:
-            for other_rank in range(size):
-                rank_log = f"{root}_rank{other_rank}{extension}"
-                if os.path.exists(rank_log):
-                    with open(rank_log, encoding="utf-8") as rank_file:
-                        aggregate.write(rank_file.read())
 
     def initialize_folders(self):
         """Initialize output folders

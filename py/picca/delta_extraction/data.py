@@ -567,16 +567,34 @@ class Data:
         """
         self.logger.progress(f"{label} has {len(self.forests)} forests")
 
+    def log_rejections(self, messages):
+        """Log the per-forest rejection messages collected during filtering.
+
+        Base (serial) implementation logs this rank's messages directly.
+        MPI-aware readers override this to gather the messages from every rank
+        onto rank 0, so the aggregate run.log lists all rejected forests (not
+        only rank 0's subset), while each rank still records its own in its
+        run_rank<n>.log.
+
+        Arguments
+        ---------
+        messages: list of str
+        Rejection messages for the forests removed on this rank.
+        """
+        for message in messages:
+            self.logger.progress(message)
+
     def filter_bad_cont_forests(self):
         """Remove forests where continuum could not be computed"""
         remove_indexs = []
+        rejection_messages = []
         for index, forest in enumerate(self.forests):
             if forest.bad_continuum_reason is not None:
                 # store information for logs
                 self.rejection_log.add_to_rejection_log(
                     forest, forest.bad_continuum_reason)
 
-                self.logger.progress(
+                rejection_messages.append(
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to continuum fitting problems. Reason: "
                     f"{forest.bad_continuum_reason}")
@@ -586,6 +604,7 @@ class Data:
         for index in sorted(remove_indexs, reverse=True):
             del self.forests[index]
 
+        self.log_rejections(rejection_messages)
         self.log_sample_size("Accepted sample")
 
     def filter_forests(self):
@@ -593,22 +612,23 @@ class Data:
         self.log_sample_size("Input sample")
 
         remove_indexs = []
+        rejection_messages = []
         for index, forest in enumerate(self.forests):
             if np.sum(forest.ivar > 0) < self.min_num_pix:
                 # store information for logs
                 self.rejection_log.add_to_rejection_log(forest, "short_forest")
-                self.logger.progress(
+                rejection_messages.append(
                     f"Rejected forest with los_id {forest.los_id} "
                     f"due to forest being too short ({forest.flux.size})")
             elif np.isnan((forest.flux * forest.ivar).sum()):
                 self.rejection_log.add_to_rejection_log(forest, "nan_forest")
-                self.logger.progress(
+                rejection_messages.append(
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to finding nan")
             elif forest.mean_snr < self.min_snr:
                 self.rejection_log.add_to_rejection_log(
                     forest, f"low SNR ({forest.mean_snr})")
-                self.logger.progress(
+                rejection_messages.append(
                     f"Rejected forest with los_id {forest.los_id} "
                     f"due to low SNR ({forest.mean_snr} < {self.min_snr})")
             else:
@@ -620,6 +640,7 @@ class Data:
         for index in sorted(remove_indexs, reverse=True):
             del self.forests[index]
 
+        self.log_rejections(rejection_messages)
         self.logger.progress("Removed forests that are too short")
         self.log_sample_size("Remaining sample")
 
