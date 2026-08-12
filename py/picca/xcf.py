@@ -30,6 +30,7 @@ num_model_bins_r_par = None
 num_model_bins_r_trans = None
 r_par_max = None
 r_par_min = None
+r_trans_min = 0.0
 r_trans_max = None
 z_min_pairs = None
 z_max_pairs = None
@@ -302,7 +303,7 @@ def compute_xi_forest_pairs_fast(
                 r_par /= r_trans
 
             if (r_par >= r_par_max or r_trans >= r_trans_max or
-                    r_par <= r_par_min):
+                    r_trans < r_trans_min or r_par <= r_par_min):
                 continue
 
             delta_times_weight = delta1[i] * weights1[i] * weights2[j]
@@ -311,7 +312,9 @@ def compute_xi_forest_pairs_fast(
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
             )
-            bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
+            bins_r_trans = np.floor(
+                (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+            )
             bins = int(bins_r_trans + num_bins_r_trans * bins_r_par)
 
             rebin_xi[bins] += delta_times_weight
@@ -461,7 +464,7 @@ def compute_dmat_forest_pairs_fast(
                 r_trans = np.sqrt(r_trans**2 + r_par**2)
                 r_par /= r_trans
             if (r_par >= r_par_max or r_trans >= r_trans_max or
-                    r_par <= r_par_min):
+                    r_trans < r_trans_min or r_par <= r_par_min):
                 continue
             num_pairs += 1
 
@@ -532,7 +535,7 @@ def compute_dmat_forest_pairs_fast(
                 r_par /= r_trans
 
             if (r_par >= r_par_max or r_trans >= r_trans_max or
-                    r_par < r_par_min):
+                    r_trans < r_trans_min or r_par < r_par_min):
                 continue
 
             weights12 = weights1[i] * weights2[j]
@@ -551,13 +554,17 @@ def compute_dmat_forest_pairs_fast(
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
             )
-            bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
+            bins_r_trans = np.floor(
+                (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+            )
             bins = int32(bins_r_trans + num_bins_r_trans * bins_r_par)
             model_bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_model_bins_r_par
             )
             model_bins_r_trans = np.floor(
-                r_trans / r_trans_max * num_model_bins_r_trans
+                (r_trans - r_trans_min)
+                / (r_trans_max - r_trans_min)
+                * num_model_bins_r_trans
             )
             model_bins = int32(
                 model_bins_r_trans + num_model_bins_r_trans * model_bins_r_par

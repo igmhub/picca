@@ -33,6 +33,7 @@ r_par_max = None
 r_par_min = None
 z_min_pairs = None
 z_max_pairs = None
+r_trans_min = 0.0
 r_trans_max = None
 ang_max = None
 nside = None
@@ -361,7 +362,8 @@ def compute_xi_forest_pairs_fast(
                 if not x_correlation:
                     r_par = np.abs(r_par)
 
-            if r_par >= r_par_max or r_trans >= r_trans_max or r_par < r_par_min:
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_trans < r_trans_min or r_par < r_par_min):
                 continue
 
             delta_times_weight1 = delta1[i] * weights1[i]
@@ -372,7 +374,9 @@ def compute_xi_forest_pairs_fast(
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
             )
-            bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
+            bins_r_trans = np.floor(
+                (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+            )
             bins = int(bins_r_trans + num_bins_r_trans * bins_r_par)
 
             if remove_same_half_plate_close_pairs and same_half_plate:
@@ -560,7 +564,8 @@ def compute_dmat_forest_pairs_fast(
                 r_par /= r_trans
             if not x_correlation:
                 r_par = np.abs(r_par)
-            if r_par >= r_par_max or r_trans >= r_trans_max or r_par < r_par_min:
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_trans < r_trans_min or r_par < r_par_min):
                 continue
             if remove_same_half_plate_close_pairs and same_half_plate:
                 if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
@@ -664,7 +669,8 @@ def compute_dmat_forest_pairs_fast(
                 r_par /= r_trans
             if not x_correlation:
                 r_par = np.abs(r_par)
-            if r_par >= r_par_max or r_trans >= r_trans_max or r_par < r_par_min:
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_trans < r_trans_min or r_par < r_par_min):
                 continue  # outside of model range, so not in matrix
             if remove_same_half_plate_close_pairs and same_half_plate:
                 if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
@@ -687,13 +693,17 @@ def compute_dmat_forest_pairs_fast(
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
             )
-            bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
+            bins_r_trans = np.floor(
+                (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+            )
             bins = int32(bins_r_trans + num_bins_r_trans * bins_r_par)
             model_bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_model_bins_r_par
             )
             model_bins_r_trans = np.floor(
-                r_trans / r_trans_max * num_model_bins_r_trans
+                (r_trans - r_trans_min)
+                / (r_trans_max - r_trans_min)
+                * num_model_bins_r_trans
             )
             model_bins = int32(
                 model_bins_r_trans + num_model_bins_r_trans * model_bins_r_par

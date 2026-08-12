@@ -152,6 +152,7 @@ def main(cmdargs=None):
     head = hdul[1].read_header()
     num_bins_r_par = head["NP"]
     num_bins_r_trans = head["NT"]
+    r_trans_min = head["RTMIN"] if "RTMIN" in head else 0.0
     r_trans_max = head["RTMAX"]
     r_par_min = head["RPMIN"]
     r_par_max = head["RPMAX"]
@@ -346,7 +347,8 @@ def main(cmdargs=None):
             assert head_dmat["RMU_BIN"]
             nmu_dmat = head_dmat["NP"] * head_dmat["COEFMOD"]
             nr_dmat = head_dmat["NT"] * head_dmat["COEFMOD"]
-            dr_dmat = head_dmat["RTMAX"] / nr_dmat
+            r_trans_min_dmat = head_dmat["RTMIN"] if "RTMIN" in head_dmat else 0.0
+            dr_dmat = (head_dmat["RTMAX"] - r_trans_min_dmat) / nr_dmat
             ells_model = np.arange(args.lmax_model + 1)
             if not is_x_correlation:
                 ells_model = ells_model[ells_model % 2 == 0]
@@ -354,7 +356,7 @@ def main(cmdargs=None):
 
             # From model multipoles to transverse-radial interpolation matrix.
             ell_to_tr_matrix = legvander(r_par_dmat, args.lmax_model)[:, ells_model]
-            cols = np.floor(r_trans_dmat / dr_dmat).astype(int)
+            cols = np.floor((r_trans_dmat - r_trans_min_dmat) / dr_dmat).astype(int)
             cols = np.repeat(cols, nell_model) + np.tile(
                 np.arange(nell_model) * nr_dmat, cols.size
             )
@@ -410,6 +412,7 @@ def main(cmdargs=None):
         },
         {"name": "RPMIN", "value": r_par_min, "comment": "Minimum r-parallel"},
         {"name": "RPMAX", "value": r_par_max, "comment": "Maximum r-parallel"},
+        {"name": "RTMIN", "value": r_trans_min, "comment": "Minimum r-transverse"},
         {"name": "RTMAX", "value": r_trans_max, "comment": "Maximum r-transverse"},
         {
             "name": "NP",
