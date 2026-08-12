@@ -6,7 +6,6 @@ import unittest
 import os
 import importlib
 import numpy as np
-import fitsio
 
 from picca.utils import userprint
 
@@ -47,7 +46,6 @@ def reset_cf():
     picca.cf.r_par_min = None
     picca.cf.z_min_pairs = None
     picca.cf.z_max_pairs = None
-    picca.cf.r_trans_min = 0.0
     picca.cf.r_trans_max = None
     picca.cf.ang_max = None
     picca.cf.nside = None
@@ -96,7 +94,6 @@ def reset_xcf():
     picca.xcf.r_par_min = None
     picca.xcf.z_min_pairs = None
     picca.xcf.z_max_pairs = None
-    picca.xcf.r_trans_min = 0.0
     picca.xcf.r_trans_max = None
     picca.xcf.ang_max = None
     picca.xcf.nside = None
@@ -158,95 +155,6 @@ class TestCor(AbstractTest):
                 os.mkdir(self._branchFiles + fold)
 
         return
-
-    def assert_rt_min_output(
-        self, filename, num_bins_r_par, num_bins_r_trans, rt_min
-    ):
-        """Assert a correlation or distortion output respects its transverse cut."""
-        with fitsio.FITS(filename) as hdul:
-            header = hdul[1].read_header()
-            self.assertEqual(header["RTMIN"], rt_min)
-
-            r_trans = hdul[1 if "NB" in hdul[1].get_colnames() else 2]["RT"][:]
-            self.assertEqual(r_trans.size, num_bins_r_par * num_bins_r_trans)
-            self.assertTrue(np.any(r_trans > 0.0))
-            self.assertTrue(np.all(r_trans[r_trans > 0.0] >= rt_min))
-
-    def test_rt_min(self):
-        """Test minimum transverse separation for correlation functions and dmat."""
-        rt_min = 30.0
-        rt_max = 60.0
-        in_dir = self._masterFiles + "/test_delta/Delta_LYA/"
-        attributes = self._masterFiles + "/test_delta/delta_attributes.fits.gz"
-        catalogue = self._masterFiles + "/test_delta/cat.fits"
-        output_dir = self._branchFiles + "/Products/Correlations/"
-
-        importlib.reload(picca.cf)
-        picca.bin.picca_cf.main([
-            "--in-dir", in_dir, "--out", output_dir + "cf_rt_min.fits.gz",
-            "--rp-min", "0.0", "--rp-max", "60.0", "--rt-min", str(rt_min),
-            "--rt-max", str(rt_max), "--np", "15", "--nt", "15", "--nproc", "1",
-            "--in-attributes", attributes,
-        ])
-        self.assert_rt_min_output(
-            output_dir + "cf_rt_min.fits.gz", 15, 15, rt_min
-        )
-
-        importlib.reload(picca.cf)
-        picca.bin.picca_dmat.main([
-            "--in-dir", in_dir, "--out", output_dir + "dmat_rt_min.fits.gz",
-            "--rp-min", "0.0", "--rp-max", "60.0", "--rt-min", str(rt_min),
-            "--rt-max", str(rt_max), "--np", "15", "--nt", "15", "--rej", "0.99",
-            "--nproc", "1", "--no-redshift-evolution", "--in-attributes",
-            attributes,
-        ])
-        self.assert_rt_min_output(
-            output_dir + "dmat_rt_min.fits.gz", 15, 15, rt_min
-        )
-
-        importlib.reload(picca.xcf)
-        picca.bin.picca_xcf.main([
-            "--in-dir", in_dir, "--drq", catalogue,
-            "--out", output_dir + "xcf_rt_min.fits.gz", "--rp-min", "-60.0",
-            "--rp-max", "60.0", "--rt-min", str(rt_min), "--rt-max", str(rt_max),
-            "--np", "30", "--nt", "15", "--nproc", "1", "--z-evol-obj", "1.0",
-            "--in-attributes", attributes,
-        ])
-        self.assert_rt_min_output(
-            output_dir + "xcf_rt_min.fits.gz", 30, 15, rt_min
-        )
-
-        importlib.reload(picca.xcf)
-        picca.bin.picca_xdmat.main([
-            "--in-dir", in_dir, "--drq", catalogue,
-            "--out", output_dir + "xdmat_rt_min.fits.gz", "--rp-min", "-60.0",
-            "--rp-max", "60.0", "--rt-min", str(rt_min), "--rt-max", str(rt_max),
-            "--np", "30", "--nt", "15", "--rej", "0.99", "--nproc", "1",
-            "--z-evol-obj", "1.0", "--no-redshift-evolution", "--in-attributes",
-            attributes,
-        ])
-        self.assert_rt_min_output(
-            output_dir + "xdmat_rt_min.fits.gz", 30, 15, rt_min
-        )
-
-        importlib.reload(picca.cf)
-        picca.bin.picca_cf.main([
-            "--in-dir", in_dir, "--out", output_dir + "cf_rmu_rt_min.fits.gz",
-            "--rt-min", str(rt_min), "--rt-max", str(rt_max), "--np", "15",
-            "--nt", "15", "--nproc", "1", "--rmu-binning", "--in-attributes",
-            attributes,
-        ])
-        self.assert_rt_min_output(
-            output_dir + "cf_rmu_rt_min.fits.gz", 15, 15, rt_min
-        )
-
-        picca.bin.picca_export.main([
-            "--data", output_dir + "cf_rt_min.fits.gz", "--dmat",
-            output_dir + "dmat_rt_min.fits.gz", "--out",
-            output_dir + "exported_cf_rt_min.fits.gz",
-        ])
-        with fitsio.FITS(output_dir + "exported_cf_rt_min.fits.gz") as hdul:
-            self.assertEqual(hdul[1].read_header()["RTMIN"], rt_min)
 
     def test_cf1d(self):
         """
@@ -545,10 +453,6 @@ class TestCor(AbstractTest):
         cmd += " --out " + self._branchFiles + "/Products/Correlations/exported_cf.fits.gz"
         print(repr(cmd))
         picca.bin.picca_export.main(cmd.split()[1:])
-        with fitsio.FITS(
-            self._branchFiles + "/Products/Correlations/exported_cf.fits.gz"
-        ) as hdul:
-            self.assertEqual(hdul[1].read_header()["RTMIN"], 0.0)
         return
 
     def test_cf_cross(self):
