@@ -95,6 +95,14 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
+        "--rt-min",
+        type=float,
+        default=0.0,
+        required=False,
+        help="Min r-transverse [h^-1 Mpc] (min radial separation with --rmu-binning)",
+    )
+
+    parser.add_argument(
         "--rt-max",
         type=float,
         default=200.0,
@@ -338,6 +346,8 @@ def main(cmdargs=None):
     )
 
     args = parser.parse_args(cmdargs)
+    if args.rt_min < 0.0 or args.rt_min >= args.rt_max:
+        raise ValueError("--rt-min must be non-negative and smaller than --rt-max")
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -351,6 +361,7 @@ def main(cmdargs=None):
 
     xcf.r_par_max = args.rp_max
     xcf.r_par_min = args.rp_min
+    xcf.r_trans_min = args.rt_min
     xcf.r_trans_max = args.rt_max
     xcf.z_min_pairs = args.z_min_pairs
     xcf.z_max_pairs = args.z_max_pairs
@@ -516,6 +527,11 @@ def main(cmdargs=None):
             "name": "RPMAX",
             "value": xcf.r_par_max,
             "comment": "Maximum r-parallel [h^-1 Mpc]",
+        },
+        {
+            "name": "RTMIN",
+            "value": xcf.r_trans_min,
+            "comment": "Minimum r-transverse [h^-1 Mpc]",
         },
         {
             "name": "RTMAX",

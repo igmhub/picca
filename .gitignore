@@ -19,3 +19,5 @@ py/picca\.egg-info/
 py/picca/tests/delta_extraction/results/
 
 *.drawio.bkp
+
+AGENTS.md

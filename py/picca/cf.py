@@ -33,6 +33,7 @@ r_par_max = None
 r_par_min = None
 z_min_pairs = None
 z_max_pairs = None
+r_trans_min = 0.0
 r_trans_max = None
 ang_max = None
 nside = None
@@ -361,7 +362,8 @@ def compute_xi_forest_pairs_fast(
                 if not x_correlation:
                     r_par = np.abs(r_par)
 
-            if r_par >= r_par_max or r_trans >= r_trans_max or r_par < r_par_min:
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_trans < r_trans_min or r_par < r_par_min):
                 continue
 
             delta_times_weight1 = delta1[i] * weights1[i]
@@ -372,7 +374,9 @@ def compute_xi_forest_pairs_fast(
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
             )
-            bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
+            bins_r_trans = np.floor(
+                (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+            )
             bins = int(bins_r_trans + num_bins_r_trans * bins_r_par)
 
             if remove_same_half_plate_close_pairs and same_half_plate:
@@ -560,7 +564,8 @@ def compute_dmat_forest_pairs_fast(
                 r_par /= r_trans
             if not x_correlation:
                 r_par = np.abs(r_par)
-            if r_par >= r_par_max or r_trans >= r_trans_max or r_par < r_par_min:
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_trans < r_trans_min or r_par < r_par_min):
                 continue
             if remove_same_half_plate_close_pairs and same_half_plate:
                 if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
@@ -664,7 +669,8 @@ def compute_dmat_forest_pairs_fast(
                 r_par /= r_trans
             if not x_correlation:
                 r_par = np.abs(r_par)
-            if r_par >= r_par_max or r_trans >= r_trans_max or r_par < r_par_min:
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_trans < r_trans_min or r_par < r_par_min):
                 continue  # outside of model range, so not in matrix
             if remove_same_half_plate_close_pairs and same_half_plate:
                 if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
@@ -687,13 +693,17 @@ def compute_dmat_forest_pairs_fast(
             bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
             )
-            bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
+            bins_r_trans = np.floor(
+                (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+            )
             bins = int32(bins_r_trans + num_bins_r_trans * bins_r_par)
             model_bins_r_par = np.floor(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_model_bins_r_par
             )
             model_bins_r_trans = np.floor(
-                r_trans / r_trans_max * num_model_bins_r_trans
+                (r_trans - r_trans_min)
+                / (r_trans_max - r_trans_min)
+                * num_model_bins_r_trans
             )
             model_bins = int32(
                 model_bins_r_trans + num_model_bins_r_trans * model_bins_r_par
@@ -1005,7 +1015,11 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 bins_r_par = np.floor(
                     (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
                 ).astype(int)
-                bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+                bins_r_trans = (
+                    (r_trans - r_trans_min)
+                    / (r_trans_max - r_trans_min)
+                    * num_bins_r_trans
+                ).astype(int)
 
                 if remove_same_half_plate_close_pairs and same_half_plate:
                     weights12[abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par] = (
@@ -1017,6 +1031,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     (bins_r_par < num_bins_r_par)
                     & (bins_r_trans < num_bins_r_trans)
                     & (bins_r_par >= 0)
+                    & (bins_r_trans >= 0)
                 )
                 rebin = np.bincount(bins[w], weights=weights12[w])
                 weights_dmat[: len(rebin)] += rebin
@@ -1043,7 +1058,9 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     * num_model_bins_r_par
                 ).astype(int)
                 model_bins_r_trans = (
-                    r_trans_abs1_abs2 / r_trans_max * num_model_bins_r_trans
+                    (r_trans_abs1_abs2 - r_trans_min)
+                    / (r_trans_max - r_trans_min)
+                    * num_model_bins_r_trans
                 ).astype(int)
                 model_bins = (
                     model_bins_r_trans + num_model_bins_r_trans * model_bins_r_par
@@ -1052,6 +1069,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     (model_bins_r_par < num_model_bins_r_par)
                     & (model_bins_r_trans < num_model_bins_r_trans)
                     & (model_bins_r_par >= 0)
+                    & (model_bins_r_trans >= 0)
                 )
                 rebin = np.bincount(
                     (
@@ -1133,9 +1151,11 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     bins_r_par = np.floor(
                         (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
                     ).astype(int)
-                    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(
-                        int
-                    )
+                    bins_r_trans = (
+                        (r_trans - r_trans_min)
+                        / (r_trans_max - r_trans_min)
+                        * num_bins_r_trans
+                    ).astype(int)
                     if remove_same_half_plate_close_pairs and same_half_plate:
                         weights12[
                             abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par
@@ -1145,6 +1165,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                         (bins_r_par < num_bins_r_par)
                         & (bins_r_trans < num_bins_r_trans)
                         & (bins_r_par >= 0)
+                        & (bins_r_trans >= 0)
                     )
                     rebin = np.bincount(bins[w], weights=weights12[w])
                     weights_dmat[: len(rebin)] += rebin
@@ -1169,7 +1190,9 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                         * num_model_bins_r_par
                     ).astype(int)
                     model_bins_r_trans = (
-                        r_trans_abs2_abs1 / r_trans_max * num_model_bins_r_trans
+                        (r_trans_abs2_abs1 - r_trans_min)
+                        / (r_trans_max - r_trans_min)
+                        * num_model_bins_r_trans
                     ).astype(int)
                     model_bins = (
                         model_bins_r_trans + num_model_bins_r_trans * model_bins_r_par
@@ -1178,6 +1201,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                         (model_bins_r_par < num_model_bins_r_par)
                         & (model_bins_r_trans < num_model_bins_r_trans)
                         & (model_bins_r_par >= 0)
+                        & (model_bins_r_trans >= 0)
                     )
 
                     rebin = np.bincount(
@@ -1563,7 +1587,10 @@ def compute_wickT123_pairs(
                 r_par = abs(r_par)
             r_trans = (r_comov1[ind1] + r_comov2[ind2]) * np.sin(ang / 2)
             w[ind1, ind2] = (
-                (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
+                (r_par < r_par_max)
+                & (r_trans >= r_trans_min)
+                & (r_trans < r_trans_max)
+                & (r_par >= r_par_min)
             )
             if w[ind1, ind2] > 0:
                 wsum += 1
@@ -1590,7 +1617,9 @@ def compute_wickT123_pairs(
             bin_r_par = int(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
             )
-            bin_r_trans = int(r_trans / r_trans_max * num_bins_r_trans)
+            bin_r_trans = int(
+                (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+            )
             bins_forest[ind] = bin_r_trans + num_bins_r_trans * bin_r_par
             weights12[ind] = weights1[ind1] * weights2[ind2]
             weight1[ind] = weights1[ind1]
@@ -1702,13 +1731,20 @@ def compute_wickT45_pairs(
     r_trans = (r_comov1[:, None] + r_comov2) * np.sin(ang12 / 2.0)
     bins1_12 = (np.arange(r_comov1.size)[:, None] * np.ones(r_comov2.size)).astype(int)
     bins2_12 = (np.ones(r_comov1.size)[:, None] * np.arange(r_comov2.size)).astype(int)
-    w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
+    w = (
+        (r_par < r_par_max)
+        & (r_trans >= r_trans_min)
+        & (r_trans < r_trans_max)
+        & (r_par >= r_par_min)
+    )
     if w.sum() == 0:
         return
     bins_r_par = np.floor(
         (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
     ).astype(int)
-    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+    bins_r_trans = (
+        (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+    ).astype(int)
     bins_forest12 = bins_r_trans + num_bins_r_trans * bins_r_par
     bins_forest12[~w] = 0
     xi12 = xi_wick["{}_{}".format(fname1, fname2)][bins_forest12]
@@ -1725,13 +1761,20 @@ def compute_wickT45_pairs(
     r_trans = (r_comov1[:, None] + r_comov3) * np.sin(ang13 / 2.0)
     bins1_13 = (np.arange(r_comov1.size)[:, None] * np.ones(r_comov3.size)).astype(int)
     bins3_13 = (np.ones(r_comov1.size)[:, None] * np.arange(r_comov3.size)).astype(int)
-    w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
+    w = (
+        (r_par < r_par_max)
+        & (r_trans >= r_trans_min)
+        & (r_trans < r_trans_max)
+        & (r_par >= r_par_min)
+    )
     if w.sum() == 0:
         return
     bins_r_par = np.floor(
         (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
     ).astype(int)
-    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+    bins_r_trans = (
+        (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+    ).astype(int)
     bins_forest13 = bins_r_trans + num_bins_r_trans * bins_r_par
     bins_forest13[~w] = 0
     xi13 = xi_wick["{}_{}".format(fname1, fname3)][bins_forest12]
@@ -1748,13 +1791,20 @@ def compute_wickT45_pairs(
     r_trans = (r_comov2[:, None] + r_comov3) * np.sin(ang23 / 2.0)
     bins2_23 = (np.arange(r_comov2.size)[:, None] * np.ones(r_comov3.size)).astype(int)
     bins3_23 = (np.ones(r_comov2.size)[:, None] * np.arange(r_comov3.size)).astype(int)
-    w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
+    w = (
+        (r_par < r_par_max)
+        & (r_trans >= r_trans_min)
+        & (r_trans < r_trans_max)
+        & (r_par >= r_par_min)
+    )
     if w.sum() == 0:
         return
     bins_r_par = np.floor(
         (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
     ).astype(int)
-    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+    bins_r_trans = (
+        (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+    ).astype(int)
     bins_forest23 = bins_r_trans + num_bins_r_trans * bins_r_par
     bins_forest23[~w] = 0
     xi23 = xi_wick["{}_{}".format(fname2, fname3)][bins_forest23]
@@ -1875,7 +1925,10 @@ def compute_wickT45_pairs_fast(
                 r_par = abs(r_par)
             r_trans = (r_comov1[ind1] + r_comov2[ind2]) * np.sin(ang12 / 2)
             w[ind1, ind2] = (
-                (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
+                (r_par < r_par_max)
+                & (r_trans >= r_trans_min)
+                & (r_trans < r_trans_max)
+                & (r_par >= r_par_min)
             )
             if w[ind1, ind2] > 0:
                 wsum += 1
@@ -1900,7 +1953,9 @@ def compute_wickT45_pairs_fast(
             bin_r_par = int(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
             )
-            bin_r_trans = int(r_trans / r_trans_max * num_bins_r_trans)
+            bin_r_trans = int(
+                (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+            )
             bins_forest12[ind] = bin_r_trans + num_bins_r_trans * bin_r_par
             ind += 1
 
@@ -1915,7 +1970,10 @@ def compute_wickT45_pairs_fast(
                 r_par = abs(r_par)
             r_trans = (r_comov1[ind1] + r_comov3[ind3]) * np.sin(ang13 / 2)
             w[ind1, ind2] = (
-                (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
+                (r_par < r_par_max)
+                & (r_trans >= r_trans_min)
+                & (r_trans < r_trans_max)
+                & (r_par >= r_par_min)
             )
             if w[ind1, ind3] > 0:
                 wsum += 1
@@ -1940,7 +1998,9 @@ def compute_wickT45_pairs_fast(
             bin_r_par = int(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
             )
-            bin_r_trans = int(r_trans / r_trans_max * num_bins_r_trans)
+            bin_r_trans = int(
+                (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+            )
             bins_forest13[ind] = bin_r_trans + num_bins_r_trans * bin_r_par
             ind += 1
 
@@ -1965,7 +2025,9 @@ def compute_wickT45_pairs_fast(
             bin_r_par = int(
                 (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par
             )
-            bin_r_trans = int(r_trans / r_trans_max * num_bins_r_trans)
+            bin_r_trans = int(
+                (r_trans - r_trans_min) / (r_trans_max - r_trans_min) * num_bins_r_trans
+            )
             bins_forest23[ind] = bin_r_trans + num_bins_r_trans * bin_r_par
             ind += 1
             xi23 = xi_wick["{}_{}".format(fname2, fname3)][bins_forest23[ind]]
