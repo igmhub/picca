@@ -10,6 +10,7 @@ import healpy
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
+from picca.delta_extraction.delta_writer import DeltaWriter
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.rejection_logs.rejection_log_from_image import RejectionLogFromImage
 from picca.delta_extraction.rejection_logs.rejection_log_from_table import RejectionLogFromTable
@@ -234,6 +235,10 @@ def _save_deltas_one_healpix_table(out_dir, healpix, forests):
     return forests
 
 
+# Module-level DeltaWriter instance for use in multiprocessing
+_delta_writer = DeltaWriter()
+
+
 def _save_deltas_one_healpix(out_dir, healpix, forests, save_format):
     """Saves the deltas that belong to one healpix.
 
@@ -256,13 +261,8 @@ def _save_deltas_one_healpix(out_dir, healpix, forests, save_format):
     List forest to later
     add to rejection log as accepted.
     """
-    if save_format == "BinTableHDU":
-        return _save_deltas_one_healpix_table(out_dir, healpix, forests)
-    if save_format == "ImageHDU":
-        return _save_deltas_one_healpix_image(out_dir, healpix, forests)
-    raise DataError("Invalid format. Expected one of " +
-                    " ".join(accepted_save_format) +
-                    f" Found: {save_format}")
+    return _delta_writer.save_deltas_one_healpix(
+        out_dir, healpix, forests, save_format)
 
 
 def _coadd_exposures(forests):

@@ -296,7 +296,8 @@ class Delta(QSO):
     def __init__(self, los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                  weights, cont, delta, order, ivar, exposures_diff, mean_snr,
                  mean_reso, mean_z, resolution_matrix=None,
-                 mean_resolution_matrix=None, mean_reso_pix=None):
+                 mean_resolution_matrix=None, mean_reso_pix=None,
+                 var_lss=None, eta=None, fudge=None, var_pipe=None):
         """Initializes class instances.
 
         Args:
@@ -344,6 +345,14 @@ class Delta(QSO):
                 Wavelength dependent resolution matrix for that forest
             delta_log_lambda: float
                 Variation of the logarithm of the wavelength between two pixels
+            var_lss: array of floats or None
+                Variance of the Large Scale Structure
+            eta: array of floats or None
+                Noise correction factor eta
+            fudge: array of floats or None
+                Fudge contribution to variance
+            var_pipe: array of floats or None
+                Pipeline variance
         """
         QSO.__init__(self, los_id, ra, dec, z_qso, plate, mjd, fiberid)
         self.log_lambda = log_lambda
@@ -359,6 +368,12 @@ class Delta(QSO):
         self.resolution_matrix = resolution_matrix
         self.mean_resolution_matrix = mean_resolution_matrix
         self.mean_reso_pix = mean_reso_pix
+
+        # weight components
+        self.var_lss = var_lss
+        self.eta = eta
+        self.fudge = fudge
+        self.var_pipe = var_pipe
 
         # variables computed in function io.read_deltas
         self.z = None
@@ -468,10 +483,18 @@ class Delta(QSO):
         dec = header['DEC']
         z_qso = header['Z']
 
+        # Read weight components if available (backward compatible)
+        colnames = hdu.get_colnames()
+        var_lss = hdu['VAR_LSS'][:].astype(float) if 'VAR_LSS' in colnames else None
+        eta = hdu['ETA'][:].astype(float) if 'ETA' in colnames else None
+        fudge = hdu['FUDGE'][:].astype(float) if 'FUDGE' in colnames else None
+        var_pipe = hdu['VAR_PIPE'][:].astype(float) if 'VAR_PIPE' in colnames else None
+
         return cls(los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
                    mean_reso, mean_z, resolution_matrix,
-                   mean_resolution_matrix, mean_reso_pix)
+                   mean_resolution_matrix, mean_reso_pix,
+                   var_lss, eta, fudge, var_pipe)
 
     @classmethod
     def from_ascii(cls, line):
@@ -576,6 +599,16 @@ class Delta(QSO):
         w = weights > 0
         cont = hdul["CONT"].read().astype(float)
 
+        # Read weight components if available (backward compatible)
+        has_var_lss = "VAR_LSS" in hdul
+        has_eta = "ETA" in hdul
+        has_fudge = "FUDGE" in hdul
+        has_var_pipe = "VAR_PIPE" in hdul
+        var_lss_all = hdul["VAR_LSS"].read().astype(float) if has_var_lss else Nones
+        eta_all = hdul["ETA"].read().astype(float) if has_eta else Nones
+        fudge_all = hdul["FUDGE"].read().astype(float) if has_fudge else Nones
+        var_pipe_all = hdul["VAR_PIPE"].read().astype(float) if has_var_pipe else Nones
+
         if "THING_ID" in hdul["METADATA"].get_colnames():
             los_id = hdul["METADATA"]["THING_ID"][:]
             plate = hdul["METADATA"]["PLATE"][:]
@@ -597,11 +630,13 @@ class Delta(QSO):
         for (los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i, log_lambda,
             weights_i, cont_i, delta_i, ivar_i, exposures_diff_i, mean_snr_i,
             mean_reso_i, mean_z_i, resolution_matrix_i,
-            mean_resolution_matrix_i, mean_reso_pix_i, w_i
+            mean_resolution_matrix_i, mean_reso_pix_i, w_i,
+            var_lss_i, eta_i, fudge_i, var_pipe_i
         ) in zip(los_id, ra, dec, z_qso, plate, mjd, fiberid, repeat(log_lambda),
                    weights, cont, delta, ivar, exposures_diff, mean_snr,
                    mean_reso, mean_z, resolution_matrix,
-                   mean_resolution_matrix, mean_reso_pix, w):
+                   mean_resolution_matrix, mean_reso_pix, w,
+                   var_lss_all, eta_all, fudge_all, var_pipe_all):
             if z_qso_i >= z_min_qso and z_qso_i <= z_max_qso:        
                 deltas.append(cls(
                     los_id_i, ra_i, dec_i, z_qso_i, plate_i, mjd_i, fiberid_i, log_lambda[w_i],
@@ -615,6 +650,10 @@ class Delta(QSO):
                     resolution_matrix_i if resolution_matrix_i is not None else None,
                     mean_resolution_matrix_i if mean_resolution_matrix_i is not None else None,
                     mean_reso_pix_i,
+                    var_lss_i[w_i] if var_lss_i is not None else None,
+                    eta_i[w_i] if eta_i is not None else None,
+                    fudge_i[w_i] if fudge_i is not None else None,
+                    var_pipe_i[w_i] if var_pipe_i is not None else None,
                 ))
 
         return deltas
