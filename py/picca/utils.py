@@ -15,7 +15,7 @@ import numpy as np
 import fitsio
 import scipy.interpolate as interpolate
 import iminuit
-
+import healpy
 
 def userprint(*args, **kwds):
     """Defines an extension of the print function.
@@ -497,6 +497,63 @@ def shuffle_distrib_forests(data, seed):
             data_shuffled[data_info['healpix'][new_index[index]]].append(delta)
             index += 1
 
+    return data_shuffled
+
+def shuffle_sky_pos(data, nside):
+    """Randomizes the sky position of each forest by drawing a fresh
+    (ra, dec) from a uniform angular distribution over the survey
+    footprint, instead of permuting the existing positions.
+    
+    Args:
+        data: dict
+            A dictionary with the data. Keys are the healpix numbers of
+            each spectrum. Values are lists of delta instances.
+        nside: int
+            Healpix nside used for `data`'s keys.
+            
+    Returns:
+        The catalogue with randomized sky positions
+    """
+    userprint("INFO: Randomizing the forest angular positions")
+    rng = np.random.RandomState()
+
+    footprint_pix = np.fromiter(data.keys(), dtype=np.int64)
+    accept_frac = len(footprint_pix) / healpy.nside2npix(nside)
+
+    all_deltas = [delta for deltas in data.values() for delta in deltas]
+    n_forests = len(all_deltas)
+
+    new_ra = np.empty(n_forests)
+    new_dec = np.empty(n_forests)
+    new_pix = np.empty(n_forests, dtype=np.int64)
+
+    n_filled = 0
+    while n_filled < n_forests:
+        n_remaining = n_forests - n_filled
+        # draw with a safety margin above the expected acceptance rate
+        n_draw = int(n_remaining / accept_frac * 1.3) + 10
+
+        ra_cand = rng.uniform(0, 2 * np.pi, n_draw)
+        dec_cand = np.arcsin(rng.uniform(-1, 1, n_draw))
+        pix_cand = healpy.ang2pix(nside, np.pi / 2 - dec_cand, ra_cand,
+                                   )
+
+        keep = np.isin(pix_cand, footprint_pix)
+        n_take = min(int(keep.sum()), n_remaining)
+        take_idx = np.flatnonzero(keep)[:n_take]
+
+        sl = slice(n_filled, n_filled + n_take)
+        new_ra[sl] = ra_cand[take_idx]
+        new_dec[sl] = dec_cand[take_idx]
+        new_pix[sl] = pix_cand[take_idx]
+        n_filled += n_take
+
+    data_shuffled = {}
+    for delta, ra, dec, pix in zip(all_deltas, new_ra, new_dec, new_pix):
+        delta.ra = ra
+        delta.dec = dec
+        data_shuffled.setdefault(int(pix), []).append(delta)
+    
     return data_shuffled
 
 

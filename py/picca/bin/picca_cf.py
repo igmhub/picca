@@ -328,6 +328,15 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
+        "--shuffle-sky-pos",
+        action="store_true",
+        required=False,
+        help=(
+            "Shuffle the positions of forests on the sky (RA/DEC)"
+        ),
+    )
+
+    parser.add_argument(
         "--rebin-factor",
         type=int,
         default=None,
@@ -440,11 +449,18 @@ def main(cmdargs=None):
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
 
-    # shuffle forests
+    # re-sitribute forests
     if args.shuffle_distrib_forest_seed is not None:
         cf.data = utils.shuffle_distrib_forests(
             cf.data, args.shuffle_distrib_forest_seed
         )
+    
+    # shuffle forest sky positions
+    if args.shuffle_sky_pos:
+        cf.data = utils.shuffle_sky_pos(
+            cf.data, args.nside
+        )
+
 
     t1 = time.time()
     userprint(f"picca_cf.py - Time reading data: {(t1-t0)/60:.3f} minutes")
