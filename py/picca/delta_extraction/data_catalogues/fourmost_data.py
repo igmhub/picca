@@ -55,6 +55,15 @@ FOURMOST_NUM_PIXELS = 23201
 FOURMOST_FLUX_COLUMN = "FLUX"
 FOURMOST_ERR_COLUMN = "ERR"
 
+# 4MOST stores flux in raw erg/(s cm2 Angstrom), so values are of order
+# 1e-17 and inverse variances of order 1e34. The continuum fit starts from a
+# mean continuum of order unity, and Minuit does not converge across that gap:
+# fitting the delivery unscaled yields "minuit didn't converge" for essentially
+# every forest. SDSS and DESI both store pre-scaled flux for the same reason.
+# Scaling here brings the flux to order unity and is declared in 'flux units'.
+FOURMOST_FLUX_SCALE = 1e17
+FOURMOST_FLUX_UNITS = "10**-17 erg/(s cm2 Angstrom)"
+
 
 def get_fourmost_wavelength_grid():
     """Build the 4MOST LRS wavelength grid
@@ -129,7 +138,7 @@ class FourmostData(Data):
         self.filename = None
         self.__parse_config(config)
 
-        config["flux units"] = "erg/(s cm2 Angstrom)"
+        config["flux units"] = FOURMOST_FLUX_UNITS
         super().__init__(config)
 
         if self.analysis_type != "BAO 3D":
@@ -201,8 +210,10 @@ class FourmostData(Data):
                         f"'{column}' in {self.filename}")
             rows = hdu[sorted(row_index.tolist())]
 
-        flux_all = np.asarray(rows[FOURMOST_FLUX_COLUMN], dtype=np.float64)
-        err_all = np.asarray(rows[FOURMOST_ERR_COLUMN], dtype=np.float64)
+        flux_all = np.asarray(rows[FOURMOST_FLUX_COLUMN],
+                              dtype=np.float64) * FOURMOST_FLUX_SCALE
+        err_all = np.asarray(rows[FOURMOST_ERR_COLUMN],
+                             dtype=np.float64) * FOURMOST_FLUX_SCALE
         # columns are stored as [1, num_pixels]; drop the leading axis
         flux_all = flux_all.reshape(flux_all.shape[0], -1)
         err_all = err_all.reshape(err_all.shape[0], -1)
@@ -225,6 +236,7 @@ class FourmostData(Data):
         err_all = err_all[order]
 
         forests = []
+        num_empty = 0
         for index, row in enumerate(self.catalogue):
             flux = flux_all[index]
             err = err_all[index]
@@ -234,16 +246,27 @@ class FourmostData(Data):
             ivar[good] = 1.0 / err[good]**2
             flux = np.where(good, flux, 0.0)
 
-            forests.append(
-                Forest(**{
-                    "log_lambda": log_lambda_all.copy(),
-                    "flux": flux,
-                    "ivar": ivar,
-                    "ra": row["RA"],
-                    "dec": row["DEC"],
-                    "z": row["Z"],
-                    "los_id": int(row["LOS_ID"]),
-                }))
+            if not np.any(ivar > 0.0):
+                num_empty += 1
+                continue
+
+            forest = Forest(**{
+                "log_lambda": log_lambda_all.copy(),
+                "flux": flux,
+                "ivar": ivar,
+                "ra": row["RA"],
+                "dec": row["DEC"],
+                "z": row["Z"],
+                "los_id": int(row["LOS_ID"]),
+            })
+
+            # Rebin onto Forest.log_lambda_grid. This also applies the
+            # rest-frame trimming, so it must run before the forest is used.
+            # It has to happen after the constructor, which initialises the
+            # arrays rebin operates on.
+            forest.rebin()
+
+            forests.append(forest)
 
         if len(forests) == 0:
             raise DataError(
@@ -251,4 +274,7 @@ class FourmostData(Data):
                 f"{self.filename}")
 
         self.forests = forests
+        if num_empty > 0:
+            self.logger.progress(
+                f"Discarded {num_empty} spectra with no valid pixel")
         self.logger.progress(f"Read {len(self.forests)} forests")

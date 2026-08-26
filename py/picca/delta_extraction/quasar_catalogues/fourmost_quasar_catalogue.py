@@ -108,27 +108,32 @@ class FourmostQuasarCatalogue(QuasarCatalogue):
                 f"{self.filename}")
 
         self.logger.progress(f"Reading 4MOST catalogue from {self.filename}")
-        catalogue = Table.read(self.filename, hdu="Joined")
+        raw = Table.read(self.filename, hdu="Joined")
 
         for column in REQUIRED_COLUMNS:
-            if column not in catalogue.colnames:
+            if column not in raw.colnames:
                 raise QuasarCatalogueError(
                     "Error reading the 4MOST catalogue. Missing column "
                     f"'{column}' in {self.filename}")
 
+        # Build a fresh table rather than renaming in place. The delivery is a
+        # join of several catalogues and carries case-variant duplicates of
+        # several columns ('specuid' and 'SPECUID', 'snr' and 'SNR', 'ra' and
+        # 'RA'), so an in-place rename collides.
+        catalogue = Table()
+        catalogue["RA"] = np.asarray(raw[FOURMOST_RA], dtype=np.float64)
+        catalogue["DEC"] = np.asarray(raw[FOURMOST_DEC], dtype=np.float64)
+        catalogue["Z"] = np.asarray(raw[FOURMOST_Z], dtype=np.float64)
+        catalogue["LOS_ID"] = np.asarray(raw[FOURMOST_OBJECT_ID],
+                                         dtype=np.int64)
+        catalogue["SPECUID"] = np.asarray(raw[FOURMOST_SPECTRUM_ID],
+                                          dtype=np.int64)
+        catalogue["EXPTIME"] = np.asarray(raw[FOURMOST_EXPTIME],
+                                          dtype=np.float64)
+        catalogue["SNR"] = np.asarray(raw[FOURMOST_SNR], dtype=np.float64)
         # remember where each entry sits in the file, so that FourmostData
         # can read the matching FLUX and ERR rows
-        catalogue["ROW_INDEX"] = np.arange(len(catalogue), dtype=np.int64)
-
-        catalogue.rename_column(FOURMOST_Z, "Z")
-        catalogue.rename_column(FOURMOST_OBJECT_ID, "LOS_ID")
-        catalogue.rename_column(FOURMOST_SPECTRUM_ID, "SPECUID")
-        catalogue.rename_column(FOURMOST_EXPTIME, "EXPTIME")
-        catalogue.rename_column(FOURMOST_SNR, "SNR")
-
-        keep_columns = ["RA", "DEC", "Z", "LOS_ID", "SPECUID", "EXPTIME",
-                        "SNR", "ROW_INDEX"]
-        catalogue.keep_columns(keep_columns)
+        catalogue["ROW_INDEX"] = np.arange(len(raw), dtype=np.int64)
 
         # redshift cuts
         num_before = len(catalogue)
