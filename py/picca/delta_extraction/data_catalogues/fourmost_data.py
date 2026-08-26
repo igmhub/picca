@@ -17,6 +17,14 @@ from picca.delta_extraction.quasar_catalogues.fourmost_quasar_catalogue import (
 from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options)
 
+# The 4MOST LRS wavelength solution. It is NOT stored in the delivered files:
+# there is no WAVE column and no spectral WCS. The grid is linear, runs from
+# 3700 Angstrom to 9500 Angstrom inclusive, with a step of 0.25 Angstrom.
+FOURMOST_LAMBDA_MIN = 3700.0
+FOURMOST_LAMBDA_MAX = 9500.0
+FOURMOST_PIXEL_STEP = 0.25
+FOURMOST_NUM_PIXELS = 23201
+
 accepted_options = update_accepted_options(accepted_options,
                                            accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(accepted_options, ["catalogue"])
@@ -26,7 +34,7 @@ accepted_options = update_accepted_options(
 
 defaults = update_default_options(
     defaults, {
-        "delta lambda": 0.8,
+        "delta lambda": FOURMOST_PIXEL_STEP,
         "lambda min rest frame": 1040.0,
         "lambda max rest frame": 1200.0,
         "wave solution": "lin",
@@ -43,14 +51,6 @@ defaults = update_default_options(defaults, defaults_quasar_catalogue)
 # so the parent value would survive.
 defaults["lambda min"] = 3950.0
 defaults["lambda max"] = 9300.0
-
-# The 4MOST LRS wavelength solution. It is NOT stored in the delivered files:
-# there is no WAVE column and no spectral WCS. The grid is linear, runs from
-# 3700 Angstrom to 9500 Angstrom inclusive, with a step of 0.25 Angstrom.
-FOURMOST_LAMBDA_MIN = 3700.0
-FOURMOST_LAMBDA_MAX = 9500.0
-FOURMOST_PIXEL_STEP = 0.25
-FOURMOST_NUM_PIXELS = 23201
 
 FOURMOST_FLUX_COLUMN = "FLUX"
 FOURMOST_ERR_COLUMN = "ERR"
