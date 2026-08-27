@@ -6,6 +6,8 @@ import numpy as np
 import fitsio
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
+from picca.delta_extraction.astronomical_objects.fourmost_pk1d_forest import (
+    FourmostPk1dForest)
 from picca.delta_extraction.data import Data, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.fourmost_quasar_catalogue import (
@@ -320,11 +322,18 @@ class FourmostData(Data):
         config["flux units"] = FOURMOST_FLUX_UNITS
         super().__init__(config)
 
-        if self.analysis_type != "BAO 3D":
-            raise DataError(
-                "Invalid argument 'analysis type' for FourmostData. Only "
-                "'BAO 3D' is supported, as the 4MOST delivery contains no "
-                f"resolution information. Found: '{self.analysis_type}'")
+        if self.analysis_type == "PK 1D":
+            # The per-pixel DIFF, RESO and RESO_PIX columns are produced by
+            # Forest.get_data, which only the BinTableHDU writer calls; the
+            # ImageHDU writer emits LAMBDA, METADATA, DELTA, WEIGHT and CONT
+            # only. Refuse rather than silently drop the resolution arrays.
+            if self.save_format != "BinTableHDU":
+                raise DataError(
+                    "Invalid argument 'save format' for FourmostData with "
+                    "'analysis type' = 'PK 1D'. The per-pixel DIFF, RESO and "
+                    "RESO_PIX arrays are only written by the 'BinTableHDU' "
+                    f"writer. Found: '{self.save_format}'")
+            FourmostPk1dForest.update_class_variables()
 
         self.catalogue = FourmostQuasarCatalogue(config).catalogue
 
@@ -414,6 +423,23 @@ class FourmostData(Data):
         flux_all = flux_all[order]
         err_all = err_all[order]
 
+        if self.analysis_type == "PK 1D":
+            # Resolution depends only on wavelength, so it is the same array
+            # for every forest and is built once here, on the native grid.
+            # rebin() carries it onto the delta grid with ivar weighting.
+            reso_all, reso_pix_all = get_fourmost_resolution(
+                lambda_, pixel_step=FOURMOST_PIXEL_STEP)
+            # The repeat rows of an object are nested cumulative stacks of the
+            # same photons, not independent sub-exposures, so no half-difference
+            # noise realisation can be formed. DIFF is therefore written as
+            # zeros, exactly as DesiData does when non-coadded spectra are not
+            # available. Downstream this means only
+            # 'picca_Pk1D.py --noise-estimate pipeline' (or 'mean_pipeline') is
+            # meaningful; the diff-based estimators would read these zeros as a
+            # noise-free spectrum. picca_Pk1D defaults to 'mean_diff', so the
+            # flag must be set explicitly.
+            exposures_diff_all = np.zeros_like(lambda_)
+
         forests = []
         num_empty = 0
         for index, row in enumerate(self.catalogue):
@@ -429,7 +455,7 @@ class FourmostData(Data):
                 num_empty += 1
                 continue
 
-            forest = Forest(**{
+            args = {
                 "log_lambda": log_lambda_all.copy(),
                 "flux": flux,
                 "ivar": ivar,
@@ -437,7 +463,15 @@ class FourmostData(Data):
                 "dec": row["DEC"],
                 "z": row["Z"],
                 "los_id": int(row["LOS_ID"]),
-            })
+            }
+
+            if self.analysis_type == "BAO 3D":
+                forest = Forest(**args)
+            else:
+                args["exposures_diff"] = exposures_diff_all.copy()
+                args["reso"] = reso_all.copy()
+                args["reso_pix"] = reso_pix_all.copy()
+                forest = FourmostPk1dForest(**args)
 
             # Rebin onto Forest.log_lambda_grid. This also applies the
             # rest-frame trimming, so it must run before the forest is used.
