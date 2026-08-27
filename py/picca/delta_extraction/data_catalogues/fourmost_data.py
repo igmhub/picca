@@ -14,7 +14,7 @@ from picca.delta_extraction.quasar_catalogues.fourmost_quasar_catalogue import (
     accepted_options as accepted_options_quasar_catalogue)
 from picca.delta_extraction.quasar_catalogues.fourmost_quasar_catalogue import (
     defaults as defaults_quasar_catalogue)
-from picca.delta_extraction.utils import (update_accepted_options,
+from picca.delta_extraction.utils import (SPEED_LIGHT, update_accepted_options,
                                           update_default_options)
 
 # The 4MOST LRS wavelength solution. It is NOT stored in the delivered files:
@@ -51,6 +51,185 @@ defaults = update_default_options(defaults, defaults_quasar_catalogue)
 # so the parent value would survive.
 defaults["lambda min"] = 3950.0
 defaults["lambda max"] = 9300.0
+
+
+# ---------------------------------------------------------------------------
+# 4MOST LRS spectral resolution
+# ---------------------------------------------------------------------------
+# The delivered files carry no resolution information of any kind: no RESO
+# matrix, no wdisp-like column, no LSF keyword. R(lambda) is therefore
+# hardcoded here from the published instrument description.
+#
+# Sources:
+#   de Jong et al. 2019, The Messenger 175, 3, "4MOST: Project overview and
+#     information for the First Call for Proposals", DOI 10.18727/0722-6691/5117
+#     - Table 1: LRS passband 3700-9500 Angstrom, <R> = 6500
+#     - Figure 2: spectral resolution of the three LRS channels
+#   4MOST User Manual, VIS-MAN-4MOST-47110-9800-0001, Issue 2.00, 2019-09-26
+#     - Section 6.1.2: arm passbands; "The resolution is defined as
+#       lambda/Delta-lambda, where Delta-lambda is the width of a resolution
+#       element (given by the FWHM of a custom fit function to an unresolved
+#       line)"; "The spectra are sampled with ~3 pixels per resolution element"
+#     - Figure 6: LRS spectral resolution, "Average over the slit" curves
+#
+# The tables below are the "Average over the slit" curves of User Manual
+# Figure 6, digitised from the released PDF at 220 dpi by colour extraction
+# and axis-gridline calibration. Anchors are spaced 10 nm; linear
+# interpolation between them reproduces the digitised curves to better than
+# 0.5 per cent. They are *design/model* curves including CCD flatness, charge
+# diffusion, scattered light and thermal effects -- not on-sky measurements.
+#
+# R here is FWHM-based, per the User Manual definition above. Converting to a
+# Gaussian sigma therefore divides by 2.3548, not by 1.
+#
+# Note the arms overlap. Because the delivered spectrum is a single merged
+# product spanning 3700-9500 Angstrom with no discontinuity in its error
+# array, the effective LSF in an overlap is a weighted mixture of the two arm
+# LSFs. A mixture of two Gaussians has second moment
+#     sigma_eff^2 = w * sigma_1^2 + (1 - w) * sigma_2^2
+# so the blend below is linear in sigma^2, ramped across the overlap. The
+# ramp is a stand-in for the true merge weights, which are a property of the
+# 4MOST L1 pipeline and are not published; replace it if they become
+# available.
+#
+# Cross-check: the mean of the merged curve over 3700-9500 Angstrom is
+# R = 6077, against the <R> = 6500 quoted in Table 1 of de Jong et al. That
+# 6.5 per cent gap is expected -- 6500 is a round design figure, not the mean
+# of the Figure 6 curves.
+# ---------------------------------------------------------------------------
+
+# Arm passbands in Angstrom (User Manual section 6.1.2: blue 370-554 nm,
+# green 524-721 nm, red 691-950 nm)
+FOURMOST_ARM_SPANS = {
+    "blue": (3700.0, 5540.0),
+    "green": (5240.0, 7210.0),
+    "red": (6910.0, 9500.0),
+}
+
+# (wavelength in Angstrom, resolving power R = lambda / FWHM) per arm
+FOURMOST_ARM_RESOLUTION = {
+    "blue": (
+        (3700, 3829), (3800, 3994), (3900, 4168), (4000, 4344),
+        (4100, 4516), (4200, 4644), (4300, 4718), (4400, 4792),
+        (4500, 4867), (4600, 4941), (4700, 5061), (4800, 5185),
+        (4900, 5309), (5000, 5435), (5100, 5561), (5200, 5719),
+        (5300, 5868), (5400, 6017), (5500, 6171), (5540, 6221),
+    ),
+    "green": (
+        (5240, 5166), (5300, 5251), (5400, 5395), (5500, 5543),
+        (5600, 5686), (5700, 5835), (5800, 5979), (5900, 6092),
+        (6000, 6211), (6100, 6323), (6200, 6438), (6300, 6557),
+        (6400, 6667), (6500, 6784), (6600, 6901), (6700, 7011),
+        (6800, 7135), (6900, 7268), (7000, 7402), (7100, 7536),
+        (7200, 7669), (7210, 7673),
+    ),
+    "red": (
+        (6910, 5412), (7000, 5490), (7100, 5583), (7200, 5674),
+        (7300, 5763), (7400, 5853), (7500, 5947), (7600, 6038),
+        (7700, 6131), (7800, 6226), (7900, 6324), (8000, 6417),
+        (8100, 6511), (8200, 6604), (8300, 6678), (8400, 6757),
+        (8500, 6832), (8600, 6906), (8700, 6985), (8800, 7055),
+        (8900, 7139), (9000, 7226), (9100, 7308), (9200, 7392),
+        (9300, 7477), (9400, 7561), (9500, 7638),
+    ),
+}
+
+# FWHM -> Gaussian sigma
+FOURMOST_FWHM_TO_SIGMA = 2.0 * np.sqrt(2.0 * np.log(2.0))
+
+# Overlap regions, blended linearly in sigma^2 from the first arm to the second
+FOURMOST_ARM_BLENDS = (
+    ("blue", "green", 5240.0, 5540.0),
+    ("green", "red", 6910.0, 7210.0),
+)
+
+
+def _arm_sigma(arm, lambda_):
+    """Gaussian LSF sigma of one LRS arm, in Angstrom
+
+    Arguments
+    ---------
+    arm: str
+    One of "blue", "green", "red"
+
+    lambda_: array of float
+    Wavelength in Angstrom
+
+    Return
+    ------
+    sigma: array of float
+    LSF sigma in Angstrom. Outside the arm passband the edge value of R is
+    held constant; callers must only use the result inside the passband.
+    """
+    table = np.array(FOURMOST_ARM_RESOLUTION[arm], dtype=np.float64)
+    resolving_power = np.interp(lambda_, table[:, 0], table[:, 1])
+    return lambda_ / (resolving_power * FOURMOST_FWHM_TO_SIGMA)
+
+
+def get_fourmost_sigma(lambda_):
+    """Gaussian LSF sigma of the merged 4MOST LRS spectrum, in Angstrom
+
+    Single arms outside the overlaps; inside an overlap the two arm LSFs are
+    combined as a mixture, which adds in sigma^2 (see the note above).
+
+    Arguments
+    ---------
+    lambda_: array of float
+    Wavelength in Angstrom
+
+    Return
+    ------
+    sigma: array of float
+    LSF sigma in Angstrom
+    """
+    lambda_ = np.atleast_1d(np.asarray(lambda_, dtype=np.float64))
+    variance = np.full(lambda_.shape, np.nan)
+
+    # single-arm regions
+    variance[lambda_ < 5240.0] = _arm_sigma("blue", lambda_[lambda_ < 5240.0])**2
+    mid = (lambda_ > 5540.0) & (lambda_ < 6910.0)
+    variance[mid] = _arm_sigma("green", lambda_[mid])**2
+    variance[lambda_ > 7210.0] = _arm_sigma("red", lambda_[lambda_ > 7210.0])**2
+
+    # overlaps
+    for first, second, start, stop in FOURMOST_ARM_BLENDS:
+        within = (lambda_ >= start) & (lambda_ <= stop)
+        if not np.any(within):
+            continue
+        weight = (stop - lambda_[within]) / (stop - start)
+        variance[within] = (weight * _arm_sigma(first, lambda_[within])**2 +
+                            (1.0 - weight) * _arm_sigma(second, lambda_[within])**2)
+
+    return np.sqrt(variance)
+
+
+def get_fourmost_resolution(lambda_, pixel_step=FOURMOST_PIXEL_STEP):
+    """Resolution arrays for a Pk1dForest
+
+    picca reduces these to the single scalar MEANRESO_PIX, which it multiplies
+    by the pixel step of the delta file. reso_pix is therefore expressed in
+    units of pixel_step, which must be the step of the delta file rather than
+    the native 0.25 Angstrom step whenever the two differ.
+
+    Arguments
+    ---------
+    lambda_: array of float
+    Wavelength in Angstrom
+
+    pixel_step: float
+    Wavelength step of the delta file, in Angstrom
+
+    Return
+    ------
+    reso: array of float
+    LSF sigma in km/s, used by picca only for the --reso-max cut
+
+    reso_pix: array of float
+    LSF sigma in units of pixel_step, used for the Gaussian correction
+    """
+    sigma = get_fourmost_sigma(lambda_)
+    reso = SPEED_LIGHT * sigma / np.asarray(lambda_, dtype=np.float64)
+    return reso, sigma / pixel_step
 
 FOURMOST_FLUX_COLUMN = "FLUX"
 FOURMOST_ERR_COLUMN = "ERR"
