@@ -4,12 +4,16 @@
 name: Pytest
 on:
   push:
+    branches:
+      - main
     paths-ignore:
       - '**/*.md'
   pull_request:
     paths-ignore:
       - '**/*.md'
   merge_group:
+    types:
+      - checks_requested
 env:
   SETUP_XVFB: True  # avoid issues if mpl tries to open a GUI window
 

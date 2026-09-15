@@ -2,12 +2,16 @@ name: Pylint
 
 on:
   push:
+    branches:
+      - main
     paths-ignore:
       - '**/*.md'
   pull_request:
     paths-ignore:
       - '**/*.md'
   merge_group:
+    types:
+      - checks_requested
 
 jobs:
   lint:
