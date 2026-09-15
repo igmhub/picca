@@ -16,9 +16,9 @@ This package contains tools used for the analysis of the Lyman-alpha forest samp
 The current reference is du Mas des Bourboux et al. 2020 (https://arxiv.org/abs/2007.08995).
 
 ## Installation
-First, create a clean environment with `version`>=3.9:
+Picca requires Python 3.11 or newer. First, create a clean environment:
 ```
-conda create -n my_picca_env python==version
+conda create -n my_picca_env python=3.11
 conda activate my_picca_env
 ```
 If you already have an environment, you just need to activate it.
