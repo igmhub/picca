@@ -18,7 +18,7 @@ The current reference is du Mas des Bourboux et al. 2020 (https://arxiv.org/abs/
 ## Installation
 Picca requires Python 3.11 or newer. First, create a clean environment:
 ```
-conda create -n my_picca_env python=3.11
+conda create -n my_picca_env python=3.14
 conda activate my_picca_env
 ```
 If you already have an environment, you just need to activate it.
