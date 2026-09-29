@@ -38,7 +38,8 @@ namespaces = true
 
 [tool.setuptools.package-data]
 picca = [
-    "delta_extraction/expected_fluxes/raw_stats/*fits.gz"
+    "delta_extraction/expected_fluxes/raw_stats/*fits.gz",
+    "cov_denoise/default_paths.ini"
 ]
 
 [project.scripts]
@@ -65,3 +66,6 @@ picca = [
 #Covariance scripts
 "picca_write_full_covariance.py" = "picca.bin.picca_write_full_covariance:main"
 "picca_write_smooth_covariance.py" = "picca.bin.picca_write_smooth_covariance:main"
+"picca_denoise_fit_classifier.py" = "picca.bin.picca_denoise_fit_classifier:main"
+"picca_denoise_pipeline.py" = "picca.bin.picca_denoise_pipeline:main"
+"picca_denoise_cov.py" = "picca.bin.picca_denoise_cov:main"
