@@ -9,18 +9,32 @@ on:
       - 'CHANGELOG.md'
       - 'py/picca/_version.py'
       - '.bumpversion.cfg'
+  # Manual trigger (Actions tab or `gh workflow run`). A manual run has no head commit, so the
+  # [bump major]/[bump minor]/[no bump] keywords never match and it always does a patch bump.
+  workflow_dispatch:
 jobs:
   bump_version:
     runs-on: ubuntu-latest
     steps:
+    # Short-lived installation token for the picca-version-bot GitHub App. The App is on the
+    # bypass list of the main-branch rulesets, so it can push the version-bump commit and tags.
+    - name: Generate GitHub App token
+      id: app-token
+      uses: actions/create-github-app-token@v3
+      with:
+        client-id: ${{ vars.BUMP_APP_CLIENT_ID }}
+        private-key: ${{ secrets.BUMP_APP_PRIVATE_KEY }}
+        permission-contents: write
+
     - uses: actions/checkout@v4
       with:
-        token: ${{ secrets.PAT_MW_TOKEN_ACTION }}
-        
+        token: ${{ steps.app-token.outputs.token }}
+
+    # Commit as the App's bot account (user id 337890195 of picca-version-bot[bot])
     - name: setup git
       run: |
-        git config --global user.email "Waelthus@users.noreply.github.com"
-        git config --global user.name "Michael Walther (bot)"
+        git config --global user.email "337890195+picca-version-bot[bot]@users.noreply.github.com"
+        git config --global user.name "picca-version-bot[bot]"
     
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -47,5 +61,5 @@ jobs:
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
-        github_token: ${{ secrets.PAT_MW_TOKEN_ACTION }}
+        github_token: ${{ steps.app-token.outputs.token }}
         tags: true
