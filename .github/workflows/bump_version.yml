@@ -9,6 +9,9 @@ on:
       - 'CHANGELOG.md'
       - 'py/picca/_version.py'
       - '.bumpversion.cfg'
+  # Manual trigger (Actions tab or `gh workflow run`). A manual run has no head commit, so the
+  # [bump major]/[bump minor]/[no bump] keywords never match and it always does a patch bump.
+  workflow_dispatch:
 jobs:
   bump_version:
     runs-on: ubuntu-latest
