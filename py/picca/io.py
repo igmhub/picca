@@ -48,7 +48,14 @@ def find_order(in_dir, delta_attributes):
             matrix is computed
     """
     if delta_attributes is None:
-        delta_attributes = in_dir + "/../Log/delta_attributes.fits.gz"
+        expected_fnames = [
+            in_dir + "/../Log/delta_attributes.fits.gz",
+            in_dir + "/attributes.fits"
+        ]
+        delta_attributes = next(
+            (x for x in expected_fnames if os.path.exists(x)),
+            expected_fnames[0]
+        )
         userprint(f"WARNING: delta_attributes file not given, setting to {delta_attributes}")
     userprint(f"Reading delta attributes from {delta_attributes}")
     try:
