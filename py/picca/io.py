@@ -314,7 +314,7 @@ def read_blinding(in_dir):
         files += glob.glob(in_dir)
     else:
         files += (glob.glob(in_dir + '/delta-*.fits')
-                  + glob.glob(in_dir + '/delta-*.fits.gz')
+                  + glob.glob(in_dir + '/delta-*.fits.gz'))
     filename = files[0]
     hdul = fitsio.FITS(filename)
     if "LAMBDA" in hdul: # This is for ImageHDU format
