@@ -294,17 +294,39 @@ def read_drq(drq_filename,
     return catalog
 
 
-def read_blinding(in_dir):
-    """Checks the delta files for blinding settings
+def read_blinding(in_dir, lambda_abs=None, lambda_abs2=None):
+    """Read the delta blinding strategy and select it for the absorbers.
 
-    Args:
-        in_dir: str
-            Directory to spectra files. If mode is "spec-mock-1D", then it is
-            the filename of the fits file contianing the mock spectra
+    Parameters
+    ----------
+    in_dir : str
+        Directory containing delta FITS files, or a FITS filename or pattern.
+        Environment variables are expanded before selecting the first file.
+    lambda_abs : str or None, optional
+        Primary absorber identifier. The default, None, supplies no absorber.
+    lambda_abs2 : str or None, optional
+        Second absorber identifier for a two-forest correlation. The default,
+        None, uses only the primary absorber when it is supplied.
 
-    Returns:
-        The following variables:
-            blinding: True if data is blinded and False otherwise
+    Returns
+    -------
+    blinding : str
+        Stored strategy when no absorbers are supplied. With absorber
+        identifiers, return ``none`` if none is LYA, LYB, or a CIV variant,
+        or ``desi_dr3_civ`` for DR3 correlations involving only CIV absorbers.
+        Other absorber combinations retain the stored strategy.
+
+    Raises
+    ------
+    IndexError
+        If no matching delta FITS file is found.
+    KeyError
+        If an image-format delta file has no BLINDING keyword.
+
+    Notes
+    -----
+    This selection does not modify delta headers or numerical arrays. Delta
+    readers continue to use the original strategy stored in each input file.
     """
     files = []
     in_dir = os.path.expandvars(in_dir)
@@ -326,6 +348,19 @@ def read_blinding(in_dir):
             blinding = header["BLINDING"]
         else:
             blinding = "none"
+
+    absorbers = tuple(absorber for absorber in (lambda_abs, lambda_abs2)
+                      if absorber is not None)
+    if not absorbers:
+        return blinding
+
+    civ_absorbers = ("CIV(eff)", "CIV(1548)", "CIV(1551)")
+    standard_absorbers = ("LYA", "LYB") + civ_absorbers
+    if not any(absorber in standard_absorbers for absorber in absorbers):
+        return "none"
+    if blinding == "desi_dr3" and all(
+            absorber in civ_absorbers for absorber in absorbers):
+        return "desi_dr3_civ"
 
     return blinding
 
