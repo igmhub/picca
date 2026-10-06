@@ -20,6 +20,11 @@ from picca.delta_extraction.mask import Mask
 from picca.delta_extraction.utils import class_from_string, setup_logger
 
 try:
+    from mpi4py import MPI
+except ImportError:  # pragma: no cover
+    MPI = None
+
+try:
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     PICCA_BASE = THIS_DIR.split("py/picca")[0]
     git_hash = git.Repo(PICCA_BASE).head.object.hexsha
@@ -174,10 +179,25 @@ class Config:
         # initialize folders where data will be saved
         self.initialize_folders()
 
-        # setup logger
+        # setup logger. Under MPI rank 0 writes the aggregate run.log (self.log)
+        # -- which reads like a serial run.log because rank 0 logs the global
+        # reduced quantities (nside, sample sizes, variance functions, ...) and
+        # the per-forest rejection messages are gathered onto it (see
+        # Data.log_rejections). The other ranks write their own run_rank<n>.log
+        # for per-rank debugging, and only rank 0 writes to the console so that
+        # stdout stays a single clean stream.
+        rank, mpi_size, _ = self.mpi_comm()
+        log_file = self.log
+        add_console = True
+        if mpi_size > 1:
+            add_console = rank == 0
+            if rank != 0:
+                root, extension = os.path.splitext(self.log)
+                log_file = f"{root}_rank{rank}{extension}"
         setup_logger(logging_level_console=self.logging_level_console,
-                     log_file=self.log,
-                     logging_level_file=self.logging_level_file)
+                     log_file=log_file,
+                     logging_level_file=self.logging_level_file,
+                     add_console=add_console)
 
     def __format_corrections_section(self):
         """Format the corrections section of the parser into usable data
@@ -370,9 +390,14 @@ class Config:
                               "is required")
         module_name = section.get("module name")
         if module_name is None:
-            module_name = re.sub('(?<!^)(?=[A-Z])', '_',
-                                 expected_flux_name).lower()
-            module_name = f"picca.delta_extraction.expected_fluxes.{module_name.lower()}"
+            # MPI variants (name ending in "Mpi") are generated on demand by a
+            # single factory module rather than living in one file each
+            if expected_flux_name.endswith("Mpi"):
+                module_name = "picca.delta_extraction.expected_fluxes.mpi"
+            else:
+                module_name = re.sub('(?<!^)(?=[A-Z])', '_',
+                                     expected_flux_name).lower()
+                module_name = f"picca.delta_extraction.expected_fluxes.{module_name.lower()}"
         try:
             (ExpectedFluxType, default_args,
              accepted_options) = class_from_string(expected_flux_name,
@@ -608,6 +633,24 @@ class Config:
                     self.config[section][key] = value.replace(
                         value[:pos], os.getenv(value[1:pos]))
 
+    def mpi_comm(self):
+        """Return ``(rank, size, barrier)`` for the current run.
+
+        Under MPI the whole program runs on every rank, so the steps that write
+        shared files (folder creation, the .config.ini backup, run.log) must be
+        coordinated. When this is not an MPI run -- the data 'type' does not end
+        in 'Mpi', or mpi4py is unavailable, or there is a single rank -- this
+        returns rank 0, size 1 and a no-op barrier, preserving the serial
+        behaviour exactly.
+        """
+        data_type = ""
+        if self.config.has_section("data"):
+            data_type = self.config["data"].get("type", "")
+        if MPI is None or not data_type.endswith("Mpi"):
+            return 0, 1, lambda: None
+        comm = MPI.COMM_WORLD
+        return comm.Get_rank(), comm.Get_size(), comm.Barrier
+
     def initialize_folders(self):
         """Initialize output folders
 
@@ -616,21 +659,25 @@ class Config:
         ConfigError if the output path was already used and the
         overwrite is not selected
         """
-        if not os.path.exists(f"{self.out_dir}/.config.ini"):
-            os.makedirs(self.out_dir, exist_ok=True)
-            os.makedirs(self.out_dir + "Delta/", exist_ok=True)
-            os.makedirs(self.out_dir + "Log/", exist_ok=True)
-            self.write_config()
-        elif self.overwrite:
-            os.makedirs(self.out_dir + "Delta/", exist_ok=True)
-            os.makedirs(self.out_dir + "Log/", exist_ok=True)
-            self.write_config()
-        else:
+        # Under MPI every rank runs this; only rank 0 creates the folders and
+        # writes the .config.ini backup (the rename is not safe to race), and
+        # all ranks wait until it is done.
+        rank, _, barrier = self.mpi_comm()
+
+        if os.path.exists(f"{self.out_dir}/.config.ini") and not self.overwrite:
             raise ConfigError("Specified folder contains a previous run. "
                               "Pass overwrite option in configuration file "
                               "in order to ignore the previous run or "
                               "change the output path variable to point "
                               f"elsewhere. Folder: {self.out_dir}")
+
+        if rank == 0:
+            os.makedirs(self.out_dir, exist_ok=True)
+            os.makedirs(self.out_dir + "Delta/", exist_ok=True)
+            os.makedirs(self.out_dir + "Log/", exist_ok=True)
+            self.write_config()
+
+        barrier()
 
     def write_config(self):
         """This function writes the configuration options for later
