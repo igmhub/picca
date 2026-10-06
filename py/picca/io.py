@@ -313,8 +313,8 @@ def read_blinding(in_dir):
     elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
         files += glob.glob(in_dir)
     else:
-        files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir
-                                                           + '/*.fits.gz')
+        files += (glob.glob(in_dir + '/delta-*.fits')
+                  + glob.glob(in_dir + '/delta-*.fits.gz')
     filename = files[0]
     hdul = fitsio.FITS(filename)
     if "LAMBDA" in hdul: # This is for ImageHDU format
@@ -452,8 +452,8 @@ def read_deltas(in_dir,
     elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
         files += sorted(glob.glob(in_dir))
     else:
-        files += sorted(glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
-                                                            '/*.fits.gz'))
+        files += sorted(glob.glob(in_dir + '/delta-*.fits')
+                        + glob.glob(in_dir + '/delta-*.fits.gz'))
     files = sorted(files)
 
     if rebin_factor is not None:
