@@ -501,6 +501,10 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         z_dist = [forest.z for forest in forests]
         percentiles = np.linspace(0, 100, self.num_z_bins + 1)
         self.z_bin_edges = np.percentile(z_dist, percentiles)
+        if np.any(np.diff(self.z_bin_edges) <= 0):
+            raise ExpectedFluxError(
+                "Cannot infer strictly increasing redshift bins; reduce 'num z bins' "
+                "or use a sample with more redshift variation.")
         self.logger.info("Inferred redshift bins: %s", self.z_bin_edges)
 
 
