@@ -165,11 +165,11 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         # initialize the mean quasar continuum
         if self.interpolation_type == "2D":
             mean_cont = np.ones(
-                (self.z_bin_edges.size, Forest.log_lambda_rest_frame_grid.size))
+                (self.num_z_bins + 1, Forest.log_lambda_rest_frame_grid.size))
             # fill_value cannot be "extrapolate" for RegularGridInterpolator
             # so we use 0.0 instead
             self.get_mean_cont = RegularGridInterpolator(
-                (self.z_bin_edges, Forest.log_lambda_rest_frame_grid),
+                (self.num_z_bins + 1, Forest.log_lambda_rest_frame_grid),
                 mean_cont,
                 bounds_error=False,
                 fill_value=0.0)
