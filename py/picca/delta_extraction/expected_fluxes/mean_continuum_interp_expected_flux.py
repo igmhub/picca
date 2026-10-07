@@ -164,12 +164,20 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         """
         # initialize the mean quasar continuum
         if self.interpolation_type == "2D":
+            if self.z_bin_edges is None:
+                self.logger.info(
+                    "In MeanContinuumInterpExpectedFlux, 'z_bin_edges' is None. "
+                    "Arrays will need to be initialized at a later time")
+            else:
+                self.logger.info(
+                    "Initializing mean continuum arrays for 2D interpolation with z bins: "
+                    "%s", self.z_bin_edges)
             mean_cont = np.ones(
-                (self.num_z_bins + 1, Forest.log_lambda_rest_frame_grid.size))
+                (self.z_bin_edges.size, Forest.log_lambda_rest_frame_grid.size))
             # fill_value cannot be "extrapolate" for RegularGridInterpolator
             # so we use 0.0 instead
             self.get_mean_cont = RegularGridInterpolator(
-                (self.num_z_bins + 1, Forest.log_lambda_rest_frame_grid),
+                (self.z_bin_edges, Forest.log_lambda_rest_frame_grid),
                 mean_cont,
                 bounds_error=False,
                 fill_value=0.0)
@@ -199,6 +207,10 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             # otherwise the z_bin_edges attribute is set in the __parse_config method
             # and this call is not needed
             self.infer_z_bins_from_data(forests)
+
+            # initialize the mean continuum arrays with the inferred z_bin_edges
+            # (failed before since the z_bin_edges were not set in the __parse_config method)
+            self._initialize_mean_continuum_arrays()
 
         super().compute_expected_flux(forests)
 
