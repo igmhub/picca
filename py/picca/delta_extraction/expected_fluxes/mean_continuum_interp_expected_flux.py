@@ -204,7 +204,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         forests: list of Forest
         A list of Forest from which to compute the expected flux.
         """
-        if self.infer_z_bins:
+        if self.interpolation_type == "2D" and self.infer_z_bins:
             # this sets the z_bin_edges attribute based on the data in forests
             # otherwise the z_bin_edges attribute is set in the __parse_config method
             # and this call is not needed
@@ -603,6 +603,7 @@ def interp_coeff_z(z, z_grid):
     Indices of the z bins for the given z value
     """
     z_bin = np.digitize(z, z_grid) - 1
+    z_bin = min(max(z_bin, 0), len(z_grid) - 2)
     z_low = z_grid[z_bin]
     z_high = z_grid[z_bin + 1]
 
