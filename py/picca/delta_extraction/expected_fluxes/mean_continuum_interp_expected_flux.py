@@ -172,16 +172,18 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 self.logger.info(
                     "Initializing mean continuum arrays for 2D interpolation with z bins: "
                     "%s", self.z_bin_edges)
-            mean_cont = np.ones(
-                (self.z_bin_edges.size, Forest.log_lambda_rest_frame_grid.size))
-            # fill_value cannot be "extrapolate" for RegularGridInterpolator
-            # so we use 0.0 instead
-            self.get_mean_cont = RegularGridInterpolator(
-                (self.z_bin_edges, Forest.log_lambda_rest_frame_grid),
-                mean_cont,
-                bounds_error=False,
-                fill_value=0.0)
+                mean_cont = np.ones(
+                    (self.z_bin_edges.size, Forest.log_lambda_rest_frame_grid.size))
+                # fill_value cannot be "extrapolate" for RegularGridInterpolator
+                # so we use 0.0 instead
+                self.get_mean_cont = RegularGridInterpolator(
+                    (self.z_bin_edges, Forest.log_lambda_rest_frame_grid),
+                    mean_cont,
+                    bounds_error=False,
+                    fill_value=0.0)
         elif self.interpolation_type == "1D":
+            self.logger.info(
+                "Initializing mean continuum arrays for 1D interpolation")
             self.mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
 
             self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
