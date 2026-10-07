@@ -13,7 +13,7 @@ from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(
-    accepted_options, ["interpolation type", "limit z", "num z bins"])
+    accepted_options, ["infer z bins", "interpolation type", "limit z", "num z bins"])
 
 defaults = update_default_options(defaults, {
     "infer z bins": False,
