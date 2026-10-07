@@ -129,7 +129,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 limit_z_string = config.get("limit z")
                 if limit_z_string is None and not self.infer_z_bins:
                     raise ExpectedFluxError(
-                        "Missing argument 'limit z' required by MeanContinuumInterpExpectedFlux" 
+                        "Missing argument 'limit z' required by MeanContinuumInterpExpectedFlux " 
                         "when 'infer z bins' is set to False. If you want to infer the redshift bins, set "
                         "'infer z bins' to True."
                     )
