@@ -475,13 +475,28 @@ def main(cmdargs=None):
         )
         pool = context.Pool(processes=args.nproc)
         accumulator = cf_gpu.XiAccumulator(flat1, flat2, hps)
-        for chunk in pool.imap_unordered(
-            cf_gpu.pairs_for_healpixs, [[h] for h in hps]
-        ):
+        t_wait = t_add = 0.0
+        t_loop = time.time()
+        it = pool.imap_unordered(cf_gpu.pairs_for_healpixs, [[h] for h in hps])
+        while True:
+            ta = time.time()
+            try:
+                chunk = next(it)
+            except StopIteration:
+                break
+            tb = time.time()
             for item in chunk:
                 accumulator.add(*item)
+            t_wait += tb - ta
+            t_add += time.time() - tb
         pool.close()
+        tc = time.time()
         correlation_function_data = accumulator.result(hps)
+        userprint(
+            f"picca_cf.py - GPU timing: waiting for CPU neighbours {t_wait:.1f}s, "
+            f"copy+launch {t_add:.1f}s, final GPU sync {time.time()-tc:.1f}s, "
+            f"loop {tc-t_loop:.1f}s"
+        )
     else:
         pool = context.Pool(processes=args.nproc)
         correlation_function_data = pool.map(corr_func, sorted(cpu_data.values()))
