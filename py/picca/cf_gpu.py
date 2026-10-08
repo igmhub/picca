@@ -295,14 +295,14 @@ def _params():
     return f, i
 
 
-class XiAccumulator:
+class _DeviceXi:
     """Accumulates the per-healpix correlation function on one GPU."""
 
     PAIRS_PER_BLOCK = 32
     THREADS = 1024
 
     def __init__(self, flat1, flat2, healpix_list, device=0):
-        cuda.select_device(device)
+        self.device = device
         self.nbins = cf.num_bins_r_par * cf.num_bins_r_trans
         self.slot_of = {h: s for s, h in enumerate(healpix_list)}
         self.out = cuda.device_array(len(healpix_list) * 6 * self.nbins, np.float64)
@@ -347,11 +347,38 @@ class XiAccumulator:
         else:
             _xi_kernel_global[nblocks, BLOCK](*args)
 
+    def host_sums(self):
+        cuda.synchronize()
+        return self.out.copy_to_host().reshape(-1, 6, self.nbins)
+
+
+class XiAccumulator:
+    """Spreads healpixes round-robin over the GPUs of the node and returns the
+    per-healpix results in the same form as ``cf.compute_xi``."""
+
+    def __init__(self, flat1, flat2, healpix_list, devices=None):
+        if devices is None:
+            devices = list(range(len(cuda.gpus)))
+        self.slot_of = {h: s for s, h in enumerate(healpix_list)}
+        self.parts = []
+        for dev in devices:
+            with cuda.gpus[dev]:
+                self.parts.append(_DeviceXi(flat1, flat2, healpix_list, device=dev))
+        self.next = 0
+
+    def add(self, healpix, idx1, idx2, ang, shp):
+        part = self.parts[self.next % len(self.parts)]
+        self.next += 1
+        with cuda.gpus[part.device]:
+            part.add(healpix, idx1, idx2, ang, shp)
+
     def result(self, healpix_list):
         """Same structure as ``np.array([cf.compute_xi(h) for h in healpixs])``."""
-        cuda.synchronize()
-        nb = self.nbins
-        host = self.out.copy_to_host().reshape(-1, 6, nb)
+        host = None
+        for part in self.parts:
+            with cuda.gpus[part.device]:
+                h = part.host_sums()
+            host = h if host is None else host + h
         res = []
         for h in healpix_list:
             xx, ww, pp, tt, zz, nn = (a.copy() for a in host[self.slot_of[h]])
