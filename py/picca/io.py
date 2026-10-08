@@ -52,7 +52,14 @@ def find_order(in_dir, delta_attributes):
             matrix is computed
     """
     if delta_attributes is None:
-        delta_attributes = in_dir + "/../Log/delta_attributes.fits.gz"
+        expected_fnames = [
+            in_dir + "/../Log/delta_attributes.fits.gz",
+            in_dir + "/attributes.fits"
+        ]
+        delta_attributes = next(
+            (x for x in expected_fnames if os.path.exists(x)),
+            expected_fnames[0]
+        )
         userprint(f"WARNING: delta_attributes file not given, setting to {delta_attributes}")
     userprint(f"Reading delta attributes from {delta_attributes}")
     try:
@@ -324,8 +331,8 @@ def _find_first_delta_file(in_dir):
     elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
         files += glob.glob(in_dir)
     else:
-        files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir
-                                                           + '/*.fits.gz')
+        files += (glob.glob(in_dir + '/delta-*.fits')
+                  + glob.glob(in_dir + '/delta-*.fits.gz'))
     return files[0]
 
 
@@ -596,8 +603,8 @@ def read_deltas(in_dir,
     elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
         files += sorted(glob.glob(in_dir))
     else:
-        files += sorted(glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
-                                                            '/*.fits.gz'))
+        files += sorted(glob.glob(in_dir + '/delta-*.fits')
+                        + glob.glob(in_dir + '/delta-*.fits.gz'))
     files = sorted(files)
 
     if rebin_factor is not None:
