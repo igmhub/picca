@@ -22,10 +22,14 @@ from astropy.table import Table
 import warnings
 from multiprocessing import Pool
 
+from . import constants
 from .utils import userprint
 from .data import Delta, QSO
 from .pk1d.prep_pk1d import exp_diff, spectral_resolution
 from .pk1d.prep_pk1d import spectral_resolution_desi
+
+# Blinding strategy of the current DESI data release
+CURRENT_DESI_BLINDING = "desi_dr3"
 
 
 def find_order(in_dir, delta_attributes):
@@ -294,7 +298,98 @@ def read_drq(drq_filename,
     return catalog
 
 
-def read_blinding(in_dir, lambda_abs=None, lambda_abs2=None):
+def _find_first_delta_file(in_dir):
+    """Return the first delta FITS file matching a directory or pattern.
+
+    Parameters
+    ----------
+    in_dir : str
+        Directory containing delta FITS files, or a FITS filename or pattern.
+        Environment variables are expanded before matching.
+
+    Returns
+    -------
+    filename : str
+        First matching file, in ``glob`` order.
+
+    Raises
+    ------
+    IndexError
+        If no matching delta FITS file is found.
+    """
+    files = []
+    in_dir = os.path.expandvars(in_dir)
+    if len(in_dir) > 8 and in_dir[-8:] == '.fits.gz':
+        files += glob.glob(in_dir)
+    elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
+        files += glob.glob(in_dir)
+    else:
+        files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir
+                                                           + '/*.fits.gz')
+    return files[0]
+
+
+def _check_lya_region_absorber(filename, lambda_abs):
+    """Require LYA redshifts if and only if deltas contain Lya-forest pixels.
+
+    Deltas whose rest-frame window extends blueward of the LYA line contain
+    Lya-forest pixels. Assigning them the redshifts of another absorber
+    could bypass the Lya blinding, so only LYA (or no absorber) is accepted.
+    Conversely, LYA is rejected for windows entirely redward of the LYA line
+    (e.g. the SiIV or CIV regions), which contain no Lya absorption; these
+    accept any other absorber.
+
+    Parameters
+    ----------
+    filename : str
+        Delta FITS file in ImageHDU or BinTable format.
+    lambda_abs : str or None
+        Absorber identifier defining the pixel redshifts of these deltas.
+        None skips the check without reading the file.
+
+    Raises
+    ------
+    ValueError
+        If ``lambda_abs`` is not LYA and the first forest has pixels blueward
+        of the LYA line in the quasar rest frame, or if ``lambda_abs`` is LYA
+        and all its pixels lie redward of the LYA line.
+
+    Notes
+    -----
+    Delta extraction applies one rest-frame window to all forests of a run,
+    so only the pixels and redshift of the first forest are read.
+    """
+    if lambda_abs is None:
+        return
+
+    with fitsio.FITS(filename) as hdul:
+        if "LAMBDA" in hdul:  # ImageHDU: common grid, forest has weight > 0
+            lambda_obs = hdul["LAMBDA"].read().astype(float)
+            weights = hdul["WEIGHT"][0:1, :][0]
+            lambda_obs = lambda_obs[weights > 0]
+            z_qso = hdul["METADATA"]["Z"][0:1][0]
+        else:  # BinTable: only forest pixels are stored
+            if "LOGLAM" in hdul[1].get_colnames():
+                lambda_obs = 10**hdul[1]["LOGLAM"][:].astype(float)
+            else:
+                lambda_obs = hdul[1]["LAMBDA"][:].astype(float)
+            z_qso = hdul[1].read_header()["Z"]
+
+    lambda_rest_min = lambda_obs.min() / (1 + z_qso)
+    is_lya_region = lambda_rest_min < constants.ABSORBER_IGM["LYA"]
+    if is_lya_region and lambda_abs != "LYA":
+        raise ValueError(
+            f"Deltas in {filename} extend blueward of the LYA line in the "
+            f"quasar rest frame (min {lambda_rest_min:.1f} A), but their "
+            f"absorber is {lambda_abs}. Lya-region deltas require LYA.")
+    if not is_lya_region and lambda_abs == "LYA":
+        raise ValueError(
+            f"Deltas in {filename} lie redward of the LYA line in the quasar "
+            f"rest frame (min {lambda_rest_min:.1f} A), but their absorber is "
+            "LYA. Use the absorber of this region instead.")
+
+
+def read_blinding(in_dir, lambda_abs=None, lambda_abs2=None, in_dir2=None):
     """Read the delta blinding strategy and select it for the absorbers.
 
     Parameters
@@ -307,6 +402,12 @@ def read_blinding(in_dir, lambda_abs=None, lambda_abs2=None):
     lambda_abs2 : str or None, optional
         Second absorber identifier for a two-forest correlation. The default,
         None, uses only the primary absorber when it is supplied.
+    in_dir2 : str or None, optional
+        Second delta directory, file or pattern, as passed by the user. Only
+        used to check that its absorber, ``lambda_abs2``, or ``lambda_abs``
+        if ``lambda_abs2`` is None, matches its rest-frame region (see
+        ``_check_lya_region_absorber``). The default, None, skips this check,
+        as the second field is then read from ``in_dir``.
 
     Returns
     -------
@@ -322,22 +423,19 @@ def read_blinding(in_dir, lambda_abs=None, lambda_abs2=None):
         If no matching delta FITS file is found.
     KeyError
         If an image-format delta file has no BLINDING keyword.
+    ValueError
+        If the stored strategy is ``CURRENT_DESI_BLINDING`` and deltas in
+        ``in_dir`` (or ``in_dir2``) extend blueward of the LYA line in the
+        quasar rest frame but their absorber is not LYA, or lie entirely
+        redward of it but their absorber is LYA.
 
     Notes
     -----
     This selection does not modify delta headers or numerical arrays. Delta
     readers continue to use the original strategy stored in each input file.
+    The strategy is read from ``in_dir`` only.
     """
-    files = []
-    in_dir = os.path.expandvars(in_dir)
-    if len(in_dir) > 8 and in_dir[-8:] == '.fits.gz':
-        files += glob.glob(in_dir)
-    elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
-        files += glob.glob(in_dir)
-    else:
-        files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir
-                                                           + '/*.fits.gz')
-    filename = files[0]
+    filename = _find_first_delta_file(in_dir)
     hdul = fitsio.FITS(filename)
     if "LAMBDA" in hdul: # This is for ImageHDU format
         header = hdul["METADATA"].read_header()
@@ -348,6 +446,17 @@ def read_blinding(in_dir, lambda_abs=None, lambda_abs2=None):
             blinding = header["BLINDING"]
         else:
             blinding = "none"
+    hdul.close()
+
+    # For the current DESI release, Lya-region deltas must be assigned LYA
+    # redshifts in both fields, and redward regions any other absorber
+    if blinding == CURRENT_DESI_BLINDING:
+        _check_lya_region_absorber(filename, lambda_abs)
+        if in_dir2 is not None:
+            lambda_abs_field2 = (lambda_abs if lambda_abs2 is None
+                                 else lambda_abs2)
+            _check_lya_region_absorber(_find_first_delta_file(in_dir2),
+                                       lambda_abs_field2)
 
     absorbers = tuple(absorber for absorber in (lambda_abs, lambda_abs2)
                       if absorber is not None)
@@ -358,9 +467,9 @@ def read_blinding(in_dir, lambda_abs=None, lambda_abs2=None):
     standard_absorbers = ("LYA", "LYB") + civ_absorbers
     if not any(absorber in standard_absorbers for absorber in absorbers):
         return "none"
-    if blinding == "desi_dr3" and all(
+    if blinding == CURRENT_DESI_BLINDING and all(
             absorber in civ_absorbers for absorber in absorbers):
-        return "desi_dr3_civ"
+        return CURRENT_DESI_BLINDING + "_civ"
 
     return blinding
 

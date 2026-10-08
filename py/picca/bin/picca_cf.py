@@ -369,7 +369,8 @@ def main(cmdargs=None):
 
     # read blinding keyword
     blinding = io.read_blinding(args.in_dir, lambda_abs=args.lambda_abs,
-                                lambda_abs2=args.lambda_abs2)
+                                lambda_abs2=args.lambda_abs2,
+                                in_dir2=args.in_dir2)
 
     # load fiducial cosmology
     cosmo = constants.Cosmo(
