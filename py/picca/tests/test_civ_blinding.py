@@ -39,7 +39,7 @@ def write_delta_header(tmp_path, blinding, delta_format, z_qso=1.5,
     filename : pathlib.Path
         Path to the synthetic FITS file.
     """
-    filename = tmp_path / "delta.fits"
+    filename = tmp_path / "delta-0.fits"
     header = {} if blinding is None else {"BLINDING": blinding}
     delta_name = "DELTA" if blinding in (None, "none") else "DELTA_BLIND"
     lambda_obs = np.array(lambda_obs)
