@@ -394,7 +394,9 @@ def main(cmdargs=None):
     cf.zerr_cut_kms = args.zerr_cut_kms
 
     # read blinding keyword
-    blinding = io.read_blinding(args.in_dir)
+    blinding = io.read_blinding(args.in_dir, lambda_abs=args.lambda_abs,
+                                lambda_abs2=args.lambda_abs2,
+                                in_dir2=args.in_dir2)
 
     # load fiducial cosmology
     cosmo = constants.Cosmo(
