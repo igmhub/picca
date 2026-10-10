@@ -338,6 +338,14 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
+        "--gpu",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Run the pair loop on the GPUs (numba.cuda); CPU workers only find neighbours",
+    )
+
+    parser.add_argument(
         "--no-redshift-evolution",
         action="store_true",
         help="Ignore redshift evolution when computing distortion matrix",
@@ -476,7 +484,44 @@ def main(cmdargs=None):
         cpu_data[num_processor].append(healpix)
 
     # compute the distortion matrix
-    if args.nproc > 1:
+    if args.gpu:
+        # flatten before forking the pool (workers need delta.gpu_idx) and create
+        # the pool before initialising CUDA (fork after CUDA init is unsafe)
+        from picca import dmat_gpu
+
+        if cf.x_correlation:
+            flat_all = [d for h in sorted(data) for d in data[h]]
+            flat2_all = [d for h in sorted(cf.data2) for d in cf.data2[h]]
+        else:
+            flat_all = [d for h in sorted(data) for d in data[h]]
+            flat2_all = None
+        flat1 = dmat_gpu.FlatForestsDmat(flat_all)
+        flat2 = flat1 if flat2_all is None else dmat_gpu.FlatForestsDmat(flat2_all)
+        context = multiprocessing.get_context("fork")
+        pool = context.Pool(processes=max(args.nproc, 1))
+        accumulator = dmat_gpu.DmatAccumulator(flat1, flat2)
+        t_wait = t_add = 0.0
+        t_loop = time.time()
+        it = pool.imap_unordered(dmat_gpu.pairs_for_chunk, sorted(cpu_data.values()))
+        while True:
+            ta = time.time()
+            try:
+                chunk = next(it)
+            except StopIteration:
+                break
+            tb = time.time()
+            accumulator.add(*chunk)
+            t_wait += tb - ta
+            t_add += time.time() - tb
+        pool.close()
+        tc = time.time()
+        dmat_data = [accumulator.result()]
+        userprint(
+            f"picca_dmat.py - GPU timing: waiting for CPU neighbours {t_wait:.1f}s, "
+            f"copy+launch {t_add:.1f}s, final GPU sync {time.time()-tc:.1f}s, "
+            f"loop {tc-t_loop:.1f}s"
+        )
+    elif args.nproc > 1:
         context = multiprocessing.get_context("fork")
         pool = context.Pool(processes=args.nproc)
         dmat_data = pool.map(calc_dmat, sorted(cpu_data.values()))
