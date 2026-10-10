@@ -220,6 +220,12 @@ class TrueContinuum(ExpectedFlux):
             ivar_pipe = forest.ivar * forest.continuum**2
             weights[w] = 1.0/(self.var_lss_mod * var_lss + 1/ivar_pipe[w])
 
+            # Store weight components on the forest
+            forest.var_pipe = np.zeros_like(forest.log_lambda)
+            forest.var_pipe[w] = 1.0 / ivar_pipe[w]
+            forest.var_lss = np.zeros_like(forest.log_lambda)
+            forest.var_lss[w] = var_lss
+
         return weights
 
     def hdu_var_func(self, results):
