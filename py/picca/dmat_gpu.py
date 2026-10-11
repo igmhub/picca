@@ -27,7 +27,8 @@ from . import cf, constants
 from .cf_gpu import FlatForests as _FlatForests
 from .cf_gpu import _same_half_plate
 
-THREADS = 256
+THREADS = 1024  # dmat kernel: with max_registers=64, one resident block of 32 warps per SM
+METAL_THREADS = 256
 
 
 class FlatForestsDmat(_FlatForests):
@@ -110,13 +111,13 @@ def pairs_for_chunk(healpixs, require_order=True):
     return e.astype(np.int32), e.astype(np.int32), e, e.astype(np.uint8), num_pairs, num_pairs_used
 
 
-@cuda.jit
+@cuda.jit(max_registers=64)
 def _dmat_kernel(
     pair_i1, pair_i2, pair_ang, pair_shp, npairs, counter,
     off1, z1, rc1, dm1, w1, ll1, zq1, sw1, sl1, ord1,
     off2, z2, rc2, dm2, w2, ll2, zq2, sw2, sl2, ord2,
     fparams, iparams, kcap, pcap,
-    s_i, s_j, s_b, s_m, slot_of, ukeys, eta, perm, gb, gs, flags,
+    s_i, s_j, s_b, s_m, slot_of, ukeys, eta, oi, oj, ow, ol1, ol2, gb, gs, flags,
     dmat, wdmat, rpar_eff, rtr_eff, z_eff, w_eff,
 ):
     """Persistent blocks: block b handles pairs b, b + gridDim.x, ...
@@ -375,7 +376,13 @@ def _dmat_kernel(
             bn = s_b[pb + q]
             if bn >= 0:
                 pos = cuda.atomic.add(hist, nbins + bn, 1)
-                perm[pb + pos] = q
+                i = s_i[pb + q]
+                j = s_j[pb + q]
+                oi[pb + pos] = i
+                oj[pb + pos] = j
+                ow[pb + pos] = w1[s1 + i] * w2[s2 + j]
+                ol1[pb + pos] = ll1[s1 + i]
+                ol2[pb + pos] = ll2[s2 + j]
         cuda.syncthreads()
         for t in range(tid, ngroups * K, nthr):
             g = t // K
@@ -388,11 +395,10 @@ def _dmat_kernel(
             c8 = eta[e8 + s]
             acc = 0.0
             for r in range(lo, hi):
-                q = perm[pb + r]
-                i = s_i[pb + q]
-                j = s_j[pb + q]
-                li = ll1[s1 + i]
-                lj = ll2[s2 + j]
+                i = oi[pb + r]
+                j = oj[pb + r]
+                li = ol1[pb + r]
+                lj = ol2[pb + r]
                 val = (
                     c5 + c6 * lj + c7 * li + c8 * li * lj
                     - eta[e1 + i * K + s]
@@ -400,7 +406,7 @@ def _dmat_kernel(
                     - eta[e3 + i * K + s] * lj
                     - eta[e4 + j * K + s] * li
                 )
-                acc += w1[s1 + i] * w2[s2 + j] * val
+                acc += ow[pb + r] * val
             cuda.atomic.add(dmat, gb[gbb + g] * nmodel + ukeys[kb + s], acc)
         cuda.syncthreads()
 
@@ -444,7 +450,7 @@ def _params():
 class _DeviceDmat:
     """Accumulates the distortion matrix on one GPU."""
 
-    BLOCKS_PER_SM = 2
+    BLOCKS_PER_SM = 1
     KCAP = 2048  # max unique model bins per forest pair (measured: mean ~510, max ~1350)
 
     def __init__(self, flat1, flat2, device=0):
@@ -474,6 +480,10 @@ class _DeviceDmat:
             cuda.device_array(nb * kcap, np.int32),
             cuda.device_array(nb * (2 * max1 + 2 * max2 + 4) * kcap, np.float64),
             cuda.device_array(nb * self.pcap, np.int32),
+            cuda.device_array(nb * self.pcap, np.int32),
+            cuda.device_array(nb * self.pcap, np.float64),
+            cuda.device_array(nb * self.pcap, np.float64),
+            cuda.device_array(nb * self.pcap, np.float64),
             cuda.device_array(nb * self.nbins, np.int32),
             cuda.device_array(nb * (self.nbins + 1), np.int32),
         )
@@ -487,7 +497,7 @@ class _DeviceDmat:
         _dmat_kernel[self.nblocks, THREADS, 0, 2 * self.nbins * 4](
             *d, npairs, cuda.to_device(np.zeros(1, dtype=np.int32)), *self.f1, *self.f2,
             self.fparams, self.iparams,
-            self.KCAP, self.pcap, *self.scratch[:7], *self.scratch[7:], self.flags,
+            self.KCAP, self.pcap, *self.scratch, self.flags,
             self.dmat, self.wdmat, self.rpar, self.rtr, self.zeff, self.weff,
         )
 
@@ -730,7 +740,7 @@ class _DeviceMetal:
             [cf.num_bins_r_par, cf.num_bins_r_trans, cf.num_model_bins_r_par,
              cf.num_model_bins_r_trans, int(bool(cf.x_correlation)),
              int(bool(cf.remove_same_half_plate_close_pairs))], dtype=np.int64))
-        _metal_kernel[min(self.nblocks, self.npairs), THREADS](
+        _metal_kernel[min(self.nblocks, self.npairs), METAL_THREADS](
             *self.pairs, self.npairs,
             self.b1[0], self.b1[1], self.b1[2], self.b1[3], self.b1[4], *self.flat1.absorber(a1),
             self.b2[0], self.b2[1], self.b2[2], self.b2[3], self.b2[4], *self.flat2.absorber(a2),
