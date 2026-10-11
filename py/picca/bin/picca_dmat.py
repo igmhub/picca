@@ -489,12 +489,11 @@ def main(cmdargs=None):
         # the pool before initialising CUDA (fork after CUDA init is unsafe)
         from picca import dmat_gpu
 
-        if cf.x_correlation:
-            flat_all = [d for h in sorted(data) for d in data[h]]
-            flat2_all = [d for h in sorted(cf.data2) for d in cf.data2[h]]
-        else:
-            flat_all = [d for h in sorted(data) for d in data[h]]
+        flat_all = [d for h in sorted(data) for d in data[h]]
+        if cf.data2 is None:
             flat2_all = None
+        else:
+            flat2_all = [d for h in sorted(cf.data2) for d in cf.data2[h]]
         flat1 = dmat_gpu.FlatForestsDmat(flat_all)
         flat2 = flat1 if flat2_all is None else dmat_gpu.FlatForestsDmat(flat2_all)
         context = multiprocessing.get_context("fork")
