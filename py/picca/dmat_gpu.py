@@ -17,6 +17,8 @@ forest pair in five steps (all steps see only that pair):
 Per-block scratch is allocated once (persistent blocks loop over the pairs).
 """
 import math
+import queue
+import threading
 
 import numpy as np
 from numba import cuda, int32
@@ -61,7 +63,7 @@ class FlatForestsDmat(_FlatForests):
         )
 
 
-def pairs_for_chunk(healpixs):
+def pairs_for_chunk(healpixs, require_order=True):
     """CPU worker: neighbours of the forests in ``healpixs`` after the pair rejection.
 
     Reproduces the random stream of ``picca_dmat.calc_dmat`` (``np.random.seed(healpixs[0])``
@@ -76,7 +78,7 @@ def pairs_for_chunk(healpixs):
     num_pairs_used = 0
     for healpix in healpixs:
         for delta1 in cf.data[healpix]:
-            if delta1.order is None:
+            if require_order and delta1.order is None:
                 raise RuntimeError(
                     "Trying to compute the distortion matrix but order is not defined "
                     "for the deltas. Check previous warning to solve this issue"
@@ -88,7 +90,7 @@ def pairs_for_chunk(healpixs):
             if keep.any():
                 chosen = list(np.array(neigh)[keep])
                 for d in chosen:
-                    if d.order is None:
+                    if require_order and d.order is None:
                         raise RuntimeError(
                             "Trying to compute the distortion matrix but order is not "
                             "defined for the deltas. Check previous warning to solve this issue"
@@ -110,11 +112,11 @@ def pairs_for_chunk(healpixs):
 
 @cuda.jit
 def _dmat_kernel(
-    pair_i1, pair_i2, pair_ang, pair_shp, npairs,
+    pair_i1, pair_i2, pair_ang, pair_shp, npairs, counter,
     off1, z1, rc1, dm1, w1, ll1, zq1, sw1, sl1, ord1,
     off2, z2, rc2, dm2, w2, ll2, zq2, sw2, sl2, ord2,
     fparams, iparams, kcap, pcap,
-    s_i, s_j, s_b, s_m, slot_of, ukeys, eta, flags,
+    s_i, s_j, s_b, s_m, slot_of, ukeys, eta, perm, gb, gs, flags,
     dmat, wdmat, rpar_eff, rtr_eff, z_eff, w_eff,
 ):
     """Persistent blocks: block b handles pairs b, b + gridDim.x, ...
@@ -127,7 +129,8 @@ def _dmat_kernel(
     nthr = cuda.blockDim.x
     blk = cuda.blockIdx.x
 
-    sh = cuda.shared.array(2, dtype=int32)  # [0] list length, [1] K
+    sh = cuda.shared.array(4, dtype=int32)  # [0] list length, [1] K, [2] data-bin groups, [3] current pair
+    hist = cuda.shared.array(0, dtype=int32)  # dynamic: [0, nbins) counts, [nbins, 2*nbins) cursors
 
     r_par_min = fparams[0]
     r_par_max = fparams[1]
@@ -154,13 +157,24 @@ def _dmat_kernel(
     max1 = iparams[11]
     max2 = iparams[12]
     nmodel = nmb_par * nmb_trans
+    nbins = nb_par * nb_trans
 
     pb = blk * pcap  # scratch bases for this block
     sb = blk * nmodel
     kb = blk * kcap
+    gbb = blk * nbins
+    gsb = blk * (nbins + 1)
     eb = blk * ((2 * max1 + 2 * max2 + 4) * kcap)
 
-    for p in range(blk, npairs, cuda.gridDim.x):
+    while True:
+        # dynamic scheduling: pairs differ a lot in cost, so each block grabs the next one
+        if tid == 0:
+            sh[3] = cuda.atomic.add(counter, 0, 1)
+        cuda.syncthreads()
+        p = sh[3]
+        cuda.syncthreads()
+        if p >= npairs:
+            break
         a = pair_i1[p]
         b = pair_i2[p]
         ang = pair_ang[p]
@@ -332,28 +346,62 @@ def _dmat_kernel(
                     zfac = 1.0
                 cuda.atomic.add(dmat, bn * nmodel + s_m[pb + q], w1[s1 + i] * w2[s2 + j] * zfac)
 
-        # 4b. eta combination: one atomic per (selected pixel pair, unique model bin)
-        for t in range(tid, nlist * K, nthr):
-            q = t // K
-            s = t - q * K
+        # 4b. group the selected pixel pairs by data bin (counting sort), then add the eta
+        # combination with one atomic per (data bin, model bin) instead of per pixel pair
+        for t in range(tid, nbins, nthr):
+            hist[t] = 0
+        cuda.syncthreads()
+        for q in range(tid, nlist, nthr):
             bn = s_b[pb + q]
-            if bn < 0:
-                continue
-            i = s_i[pb + q]
-            j = s_j[pb + q]
-            li = ll1[s1 + i]
-            lj = ll2[s2 + j]
-            val = (
-                eta[e5 + s]
-                + eta[e6 + s] * lj
-                + eta[e7 + s] * li
-                + eta[e8 + s] * li * lj
-                - eta[e1 + i * K + s]
-                - eta[e2 + j * K + s]
-                - eta[e3 + i * K + s] * lj
-                - eta[e4 + j * K + s] * li
-            )
-            cuda.atomic.add(dmat, bn * nmodel + ukeys[kb + s], w1[s1 + i] * w2[s2 + j] * val)
+            if bn >= 0:
+                cuda.atomic.add(hist, bn, 1)
+        cuda.syncthreads()
+        if tid == 0:
+            ng = 0
+            run = 0
+            for bnn in range(nbins):
+                c = hist[bnn]
+                if c > 0:
+                    gb[gbb + ng] = bnn
+                    gs[gsb + ng] = run
+                    hist[nbins + bnn] = run
+                    ng += 1
+                    run += c
+            gs[gsb + ng] = run
+            sh[2] = ng
+        cuda.syncthreads()
+        ngroups = sh[2]
+        for q in range(tid, nlist, nthr):
+            bn = s_b[pb + q]
+            if bn >= 0:
+                pos = cuda.atomic.add(hist, nbins + bn, 1)
+                perm[pb + pos] = q
+        cuda.syncthreads()
+        for t in range(tid, ngroups * K, nthr):
+            g = t // K
+            s = t - g * K
+            lo = gs[gsb + g]
+            hi = gs[gsb + g + 1]
+            c5 = eta[e5 + s]
+            c6 = eta[e6 + s]
+            c7 = eta[e7 + s]
+            c8 = eta[e8 + s]
+            acc = 0.0
+            for r in range(lo, hi):
+                q = perm[pb + r]
+                i = s_i[pb + q]
+                j = s_j[pb + q]
+                li = ll1[s1 + i]
+                lj = ll2[s2 + j]
+                val = (
+                    c5 + c6 * lj + c7 * li + c8 * li * lj
+                    - eta[e1 + i * K + s]
+                    - eta[e2 + j * K + s]
+                    - eta[e3 + i * K + s] * lj
+                    - eta[e4 + j * K + s] * li
+                )
+                acc += w1[s1 + i] * w2[s2 + j] * val
+            cuda.atomic.add(dmat, gb[gbb + g] * nmodel + ukeys[kb + s], acc)
         cuda.syncthreads()
 
 
@@ -425,6 +473,9 @@ class _DeviceDmat:
             cuda.device_array(nb * self.nmodel, np.int32),
             cuda.device_array(nb * kcap, np.int32),
             cuda.device_array(nb * (2 * max1 + 2 * max2 + 4) * kcap, np.float64),
+            cuda.device_array(nb * self.pcap, np.int32),
+            cuda.device_array(nb * self.nbins, np.int32),
+            cuda.device_array(nb * (self.nbins + 1), np.int32),
         )
         self.flags = cuda.to_device(np.zeros(2, dtype=np.int32))
 
@@ -433,9 +484,10 @@ class _DeviceDmat:
         if npairs == 0:
             return
         d = [cuda.to_device(x) for x in (idx1, idx2, ang, shp)]
-        _dmat_kernel[self.nblocks, THREADS](
-            *d, npairs, *self.f1, *self.f2, self.fparams, self.iparams,
-            self.KCAP, self.pcap, *self.scratch, self.flags,
+        _dmat_kernel[self.nblocks, THREADS, 0, 2 * self.nbins * 4](
+            *d, npairs, cuda.to_device(np.zeros(1, dtype=np.int32)), *self.f1, *self.f2,
+            self.fparams, self.iparams,
+            self.KCAP, self.pcap, *self.scratch[:7], *self.scratch[7:], self.flags,
             self.dmat, self.wdmat, self.rpar, self.rtr, self.zeff, self.weff,
         )
 
@@ -453,8 +505,14 @@ class _DeviceDmat:
 
 
 class DmatAccumulator:
-    """Spreads chunks round-robin over the GPUs of the node; ``result`` returns the
-    same tuple as ``cf.compute_dmat`` (summed over everything that was added)."""
+    """Spreads chunks round-robin over the GPUs of the node and returns the same tuple as
+    ``cf.compute_dmat`` (summed over everything that was added).
+
+    Each GPU is driven by its own thread: the host-to-device copies and the kernel launches of
+    different GPUs would otherwise run one after the other (only one GPU busy at a time)."""
+
+    QUEUE_DEPTH = 3
+    PIECE = 1024  # forest pairs per kernel launch (a few tenths of a second)
 
     def __init__(self, flat1, flat2, devices=None):
         if devices is None:
@@ -463,6 +521,244 @@ class DmatAccumulator:
         for dev in devices:
             with cuda.gpus[dev]:
                 self.parts.append(_DeviceDmat(flat1, flat2, device=dev))
+        self.queues = [queue.Queue(maxsize=self.QUEUE_DEPTH) for _ in self.parts]
+        self.errors = []
+        self.threads = [
+            threading.Thread(target=self._worker, args=(k,), daemon=True)
+            for k in range(len(self.parts))
+        ]
+        for t in self.threads:
+            t.start()
+        self.next = 0
+        self.num_pairs = 0
+        self.num_pairs_used = 0
+
+    def _worker(self, k):
+        part = self.parts[k]
+        cuda.select_device(part.device)
+        try:
+            while True:
+                item = self.queues[k].get()
+                if item is None:
+                    break
+                part.add(*item)
+            cuda.synchronize()
+        except BaseException as err:  # pylint: disable=broad-except
+            self.errors.append(err)
+            while self.queues[k].get() is not None:  # keep draining so add() never blocks
+                pass
+
+    def add(self, idx1, idx2, ang, shp, num_pairs, num_pairs_used):
+        if self.errors:
+            raise self.errors[0]
+        self.num_pairs += num_pairs
+        self.num_pairs_used += num_pairs_used
+        # deal the chunk out in small pieces so the GPUs finish together
+        for lo in range(0, idx1.size, self.PIECE):
+            sl = slice(lo, lo + self.PIECE)
+            self.queues[self.next % len(self.parts)].put((idx1[sl], idx2[sl], ang[sl], shp[sl]))
+            self.next += 1
+
+    def result(self):
+        for q in self.queues:
+            q.put(None)
+        for t in self.threads:
+            t.join()
+        if self.errors:
+            raise self.errors[0]
+        sums = None
+        for part in self.parts:
+            with cuda.gpus[part.device]:
+                h = part.host_sums()
+            sums = list(h) if sums is None else [a + b for a, b in zip(sums, h)]
+        wdmat, dmat, rpar, rtr, zeff, weff = sums
+        nbins = cf.num_bins_r_par * cf.num_bins_r_trans
+        dmat = dmat.reshape(nbins, cf.num_model_bins_r_par * cf.num_model_bins_r_trans)
+        return (wdmat, dmat, rpar, rtr, zeff, weff, self.num_pairs, self.num_pairs_used)
+
+
+# ----------------------------------------------------------------------------------------
+# metal distortion matrices (cf.compute_metal_dmat)
+# ----------------------------------------------------------------------------------------
+
+
+class FlatForestsMetal(_FlatForests):
+    """``FlatForests`` plus the raw log-lambda, to place the pixels at the redshift of a metal."""
+
+    def __init__(self, forests):
+        super().__init__(forests)
+        self.log_lambda = np.ascontiguousarray(
+            np.concatenate([f.log_lambda for f in forests]), dtype=np.float64
+        )
+        self._cache = {}
+
+    def absorber(self, name):
+        """Device arrays (z_abs, r_comov_abs, dist_m_abs) for absorber ``name``."""
+        key = (cuda.get_current_device().id, name)  # device arrays live on one GPU
+        if key not in self._cache:
+            z = 10**self.log_lambda / constants.ABSORBER_IGM[name] - 1
+            self._cache[key] = tuple(
+                cuda.to_device(np.ascontiguousarray(a, dtype=np.float64))
+                for a in (z, cf.cosmo.get_r_comov(z), cf.cosmo.get_dist_m(z))
+            )
+        return self._cache[key]
+
+
+@cuda.jit
+def _metal_kernel(
+    pair_i1, pair_i2, pair_ang, pair_shp, npairs,
+    off1, rc1, dm1, w1, zq1, za1, rca1, dma1,
+    off2, rc2, dm2, w2, zq2, za2, rca2, dma2,
+    fparams, iparams,
+    dmat, wdmat, rpar_eff, rtr_eff, z_eff, w_eff,
+):
+    """One block per forest pair (grid-stride), threads over pixel pairs. Mirrors the first
+    block of ``cf.compute_metal_dmat``; the swapped block is a second launch with the roles
+    of the two absorbers exchanged."""
+    tid = cuda.threadIdx.x
+    nthr = cuda.blockDim.x
+    r_par_min = fparams[0]
+    r_par_max = fparams[1]
+    r_trans_max = fparams[2]
+    z_ref = fparams[3]
+    expo1 = fparams[4]
+    expo2 = fparams[5]
+    nb_par = iparams[0]
+    nb_trans = iparams[1]
+    nmb_par = iparams[2]
+    nmb_trans = iparams[3]
+    xcorr = iparams[4]
+    rm_shp = iparams[5]
+    nmodel = nmb_par * nmb_trans
+    bin_par_width = (r_par_max - r_par_min) / nb_par
+    denom = (1 + z_ref) ** (expo1 + expo2)
+
+    for p in range(cuda.blockIdx.x, npairs, cuda.gridDim.x):
+        a = pair_i1[p]
+        b = pair_i2[p]
+        ang = pair_ang[p]
+        shp = pair_shp[p]
+        s1 = off1[a]
+        n1 = off1[a + 1] - s1
+        s2 = off2[b]
+        n2 = off2[b + 1] - s2
+        zqso1 = zq1[a]
+        zqso2 = zq2[b]
+        cos_h = math.cos(ang / 2)
+        sin_h = math.sin(ang / 2)
+        for k in range(tid, n1 * n2, nthr):
+            i = k // n2
+            j = k - i * n2
+            wi = w1[s1 + i]
+            if wi == 0:
+                continue
+            wj = w2[s2 + j]
+            if wj == 0:
+                continue
+            zi = za1[s1 + i]
+            zj = za2[s2 + j]
+            # metal absorption inconsistent with the quasar redshift
+            if not (zi < zqso1) or not (zj < zqso2):
+                continue
+            r_par = (rc1[s1 + i] - rc2[s2 + j]) * cos_h
+            if xcorr == 0:
+                r_par = abs(r_par)
+            r_trans = (dm1[s1 + i] + dm2[s2 + j]) * sin_h
+            w12 = wi * wj
+            bp = math.floor((r_par - r_par_min) / (r_par_max - r_par_min) * nb_par)
+            bt = math.floor(r_trans / r_trans_max * nb_trans)
+            if rm_shp != 0 and shp != 0:
+                if abs(r_par) < bin_par_width:
+                    w12 = 0.0
+            if not (bp < nb_par and bt < nb_trans and bp >= 0 and bt >= 0):
+                continue
+            bins = int(bt + nb_trans * bp)
+            cuda.atomic.add(wdmat, bins, w12)
+
+            r_par_a = (rca1[s1 + i] - rca2[s2 + j]) * cos_h
+            if xcorr == 0:
+                r_par_a = abs(r_par_a)
+            r_trans_a = (dma1[s1 + i] + dma2[s2 + j]) * sin_h
+            zw = (1 + zi) ** expo1 * (1 + zj) ** expo2 / denom
+            mp = math.floor((r_par_a - r_par_min) / (r_par_max - r_par_min) * nmb_par)
+            mt = math.floor(r_trans_a / r_trans_max * nmb_trans)
+            # (NaN compares false, so non-finite positions are dropped here as on the CPU)
+            if not (mp < nmb_par and mt < nmb_trans and mp >= 0 and mt >= 0):
+                continue
+            mb = int(mt + nmb_trans * mp)
+            v = w12 * zw
+            cuda.atomic.add(dmat, bins * nmodel + mb, v)
+            cuda.atomic.add(rpar_eff, mb, r_par_a * v)
+            cuda.atomic.add(rtr_eff, mb, r_trans_a * v)
+            cuda.atomic.add(z_eff, mb, (zi + zj) / 2 * v)
+            cuda.atomic.add(w_eff, mb, v)
+
+
+class _DeviceMetal:
+    BLOCKS_PER_SM = 8
+
+    def __init__(self, flat1, flat2, device=0):
+        self.device = device
+        self.nbins = cf.num_bins_r_par * cf.num_bins_r_trans
+        self.nmodel = cf.num_model_bins_r_par * cf.num_model_bins_r_trans
+        z = lambda n: cuda.to_device(np.zeros(n, dtype=np.float64))
+        self.dmat = z(self.nbins * self.nmodel)
+        self.wdmat = z(self.nbins)
+        self.rpar, self.rtr, self.zeff, self.weff = (z(self.nmodel) for _ in range(4))
+        self.flat1, self.flat2 = flat1, flat2
+        basic = lambda f: tuple(cuda.to_device(a) for a in (f.offsets, f.r_comov, f.dist_m, f.weights, f.z_qso))
+        self.b1 = basic(flat1)
+        self.b2 = self.b1 if flat2 is flat1 else basic(flat2)
+        self.nblocks = cuda.get_current_device().MULTIPROCESSOR_COUNT * self.BLOCKS_PER_SM
+        self.pairs = None
+
+    def set_pairs(self, idx1, idx2, ang, shp):
+        self.npairs = idx1.size
+        self.pairs = tuple(cuda.to_device(x) for x in (idx1, idx2, ang, shp))
+
+    def run(self, abs1, abs2, swap):
+        """Accumulate all stored pairs for the absorber pair (abs1 on forest 1, abs2 on forest 2),
+        or with the roles exchanged (swap)."""
+        if self.npairs == 0:
+            return
+        a1, a2 = (abs2, abs1) if swap else (abs1, abs2)
+        e1 = cf.alpha_abs[a1] - 1
+        e2 = cf.alpha_abs[a2] - 1
+        fp = cuda.to_device(np.array(
+            [cf.r_par_min, cf.r_par_max, cf.r_trans_max, cf.z_ref, e1, e2], dtype=np.float64))
+        ip = cuda.to_device(np.array(
+            [cf.num_bins_r_par, cf.num_bins_r_trans, cf.num_model_bins_r_par,
+             cf.num_model_bins_r_trans, int(bool(cf.x_correlation)),
+             int(bool(cf.remove_same_half_plate_close_pairs))], dtype=np.int64))
+        _metal_kernel[min(self.nblocks, self.npairs), THREADS](
+            *self.pairs, self.npairs,
+            self.b1[0], self.b1[1], self.b1[2], self.b1[3], self.b1[4], *self.flat1.absorber(a1),
+            self.b2[0], self.b2[1], self.b2[2], self.b2[3], self.b2[4], *self.flat2.absorber(a2),
+            fp, ip, self.dmat, self.wdmat, self.rpar, self.rtr, self.zeff, self.weff,
+        )
+
+    def reset(self):
+        for a in (self.dmat, self.wdmat, self.rpar, self.rtr, self.zeff, self.weff):
+            a[:] = 0
+
+    def host_sums(self):
+        cuda.synchronize()
+        return tuple(a.copy_to_host() for a in (self.wdmat, self.dmat, self.rpar, self.rtr, self.zeff, self.weff))
+
+
+class MetalAccumulator:
+    """Holds the (rejection-selected) forest pairs on the GPUs and computes the metal distortion
+    matrix of any absorber combination from them; ``combo`` returns the same tuple as
+    ``cf.compute_metal_dmat``."""
+
+    def __init__(self, flat1, flat2, devices=None):
+        if devices is None:
+            devices = list(range(len(cuda.gpus)))
+        self.parts = []
+        for dev in devices:
+            with cuda.gpus[dev]:
+                self.parts.append(_DeviceMetal(flat1, flat2, device=dev))
+        self.chunks = [[] for _ in self.parts]
         self.next = 0
         self.num_pairs = 0
         self.num_pairs_used = 0
@@ -470,13 +766,28 @@ class DmatAccumulator:
     def add(self, idx1, idx2, ang, shp, num_pairs, num_pairs_used):
         self.num_pairs += num_pairs
         self.num_pairs_used += num_pairs_used
-        part = self.parts[self.next % len(self.parts)]
+        self.chunks[self.next % len(self.parts)].append((idx1, idx2, ang, shp))
         self.next += 1
-        with cuda.gpus[part.device]:
-            part.add(idx1, idx2, ang, shp)
 
-    def result(self):
+    def finish_adding(self):
+        for part, ch in zip(self.parts, self.chunks):
+            with cuda.gpus[part.device]:
+                cols = [np.concatenate([c[k] for c in ch]) if ch else np.zeros(0) for k in range(4)]
+                dtypes = (np.int32, np.int32, np.float64, np.uint8)
+                part.set_pairs(*[c.astype(d) for c, d in zip(cols, dtypes)])
+        self.chunks = None
+
+    def combo(self, abs1, abs2):
+        swap = ((not cf.x_correlation) and (abs1 != abs2)) or (
+            cf.x_correlation and (cf.lambda_abs == cf.lambda_abs2)
+        )
         sums = None
+        for part in self.parts:
+            with cuda.gpus[part.device]:
+                part.reset()
+                part.run(abs1, abs2, False)
+                if swap:
+                    part.run(abs1, abs2, True)
         for part in self.parts:
             with cuda.gpus[part.device]:
                 h = part.host_sums()
