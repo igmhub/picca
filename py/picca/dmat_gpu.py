@@ -25,7 +25,7 @@ from numba import cuda, int32
 
 from . import cf, constants
 from .cf_gpu import FlatForests as _FlatForests
-from .cf_gpu import _same_half_plate
+from .cf_gpu import _enable_large_shared, _same_half_plate
 
 THREADS = 1024  # dmat kernel: with max_registers=64, one resident block of 32 warps per SM
 METAL_THREADS = 256
@@ -64,33 +64,73 @@ class FlatForestsDmat(_FlatForests):
         )
 
 
-def pairs_for_chunk(healpixs, require_order=True):
+class FlatObjects:
+    """Quasars of the cross-correlation as one-pixel "forests" with no continuum correction.
+
+    ``sum_w = inf`` makes every eta term that needs the object's weight sum vanish and
+    ``order = 0`` drops the log-lambda terms, which leaves the two eta tables of
+    ``xcf.compute_dmat_forest_pairs_fast``.
+    """
+
+    def __init__(self, objs):
+        n = len(objs)
+        f64 = lambda name: np.array([getattr(o, name) for o in objs], dtype=np.float64)
+        self.offsets = np.arange(n + 1, dtype=np.int64)
+        self.z = f64("z_qso")
+        self.z_qso = self.z
+        self.r_comov = f64("r_comov")
+        self.dist_m = f64("dist_m")
+        self.weights = np.array([np.ravel(o.weights)[0] for o in objs], dtype=np.float64)
+        self.llm = np.zeros(n)
+        self.sum_w = np.full(n, np.inf)
+        self.swsll = np.ones(n)
+        self.order = np.zeros(n, dtype=np.int32)
+        self.max_pixels = 1
+        for k, o in enumerate(objs):
+            o.gpu_idx = k
+
+    to_device_dmat = FlatForestsDmat.to_device_dmat
+
+
+def _module(kind):
+    """The picca module holding the globals of the correlation being computed."""
+    if kind == "xcf":
+        from . import xcf  # pylint: disable=import-outside-toplevel
+
+        return xcf
+    return cf
+
+
+def pairs_for_chunk(healpixs, require_order=True, kind="cf"):
     """CPU worker: neighbours of the forests in ``healpixs`` after the pair rejection.
 
     Reproduces the random stream of ``picca_dmat.calc_dmat`` (``np.random.seed(healpixs[0])``
     after ``fill_neighs``, one ``rand`` per forest in healpix order), so for the same chunks
     the GPU run uses exactly the same pairs as the CPU run.
+    ``kind="xcf"`` takes the forests x objects variant (``picca.xcf``), where the neighbours
+    are objects that carry a ``gpu_idx`` set by ``FlatObjects``.
     Returns (idx1, idx2, ang, same_half_plate, num_pairs, num_pairs_used).
     """
-    cf.fill_neighs(healpixs)
+    mod = _module(kind)
+    mod.fill_neighs(healpixs)
     np.random.seed(healpixs[0])
     idx1, idx2, angs, shp = [], [], [], []
     num_pairs = 0
     num_pairs_used = 0
     for healpix in healpixs:
-        for delta1 in cf.data[healpix]:
+        for delta1 in mod.data[healpix]:
             if require_order and delta1.order is None:
                 raise RuntimeError(
                     "Trying to compute the distortion matrix but order is not defined "
                     "for the deltas. Check previous warning to solve this issue"
                 )
             neigh = delta1.neighbours
-            keep = np.random.rand(len(neigh)) > cf.reject
+            keep = np.random.rand(len(neigh)) > mod.reject
             num_pairs += len(neigh)
             num_pairs_used += int(keep.sum())
             if keep.any():
                 chosen = list(np.array(neigh)[keep])
-                for d in chosen:
+                for d in chosen if kind == "cf" else ():
                     if require_order and d.order is None:
                         raise RuntimeError(
                             "Trying to compute the distortion matrix but order is not "
@@ -99,7 +139,7 @@ def pairs_for_chunk(healpixs, require_order=True):
                 idx1.append(np.full(len(chosen), delta1.gpu_idx, dtype=np.int32))
                 idx2.append(np.fromiter((d.gpu_idx for d in chosen), np.int32, len(chosen)))
                 angs.append(np.asarray(delta1.get_angle_between(chosen), dtype=np.float64))
-                if cf.remove_same_half_plate_close_pairs:
+                if getattr(mod, "remove_same_half_plate_close_pairs", False):
                     shp.append(np.array([_same_half_plate(delta1, d) for d in chosen], dtype=np.uint8))
                 else:
                     shp.append(np.zeros(len(chosen), dtype=np.uint8))
@@ -411,36 +451,38 @@ def _dmat_kernel(
         cuda.syncthreads()
 
 
-def _params():
+def _params(mod=cf):
+    """Binning and selection parameters of ``mod`` (``cf`` or ``xcf``) for the kernel."""
+    xc = mod is not cf
     f = np.array(
         [
-            cf.r_par_min,
-            cf.r_par_max,
-            cf.r_trans_max,
-            cf.z_min_pairs if cf.z_min_pairs is not None else 0.0,
-            cf.z_max_pairs if cf.z_max_pairs is not None else 0.0,
-            cf.zerr_cut_deg * np.pi / 180.0 if cf.zerr_cut_deg is not None else 0.0,
-            cf.zerr_cut_kms if cf.zerr_cut_kms is not None else 0.0,
+            mod.r_par_min,
+            mod.r_par_max,
+            mod.r_trans_max,
+            mod.z_min_pairs if mod.z_min_pairs is not None else 0.0,
+            mod.z_max_pairs if mod.z_max_pairs is not None else 0.0,
+            cf.zerr_cut_deg * np.pi / 180.0 if (not xc and cf.zerr_cut_deg is not None) else 0.0,
+            cf.zerr_cut_kms if (not xc and cf.zerr_cut_kms is not None) else 0.0,
             constants.SPEED_LIGHT,
-            cf.z_ref,
-            cf.alpha,
-            cf.alpha2,
+            mod.z_ref,
+            mod.alpha,
+            mod.alpha_obj if xc else cf.alpha2,
         ],
         dtype=np.float64,
     )
     i = np.array(
         [
-            cf.num_bins_r_par,
-            cf.num_bins_r_trans,
-            cf.num_model_bins_r_par,
-            cf.num_model_bins_r_trans,
-            int(bool(cf.rmu_binning)),
-            int(bool(cf.x_correlation)),
-            int(cf.z_min_pairs is not None),
-            int(cf.z_max_pairs is not None),
-            int(cf.zerr_cut_deg is not None),
-            int(bool(cf.remove_same_half_plate_close_pairs)),
-            int(bool(cf.redshift_evolution_in_distortion_matrix)),
+            mod.num_bins_r_par,
+            mod.num_bins_r_trans,
+            mod.num_model_bins_r_par,
+            mod.num_model_bins_r_trans,
+            int(bool(mod.rmu_binning)),
+            1 if xc else int(bool(cf.x_correlation)),
+            int(mod.z_min_pairs is not None),
+            int(mod.z_max_pairs is not None),
+            int(not xc and cf.zerr_cut_deg is not None),
+            int(not xc and bool(cf.remove_same_half_plate_close_pairs)),
+            int(bool(mod.redshift_evolution_in_distortion_matrix)),
         ],
         dtype=np.int64,
     )
@@ -453,17 +495,17 @@ class _DeviceDmat:
     BLOCKS_PER_SM = 1
     KCAP = 2048  # max unique model bins per forest pair (measured: mean ~510, max ~1350)
 
-    def __init__(self, flat1, flat2, device=0):
+    def __init__(self, flat1, flat2, device=0, mod=cf):
         self.device = device
-        self.nbins = cf.num_bins_r_par * cf.num_bins_r_trans
-        self.nmodel = cf.num_model_bins_r_par * cf.num_model_bins_r_trans
+        self.nbins = mod.num_bins_r_par * mod.num_bins_r_trans
+        self.nmodel = mod.num_model_bins_r_par * mod.num_model_bins_r_trans
         z = lambda n: cuda.to_device(np.zeros(n, dtype=np.float64))
         self.dmat = z(self.nbins * self.nmodel)
         self.wdmat = z(self.nbins)
         self.rpar, self.rtr, self.zeff, self.weff = (z(self.nmodel) for _ in range(4))
         self.f1 = flat1.to_device_dmat()
         self.f2 = self.f1 if flat2 is flat1 else flat2.to_device_dmat()
-        fp, ip = _params()
+        fp, ip = _params(mod)
         max1, max2 = flat1.max_pixels, flat2.max_pixels
         ip = np.concatenate([ip, [max1, max2]]).astype(np.int64)
         self.fparams = cuda.to_device(fp)
@@ -488,18 +530,33 @@ class _DeviceDmat:
             cuda.device_array(nb * (self.nbins + 1), np.int32),
         )
         self.flags = cuda.to_device(np.zeros(2, dtype=np.int32))
+        self.smem = 2 * self.nbins * 4
+        if self.smem > 48 * 1024:
+            # more than 48 KiB of dynamic shared memory needs a driver opt-in. A launch with
+            # no pairs compiles the kernel first (it exits before touching the shared array).
+            self._launch(np.zeros(1, np.int32), np.zeros(1, np.int32), np.zeros(1),
+                         np.zeros(1, np.uint8), 0)
+            ok = _enable_large_shared(_dmat_kernel, self.smem)
+            if not ok:
+                raise RuntimeError(
+                    f"dmat_gpu: cannot enable {self.smem} bytes of shared memory for "
+                    f"{self.nbins} data bins"
+                )
 
-    def add(self, idx1, idx2, ang, shp):
-        npairs = idx1.size
-        if npairs == 0:
-            return
+    def _launch(self, idx1, idx2, ang, shp, npairs):
+        smem = self.smem if npairs else 0
         d = [cuda.to_device(x) for x in (idx1, idx2, ang, shp)]
-        _dmat_kernel[self.nblocks, THREADS, 0, 2 * self.nbins * 4](
+        _dmat_kernel[self.nblocks, THREADS, 0, smem](
             *d, npairs, cuda.to_device(np.zeros(1, dtype=np.int32)), *self.f1, *self.f2,
             self.fparams, self.iparams,
             self.KCAP, self.pcap, *self.scratch, self.flags,
             self.dmat, self.wdmat, self.rpar, self.rtr, self.zeff, self.weff,
         )
+
+    def add(self, idx1, idx2, ang, shp):
+        npairs = idx1.size
+        if npairs:
+            self._launch(idx1, idx2, ang, shp, npairs)
 
     def host_sums(self):
         cuda.synchronize()
@@ -524,13 +581,14 @@ class DmatAccumulator:
     QUEUE_DEPTH = 3
     PIECE = 1024  # forest pairs per kernel launch (a few tenths of a second)
 
-    def __init__(self, flat1, flat2, devices=None):
+    def __init__(self, flat1, flat2, devices=None, mod=cf):
+        self.mod = mod
         if devices is None:
             devices = list(range(len(cuda.gpus)))
         self.parts = []
         for dev in devices:
             with cuda.gpus[dev]:
-                self.parts.append(_DeviceDmat(flat1, flat2, device=dev))
+                self.parts.append(_DeviceDmat(flat1, flat2, device=dev, mod=mod))
         self.queues = [queue.Queue(maxsize=self.QUEUE_DEPTH) for _ in self.parts]
         self.errors = []
         self.threads = [
@@ -582,8 +640,9 @@ class DmatAccumulator:
                 h = part.host_sums()
             sums = list(h) if sums is None else [a + b for a, b in zip(sums, h)]
         wdmat, dmat, rpar, rtr, zeff, weff = sums
-        nbins = cf.num_bins_r_par * cf.num_bins_r_trans
-        dmat = dmat.reshape(nbins, cf.num_model_bins_r_par * cf.num_model_bins_r_trans)
+        mod = self.mod
+        nbins = mod.num_bins_r_par * mod.num_bins_r_trans
+        dmat = dmat.reshape(nbins, mod.num_model_bins_r_par * mod.num_model_bins_r_trans)
         return (wdmat, dmat, rpar, rtr, zeff, weff, self.num_pairs, self.num_pairs_used)
 
 
@@ -707,10 +766,10 @@ def _metal_kernel(
 class _DeviceMetal:
     BLOCKS_PER_SM = 8
 
-    def __init__(self, flat1, flat2, device=0):
+    def __init__(self, flat1, flat2, device=0, mod=cf):
         self.device = device
-        self.nbins = cf.num_bins_r_par * cf.num_bins_r_trans
-        self.nmodel = cf.num_model_bins_r_par * cf.num_model_bins_r_trans
+        self.nbins = mod.num_bins_r_par * mod.num_bins_r_trans
+        self.nmodel = mod.num_model_bins_r_par * mod.num_model_bins_r_trans
         z = lambda n: cuda.to_device(np.zeros(n, dtype=np.float64))
         self.dmat = z(self.nbins * self.nmodel)
         self.wdmat = z(self.nbins)
@@ -761,7 +820,8 @@ class MetalAccumulator:
     matrix of any absorber combination from them; ``combo`` returns the same tuple as
     ``cf.compute_metal_dmat``."""
 
-    def __init__(self, flat1, flat2, devices=None):
+    def __init__(self, flat1, flat2, devices=None, mod=cf):
+        self.mod = mod
         if devices is None:
             devices = list(range(len(cuda.gpus)))
         self.parts = []
@@ -803,6 +863,7 @@ class MetalAccumulator:
                 h = part.host_sums()
             sums = list(h) if sums is None else [a + b for a, b in zip(sums, h)]
         wdmat, dmat, rpar, rtr, zeff, weff = sums
-        nbins = cf.num_bins_r_par * cf.num_bins_r_trans
-        dmat = dmat.reshape(nbins, cf.num_model_bins_r_par * cf.num_model_bins_r_trans)
+        mod = self.mod
+        nbins = mod.num_bins_r_par * mod.num_bins_r_trans
+        dmat = dmat.reshape(nbins, mod.num_model_bins_r_par * mod.num_model_bins_r_trans)
         return (wdmat, dmat, rpar, rtr, zeff, weff, self.num_pairs, self.num_pairs_used)
