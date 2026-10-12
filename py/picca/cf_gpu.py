@@ -38,6 +38,15 @@ class FlatForests:
         self.weights = cat("weights")
         self.delta = cat("delta")
         self.z_qso = np.array([f.z_qso for f in forests], dtype=np.float64)
+        # sky positions, for the vectorised neighbour search (pairs_for_healpixs_fast)
+        per_forest = lambda name: np.array([getattr(f, name) for f in forests])
+        self.x_cart = per_forest("x_cart")
+        self.y_cart = per_forest("y_cart")
+        self.z_cart = per_forest("z_cart")
+        self.ra = per_forest("ra")
+        self.dec = per_forest("dec")
+        self.cos_dec = per_forest("cos_dec")
+        self.thingid = per_forest("thingid")
         for k, f in enumerate(forests):
             f.gpu_idx = k
 
@@ -79,6 +88,81 @@ def pairs_for_healpixs(healpixs):
         else:
             e = np.zeros(0)
             out.append((healpix, e.astype(np.int32), e.astype(np.int32), e, e.astype(np.uint8)))
+    return out
+
+
+_FLAT = {}
+
+
+def set_flat_forests(flat1, flat2):
+    """Make the flattened forests visible to ``pairs_for_healpixs_fast`` (call before forking)."""
+    _FLAT["f1"], _FLAT["f2"] = flat1, flat2
+
+
+def _healpix_ranges(dct):
+    # forests are flattened in sorted healpix order, so each healpix is a contiguous range
+    return {h: (v[0].gpu_idx, v[-1].gpu_idx + 1) for h, v in dct.items() if len(v)}
+
+
+def pairs_for_healpixs_fast(healpixs):
+    """Same pairs as ``pairs_for_healpixs`` (not in the same order), found with array operations
+    on the flattened sky positions instead of one ``query_disc`` and Python lists per forest.
+
+    The candidates of a healpix are the forests in the healpixes within ``ang_max`` plus one
+    pixel radius of its centre; the selection (``angle < ang_max``, different thingid, and
+    ``ra`` ordering for the auto-correlation) uses the same expressions as ``cf.fill_neighs``.
+    Does not handle ``remove_same_half_plate_close_pairs``.
+    """
+    # pylint: disable=import-outside-toplevel
+    import healpy
+
+    f1 = _FLAT["f1"]
+    auto = cf.data2 is None
+    f2 = f1 if auto else _FLAT["f2"]
+    if "r1" not in _FLAT:
+        _FLAT["r1"] = _healpix_ranges(cf.data)
+        _FLAT["r2"] = _FLAT["r1"] if auto else _healpix_ranges(cf.data2)
+    rng1, rng2 = _FLAT["r1"], _FLAT["r2"]
+    radius = cf.ang_max + healpy.max_pixrad(cf.nside)
+    cos_cut = np.cos(cf.ang_max) - 1e-9
+    out = []
+    for hp in healpixs:
+        lo, hi = rng1[hp]
+        near = healpy.query_disc(cf.nside, healpy.pix2vec(cf.nside, hp), radius, inclusive=True)
+        spans = [rng2[h] for h in near if h in rng2]
+        cand = np.concatenate([np.arange(a, b) for a, b in spans]) if spans else np.zeros(0, np.int64)
+        xc, yc, zc = f2.x_cart[cand], f2.y_cart[cand], f2.z_cart[cand]
+        rows = max(1, int(2e7 // max(cand.size, 1)))
+        idx1, idx2, angs = [], [], []
+        for r0 in range(lo, hi, rows):
+            r1 = min(hi, r0 + rows)
+            cos = (xc[None, :] * f1.x_cart[r0:r1, None] + yc[None, :] * f1.y_cart[r0:r1, None]
+                   + zc[None, :] * f1.z_cart[r0:r1, None])
+            ii, jj = np.nonzero(cos > cos_cut)
+            if ii.size == 0:
+                continue
+            i = ii + r0
+            j = cand[jj]
+            c = np.clip(cos[ii, jj], -1.0, 1.0)
+            ang = np.arccos(c)
+            small = ((np.absolute(f2.ra[j] - f1.ra[i]) < constants.SMALL_ANGLE_CUT_OFF)
+                     & (np.absolute(f2.dec[j] - f1.dec[i]) < constants.SMALL_ANGLE_CUT_OFF))
+            if small.any():
+                ang[small] = np.sqrt(
+                    (f2.dec[j][small] - f1.dec[i][small]) ** 2
+                    + (f1.cos_dec[i][small] * (f2.ra[j][small] - f1.ra[i][small])) ** 2
+                )
+            keep = (ang < cf.ang_max) & (f1.thingid[i] != f2.thingid[j])
+            if auto:
+                keep &= f1.ra[i] > f2.ra[j]
+            idx1.append(i[keep].astype(np.int32))
+            idx2.append(j[keep].astype(np.int32))
+            angs.append(ang[keep])
+        if idx1:
+            idx1, idx2, angs = np.concatenate(idx1), np.concatenate(idx2), np.concatenate(angs)
+        else:
+            idx1, idx2, angs = np.zeros(0, np.int32), np.zeros(0, np.int32), np.zeros(0)
+        out.append((hp, idx1, idx2, angs, np.zeros(idx1.size, dtype=np.uint8)))
     return out
 
 
@@ -316,7 +400,7 @@ def _params():
 class _DeviceXi:
     """Accumulates the per-healpix correlation function on one GPU."""
 
-    PAIRS_PER_BLOCK = 32
+    PAIRS_PER_BLOCK = int(__import__("os").environ.get("PICCA_GPU_PPB", 32))
     THREADS = 1024
 
     def __init__(self, flat1, flat2, healpix_list, device=0):

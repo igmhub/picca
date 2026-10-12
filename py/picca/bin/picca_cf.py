@@ -473,11 +473,17 @@ def main(cmdargs=None):
         flat2 = flat1 if cf.data2 is None else cf_gpu.FlatForests(
             [d for h in sorted(cf.data2) for d in cf.data2[h]]
         )
+        if cf.remove_same_half_plate_close_pairs:
+            pairs_function = cf_gpu.pairs_for_healpixs
+        else:
+            # vectorised neighbour search; set before forking so that the workers see it
+            cf_gpu.set_flat_forests(flat1, flat2)
+            pairs_function = cf_gpu.pairs_for_healpixs_fast
         pool = context.Pool(processes=args.nproc)
         accumulator = cf_gpu.XiAccumulator(flat1, flat2, hps)
         t_wait = t_add = 0.0
         t_loop = time.time()
-        it = pool.imap_unordered(cf_gpu.pairs_for_healpixs, [[h] for h in hps])
+        it = pool.imap_unordered(pairs_function, [[h] for h in hps])
         while True:
             ta = time.time()
             try:
