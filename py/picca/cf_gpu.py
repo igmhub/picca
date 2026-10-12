@@ -11,6 +11,8 @@ histogram slot per healpix.
 Not supported (the caller must fall back to the CPU path): ``cf.ang_correlation``.
 """
 import math
+import queue
+import threading
 
 import numpy as np
 from numba import cuda
@@ -196,7 +198,7 @@ def _accumulate_pair(
 
 @cuda.jit
 def _xi_kernel_global(
-    pair_i1, pair_i2, pair_ang, pair_shp, slot, npairs, pairs_per_block,
+    pair_i1, pair_i2, pair_ang, pair_shp, pair_slot, npairs, pairs_per_block,
     off1, z1, rc1, dm1, w1, dl1, zq1,
     off2, z2, rc2, dm2, w2, dl2, zq2,
     fparams, iparams, nbins, out,
@@ -211,31 +213,47 @@ def _xi_kernel_global(
             p, pair_i1, pair_i2, pair_ang, pair_shp,
             off1, z1, rc1, dm1, w1, dl1, zq1,
             off2, z2, rc2, dm2, w2, dl2, zq2,
-            fparams, iparams, out, slot * 6 * nbins, nbins,
+            fparams, iparams, out, pair_slot[p] * 6 * nbins, nbins,
         )
 
 
 @cuda.jit(max_registers=int(__import__('os').environ.get('PICCA_GPU_MAXREG', 64)))
 def _xi_kernel_shared(
-    pair_i1, pair_i2, pair_ang, pair_shp, slot, npairs, pairs_per_block,
+    pair_i1, pair_i2, pair_ang, pair_shp, pair_slot, npairs, pairs_per_block,
     off1, z1, rc1, dm1, w1, dl1, zq1,
     off2, z2, rc2, dm2, w2, dl2, zq2,
     fparams, iparams, nbins, out,
 ):
-    """Each block accumulates ``pairs_per_block`` pairs into a shared-memory
-    histogram (6 planes x nbins float64, dynamic shared memory) and flushes it
-    to global memory once. ``nbins`` = 0 makes this a no-op (used to compile)."""
+    """Each block accumulates ``pairs_per_block`` consecutive pairs into a shared-memory
+    histogram (6 planes x nbins float64, dynamic shared memory) and flushes it to the output
+    slot of those pairs (``pair_slot``, constant over runs of pairs; the block flushes and
+    restarts when it changes). ``nbins`` = 0 makes this a no-op (used to compile)."""
     sh = cuda.shared.array(0, dtype=np.float64)
     tid = cuda.threadIdx.x
     nthr = cuda.blockDim.x
-    for t in range(tid, 6 * nbins, nthr):
-        sh[t] = 0.0
-    cuda.syncthreads()
     p0 = cuda.blockIdx.x * pairs_per_block
     p1 = p0 + pairs_per_block
     if p1 > npairs:
         p1 = npairs
+    if p0 >= p1:
+        return
+    for t in range(tid, 6 * nbins, nthr):
+        sh[t] = 0.0
+    cuda.syncthreads()
+    cur = pair_slot[p0]
     for p in range(p0, p1):
+        slot = pair_slot[p]
+        if slot != cur:
+            cuda.syncthreads()
+            gbase = cur * 6 * nbins
+            for t in range(tid, nbins, nthr):
+                if sh[5 * nbins + t] != 0.0:
+                    for q in range(6):
+                        cuda.atomic.add(out, gbase + q * nbins + t, sh[q * nbins + t])
+                for q in range(6):
+                    sh[q * nbins + t] = 0.0
+            cuda.syncthreads()
+            cur = slot
         _accumulate_pair(
             p, pair_i1, pair_i2, pair_ang, pair_shp,
             off1, z1, rc1, dm1, w1, dl1, zq1,
@@ -243,7 +261,7 @@ def _xi_kernel_shared(
             fparams, iparams, sh, 0, nbins,
         )
     cuda.syncthreads()
-    gbase = slot * 6 * nbins
+    gbase = cur * 6 * nbins
     for t in range(tid, nbins, nthr):
         if sh[5 * nbins + t] != 0.0:
             for q in range(6):
@@ -313,15 +331,18 @@ class _DeviceXi:
         self.fparams = cuda.to_device(fp)
         self.iparams = cuda.to_device(ip)
         self.shmem = 6 * self.nbins * 8
-        self.use_shared = None  # decided on first add()
+        self.use_shared = None  # decided by _setup_shared()
 
-    def _setup_shared(self, d):
+    def _setup_shared(self):
         limit = cuda.get_current_device().MAX_SHARED_MEMORY_PER_BLOCK_OPTIN
         ok = self.shmem <= limit
         if ok:
-            # compile with a no-op launch (nbins = 0), then raise the smem limit
+            # compile with a no-op launch (npairs = 0), then raise the smem limit
+            d = [cuda.to_device(x) for x in (
+                np.zeros(1, np.int32), np.zeros(1, np.int32), np.zeros(1),
+                np.zeros(1, np.uint8), np.zeros(1, np.int32))]
             _xi_kernel_shared[1, 1, 0, 8](
-                *d, 0, 0, 1, *self.f1, *self.f2, self.fparams, self.iparams, 0, self.out
+                *d, 0, 1, *self.f1, *self.f2, self.fparams, self.iparams, 0, self.out
             )
             cuda.synchronize()
             ok = _enable_large_shared(_xi_kernel_shared, self.shmem)
@@ -329,17 +350,15 @@ class _DeviceXi:
         if not ok:
             print("cf_gpu: large shared memory unavailable, using global atomics")
 
-    def add(self, healpix, idx1, idx2, ang, shp):
+    def add(self, idx1, idx2, ang, shp, slot):
         npairs = idx1.size
         if npairs == 0:
             return
-        d = [cuda.to_device(x) for x in (idx1, idx2, ang, shp)]
-        if self.use_shared is None:
-            self._setup_shared(d)
+        d = [cuda.to_device(x) for x in (idx1, idx2, ang, shp, slot)]
         ppb = self.PAIRS_PER_BLOCK
         nblocks = (npairs + ppb - 1) // ppb
         args = (
-            *d, self.slot_of[healpix], npairs, ppb, *self.f1, *self.f2,
+            *d, npairs, ppb, *self.f1, *self.f2,
             self.fparams, self.iparams, self.nbins, self.out,
         )
         if self.use_shared:
@@ -353,8 +372,15 @@ class _DeviceXi:
 
 
 class XiAccumulator:
-    """Spreads healpixes round-robin over the GPUs of the node and returns the
-    per-healpix results in the same form as ``cf.compute_xi``."""
+    """Spreads healpixes over the GPUs of the node and returns the per-healpix results in
+    the same form as ``cf.compute_xi``.
+
+    Each GPU is driven by its own thread (the host-to-device copies block the host, so a
+    single driving thread keeps only about one GPU busy), and every healpix is dealt out in
+    pieces so that the GPUs finish together."""
+
+    QUEUE_DEPTH = 3
+    BATCH = 16384  # forest pairs per kernel launch (512 blocks at 32 pairs per block)
 
     def __init__(self, flat1, flat2, healpix_list, devices=None):
         if devices is None:
@@ -363,17 +389,66 @@ class XiAccumulator:
         self.parts = []
         for dev in devices:
             with cuda.gpus[dev]:
-                self.parts.append(_DeviceXi(flat1, flat2, healpix_list, device=dev))
+                part = _DeviceXi(flat1, flat2, healpix_list, device=dev)
+                # set up (compile, raise the shared-memory limit) here, one device at a time
+                part._setup_shared()
+                self.parts.append(part)
+        self.queues = [queue.Queue(maxsize=self.QUEUE_DEPTH) for _ in self.parts]
+        self.errors = []
+        self.threads = [
+            threading.Thread(target=self._worker, args=(k,), daemon=True)
+            for k in range(len(self.parts))
+        ]
+        for t in self.threads:
+            t.start()
         self.next = 0
+        self.pending, self.pending_n = [], 0
+
+    def _worker(self, k):
+        part = self.parts[k]
+        cuda.select_device(part.device)
+        try:
+            while True:
+                item = self.queues[k].get()
+                if item is None:
+                    break
+                part.add(*item)
+            cuda.synchronize()
+        except BaseException as err:  # pylint: disable=broad-except
+            self.errors.append(err)
+            while self.queues[k].get() is not None:  # keep draining so add() never blocks
+                pass
 
     def add(self, healpix, idx1, idx2, ang, shp):
-        part = self.parts[self.next % len(self.parts)]
+        if self.errors:
+            raise self.errors[0]
+        n = idx1.size
+        if n == 0:
+            return
+        slot = np.full(n, self.slot_of[healpix], dtype=np.int32)
+        self.pending.append((idx1, idx2, ang, shp, slot))
+        self.pending_n += n
+        if self.pending_n >= self.BATCH:
+            self._send()
+
+    def _send(self):
+        """Hand the pending healpixes to the next GPU as one launch (enough blocks to fill it)."""
+        if not self.pending:
+            return
+        batch = [np.concatenate(cols) for cols in zip(*self.pending)]
+        self.pending, self.pending_n = [], 0
+        self.queues[self.next % len(self.parts)].put(tuple(batch))
         self.next += 1
-        with cuda.gpus[part.device]:
-            part.add(healpix, idx1, idx2, ang, shp)
 
     def result(self, healpix_list):
         """Same structure as ``np.array([cf.compute_xi(h) for h in healpixs])``."""
+        self._send()
+        for q in self.queues:
+            q.put(None)
+        for t in self.threads:
+            t.join()
+        if self.errors:
+            raise self.errors[0]
         host = None
         for part in self.parts:
             with cuda.gpus[part.device]:
