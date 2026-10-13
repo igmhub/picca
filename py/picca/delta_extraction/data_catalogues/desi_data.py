@@ -18,7 +18,7 @@ from picca.delta_extraction.utils import (
     ACCEPTED_BLINDING_STRATEGIES)
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 from picca.delta_extraction.utils import (
-    ABSORBER_IGM, update_accepted_options, update_default_options)
+    update_accepted_options, update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, accepted_options_quasar_catalogue)
 accepted_options = update_accepted_options(accepted_options,
@@ -226,20 +226,31 @@ class DesiData(Data):
             "Function 'read_data' was not overloaded by child class")
 
     def set_blinding(self, is_mock):
-        """Set the blinding in Forest.
+        """Set the delta blinding strategy from mock status and observing dates.
 
-        Update the stored value if necessary.
-
-        Attributes
+        Parameters
         ----------
-        is_mock: boolean
-        True if reading mocks, False otherwise
+        is_mock : bool
+            True when reading mocks, which receive the ``none`` strategy.
+
+        Returns
+        -------
+        None
+            Update this data object's strategy and the shared Forest strategy.
+
+        Raises
+        ------
+        DataError
+            If the selected strategy is not accepted by delta extraction.
+
+        Notes
+        -----
+        For observed spectra, the latest catalogue LASTNIGHT determines the
+        release strategy. Absorber-specific selection occurs when measuring
+        correlations, where the primary absorber identifiers are available.
         """
         # do not blind mocks
         if is_mock:
-            self.blinding = "none"
-        # do not blind metal forests (not lya)
-        elif Forest.log_lambda_rest_frame_grid[0] > ABSORBER_IGM["LYA"]:
             self.blinding = "none"
         # figure out blinding
         else:

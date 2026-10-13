@@ -27,7 +27,23 @@ UNBLINDABLE_STRATEGIES = ["none", "desi_m2", "desi_y1", "desi_y3"]
 
 
 def main(cmdargs=None):
-    """Export auto and cross-correlation for the fitter."""
+    """Export auto and cross-correlation for the fitter.
+
+    Parameters
+    ----------
+    cmdargs : list of str or None, optional
+        Command-line arguments. The default, None, reads the process arguments.
+
+    Returns
+    -------
+    None
+        Write the correlation, covariance, and distortion matrix to a FITS file.
+
+    Notes
+    -----
+    The ``desi_dr3_civ`` strategy propagates unchanged for parameter blinding in
+    Vega, without adding a correlation-blinding template during export.
+    """
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Export auto and cross-correlation for the fitter.",
@@ -467,8 +483,11 @@ def main(cmdargs=None):
         data_name = "DA"
         dmat_name = "DM"
 
-    # Check if we need blinding and apply it
-    if "BLIND" in data_name or blinding != "none":
+    requires_blinding = "BLIND" in data_name or blinding != "none"
+    uses_parameter_blinding = blinding == "desi_dr3_civ"
+
+    # CIV uses parameter blinding in Vega instead of correlation templates.
+    if requires_blinding and not uses_parameter_blinding:
         blinding_dir = "/global/cfs/projectdirs/desi/science/lya/lya_blinding/bao/"
         blinding_templates = {
             "desi_dr3": {
