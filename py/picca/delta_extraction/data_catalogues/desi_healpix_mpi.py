@@ -118,23 +118,26 @@ class DesiHealpixMpi(DesiHealpix):
 
         is_mock = False
 
+        # Keep only the files of the healpix pixels owned by this rank. The
+        # ownership check comes after get_filename so that is_mock is the same
+        # on every rank, and the global file index is kept so that the
+        # keep_single_exposures keys stay globally unique.
         arguments = []
-        healpix_of_file = []
-        for group in grouped_catalogue.groups:
+        for index, group in enumerate(grouped_catalogue.groups):
             healpix, survey = group["HEALPIX", "SURVEY"][0]
 
             filename, is_mock_aux = self.get_filename(survey, healpix)
             if is_mock_aux:
                 is_mock = True
 
-            arguments.append((filename, group))
-            healpix_of_file.append(int(healpix))
+            if int(healpix) % self.mpi_size != self.mpi_rank:
+                continue
+            arguments.append((index, (filename, group)))
 
-        num_owned = sum(healpix % self.mpi_size == self.mpi_rank
-                        for healpix in healpix_of_file)
+        num_owned = len(arguments)
         if self.mpi_rank == 0:
             self.logger.info(
-                f"reading data from {len(arguments)} files "
+                f"reading data from {len(grouped_catalogue.groups)} files "
                 f"decomposed by healpix over {self.mpi_size} MPI ranks")
         # per-rank diagnostic: keep it at debug so it does not clutter the
         # serial-like run.log (it still reaches each rank's run_rank<n>.log)
@@ -147,14 +150,8 @@ class DesiHealpixMpi(DesiHealpix):
                                         self.keep_single_exposures,
                                         self.logger)
 
-        # Read only the files of the healpix pixels owned by this rank. The
-        # global file index is kept so that the keep_single_exposures keys stay
-        # globally unique.
         forests_by_targetid = {}
-        for index, (this_arg, healpix) in enumerate(
-                zip(arguments, healpix_of_file)):
-            if healpix % self.mpi_size != self.mpi_rank:
-                continue
+        for index, this_arg in arguments:
             forests_by_targetid_aux, _ = reader(this_arg)
             if self.use_non_coadded_spectra & self.keep_single_exposures:
                 forests_by_targetid_aux = {
