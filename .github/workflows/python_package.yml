@@ -4,12 +4,16 @@
 name: Pytest
 on:
   push:
+    branches:
+      - main
     paths-ignore:
       - '**/*.md'
   pull_request:
     paths-ignore:
       - '**/*.md'
   merge_group:
+    types:
+      - checks_requested
 env:
   SETUP_XVFB: True  # avoid issues if mpl tries to open a GUI window
 
@@ -22,7 +26,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
 #    env:
 #      OMP_NUM_THREADS: 1
 #      MKL_NUM_THREADS: 1

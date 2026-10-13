@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "picca"
 dynamic = ["dependencies", "version", "readme"]
 description = "Package for Igm Cosmological-Correlations Analyses"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE" ]
 authors = [
@@ -18,7 +18,11 @@ authors = [
 ]
 keywords = ["cosmology", "lyman-alpha", "bao"]
 classifiers = [
-    "Programming Language :: Python :: 3"
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14"
 ]
 
 [tool.setuptools.dynamic]

@@ -20,6 +20,8 @@ from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix, Des
 from picca.delta_extraction.data_catalogues.desi_healpix import defaults as defaults_desi_healpix
 from picca.delta_extraction.data_catalogues.desi_tile import DesiTile
 from picca.delta_extraction.data_catalogues.desi_tile import defaults as defaults_desi_tile
+from picca.delta_extraction.data_catalogues.desi_uniq_pix import DesiUniqPix
+from picca.delta_extraction.data_catalogues.desi_uniq_pix import defaults as defaults_desi_uniqpix
 from picca.delta_extraction.data_catalogues.desisim_mocks import DesisimMocks
 from picca.delta_extraction.data_catalogues.desisim_mocks import defaults as defaults_desisim_mocks
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
@@ -1400,6 +1402,53 @@ class DataTest(AbstractTest):
         data = DesiTile(config["data"])
 
         self.assertTrue(len(data.forests) == 10)
+
+    def test_desi_uniq_pix(self):
+        """Test DesiUniqPix"""
+        # case: BAO 3D
+
+        # run with one processor, expect error
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_uniqpix.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "analysis type": "BAO 3D"
+        }})
+        for key, value in defaults_desi_uniqpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        expected_message = (
+            'uniqux reading is not implementedfor analyses with "num processors=1"'
+        )
+        with self.assertRaises(NotImplementedError) as context_manager:
+            DesiUniqPix(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # run with two processors, should work
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_uniqpix.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 2,
+            "analysis type": "BAO 3D"
+        }})
+        for key, value in defaults_desi_uniqpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiUniqPix(config["data"])
+        
+        self.assertTrue(len(data.forests) == 63)
+        self.assertTrue(data.min_num_pix == 50)
+        self.assertTrue(data.analysis_type == "BAO 3D")
+        self.assertTrue(
+            all(isinstance(forest, DesiForest) for forest in data.forests))
 
     def test_desisim_mocks(self):
         """Test DesisimMocks"""

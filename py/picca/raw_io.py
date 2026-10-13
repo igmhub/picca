@@ -484,11 +484,12 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     dir_name = os.path.basename(os.path.normpath(out_dir))
     filename = out_dir + f'/../{dir_name}-stats.fits.gz'
     userprint(f"Writing statistics to {filename}")
+    var_lss_spline = flux_variance_from_spline / mean_flux_from_spline**2
 
     results = fitsio.FITS(filename, 'rw', clobber=True)
     cols = [rebin_lambda, mean_flux, mean_flux_from_spline, stack_weight,
-            flux_variance, flux_variance_from_spline, var_weights]
-    names = ['LAMBDA', 'MEANFLUX', 'MEANFLUX_SPLINE', 'WEIGHTS', 'VAR', 'VAR_SPLINE', 'VARWEIGHTS']
+            flux_variance, flux_variance_from_spline, var_weights, var_lss_spline]
+    names = ['LAMBDA', 'MEANFLUX', 'MEANFLUX_SPLINE', 'WEIGHTS', 'VAR', 'VAR_SPLINE', 'VARWEIGHTS', 'VAR_LSS']
     header = {}
     header['L_MIN'] = lambda_min
     header['L_MAX'] = lambda_max
