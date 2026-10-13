@@ -77,6 +77,24 @@ class MpiTest(AbstractTest):
 
         self.run_delta_extraction_mpi(config_file, out_dir, test_dir)
 
+    def test_delta_lin_fast_mpi(self):
+        """End-to-end MPI test of the fast healpix reader using the 'LYA'
+        linear-wavelength setup, compared against a serial DesiHealpixFast run.
+
+        DesiHealpixFast does not coadd a targetid observed in several surveys,
+        so its deltas differ from data/delta_extraction_lin.
+        """
+        subprocess.run(
+            ["picca_delta_extraction.py", f"{THIS_DIR}/data/delta_lin_fast.ini"],
+            check=True, capture_output=True,
+            env=dict(os.environ, THIS_DIR=THIS_DIR, PYTHONPATH=PY_DIR))
+
+        config_file = "{}/data/delta_lin_fast_mpi.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_lin_fast_mpi".format(THIS_DIR)
+        test_dir = "{}/results/delta_extraction_lin_fast".format(THIS_DIR)
+
+        self.run_delta_extraction_mpi(config_file, out_dir, test_dir)
+
 
 if __name__ == "__main__":
     unittest.main()

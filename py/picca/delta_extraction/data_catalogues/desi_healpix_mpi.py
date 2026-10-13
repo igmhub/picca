@@ -1,5 +1,6 @@
 """This module defines the class DesiHealpixMpi, the MPI-parallel reader for
-DESI healpix data.
+DESI healpix data, and MpiDataMixin, the healpix decomposition it shares with
+the other MPI readers (e.g. DesiHealpixFastMpi).
 
 The workspace is decomposed by healpix: rank ``r`` owns every reading healpix
 ``h`` with ``h % size == r`` and reads, corrects, masks, filters, continuum-fits
@@ -43,26 +44,25 @@ from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_mpi import get_comm, redistribute_by_key
 
 
-class DesiHealpixMpi(DesiHealpix):
-    """Reads the spectra from DESI using healpix mode, decomposing the healpix
-    pixels over MPI ranks.
+class MpiDataMixin:
+    """MPI healpix decomposition shared by the MPI readers.
 
-    Only the parallelisation strategy differs from DesiHealpix: get_filename and
-    the PK 1D setup are inherited, read_data reads the pixels owned by this rank,
-    find_nside and save_deltas add the required communication.
+    Must come first in the bases, e.g. ``class FooMpi(MpiDataMixin, Foo)``. The
+    concrete class only overrides read_data to read the files of the healpix
+    pixels it owns (see owns_healpix) and then calls check_total_forests.
 
     Methods
     -------
-    (see DesiHealpix in py/picca/delta_extraction/data_catalogues/desi_healpix.py)
     __init__
-    read_data
+    owns_healpix
+    check_total_forests
+    log_sample_size
+    log_rejections
     find_nside
     save_deltas
 
     Attributes
     ----------
-    (see DesiHealpix in py/picca/delta_extraction/data_catalogues/desi_healpix.py)
-
     comm: mpi4py.MPI.Comm
     The world communicator
 
@@ -85,7 +85,7 @@ class DesiHealpixMpi(DesiHealpix):
         self.mpi_rank = self.comm.Get_rank()
         self.mpi_size = self.comm.Get_size()
 
-        # DesiHealpix.__init__ reads the catalogue and calls read_data (below)
+        # the base __init__ reads the catalogue and calls read_data
         super().__init__(config)
 
         # write a per-rank rejection log so that the ranks do not write to the
@@ -98,82 +98,25 @@ class DesiHealpixMpi(DesiHealpix):
             self.rejection_log.file = os.path.join(
                 directory, f"{name}_rank{self.mpi_rank}{extension}")
 
-    def read_data(self):
-        """Read the data owned by this rank.
+    def owns_healpix(self, healpix):
+        """Return True if this rank reads the files of this reading healpix"""
+        return int(healpix) % self.mpi_size == self.mpi_rank
 
-        Every rank builds the same list of files, then reads only the files
-        whose healpix it owns (``healpix % size == rank``). Forests are not
-        gathered: each rank keeps and processes its own subset.
+    def check_total_forests(self):
+        """Raise if no rank found any forest, and log the global count.
 
-        Return
-        ------
-        is_mock: bool
-        False for DESI data and True for mocks
+        A given rank may legitimately own no forest; only raise if the whole run
+        found nothing. All ranks must call this (collective sum).
 
         Raise
         -----
         DataError if no quasars were found on any rank
         """
-        grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
-
-        is_mock = False
-
-        # Keep only the files of the healpix pixels owned by this rank. The
-        # ownership check comes after get_filename so that is_mock is the same
-        # on every rank, and the global file index is kept so that the
-        # keep_single_exposures keys stay globally unique.
-        arguments = []
-        for index, group in enumerate(grouped_catalogue.groups):
-            healpix, survey = group["HEALPIX", "SURVEY"][0]
-
-            filename, is_mock_aux = self.get_filename(survey, healpix)
-            if is_mock_aux:
-                is_mock = True
-
-            if int(healpix) % self.mpi_size != self.mpi_rank:
-                continue
-            arguments.append((index, (filename, group)))
-
-        num_owned = len(arguments)
-        if self.mpi_rank == 0:
-            self.logger.info(
-                f"reading data from {len(grouped_catalogue.groups)} files "
-                f"decomposed by healpix over {self.mpi_size} MPI ranks")
-        # per-rank diagnostic: keep it at debug so it does not clutter the
-        # serial-like run.log (it still reaches each rank's run_rank<n>.log)
-        self.logger.debug(
-            f"rank {self.mpi_rank} owns {num_owned} files")
-
-        reader = DesiHealpixFileHandler(self.analysis_type,
-                                        self.use_non_coadded_spectra,
-                                        self.uniquify_night_targetid,
-                                        self.keep_single_exposures,
-                                        self.logger)
-
-        forests_by_targetid = {}
-        for index, this_arg in arguments:
-            forests_by_targetid_aux, _ = reader(this_arg)
-            if self.use_non_coadded_spectra & self.keep_single_exposures:
-                forests_by_targetid_aux = {
-                    f"{index}_{key}": items
-                    for key, items in forests_by_targetid_aux.items()
-                }
-            merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
-
-        if self.use_non_coadded_spectra & self.keep_single_exposures:
-            forests_by_targetid = verify_exposures_shape(forests_by_targetid)
-
-        self.forests = list(forests_by_targetid.values())
-
-        # A given rank may legitimately own no forest; only raise if the whole
-        # run found nothing.
         total_forests = self.comm.allreduce(len(self.forests))
         if total_forests == 0:
             raise DataError("No quasars found, stopping here")
         if self.mpi_rank == 0:
             self.logger.info(f"read {total_forests} forests over all ranks")
-
-        return is_mock
 
     def log_sample_size(self, label):
         """Log the whole-run sample size (summed over all ranks) once, on rank
@@ -255,3 +198,95 @@ class DesiHealpixMpi(DesiHealpix):
             return
 
         super().save_deltas()
+
+
+class DesiHealpixMpi(MpiDataMixin, DesiHealpix):
+    """Reads the spectra from DESI using healpix mode, decomposing the healpix
+    pixels over MPI ranks.
+
+    Only the parallelisation strategy differs from DesiHealpix: get_filename and
+    the PK 1D setup are inherited, read_data reads the pixels owned by this rank,
+    and MpiDataMixin adds the required communication.
+
+    Methods
+    -------
+    (see DesiHealpix in py/picca/delta_extraction/data_catalogues/desi_healpix.py)
+    (see MpiDataMixin)
+    read_data
+
+    Attributes
+    ----------
+    (see DesiHealpix in py/picca/delta_extraction/data_catalogues/desi_healpix.py)
+    (see MpiDataMixin)
+    """
+
+    def read_data(self):
+        """Read the data owned by this rank.
+
+        Every rank builds the same list of files, then reads only the files
+        whose healpix it owns (``healpix % size == rank``). Forests are not
+        gathered: each rank keeps and processes its own subset.
+
+        Return
+        ------
+        is_mock: bool
+        False for DESI data and True for mocks
+
+        Raise
+        -----
+        DataError if no quasars were found on any rank
+        """
+        grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
+
+        is_mock = False
+
+        # Keep only the files of the healpix pixels owned by this rank. The
+        # ownership check comes after get_filename so that is_mock is the same
+        # on every rank, and the global file index is kept so that the
+        # keep_single_exposures keys stay globally unique.
+        arguments = []
+        for index, group in enumerate(grouped_catalogue.groups):
+            healpix, survey = group["HEALPIX", "SURVEY"][0]
+
+            filename, is_mock_aux = self.get_filename(survey, healpix)
+            if is_mock_aux:
+                is_mock = True
+
+            if not self.owns_healpix(healpix):
+                continue
+            arguments.append((index, (filename, group)))
+
+        num_owned = len(arguments)
+        if self.mpi_rank == 0:
+            self.logger.info(
+                f"reading data from {len(grouped_catalogue.groups)} files "
+                f"decomposed by healpix over {self.mpi_size} MPI ranks")
+        # per-rank diagnostic: keep it at debug so it does not clutter the
+        # serial-like run.log (it still reaches each rank's run_rank<n>.log)
+        self.logger.debug(
+            f"rank {self.mpi_rank} owns {num_owned} files")
+
+        reader = DesiHealpixFileHandler(self.analysis_type,
+                                        self.use_non_coadded_spectra,
+                                        self.uniquify_night_targetid,
+                                        self.keep_single_exposures,
+                                        self.logger)
+
+        forests_by_targetid = {}
+        for index, this_arg in arguments:
+            forests_by_targetid_aux, _ = reader(this_arg)
+            if self.use_non_coadded_spectra & self.keep_single_exposures:
+                forests_by_targetid_aux = {
+                    f"{index}_{key}": items
+                    for key, items in forests_by_targetid_aux.items()
+                }
+            merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
+
+        if self.use_non_coadded_spectra & self.keep_single_exposures:
+            forests_by_targetid = verify_exposures_shape(forests_by_targetid)
+
+        self.forests = list(forests_by_targetid.values())
+
+        self.check_total_forests()
+
+        return is_mock
