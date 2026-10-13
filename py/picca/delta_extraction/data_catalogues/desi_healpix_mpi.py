@@ -192,9 +192,11 @@ class MpiDataMixin:
                                             lambda forest: forest.healpix)
 
         # A rank owning no output pixel still has to write its rejection log
-        # (it may hold entries of forests rejected while it was reading).
+        # (it may hold entries of forests rejected while it was reading). A log
+        # that never received an entry has no columns and cannot be written.
         if len(self.forests) == 0:
-            self.rejection_log.save_rejection_log()
+            if self.rejection_log.initialized:
+                self.rejection_log.save_rejection_log()
             return
 
         super().save_deltas()
