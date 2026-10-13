@@ -212,6 +212,7 @@ def _accumulate_pair(
     has_zmax = iparams[5]
     has_zerr = iparams[6]
     rm_shp = iparams[7]
+    strict_min = iparams[8]
 
     s1 = off1[a]
     n1 = off1[a + 1] - s1
@@ -258,6 +259,8 @@ def _accumulate_pair(
         if xcorr == 0:
             r_par = abs(r_par)
         if r_par >= r_par_max or r_trans >= r_trans_max or r_par < r_par_min:
+            continue
+        if strict_min != 0 and r_par == r_par_min:
             continue
 
         dw12 = (dl1[s1 + i] * wi) * (dl2[s2 + j] * wj)
@@ -367,30 +370,34 @@ def _enable_large_shared(kernel, nbytes):
         return False
 
 
-def _params():
+def _params(mod=cf):
+    """Binning and selection parameters of ``mod`` (``cf`` or ``xcf``) for the kernel.
+    For ``xcf`` the redshift-error cut is applied when the pairs are found, not per pixel."""
+    xc = mod is not cf
     f = np.array(
         [
-            cf.r_par_min,
-            cf.r_par_max,
-            cf.r_trans_max,
-            cf.z_min_pairs if cf.z_min_pairs is not None else 0.0,
-            cf.z_max_pairs if cf.z_max_pairs is not None else 0.0,
-            cf.zerr_cut_deg * np.pi / 180.0 if cf.zerr_cut_deg is not None else 0.0,
-            cf.zerr_cut_kms if cf.zerr_cut_kms is not None else 0.0,
+            mod.r_par_min,
+            mod.r_par_max,
+            mod.r_trans_max,
+            mod.z_min_pairs if mod.z_min_pairs is not None else 0.0,
+            mod.z_max_pairs if mod.z_max_pairs is not None else 0.0,
+            cf.zerr_cut_deg * np.pi / 180.0 if (not xc and cf.zerr_cut_deg is not None) else 0.0,
+            cf.zerr_cut_kms if (not xc and cf.zerr_cut_kms is not None) else 0.0,
             constants.SPEED_LIGHT,
         ],
         dtype=np.float64,
     )
     i = np.array(
         [
-            cf.num_bins_r_par,
-            cf.num_bins_r_trans,
-            int(bool(cf.rmu_binning)),
-            int(bool(cf.x_correlation)),
-            int(cf.z_min_pairs is not None),
-            int(cf.z_max_pairs is not None),
-            int(cf.zerr_cut_deg is not None),
-            int(bool(cf.remove_same_half_plate_close_pairs)),
+            mod.num_bins_r_par,
+            mod.num_bins_r_trans,
+            int(bool(mod.rmu_binning)),
+            1 if xc else int(bool(cf.x_correlation)),
+            int(mod.z_min_pairs is not None),
+            int(mod.z_max_pairs is not None),
+            int(not xc and cf.zerr_cut_deg is not None),
+            int(not xc and bool(cf.remove_same_half_plate_close_pairs)),
+            1 if xc else 0,
         ],
         dtype=np.int64,
     )
@@ -403,15 +410,15 @@ class _DeviceXi:
     PAIRS_PER_BLOCK = int(__import__("os").environ.get("PICCA_GPU_PPB", 32))
     THREADS = 1024
 
-    def __init__(self, flat1, flat2, healpix_list, device=0):
+    def __init__(self, flat1, flat2, healpix_list, device=0, mod=cf):
         self.device = device
-        self.nbins = cf.num_bins_r_par * cf.num_bins_r_trans
+        self.nbins = mod.num_bins_r_par * mod.num_bins_r_trans
         self.slot_of = {h: s for s, h in enumerate(healpix_list)}
         self.out = cuda.device_array(len(healpix_list) * 6 * self.nbins, np.float64)
         self.out[:] = 0
         self.f1 = flat1.to_device()
         self.f2 = self.f1 if flat2 is flat1 else flat2.to_device()
-        fp, ip = _params()
+        fp, ip = _params(mod)
         self.fparams = cuda.to_device(fp)
         self.iparams = cuda.to_device(ip)
         self.shmem = 6 * self.nbins * 8
@@ -466,14 +473,14 @@ class XiAccumulator:
     QUEUE_DEPTH = 3
     BATCH = 16384  # forest pairs per kernel launch (512 blocks at 32 pairs per block)
 
-    def __init__(self, flat1, flat2, healpix_list, devices=None):
+    def __init__(self, flat1, flat2, healpix_list, devices=None, mod=cf):
         if devices is None:
             devices = list(range(len(cuda.gpus)))
         self.slot_of = {h: s for s, h in enumerate(healpix_list)}
         self.parts = []
         for dev in devices:
             with cuda.gpus[dev]:
-                part = _DeviceXi(flat1, flat2, healpix_list, device=dev)
+                part = _DeviceXi(flat1, flat2, healpix_list, device=dev, mod=mod)
                 # set up (compile, raise the shared-memory limit) here, one device at a time
                 part._setup_shared()
                 self.parts.append(part)
