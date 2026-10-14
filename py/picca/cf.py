@@ -57,6 +57,9 @@ data2 = None
 cosmo = None
 
 reject = None
+# if True, the random pair rejection of the distortion matrices is seeded with the healpix number
+# for each healpix, so the result does not depend on how the healpixes are split between processes
+seed_per_healpix = False
 lock = None
 x_correlation = False
 rmu_binning = False
@@ -422,6 +425,8 @@ def compute_dmat(healpixs):
     num_pairs = 0
     num_pairs_used = 0
     for healpix in healpixs:
+        if seed_per_healpix:
+            np.random.seed(healpix)
         for delta1 in data[healpix]:
             with lock:
                 xicounter = round(counter.value * 100.0 / num_data, 2)
@@ -929,6 +934,8 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
     num_pairs = 0
     num_pairs_used = 0
     for healpix in healpixs:
+        if seed_per_healpix:
+            np.random.seed(healpix)
         for delta1 in data[healpix]:
             with lock:
                 dmatcounter = round(counter.value * 100.0 / num_data, 2)

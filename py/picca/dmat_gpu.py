@@ -107,6 +107,8 @@ def pairs_for_chunk(healpixs, require_order=True, kind="cf"):
     Reproduces the random stream of ``picca_dmat.calc_dmat`` (``np.random.seed(healpixs[0])``
     after ``fill_neighs``, one ``rand`` per forest in healpix order), so for the same chunks
     the GPU run uses exactly the same pairs as the CPU run.
+    With ``seed_per_healpix`` set on the module the stream is reseeded with the healpix number for each
+    healpix instead (the pairs then do not depend on how the healpixes are split into chunks).
     ``kind="xcf"`` takes the forests x objects variant (``picca.xcf``), where the neighbours
     are objects that carry a ``gpu_idx`` set by ``FlatObjects``.
     Returns (idx1, idx2, ang, same_half_plate, num_pairs, num_pairs_used).
@@ -118,6 +120,8 @@ def pairs_for_chunk(healpixs, require_order=True, kind="cf"):
     num_pairs = 0
     num_pairs_used = 0
     for healpix in healpixs:
+        if mod.seed_per_healpix:
+            np.random.seed(healpix)
         for delta1 in mod.data[healpix]:
             if require_order and delta1.order is None:
                 raise RuntimeError(
