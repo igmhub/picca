@@ -187,6 +187,30 @@ class ExpectedFlux:
             raise ExpectedFluxError(
                 "Missing argument 'var lss mod' required by ExpectedFlux")
 
+    def reduce_sum(self, array):
+        """Reduce an accumulator array across parallel workers.
+
+        This is the single hook through which the global (sample-wide) sums
+        required by the continuum fitting are combined. In the base (serial or
+        multiprocessing) implementation there is a single worker holding all the
+        forests, so the array is already the global sum and is returned
+        unchanged. MPI-enabled subclasses override this method to perform an
+        Allreduce-sum so that every rank obtains the sum over the forests of all
+        ranks.
+
+        Arguments
+        ---------
+        array: numpy.ndarray
+        A partial accumulator (a sum over the local forests) to be combined
+        across workers. Must not be normalised yet.
+
+        Return
+        ------
+        array: numpy.ndarray
+        The array summed over all workers (identity in the serial case).
+        """
+        return array
+
     def compute_delta_stack(self, forests, stack_from_deltas=False):
         """Compute a stack of the delta field as a function of wavelength
 
@@ -219,6 +243,11 @@ class ExpectedFlux:
                 forest.log_lambda, Forest.log_lambda_grid)
             stack_delta += np.bincount(bins, weights=delta * weights, minlength=stack_delta.size)
             stack_weight += np.bincount(bins, weights=weights, minlength=stack_delta.size)
+
+        # combine the per-worker partial sums into the global sample sums
+        # (no-op in the serial case, Allreduce-sum under MPI)
+        stack_delta = self.reduce_sum(stack_delta)
+        stack_weight = self.reduce_sum(stack_weight)
 
         w = stack_weight > 0
         stack_delta[w] /= stack_weight[w]
@@ -290,6 +319,11 @@ class ExpectedFlux:
                 bins,
                 weights=weights,
                 minlength=mean_cont.size)
+
+        # combine the per-worker partial sums into the global sample sums
+        # (no-op in the serial case, Allreduce-sum under MPI)
+        mean_cont = self.reduce_sum(mean_cont)
+        mean_cont_weight = self.reduce_sum(mean_cont_weight)
 
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
