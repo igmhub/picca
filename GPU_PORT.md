@@ -27,6 +27,11 @@ correlation (`cf.ang_correlation`) raises with `--gpu`.
 - A CUDA GPU and a numba with CUDA support (`numba.cuda`). Nothing else is needed (no cupy). It works in the
   `vega_master` environment of the Lya group and in the DESI 26.9 environment.
 - All GPUs of the node are used (healpixes are dealt out round-robin).
+- Without a usable GPU, `--gpu` stops at once with a clear message ("no usable CUDA GPU was found on this node"),
+  before the deltas are read. (It checks in a subprocess, because the scripts must fork their worker pool before
+  CUDA is initialised.) It honours `CUDA_VISIBLE_DEVICES`.
+- The picca that is run must be this branch: the `picca` installed in `vega_master` is a copy of `main` and has no
+  `--gpu`. Putting a checkout of the branch first on `PYTHONPATH` is enough (numba CUDA works in `vega_master`).
 - Use it by adding `--gpu`, for example
 
       picca_cf.py --gpu --out cf_lya_lya.fits.gz --in-dir deltas_lya/Delta --rp-min 0 --rp-max 200 --rt-max 200 \

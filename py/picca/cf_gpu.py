@@ -12,6 +12,8 @@ Not supported (the caller must fall back to the CPU path): ``cf.ang_correlation`
 """
 import math
 import queue
+import subprocess
+import sys
 import threading
 
 import numpy as np
@@ -20,6 +22,34 @@ from numba import cuda
 from . import cf, constants
 
 BLOCK = 128
+
+
+def require_cuda(timeout=180):
+    """Stop at once, with a clear message, if ``--gpu`` was asked for on a node without a usable CUDA GPU.
+
+    The check runs in a subprocess: the scripts fork their worker pool before CUDA is initialised, and
+    asking numba whether a GPU exists in the main process would initialise it. It honours
+    ``CUDA_VISIBLE_DEVICES``. Call it right after the arguments are parsed, before the deltas are read.
+    """
+    code = (
+        "import sys\n"
+        "from numba import cuda\n"
+        "sys.exit(0 if cuda.is_available() and len(cuda.gpus) > 0 else 1)\n"
+    )
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", code], capture_output=True, text=True, timeout=timeout, check=False
+        )
+        ok = result.returncode == 0
+        detail = (result.stderr or "").strip().splitlines()[-1:] or [""]
+    except subprocess.TimeoutExpired:
+        ok, detail = False, ["numba did not answer within %d s" % timeout]
+    if not ok:
+        sys.exit(
+            "picca --gpu: no usable CUDA GPU was found on this node. Run on a GPU node "
+            "(for example salloc -C gpu) with CUDA_VISIBLE_DEVICES unset, or leave out --gpu to run on the CPU."
+            + (" (%s)" % detail[0] if detail[0] else "")
+        )
 
 
 class FlatForests:

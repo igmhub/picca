@@ -353,6 +353,12 @@ def main(cmdargs=None):
     )
 
     args = parser.parse_args(cmdargs)
+
+    if args.gpu:
+        # fail at once if there is no GPU, before the (slow) reading of the deltas
+        from picca import cf_gpu
+
+        cf_gpu.require_cuda()
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 

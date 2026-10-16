@@ -12,6 +12,7 @@ All tests are skipped when no CUDA device is available.
 import importlib
 import os
 import unittest
+from unittest import mock
 
 import warnings
 
@@ -241,6 +242,31 @@ class TestGpu(AbstractTest):
         self.seed_check("xdmat", "xdmat_seed", self.cross_args() + [
             "--rp-min", "-60.0", "--rp-max", "+60.0", "--rt-max", "+60.0", "--np", "30", "--nt", "15",
             "--rej", "0.99", "--z-evol-obj", "1.", "--no-redshift-evolution"])
+
+
+class TestRequireCuda(unittest.TestCase):
+    """--gpu stops at once, with a clear message, when no CUDA device is visible (runs with or without a GPU)"""
+
+    def test_no_visible_device(self):
+        """With CUDA_VISIBLE_DEVICES empty there is no device: SystemExit with the message"""
+        from picca import cf_gpu  # pylint: disable=import-outside-toplevel
+        with mock.patch.dict(os.environ, {"CUDA_VISIBLE_DEVICES": ""}):
+            with self.assertRaises(SystemExit) as caught:
+                cf_gpu.require_cuda()
+        self.assertIn("no usable CUDA GPU", str(caught.exception))
+
+    def test_scripts_stop_before_reading(self):
+        """A script run with --gpu and no device exits before it touches its inputs"""
+        with mock.patch.dict(os.environ, {"CUDA_VISIBLE_DEVICES": ""}):
+            with self.assertRaises(SystemExit) as caught:
+                picca.bin.picca_cf.main(["--gpu", "--in-dir", "/nonexistent", "--out", "/nonexistent/out.fits"])
+        self.assertIn("no usable CUDA GPU", str(caught.exception))
+
+    @unittest.skipUnless(cuda_available(), "needs a CUDA GPU")
+    def test_device_visible(self):
+        """With a device the check returns"""
+        from picca import cf_gpu  # pylint: disable=import-outside-toplevel
+        cf_gpu.require_cuda()
 
 
 if __name__ == '__main__':
