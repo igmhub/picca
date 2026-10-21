@@ -24,12 +24,18 @@ try:
 except ImportError:  # pragma: no cover
     MPI = None
 
+git_hash = "unknown"
 try:
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     PICCA_BASE = THIS_DIR.split("py/picca")[0]
     git_hash = git.Repo(PICCA_BASE).head.object.hexsha
 except InvalidGitRepositoryError:  # pragma: no cover
-    git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
+    pass
+if git_hash == "unknown" :
+    try :
+        git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
+    except :
+        pass
 
 accepted_corrections_options = [
     "num corrections", "type {int}", "module name {int}"
