@@ -36,7 +36,7 @@ if git_hash == "unknown" :
         git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
     except metadata.PackageNotFoundError as e:
         print("warning:",e)
-        pass
+
 
 accepted_corrections_options = [
     "num corrections", "type {int}", "module name {int}"
