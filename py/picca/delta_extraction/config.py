@@ -34,7 +34,8 @@ except InvalidGitRepositoryError:  # pragma: no cover
 if git_hash == "unknown" :
     try :
         git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
-    except :
+    except metadata.PackageNotFoundError as e:
+        print("warning:",e)
         pass
 
 accepted_corrections_options = [
