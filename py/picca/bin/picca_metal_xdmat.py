@@ -250,6 +250,19 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
+        "--seed-per-healpix",
+        action="store_true",
+        default=False,
+        required=False,
+        help=(
+            "Seed the random pair rejection with the healpix number for each healpix, so "
+            "that the result does not depend on --nproc (the default seeds once per chunk "
+            "of healpixes, so it does; results then differ from the default by the "
+            "rejection noise)"
+        ),
+    )
+
+    parser.add_argument(
         "--rej",
         type=float,
         default=1.0,
@@ -315,6 +328,7 @@ def main(cmdargs=None):
     xcf.z_ref = args.z_ref
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.reject = args.rej
+    xcf.seed_per_healpix = args.seed_per_healpix
 
     xcf.alpha_abs = {}
     xcf.alpha_abs[args.lambda_abs] = args.z_evol_del
