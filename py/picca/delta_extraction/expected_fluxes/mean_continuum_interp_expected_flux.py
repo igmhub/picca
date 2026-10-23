@@ -13,9 +13,10 @@ from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(
-    accepted_options, ["interpolation type", "limit z", "num z bins"])
+    accepted_options, ["infer z bins", "interpolation type", "limit z", "num z bins"])
 
 defaults = update_default_options(defaults, {
+    "infer z bins": False,
     "interpolation type": "1D",
     "limit z": (1.8, 5.),
     "num z bins": 3,
@@ -109,21 +110,39 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
 
         if self.interpolation_type == "2D":
-            limit_z_string = config.get("limit z")
-            if limit_z_string is None:
-                raise ExpectedFluxError(
-                    "Missing argument 'limit z' required by MeanContinuumInterpExpectedFlux"
+            # this one constraints the redshift parameters, so we need to check it first
+            infer_z_bins = config.getboolean("infer z bins")
+            if infer_z_bins is None:
+                self.logger.info(
+                    "In MeanContinuumInterpExpectedFlux, Missing argument 'infer z bins'. "
+                    "Redshift bins will be linearly spaced between the limits of 'limit z'.")
+                infer_z_bins = False
+            self.infer_z_bins = infer_z_bins
+
+            if self.infer_z_bins:
+                self.logger.info(
+                    "In MeanContinuumInterpExpectedFlux, 'infer z bins' is set to True. "
+                    "Redshift bins will be inferred from the data. 'limit z' will be ignored."
                 )
-            limit_z = limit_z_string.split(",")
-            if limit_z[0].startswith("(") or limit_z[0].startswith("["):
-                z_min = float(limit_z[0][1:])
+                self.limit_z = None # this is redundant, but we set it to None to avoid confusion
             else:
-                z_min = float(limit_z[0])
-            if limit_z[1].endswith(")") or limit_z[1].endswith("]"):
-                z_max = float(limit_z[1][:-1])
-            else:
-                z_max = float(limit_z[1])
-            self.limit_z = (z_min, z_max)
+                limit_z_string = config.get("limit z")
+                if limit_z_string is None and not self.infer_z_bins:
+                    raise ExpectedFluxError(
+                        "Missing argument 'limit z' required by MeanContinuumInterpExpectedFlux " 
+                        "when 'infer z bins' is set to False. If you want to infer the redshift bins, set "
+                        "'infer z bins' to True."
+                    )
+                limit_z = limit_z_string.split(",")
+                if limit_z[0].startswith("(") or limit_z[0].startswith("["):
+                    z_min = float(limit_z[0][1:])
+                else:
+                    z_min = float(limit_z[0])
+                if limit_z[1].endswith(")") or limit_z[1].endswith("]"):
+                    z_max = float(limit_z[1][:-1])
+                else:
+                    z_max = float(limit_z[1])
+                self.limit_z = (z_min, z_max)
 
             num_z_bins = config.getint("num z bins")
             if num_z_bins is None or num_z_bins < 1:
@@ -132,8 +151,11 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 )
             self.num_z_bins = num_z_bins
 
-            self.z_bin_edges = np.linspace(self.limit_z[0], self.limit_z[1],
-                                           self.num_z_bins + 1)
+            if self.infer_z_bins:
+                self.z_bin_edges = None # this is redundant, but we set it to None to avoid confusion
+            else:
+                self.z_bin_edges = np.linspace(self.limit_z[0], self.limit_z[1],
+                                            self.num_z_bins + 1)
 
     def _initialize_mean_continuum_arrays(self):
         """Initialize mean continuum arrays
@@ -142,16 +164,26 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         """
         # initialize the mean quasar continuum
         if self.interpolation_type == "2D":
-            mean_cont = np.ones(
-                (self.z_bin_edges.size, Forest.log_lambda_rest_frame_grid.size))
-            # fill_value cannot be "extrapolate" for RegularGridInterpolator
-            # so we use 0.0 instead
-            self.get_mean_cont = RegularGridInterpolator(
-                (self.z_bin_edges, Forest.log_lambda_rest_frame_grid),
-                mean_cont,
-                bounds_error=False,
-                fill_value=0.0)
+            if self.z_bin_edges is None:
+                self.logger.info(
+                    "In MeanContinuumInterpExpectedFlux, 'z_bin_edges' is None. "
+                    "Arrays will need to be initialized at a later time")
+            else:
+                self.logger.info(
+                    "Initializing mean continuum arrays for 2D interpolation with z bins: "
+                    "%s", self.z_bin_edges)
+                mean_cont = np.ones(
+                    (self.z_bin_edges.size, Forest.log_lambda_rest_frame_grid.size))
+                # fill_value cannot be "extrapolate" for RegularGridInterpolator
+                # so we use 0.0 instead
+                self.get_mean_cont = RegularGridInterpolator(
+                    (self.z_bin_edges, Forest.log_lambda_rest_frame_grid),
+                    mean_cont,
+                    bounds_error=False,
+                    fill_value=0.0)
         elif self.interpolation_type == "1D":
+            self.logger.info(
+                "Initializing mean continuum arrays for 1D interpolation")
             self.mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
 
             self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
@@ -163,6 +195,26 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 f"Invalid interpolation type '{self.interpolation_type}' "
                 f"required by MeanContinuumInterpExpectedFlux. "
                 f"Accepted values are {ACCEPTED_INTERPOLATION_TYPES}")
+
+    def compute_expected_flux(self, forests):
+        """Compute the expected flux for a list of Forests
+
+        Arguments
+        ---------
+        forests: list of Forest
+        A list of Forest from which to compute the expected flux.
+        """
+        if self.interpolation_type == "2D" and self.infer_z_bins:
+            # this sets the z_bin_edges attribute based on the data in forests
+            # otherwise the z_bin_edges attribute is set in the __parse_config method
+            # and this call is not needed
+            self.infer_z_bins_from_data(forests)
+
+            # initialize the mean continuum arrays with the inferred z_bin_edges
+            # (failed before since the z_bin_edges were not set in the __parse_config method)
+            self._initialize_mean_continuum_arrays()
+
+        super().compute_expected_flux(forests)
 
     def compute_mean_cont(self,
                           forests):
@@ -434,6 +486,28 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             fill_value=0.0,
         )
 
+    def infer_z_bins_from_data(self, forests):
+        """Infer the redshift bins from the data in forests.
+        The redshift bins are set to self.z_bin_edges.
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+        """
+        self.logger.info(
+            "Inferring redshift bins from the data in forests. "
+        )
+        z_dist = [forest.z for forest in forests]
+        percentiles = np.linspace(0, 100, self.num_z_bins + 1)
+        self.z_bin_edges = np.percentile(z_dist, percentiles)
+        if np.any(np.diff(self.z_bin_edges) <= 0):
+            raise ExpectedFluxError(
+                "Cannot infer strictly increasing redshift bins; reduce 'num z bins' "
+                "or use a sample with more redshift variation.")
+        self.logger.info("Inferred redshift bins: %s", self.z_bin_edges)
+
+
     def hdu_cont(self, results):
         """Add to the results file an HDU with the continuum information
 
@@ -533,6 +607,7 @@ def interp_coeff_z(z, z_grid):
     Indices of the z bins for the given z value
     """
     z_bin = np.digitize(z, z_grid) - 1
+    z_bin = min(max(z_bin, 0), len(z_grid) - 2)
     z_low = z_grid[z_bin]
     z_high = z_grid[z_bin + 1]
 
