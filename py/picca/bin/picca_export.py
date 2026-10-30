@@ -110,7 +110,7 @@ def read_template_redshift_evolution(filename, blind_corr_type):
     with h5py.File(filename, "r") as blinding_file:
         attributes = blinding_file["blinding"].attrs
         missing = [key for key in ["z_eff", "gamma_lya", "gamma_qso"] if key not in attributes]
-        if missing:
+        if len(missing) > 0:
             raise KeyError(
                 f"Blinding template {filename} does not store {missing}; it cannot be "
                 "rescaled to the redshift of the measurement."
@@ -762,7 +762,11 @@ def main(cmdargs=None):
         ]
 
         if args.multipoles:
-            # Project the 2D (mu, r) template onto the multipoles of the data
+            # Project the 2D (mu, r) template onto the multipoles of the data.
+            # calculate_xi_ell takes lists of data vectors and weight vectors, so the template
+            # is passed as a single row with dummy unit weights (the weights do not enter the
+            # multipoles of xi, and the returned weights are discarded); [0][0] selects the
+            # multipoles of that row
             diff = calculate_xi_ell(
                 ells_out,
                 diff[None, :],
