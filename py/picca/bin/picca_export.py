@@ -25,6 +25,189 @@ from picca.utils import (
 # TODO: add tags here when we are allowed to unblind them
 UNBLINDABLE_STRATEGIES = ["none", "desi_m2", "desi_y1", "desi_y3"]
 
+# BAO blinding templates, computed on a regular grid of bin centres and interpolated onto
+# the binning of each measurement
+BLINDING_TEMPLATE_DIR = "/global/cfs/projectdirs/desi/science/lya/lya_blinding/bao/"
+BLINDING_TEMPLATES = {
+    "desi_dr3": "dr3_blinding_v4_regular_grid_28_05_2026.h5",
+}
+
+# Binning of the template grid in h^-1 Mpc: r_trans in [0, 200] and r_par in [0, 200] for
+# auto-correlations or [-200, 200] for cross-correlations, in bins of 4 h^-1 Mpc
+TEMPLATE_BIN_SIZE = 4.0
+TEMPLATE_R_MAX = 200.0
+
+
+def get_template_bin_centres(is_x_correlation):
+    """Return the (r_par, r_trans) bin centres of the blinding-template binning.
+
+    Parameters
+    ----------
+    is_x_correlation : bool
+        True for cross-correlations, whose r_par extends to negative values.
+
+    Returns
+    -------
+    r_par_centres : numpy.ndarray
+        Bin centres along the line of sight in h^-1 Mpc, shape (num_bins_r_par,).
+    r_trans_centres : numpy.ndarray
+        Bin centres across the line of sight in h^-1 Mpc, shape (num_bins_r_trans,).
+    """
+    r_par_min = -TEMPLATE_R_MAX if is_x_correlation else 0.0
+    num_bins_r_par = int(round((TEMPLATE_R_MAX - r_par_min) / TEMPLATE_BIN_SIZE))
+    num_bins_r_trans = int(round(TEMPLATE_R_MAX / TEMPLATE_BIN_SIZE))
+
+    r_par_centres = r_par_min + (np.arange(num_bins_r_par) + 0.5) * TEMPLATE_BIN_SIZE
+    r_trans_centres = (np.arange(num_bins_r_trans) + 0.5) * TEMPLATE_BIN_SIZE
+    return r_par_centres, r_trans_centres
+
+
+def read_blinding_template(filename, blind_corr_type):
+    """Read one correlation of a BAO blinding template.
+
+    Parameters
+    ----------
+    filename : str
+        HDF5 blinding template.
+    blind_corr_type : str
+        Correlation key in the ``blinding`` group, e.g. ``'lyaxlya'`` or ``'lyaxqso'``.
+
+    Returns
+    -------
+    numpy.ndarray
+        Template Delta xi, stored as float-hex strings, shape (num_bins_r_par * num_bins_r_trans,),
+        with r_trans varying fastest.
+    """
+    with h5py.File(filename, "r") as blinding_file:
+        hex_template = np.array(blinding_file["blinding"][blind_corr_type]).astype(str)
+    return np.array([float.fromhex(value) for value in hex_template])
+
+
+def read_template_redshift_evolution(filename, blind_corr_type):
+    """Read the fiducial redshift evolution of a BAO blinding template.
+
+    Parameters
+    ----------
+    filename : str
+        HDF5 blinding template, whose ``blinding`` group stores the attributes ``z_eff``,
+        ``gamma_lya`` and ``gamma_qso`` written by the template script.
+    blind_corr_type : str
+        Correlation key, e.g. ``'lyaxlya'`` or ``'lyaxqso'``.
+
+    Returns
+    -------
+    z_eff : float
+        Redshift at which the template was computed.
+    gamma_sum : float
+        Sum of the bias-evolution exponents of the two tracers of the correlation
+        (Lya for both legs of the auto-correlations, Lya and QSO for the crosses).
+
+    Raises
+    ------
+    KeyError
+        If the template does not store its redshift evolution.
+    """
+    with h5py.File(filename, "r") as blinding_file:
+        attributes = blinding_file["blinding"].attrs
+        missing = [key for key in ["z_eff", "gamma_lya", "gamma_qso"] if key not in attributes]
+        if missing:
+            raise KeyError(
+                f"Blinding template {filename} does not store {missing}; it cannot be "
+                "rescaled to the redshift of the measurement."
+            )
+        z_eff = float(attributes["z_eff"])
+        gamma_lya = float(attributes["gamma_lya"])
+        gamma_qso = float(attributes["gamma_qso"])
+
+    if blind_corr_type in ["lyaxqso", "lybxqso"]:
+        return z_eff, gamma_lya + gamma_qso
+    return z_eff, 2 * gamma_lya
+
+
+def compute_template_amplitude_ratio(z, z_eff, gamma_sum):
+    """Amplitude of the correlation function at z relative to z_eff.
+
+    The bias of each tracer evolves as (1 + z)^gamma and the growth factor follows the
+    Einstein-de Sitter solution, D(z) proportional to 1 / (1 + z), so that
+
+        A(z) / A(z_eff) = [(1 + z) / (1 + z_eff)]^(gamma_1 + gamma_2 - 2).
+
+    This is the weighting picca uses for each tracer, ((1 + z) / (1 + z_ref))^(gamma - 1).
+    Compared with the LCDM growth used in Vega, the difference is below 1% for 2 < z < 3.
+
+    Parameters
+    ----------
+    z : float
+        Effective redshift of the measurement.
+    z_eff : float
+        Redshift at which the template was computed.
+    gamma_sum : float
+        Sum of the bias-evolution exponents of the two tracers.
+
+    Returns
+    -------
+    float
+        A(z) / A(z_eff).
+    """
+    return ((1.0 + z) / (1.0 + z_eff)) ** (gamma_sum - 2.0)
+
+
+def interpolate_blinding_template(template_grid, is_x_correlation, r_par, r_trans):
+    """Interpolate the regular-grid blinding template onto arbitrary separations.
+
+    A bicubic interpolating spline is built on the template bin centres. Separations outside
+    the grid are evaluated at the nearest grid edge (constant extrapolation), which matches
+    the FITPACK evaluation used previously; the template is negligible at these separations.
+
+    Parameters
+    ----------
+    template_grid : numpy.ndarray
+        Regular-grid template, shape (num_bins_r_par * num_bins_r_trans,), r_trans fastest.
+    is_x_correlation : bool
+        True for cross-correlations.
+    r_par, r_trans : numpy.ndarray
+        Separations along and across the line of sight in h^-1 Mpc, same shape.
+
+    Returns
+    -------
+    numpy.ndarray
+        Template evaluated at (r_par, r_trans), same shape as r_par.
+
+    Raises
+    ------
+    ValueError
+        If the template size does not match the regular grid.
+    """
+    r_par_centres, r_trans_centres = get_template_bin_centres(is_x_correlation)
+    if template_grid.size != r_par_centres.size * r_trans_centres.size:
+        raise ValueError(
+            f"Regular-grid template has {template_grid.size} bins, expected "
+            f"{r_par_centres.size} x {r_trans_centres.size}."
+        )
+
+    spline = scipy.interpolate.RectBivariateSpline(
+        r_par_centres,
+        r_trans_centres,
+        template_grid.reshape(r_par_centres.size, r_trans_centres.size),
+        kx=3,
+        ky=3,
+    )
+
+    outside_grid = (
+        (r_par < r_par_centres[0] - TEMPLATE_BIN_SIZE / 2)
+        | (r_par > r_par_centres[-1] + TEMPLATE_BIN_SIZE / 2)
+        | (r_trans > r_trans_centres[-1] + TEMPLATE_BIN_SIZE / 2)
+    )
+    if np.any(outside_grid):
+        userprint(
+            f"WARNING: {outside_grid.sum()} bins lie outside the blinding template grid; "
+            "the template is evaluated at the nearest grid edge there."
+        )
+
+    r_par_clipped = np.clip(r_par, r_par_centres[0], r_par_centres[-1])
+    r_trans_clipped = np.clip(r_trans, r_trans_centres[0], r_trans_centres[-1])
+    return spline.ev(r_par_clipped, r_trans_clipped)
+
 
 def main(cmdargs=None):
     """Export auto and cross-correlation for the fitter.
@@ -174,6 +357,23 @@ def main(cmdargs=None):
     nsamples = xi.shape[0]
 
     is_x_correlation = r_par_min < 0
+
+    # (r_par, r_trans) of the 2D bins for the blinding template, kept before r_par and r_trans
+    # are replaced by multipole coordinates. In (r, mu) binning RP holds mu and RT holds r.
+    rmu_binning = bool(head.get("RMU_BIN", False))
+    if rmu_binning:
+        r_par_template = r_trans * r_par
+        r_trans_template = r_trans * np.sqrt(np.clip(1.0 - r_par**2, 0.0, None))
+    else:
+        r_par_template = r_par.copy()
+        r_trans_template = r_trans.copy()
+
+    # Effective redshift of the measurement for rescaling the blinding template: average of the
+    # bin redshifts weighted by the summed pair weights (empty bins have zero weight and Z = 0)
+    bin_weights = weights.sum(axis=0)
+    z_measurement = None
+    if np.sum(bin_weights) > 0:
+        z_measurement = np.sum(bin_weights * z) / np.sum(bin_weights)
 
     if "BLINDING" in head:
         blinding = head["BLINDING"]
@@ -328,7 +528,7 @@ def main(cmdargs=None):
         if data_name == "DA_BLIND" and "DM_BLIND" in hdul[1].get_colnames():
             dmat = np.array(hdul[1]["DM_BLIND"][:])
             dmat_name = "DM_BLIND"
-        elif data_name == "DA_BlIND":
+        elif data_name == "DA_BLIND":
             userprint(
                 "Blinded correlations were given but distortion matrix "
                 "is unblinded. These files should not mix. Exiting..."
@@ -488,19 +688,11 @@ def main(cmdargs=None):
 
     # CIV uses parameter blinding in Vega instead of correlation templates.
     if requires_blinding and not uses_parameter_blinding:
-        blinding_dir = "/global/cfs/projectdirs/desi/science/lya/lya_blinding/bao/"
-        blinding_templates = {
-            "desi_dr3": {
-                "standard": "dr3_blinding_v4_standard_28_05_2026.h5",
-                "grid": "dr3_blinding_v4_regular_grid_28_05_2026.h5",
-            }
-        }
-
-        if blinding in blinding_templates:
+        if blinding in BLINDING_TEMPLATES:
             userprint(f"Blinding using seed for {blinding}")
         else:
             raise ValueError(
-                f"Expected blinding to be one of {blinding_templates.keys()}."
+                f"Expected blinding to be one of {BLINDING_TEMPLATES.keys()}."
                 f" Found {blinding}."
             )
 
@@ -514,51 +706,70 @@ def main(cmdargs=None):
             if blind_corr_type == "qsoxlyb":
                 blind_corr_type = "lybxqso"
 
-        # Check type of correlation and get size and regular binning
+        # Check that the correlation type agrees with the measured correlation
         if blind_corr_type in ["lyaxlya", "lyaxlyb"]:
-            corr_size = 2500
-            rp_interp_grid = np.arange(2.0, 202.0, 4)
-            rt_interp_grid = np.arange(2.0, 202.0, 4)
+            template_is_x_correlation = False
         elif blind_corr_type in ["lyaxqso", "lybxqso"]:
-            corr_size = 5000
-            rp_interp_grid = np.arange(-197.99, 202.01, 4)
-            rt_interp_grid = np.arange(2.0, 202, 4)
+            template_is_x_correlation = True
         else:
             raise ValueError("Unknown correlation type: {}".format(blind_corr_type))
+        if template_is_x_correlation != is_x_correlation:
+            raise ValueError(
+                f"--blind-corr-type {args.blind_corr_type} does not match the data, which is "
+                f"{'a cross' if is_x_correlation else 'an auto'}-correlation."
+            )
 
-        if corr_size == num_bins_r_par * num_bins_r_trans:
-            # Read the blinding file and get the right template
-            blinding_filename = blinding_dir + blinding_templates[blinding]["standard"]
-        else:
-            # Read the regular grid blinding file and get the right template
-            blinding_filename = blinding_dir + blinding_templates[blinding]["grid"]
-
+        blinding_filename = os.path.join(BLINDING_TEMPLATE_DIR, BLINDING_TEMPLATES[blinding])
         if not os.path.isfile(blinding_filename):
             raise RuntimeError(
                 "Missing blinding file. Make sure you are running at"
                 " NERSC or contact picca developers"
             )
-        blinding_file = h5py.File(blinding_filename, "r")
-        hex_diff = np.array(blinding_file["blinding"][blind_corr_type]).astype(str)
-        diff_grid = np.array([float.fromhex(x) for x in hex_diff])
+        template = read_blinding_template(blinding_filename, blind_corr_type)
 
-        if corr_size == num_bins_r_par * num_bins_r_trans:
-            diff = diff_grid
-        else:
-            # Interpolate the blinding template on the regular grid
-            interp = scipy.interpolate.RectBivariateSpline(
-                rp_interp_grid,
-                rt_interp_grid,
-                diff_grid.reshape(len(rp_interp_grid), len(rt_interp_grid)),
-                kx=3,
-                ky=3,
-            )
-            diff = interp.ev(r_par, r_trans)
+        # Interpolate the regular-grid template onto the bin centres of the measurement
+        diff = interpolate_blinding_template(
+            template, is_x_correlation, r_par_template, r_trans_template
+        )
+
+        # Rescale the template amplitude from its redshift to that of the measurement, with
+        # the fiducial bias evolution and Einstein-de Sitter growth, so that the same BAO
+        # shift is injected at every redshift
+        template_z_eff, gamma_sum = read_template_redshift_evolution(
+            blinding_filename, blind_corr_type
+        )
+        if z_measurement is None:
+            raise ValueError("The correlation has no pairs; cannot blind it.")
+        amplitude_ratio = compute_template_amplitude_ratio(
+            z_measurement, template_z_eff, gamma_sum
+        )
+        userprint(
+            f"Rescaling the blinding template from z = {template_z_eff:.3f} to "
+            f"z = {z_measurement:.3f}"
+        )
+        diff *= amplitude_ratio
+        header += [
+            {
+                "name": "BLINDZ",
+                "value": z_measurement,
+                "comment": "Redshift the blinding template is rescaled to",
+            },
+            {
+                "name": "BLINDAMP",
+                "value": amplitude_ratio,
+                "comment": "Amplitude factor applied to the blinding template",
+            },
+        ]
 
         if args.multipoles:
+            # Project the 2D (mu, r) template onto the multipoles of the data
             diff = calculate_xi_ell(
-                ells_out, diff, [], num_bins_r_par, is_x_correlation
-            )[0]
+                ells_out,
+                diff[None, :],
+                np.ones_like(diff)[None, :],
+                num_bins_r_par,
+                is_x_correlation,
+            )[0][0]
 
         # Check that the shapes match
         if np.shape(xi) != np.shape(diff):
