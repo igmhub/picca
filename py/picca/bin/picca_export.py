@@ -29,7 +29,7 @@ UNBLINDABLE_STRATEGIES = ["none", "desi_m2", "desi_y1", "desi_y3"]
 # the binning of each measurement
 BLINDING_TEMPLATE_DIR = "/global/cfs/projectdirs/desi/science/lya/lya_blinding/bao/"
 BLINDING_TEMPLATES = {
-    "desi_dr3": "dr3_blinding_v4_regular_grid_28_05_2026.h5",
+    "desi_dr3": "dr3_blinding_v4_regular_grid_30_10_2026.h5",
 }
 
 # Binning of the template grid in h^-1 Mpc: r_trans in [0, 200] and r_par in [0, 200] for
@@ -801,10 +801,6 @@ def main(cmdargs=None):
     )
     results.close()
 
-
-if __name__ == "__main__":
-    cmdargs = sys.argv[1:]
-    main(cmdargs)
 
 if __name__ == "__main__":
     cmdargs = sys.argv[1:]
