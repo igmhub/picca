@@ -124,15 +124,19 @@ def class_from_string(class_name, module_name):
     # get the class
     class_object = getattr(module_object, class_name)
     # get the dictionary with the default arguments
+    # module-level "defaults"/"accepted_options" take precedence (the usual
+    # case); classes generated on the fly (e.g. the MPI variants in
+    # expected_fluxes/mpi.py) instead carry them as class attributes
+    # "default_options"/"accepted_options"
     try:
         default_args = getattr(module_object, "defaults")
     except AttributeError:
-        default_args = {}
+        default_args = getattr(class_object, "default_options", {})
     # get the list with the valid options
     try:
         accepted_options = getattr(module_object, "accepted_options")
     except AttributeError:
-        accepted_options = []
+        accepted_options = getattr(class_object, "accepted_options", [])
     return class_object, default_args, accepted_options
 
 @njit()
@@ -216,7 +220,8 @@ logging.Logger.ok_warning = ok_warning
 
 def setup_logger(logging_level_console=logging.DEBUG,
                  log_file=None,
-                 logging_level_file=logging.DEBUG):
+                 logging_level_file=logging.DEBUG,
+                 add_console=True):
     """This function set up the logger for the package
     picca.delta_extraction
 
@@ -235,6 +240,11 @@ def setup_logger(logging_level_console=logging.DEBUG,
     the logging module (i.e. CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET).
     Additionally, the user-defined level PROGRESS and WARNING_OK are allowed.
     Ignored if log_file is None.
+
+    add_console: bool - Default: True
+    Whether to attach the console (stdout) handler. Under MPI this is set to
+    True only on rank 0 so that a single, clean stream reaches stdout while
+    every rank still keeps its own log file.
     """
     if isinstance(logging_level_console, str):
         if logging_level_console.upper() == "PROGRESS":
@@ -256,10 +266,11 @@ def setup_logger(logging_level_console=logging.DEBUG,
     formatter = logging.Formatter('[%(levelname)s]: %(message)s')
 
     # create console handler to logs messages
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging_level_console)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+    if add_console:
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging_level_console)
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
 
     # create file handler which logs messages to file
     if log_file is not None:
