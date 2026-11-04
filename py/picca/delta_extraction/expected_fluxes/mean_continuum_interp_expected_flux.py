@@ -178,7 +178,8 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 else:
                     # Load the mean continuum from the warm-up file
                     mean_cont = load_2d_mean_cont_from_file(
-                        self.mean_cont_warm_up, self.z_bin_edges, Forest.log_lambda_rest_frame_grid)
+                        self.mean_cont_warm_up, self.z_bin_edges, Forest.log_lambda_rest_frame_grid,
+                        logger=self.logger)
                 # fill_value cannot be "extrapolate" for RegularGridInterpolator
                 # so we use 0.0 instead
                 self.get_mean_cont = RegularGridInterpolator(
@@ -191,7 +192,8 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 "Initializing mean continuum arrays for 1D interpolation")
             if self.mean_cont_warm_up is not None:
                 mean_cont = load_1d_mean_cont_from_file(
-                    self.mean_cont_warm_up, Forest.log_lambda_rest_frame_grid)
+                    self.mean_cont_warm_up, Forest.log_lambda_rest_frame_grid,
+                    logger=self.logger)
             else:
                 mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
 
@@ -624,7 +626,7 @@ def interp_coeff_z(z, z_grid):
 
     return coeff, z_bin
 
-def load_1d_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
+def load_1d_mean_cont_from_file(filename, log_lambda_rest_frame_grid, logger=None):
     """Load the 1D mean continuum from a file.
 
     Arguments
@@ -635,6 +637,9 @@ def load_1d_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
     log_lambda_rest_frame_grid: array of float
     The log10 of the rest-frame wavelength grid.
 
+    logger: logging.Logger or Noine - Default: None
+    Logger to use for logging messages. If None, logging is disabled.
+
     Return
     ------
     mean_cont: array of float
@@ -643,6 +648,9 @@ def load_1d_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
     weight: array of float
     The weights for the 1D mean continuum.
     """
+    if logger is not None:
+        logger.info("Loading 1D mean continuum from file: %s", filename)
+
     # read the mean continuum from file
     # using the fitsio library
     # mean continuum is stored in the 'CONT' extension
@@ -653,14 +661,23 @@ def load_1d_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
 
     # if the read log_lambda_rest_frame_grid is not close to the input log_lambda_rest_frame_grid
     # then interpolate the mean_cont to the input log_lambda_rest_frame_grid
-    if not np.allclose(read_log_lambda_rest_frame_grid, log_lambda_rest_frame_grid):
+    if (read_log_lambda_rest_frame_grid.shape != log_lambda_rest_frame_grid.shape or 
+            not np.allclose(read_log_lambda_rest_frame_grid, log_lambda_rest_frame_grid)):
+        if logger is not None:
+            logger.warning(
+                "The read log_lambda_rest_frame_grid is not close to the input ones. "
+                "Interpolating the mean continuum to the input log_lambda_rest_frame_grid."
+            )
         mean_cont = np.interp(log_lambda_rest_frame_grid,
                               read_log_lambda_rest_frame_grid,
                               mean_cont)
 
+    if logger is not None:
+        logger.info("Loaded 1D mean continuum")
+
     return mean_cont
 
-def load_2d_mean_cont_from_file(filename, z_bin_edges, log_lambda_rest_frame_grid):
+def load_2d_mean_cont_from_file(filename, z_bin_edges, log_lambda_rest_frame_grid, logger=None):
     """Load the 2D mean continuum from a file.
 
     Arguments
@@ -674,11 +691,17 @@ def load_2d_mean_cont_from_file(filename, z_bin_edges, log_lambda_rest_frame_gri
     log_lambda_rest_frame_grid: array of float
     The log10 of the rest-frame wavelength grid.
 
+    logger: logging.Logger or Noine - Default: None
+    Logger to use for logging messages. If None, logging is disabled.
+
     Return
     ------
     mean_cont: array of float
     The 2D mean continuum.
     """
+    if logger is not None:
+        logger.info("Loading 2D mean continuum from file: %s", filename)
+
     # read the mean continuum from file
     # using the fitsio library
     # mean continuum is stored in the 'CONT' extension
@@ -691,8 +714,15 @@ def load_2d_mean_cont_from_file(filename, z_bin_edges, log_lambda_rest_frame_gri
     # if the read z_bin_edges is not close to the input z_bin_edges
     # or the read log_lambda_rest_frame_grid is not close to the input log_lambda_rest_frame_grid
     # then we need to interpolate the mean_cont to the input z_bin_edges and log_lambda_rest_frame_grid
-    if (not np.allclose(read_z_bin_edges, z_bin_edges) or
+    if (read_z_bin_edges.shape != z_bin_edges.shape or
+            not np.allclose(read_z_bin_edges, z_bin_edges) or
+            read_log_lambda_rest_frame_grid.shape != log_lambda_rest_frame_grid.shape or
             not np.allclose(read_log_lambda_rest_frame_grid, log_lambda_rest_frame_grid)):
+        if logger is not None:
+            logger.warning(
+                "The read z_bin_edges or log_lambda_rest_frame_grid are not close to the input ones. "
+                "Interpolating the mean continuum to the input z_bin_edges and log_lambda_rest_frame_grid."
+            )
         # create a 2D interpolator for the mean continuum
         mean_cont_interpolator = RegularGridInterpolator(
             (read_z_bin_edges, read_log_lambda_rest_frame_grid),
@@ -711,5 +741,8 @@ def load_2d_mean_cont_from_file(filename, z_bin_edges, log_lambda_rest_frame_gri
                            log_lam_mesh_grid.ravel()],
                           axis=-1)
         mean_cont = mean_cont_interpolator(points).reshape(z_meshgrid.shape)
+
+    if logger is not None:
+        logger.info("Loaded 2D mean continuum")
 
     return mean_cont

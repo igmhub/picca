@@ -115,9 +115,12 @@ class ExpectedFlux:
             mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
             mean_cont_weight = np.zeros(Forest.log_lambda_rest_frame_grid.size)
         else:
+            # load logger if available (some child classes may not have a logger)
+            logger = self.logger if hasattr(self, "logger") else None
+
             # Load the mean continuum from the warm-up file
             mean_cont, mean_cont_weight = load_mean_cont_from_file(
-                self.mean_cont_warm_up, Forest.log_lambda_rest_frame_grid)
+                self.mean_cont_warm_up, Forest.log_lambda_rest_frame_grid, logger=logger)
 
         self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
                                       mean_cont,
@@ -475,7 +478,7 @@ class ExpectedFlux:
             self.hdu_cont(results)
             self.hdu_fit_metadata(results)
 
-def load_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
+def load_mean_cont_from_file(filename, log_lambda_rest_frame_grid, logger=None):
     """Load the 1D mean continuum from a file.
 
     Arguments
@@ -486,6 +489,9 @@ def load_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
     log_lambda_rest_frame_grid: array of float
     The log10 of the rest-frame wavelength grid.
 
+    logger: logging.Logger or None - Default: None
+    Logger to use for logging messages. If None, logging is disabled.
+
     Return
     ------
     mean_cont: array of float
@@ -494,6 +500,9 @@ def load_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
     weight: array of float
     The weights for the 1D mean continuum.
     """
+    if logger is not None:
+        logger.info("Loading mean continuum from file: %s", filename)
+        
     # read the mean continuum from file
     # using the fitsio library
     # mean continuum is stored in the 'CONT' extension
@@ -505,7 +514,13 @@ def load_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
 
     # if the read log_lambda_rest_frame_grid is not close to the input log_lambda_rest_frame_grid
     # then interpolate the mean_cont to the input log_lambda_rest_frame_grid
-    if not np.allclose(read_log_lambda_rest_frame_grid, log_lambda_rest_frame_grid):
+    if (read_log_lambda_rest_frame_grid.shape != log_lambda_rest_frame_grid.shape or 
+            not np.allclose(read_log_lambda_rest_frame_grid, log_lambda_rest_frame_grid)):
+        if logger is not None:
+            logger.warning(
+                "The read log_lambda_rest_frame_grid is not close to the input ones. "
+                "Interpolating the mean continuum to the input log_lambda_rest_frame_grid."
+            )
         mean_cont = np.interp(log_lambda_rest_frame_grid,
                               read_log_lambda_rest_frame_grid,
                               mean_cont,
@@ -516,5 +531,8 @@ def load_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
                            weight,
                            left=weight[0],
                            right=weight[-1])
+
+    if logger is not None:
+        logger.info("Loaded mean continuum")
 
     return mean_cont, weight
