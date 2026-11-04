@@ -1,6 +1,7 @@
 """This module defines the class MeanContinuumInterpExpectedFlux"""
 import logging
 
+import fitsio
 import numba
 import numpy as np
 from scipy.interpolate import interp1d, RegularGridInterpolator
@@ -81,7 +82,6 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         self.z_bin_edges = None
         self.__parse_config(config)
 
-        self.mean_cont = None
         super().__init__(config)
 
     def __parse_config(self, config):
@@ -172,8 +172,13 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 self.logger.info(
                     "Initializing mean continuum arrays for 2D interpolation with z bins: "
                     "%s", self.z_bin_edges)
-                mean_cont = np.ones(
-                    (self.z_bin_edges.size, Forest.log_lambda_rest_frame_grid.size))
+                if self.mean_cont_warm_up is None:
+                    mean_cont = np.ones(
+                        (self.z_bin_edges.size, Forest.log_lambda_rest_frame_grid.size))
+                else:
+                    # Load the mean continuum from the warm-up file
+                    mean_cont = load_2d_mean_cont_from_file(
+                        self.mean_cont_warm_up, self.z_bin_edges, Forest.log_lambda_rest_frame_grid)
                 # fill_value cannot be "extrapolate" for RegularGridInterpolator
                 # so we use 0.0 instead
                 self.get_mean_cont = RegularGridInterpolator(
@@ -184,10 +189,14 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         elif self.interpolation_type == "1D":
             self.logger.info(
                 "Initializing mean continuum arrays for 1D interpolation")
-            self.mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
+            if self.mean_cont_warm_up is not None:
+                mean_cont = load_1d_mean_cont_from_file(
+                    self.mean_cont_warm_up, Forest.log_lambda_rest_frame_grid)
+            else:
+                mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
 
             self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
-                                          self.mean_cont,
+                                          mean_cont,
                                           fill_value='extrapolate')
         # this should never happen, but just in case
         else:  # pragma: no cover
@@ -293,7 +302,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
 
         # Solve the linear system A_matrix * mean_cont = B_matrix
         try:
-            self.mean_cont = np.linalg.solve(A_matrix, B_matrix)
+            mean_cont = np.linalg.solve(A_matrix, B_matrix)
         except np.linalg.LinAlgError as error:
             raise ExpectedFluxError(
                 "The linear system could not be solved. "
@@ -302,7 +311,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
 
         # update the interpolator with the mean continuum
         self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
-                                      self.mean_cont,
+                                      mean_cont,
                                       fill_value='extrapolate')
 
     def compute_mean_cont_2d(self,
@@ -475,13 +484,13 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         # Solve the linear system A_matrix * mean_cont = B_matrix
         mean_cont = np.linalg.solve(A_matrix, B_matrix)
         # Undo the new indexing (needed to add transposition)
-        self.mean_cont = mean_cont.reshape(
+        mean_cont = mean_cont.reshape(
             (Forest.log_lambda_rest_frame_grid.size, self.z_bin_edges.size)).T
 
         # update the interpolator with the mean continuum
         self.get_mean_cont = RegularGridInterpolator(
             (self.z_bin_edges, Forest.log_lambda_rest_frame_grid),
-            self.mean_cont,
+            mean_cont,
             bounds_error=False,
             fill_value=0.0,
         )
@@ -614,3 +623,93 @@ def interp_coeff_z(z, z_grid):
     coeff = (z_high - z) / (z_high - z_low)
 
     return coeff, z_bin
+
+def load_1d_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
+    """Load the 1D mean continuum from a file.
+
+    Arguments
+    ---------
+    filename: str
+    Path to the file containing the 1D mean continuum.
+
+    log_lambda_rest_frame_grid: array of float
+    The log10 of the rest-frame wavelength grid.
+
+    Return
+    ------
+    mean_cont: array of float
+    The 1D mean continuum.
+
+    weight: array of float
+    The weights for the 1D mean continuum.
+    """
+    # read the mean continuum from file
+    # using the fitsio library
+    # mean continuum is stored in the 'CONT' extension
+    # with fields 'LOGLAM_REST', 'MEAN_CONT'
+    mean_cont_data = fitsio.read(filename, ext='CONT')
+    read_log_lambda_rest_frame_grid = mean_cont_data['LOGLAM_REST']
+    mean_cont = mean_cont_data['MEAN_CONT']
+
+    # if the read log_lambda_rest_frame_grid is not close to the input log_lambda_rest_frame_grid
+    # then interpolate the mean_cont to the input log_lambda_rest_frame_grid
+    if not np.allclose(read_log_lambda_rest_frame_grid, log_lambda_rest_frame_grid):
+        mean_cont = np.interp(log_lambda_rest_frame_grid,
+                              read_log_lambda_rest_frame_grid,
+                              mean_cont)
+
+    return mean_cont
+
+def load_2d_mean_cont_from_file(filename, z_bin_edges, log_lambda_rest_frame_grid):
+    """Load the 2D mean continuum from a file.
+
+    Arguments
+    ---------
+    filename: str
+    Path to the file containing the 2D mean continuum.
+
+    z_bin_edges: array of float
+    The redshift bin edges.
+
+    log_lambda_rest_frame_grid: array of float
+    The log10 of the rest-frame wavelength grid.
+
+    Return
+    ------
+    mean_cont: array of float
+    The 2D mean continuum.
+    """
+    # read the mean continuum from file
+    # using the fitsio library
+    # mean continuum is stored in the 'CONT' extension
+    # with fields 'Z_BIN', 'LOGLAM_REST', 'MEAN_CONT'
+    mean_cont_data = fitsio.read(filename, ext='CONT')
+    read_z_bin_edges = mean_cont_data['Z_BIN']
+    read_log_lambda_rest_frame_grid = mean_cont_data['LOGLAM_REST']
+    mean_cont = mean_cont_data['MEAN_CONT']
+
+    # if the read z_bin_edges is not close to the input z_bin_edges
+    # or the read log_lambda_rest_frame_grid is not close to the input log_lambda_rest_frame_grid
+    # then we need to interpolate the mean_cont to the input z_bin_edges and log_lambda_rest_frame_grid
+    if (not np.allclose(read_z_bin_edges, z_bin_edges) or
+            not np.allclose(read_log_lambda_rest_frame_grid, log_lambda_rest_frame_grid)):
+        # create a 2D interpolator for the mean continuum
+        mean_cont_interpolator = RegularGridInterpolator(
+            (read_z_bin_edges, read_log_lambda_rest_frame_grid),
+            mean_cont,
+            bounds_error=False,
+            fill_value=0.0)
+
+        # create a meshgrid for the input z_bin_edges and log_lambda_rest_frame_grid
+        z_meshgrid, log_lam_mesh_grid = np.meshgrid(
+            z_bin_edges,
+            log_lambda_rest_frame_grid,
+            indexing='ij')
+
+        # evaluate the interpolator on the meshgrid
+        points = np.stack([z_meshgrid.ravel(),
+                           log_lam_mesh_grid.ravel()],
+                          axis=-1)
+        mean_cont = mean_cont_interpolator(points).reshape(z_meshgrid.shape)
+
+    return mean_cont

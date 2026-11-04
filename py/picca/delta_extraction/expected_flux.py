@@ -13,8 +13,8 @@ from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
 
 accepted_options = [
-    "iter out prefix", "num bins variance", "num processors", "out dir",
-    "var lss mod"
+    "iter out prefix", "mean cont warm up", "num bins variance", "num processors", 
+    "out dir", "var lss mod"
 ]
 
 defaults = {
@@ -73,6 +73,7 @@ class ExpectedFlux:
 
         self.iter_out_prefix = None
         self.out_dir = None
+        self.mean_cont_warm_up = None
         self.num_bins_variance = None
         self.num_processors = None
         self.var_lss_mod = None
@@ -110,13 +111,20 @@ class ExpectedFlux:
         # initialize the mean quasar continuum
         # TODO: maybe we can drop this and compute first the mean quasar
         # continuum on compute_expected_flux
+        if self.mean_cont_warm_up is None:
+            mean_cont = np.ones(Forest.log_lambda_rest_frame_grid.size)
+            mean_cont_weight = np.zeros(Forest.log_lambda_rest_frame_grid.size)
+        else:
+            # Load the mean continuum from the warm-up file
+            mean_cont, mean_cont_weight = load_mean_cont_from_file(
+                self.mean_cont_warm_up, Forest.log_lambda_rest_frame_grid)
+
         self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
-                                      np.ones_like(
-                                          Forest.log_lambda_rest_frame_grid),
+                                      mean_cont,
                                       fill_value="extrapolate")
         self.get_mean_cont_weight = interp1d(
             Forest.log_lambda_rest_frame_grid,
-            np.zeros_like(Forest.log_lambda_rest_frame_grid),
+            mean_cont_weight,
             fill_value="extrapolate")
 
     def _initialize_variance_wavelength_array(self):
@@ -163,6 +171,8 @@ class ExpectedFlux:
                 "Error constructing ExpectedFlux. "
                 "'iter out prefix' should not incude folders. "
                 f"Found: {self.iter_out_prefix}")
+
+        self.mean_cont_warm_up = config.get("mean cont warm up")
 
         self.num_bins_variance = config.getint("num bins variance")
         if self.num_bins_variance is None:
@@ -464,3 +474,43 @@ class ExpectedFlux:
             self.hdu_var_func(results)
             self.hdu_cont(results)
             self.hdu_fit_metadata(results)
+
+def load_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
+    """Load the 1D mean continuum from a file.
+
+    Arguments
+    ---------
+    filename: str
+    Path to the file containing the 1D mean continuum.
+
+    log_lambda_rest_frame_grid: array of float
+    The log10 of the rest-frame wavelength grid.
+
+    Return
+    ------
+    mean_cont: array of float
+    The 1D mean continuum.
+
+    weight: array of float
+    The weights for the 1D mean continuum.
+    """
+    # read the mean continuum from file
+    # using the fitsio library
+    # mean continuum is stored in the 'CONT' extension
+    # with fields 'LOGLAM_REST', 'MEAN_CONT', 'WEIGHT'
+    mean_cont_data = fitsio.read(filename, ext='CONT')
+    read_log_lambda_rest_frame_grid = mean_cont_data['LOGLAM_REST']
+    mean_cont = mean_cont_data['MEAN_CONT']
+    weight = mean_cont_data['WEIGHT']
+
+    # if the read log_lambda_rest_frame_grid is not close to the input log_lambda_rest_frame_grid
+    # then interpolate the mean_cont to the input log_lambda_rest_frame_grid
+    if not np.allclose(read_log_lambda_rest_frame_grid, log_lambda_rest_frame_grid):
+        mean_cont = np.interp(log_lambda_rest_frame_grid,
+                              read_log_lambda_rest_frame_grid,
+                              mean_cont)
+        weight = np.interp(log_lambda_rest_frame_grid,
+                           read_log_lambda_rest_frame_grid,
+                           weight)
+
+    return mean_cont, weight
