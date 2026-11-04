@@ -661,7 +661,7 @@ def load_1d_mean_cont_from_file(filename, log_lambda_rest_frame_grid, logger=Non
 
     # if the read log_lambda_rest_frame_grid is not close to the input log_lambda_rest_frame_grid
     # then interpolate the mean_cont to the input log_lambda_rest_frame_grid
-    if (read_log_lambda_rest_frame_grid.shape != log_lambda_rest_frame_grid.shape or 
+    if (read_log_lambda_rest_frame_grid.shape != log_lambda_rest_frame_grid.shape or
             not np.allclose(read_log_lambda_rest_frame_grid, log_lambda_rest_frame_grid)):
         if logger is not None:
             logger.warning(

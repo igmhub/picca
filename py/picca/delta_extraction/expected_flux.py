@@ -502,7 +502,7 @@ def load_mean_cont_from_file(filename, log_lambda_rest_frame_grid, logger=None):
     """
     if logger is not None:
         logger.info("Loading mean continuum from file: %s", filename)
-        
+
     # read the mean continuum from file
     # using the fitsio library
     # mean continuum is stored in the 'CONT' extension
@@ -514,7 +514,7 @@ def load_mean_cont_from_file(filename, log_lambda_rest_frame_grid, logger=None):
 
     # if the read log_lambda_rest_frame_grid is not close to the input log_lambda_rest_frame_grid
     # then interpolate the mean_cont to the input log_lambda_rest_frame_grid
-    if (read_log_lambda_rest_frame_grid.shape != log_lambda_rest_frame_grid.shape or 
+    if (read_log_lambda_rest_frame_grid.shape != log_lambda_rest_frame_grid.shape or
             not np.allclose(read_log_lambda_rest_frame_grid, log_lambda_rest_frame_grid)):
         if logger is not None:
             logger.warning(
