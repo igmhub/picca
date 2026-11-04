@@ -509,7 +509,7 @@ def load_mean_cont_from_file(filename, log_lambda_rest_frame_grid):
         mean_cont = np.interp(log_lambda_rest_frame_grid,
                               read_log_lambda_rest_frame_grid,
                               mean_cont,
-                              left=mean_cont[0], 
+                              left=mean_cont[0],
                               right=mean_cont[-1])
         weight = np.interp(log_lambda_rest_frame_grid,
                            read_log_lambda_rest_frame_grid,
