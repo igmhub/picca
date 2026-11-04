@@ -684,15 +684,15 @@ def load_2d_mean_cont_from_file(filename, z_bin_edges, log_lambda_rest_frame_gri
     # mean continuum is stored in the 'CONT' extension
     # with fields 'Z_BIN_EDGE', 'LOGLAM_REST', 'MEAN_CONT'
     mean_cont_data = fitsio.read(filename, ext='CONT')
-    read_z_bin_edges = mean_cont_data['Z_BIN_EDGE']
-    read_log_lambda_rest_frame_grid = mean_cont_data['LOGLAM_REST']
+    read_z_bin_edges = mean_cont_data['Z_BIN_EDGE'][:, 0]
+    read_log_lambda_rest_frame_grid = mean_cont_data['LOGLAM_REST'][0, :]
     mean_cont = mean_cont_data['MEAN_CONT']
 
     # if the read z_bin_edges is not close to the input z_bin_edges
     # or the read log_lambda_rest_frame_grid is not close to the input log_lambda_rest_frame_grid
     # then we need to interpolate the mean_cont to the input z_bin_edges and log_lambda_rest_frame_grid
-    if (not np.allclose(read_z_bin_edges[:, 0], z_bin_edges) or
-            not np.allclose(read_log_lambda_rest_frame_grid[0, :], log_lambda_rest_frame_grid)):
+    if (not np.allclose(read_z_bin_edges, z_bin_edges) or
+            not np.allclose(read_log_lambda_rest_frame_grid, log_lambda_rest_frame_grid)):
         # create a 2D interpolator for the mean continuum
         mean_cont_interpolator = RegularGridInterpolator(
             (read_z_bin_edges, read_log_lambda_rest_frame_grid),
