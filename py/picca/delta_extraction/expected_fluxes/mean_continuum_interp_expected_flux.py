@@ -698,7 +698,7 @@ def load_2d_mean_cont_from_file(filename, z_bin_edges, log_lambda_rest_frame_gri
             (read_z_bin_edges, read_log_lambda_rest_frame_grid),
             mean_cont,
             bounds_error=False,
-            fill_value=0.0)
+            fill_value=1.0)
 
         # create a meshgrid for the input z_bin_edges and log_lambda_rest_frame_grid
         z_meshgrid, log_lam_mesh_grid = np.meshgrid(
