@@ -8,6 +8,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from picca.delta_extraction.errors import ExpectedFluxError
+from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
 from picca.delta_extraction.data_catalogues.desi_healpix import defaults as defaults_desi_healpix
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
@@ -21,6 +22,8 @@ from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
     defaults as defaults_dr16_expected_flux)
 from picca.delta_extraction.expected_fluxes.true_continuum import (
     TrueContinuum, defaults as defaults_true_continuum)
+from picca.delta_extraction.expected_fluxes.mean_continuum_interp_expected_flux import (
+    MeanContinuumInterpExpectedFlux)
 from picca.tests.delta_extraction.abstract_test import AbstractTest
 from picca.tests.delta_extraction.test_utils import forest1
 from picca.tests.delta_extraction.test_utils import setup_forest, reset_forest
@@ -1833,6 +1836,40 @@ class ExpectedFluxTest(AbstractTest):
                 expected_flux.los_ids[59152][key],
                 np.loadtxt(test_file)
             ))
+
+    def test_mean_continuum_interp_remove_slope(self):
+        """Test _remove_mean_cont_slope for MeanContinuumInterpExpectedFlux"""
+        setup_forest("log")
+        grid = Forest.log_lambda_rest_frame_grid
+
+        # 1D test: linear continuum
+        slope = 0.5
+        intercept = 2.0
+        mean_cont_1d = intercept + slope * (grid - np.mean(grid))
+        result_1d = MeanContinuumInterpExpectedFlux._remove_mean_cont_slope(mean_cont_1d)
+
+        # check that slope is removed
+        p_res = np.polyfit(grid, result_1d, 1)
+        self.assertAlmostEqual(p_res[0], 0.0, places=10)
+        # check that mean is preserved
+        self.assertAlmostEqual(np.mean(result_1d), np.mean(mean_cont_1d), places=10)
+
+        # 2D test: array of shape (num_z, num_lambda)
+        num_z = 3
+        mean_cont_2d = np.zeros((num_z, grid.size))
+        for i in range(num_z):
+            mean_cont_2d[i] = (i + 1.0) + (0.2 * (i + 1)) * (grid - np.mean(grid))
+
+        result_2d = MeanContinuumInterpExpectedFlux._remove_mean_cont_slope(mean_cont_2d)
+        self.assertEqual(result_2d.shape, mean_cont_2d.shape)
+        for i in range(num_z):
+            p_res_i = np.polyfit(grid, result_2d[i], 1)
+            self.assertAlmostEqual(p_res_i[0], 0.0, places=10)
+            self.assertAlmostEqual(np.mean(result_2d[i]), np.mean(mean_cont_2d[i]), places=10)
+
+        # Test invalid dimensions
+        with self.assertRaises(ExpectedFluxError):
+            MeanContinuumInterpExpectedFlux._remove_mean_cont_slope(np.ones((2, 2, 2)))
 
 if __name__ == '__main__':
     unittest.main()

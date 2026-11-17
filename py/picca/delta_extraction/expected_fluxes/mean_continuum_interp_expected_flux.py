@@ -216,6 +216,43 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
 
         super().compute_expected_flux(forests)
 
+    @staticmethod
+    def _remove_mean_cont_slope(mean_cont):
+        """Remove the slope of the mean continuum by dividing by a normalized linear fit.
+
+        Arguments
+        ---------
+        mean_cont: np.ndarray
+        Mean continuum array along Forest.log_lambda_rest_frame_grid (1D or 2D)
+
+        Returns
+        -------
+        np.ndarray
+        Mean continuum array with the slope removed
+
+        Raises
+        ------
+        ExpectedFluxError if mean_cont does not have 1 or 2 dimensions
+        """
+        if mean_cont.ndim == 1:
+            poly = np.polyfit(Forest.log_lambda_rest_frame_grid, mean_cont, 1)
+            line = np.polyval(poly, Forest.log_lambda_rest_frame_grid)
+            norm_line = line / np.mean(line)
+            return mean_cont / norm_line
+
+        if mean_cont.ndim == 2:
+            result = np.empty_like(mean_cont)
+            for i in range(mean_cont.shape[0]):
+                poly = np.polyfit(Forest.log_lambda_rest_frame_grid, mean_cont[i], 1)
+                line = np.polyval(poly, Forest.log_lambda_rest_frame_grid)
+                norm_line = line / np.mean(line)
+                result[i] = mean_cont[i] / norm_line
+            return result
+
+        raise ExpectedFluxError(
+            f"Invalid dimensions for mean_cont: {mean_cont.ndim}. "
+            "Expected 1D or 2D array.")
+
     def compute_mean_cont(self,
                           forests):
         """Compute the mean quasar continuum over the whole sample.
@@ -299,6 +336,9 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 "The linear system could not be solved. "
                 "This may be due to a lack of coverage for some "
                 "wavelengths.") from error
+
+        # remove the slope of the mean continuum
+        self.mean_cont = self._remove_mean_cont_slope(self.mean_cont)
 
         # update the interpolator with the mean continuum
         self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
@@ -477,6 +517,9 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         # Undo the new indexing (needed to add transposition)
         self.mean_cont = mean_cont.reshape(
             (Forest.log_lambda_rest_frame_grid.size, self.z_bin_edges.size)).T
+
+        # remove the slope of the mean continuum for each redshift bin
+        self.mean_cont = self._remove_mean_cont_slope(self.mean_cont)
 
         # update the interpolator with the mean continuum
         self.get_mean_cont = RegularGridInterpolator(
