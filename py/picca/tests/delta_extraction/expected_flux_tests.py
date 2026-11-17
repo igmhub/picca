@@ -1842,30 +1842,81 @@ class ExpectedFluxTest(AbstractTest):
         setup_forest("log")
         grid = Forest.log_lambda_rest_frame_grid
 
-        # 1D test: linear continuum
+        # 1D test: linear continuum with buffer
         slope = 0.5
         intercept = 2.0
         mean_cont_1d = intercept + slope * (grid - np.mean(grid))
-        result_1d = MeanContinuumInterpExpectedFlux._remove_mean_cont_slope(mean_cont_1d)
+        result_1d = MeanContinuumInterpExpectedFlux._remove_mean_cont_slope(mean_cont_1d, buffer_bins=5)
 
-        # check that slope is removed
-        p_res = np.polyfit(grid, result_1d, 1)
+        # check that slope is removed over the fitted region
+        fit_mask = np.zeros(grid.size, dtype=bool)
+        fit_mask[5:-5] = True
+        p_res = np.polyfit(grid[fit_mask], result_1d[fit_mask], 1)
         self.assertAlmostEqual(p_res[0], 0.0, places=10)
-        # check that mean is preserved
-        self.assertAlmostEqual(np.mean(result_1d), np.mean(mean_cont_1d), places=10)
+        # check that mean over fitted region is preserved
+        self.assertAlmostEqual(np.mean(result_1d[fit_mask]), np.mean(mean_cont_1d[fit_mask]), places=10)
 
-        # 2D test: array of shape (num_z, num_lambda)
+        # 1D test with partial coverage: zeros only at blue end (beginning)
+        mean_cont_blue_zeros = mean_cont_1d.copy()
+        mean_cont_blue_zeros[:10] = 0.0
+        result_blue_zeros = MeanContinuumInterpExpectedFlux._remove_mean_cont_slope(
+            mean_cont_blue_zeros, buffer_bins=5)
+
+        # check that zero values are preserved
+        self.assertTrue(np.all(result_blue_zeros[:10] == 0.0))
+        self.assertTrue(np.all(result_blue_zeros[10:] != 0.0))
+
+        # check that slope is removed over the effective fitted region [10+5 : -5]
+        effective_fit_blue = np.zeros(grid.size, dtype=bool)
+        effective_fit_blue[15:-5] = True
+        p_res_blue = np.polyfit(grid[effective_fit_blue], result_blue_zeros[effective_fit_blue], 1)
+        self.assertAlmostEqual(p_res_blue[0], 0.0, places=10)
+
+        # 1D test with partial coverage: zeros only at red end
+        mean_cont_red_zeros = mean_cont_1d.copy()
+        mean_cont_red_zeros[-15:] = 0.0
+        result_red_zeros = MeanContinuumInterpExpectedFlux._remove_mean_cont_slope(
+            mean_cont_red_zeros, buffer_bins=5)
+
+        # check that zero values are preserved
+        self.assertTrue(np.all(result_red_zeros[-15:] == 0.0))
+        self.assertTrue(np.all(result_red_zeros[:-15] != 0.0))
+
+        # check that slope is removed over the effective fitted region [5 : -15-5]
+        effective_fit_red = np.zeros(grid.size, dtype=bool)
+        effective_fit_red[5:-20] = True
+        p_res_red = np.polyfit(grid[effective_fit_red], result_red_zeros[effective_fit_red], 1)
+        self.assertAlmostEqual(p_res_red[0], 0.0, places=10)
+
+        # 2D test: array of shape (num_z, num_lambda) with partial coverage at one end
         num_z = 3
         mean_cont_2d = np.zeros((num_z, grid.size))
-        for i in range(num_z):
-            mean_cont_2d[i] = (i + 1.0) + (0.2 * (i + 1)) * (grid - np.mean(grid))
+        # z bin 0: zeros at blue end
+        mean_cont_2d[0] = 1.0 + 0.2 * (grid - np.mean(grid))
+        mean_cont_2d[0, :10] = 0.0
+        # z bin 1: full coverage
+        mean_cont_2d[1] = 2.0 + 0.3 * (grid - np.mean(grid))
+        # z bin 2: zeros at red end
+        mean_cont_2d[2] = 3.0 + 0.4 * (grid - np.mean(grid))
+        mean_cont_2d[2, -20:] = 0.0
 
-        result_2d = MeanContinuumInterpExpectedFlux._remove_mean_cont_slope(mean_cont_2d)
+        result_2d = MeanContinuumInterpExpectedFlux._remove_mean_cont_slope(
+            mean_cont_2d, buffer_bins=5)
         self.assertEqual(result_2d.shape, mean_cont_2d.shape)
-        for i in range(num_z):
-            p_res_i = np.polyfit(grid, result_2d[i], 1)
-            self.assertAlmostEqual(p_res_i[0], 0.0, places=10)
-            self.assertAlmostEqual(np.mean(result_2d[i]), np.mean(mean_cont_2d[i]), places=10)
+
+        # verify bin 0
+        self.assertTrue(np.all(result_2d[0, :10] == 0.0))
+        p0 = np.polyfit(grid[15:-5], result_2d[0, 15:-5], 1)
+        self.assertAlmostEqual(p0[0], 0.0, places=10)
+
+        # verify bin 1
+        p1 = np.polyfit(grid[5:-5], result_2d[1, 5:-5], 1)
+        self.assertAlmostEqual(p1[0], 0.0, places=10)
+
+        # verify bin 2
+        self.assertTrue(np.all(result_2d[2, -20:] == 0.0))
+        p2 = np.polyfit(grid[5:-25], result_2d[2, 5:-25], 1)
+        self.assertAlmostEqual(p2[0], 0.0, places=10)
 
         # Test invalid dimensions
         with self.assertRaises(ExpectedFluxError):

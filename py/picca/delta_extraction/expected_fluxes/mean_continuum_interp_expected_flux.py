@@ -13,13 +13,14 @@ from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(
-    accepted_options, ["infer z bins", "interpolation type", "limit z", "num z bins"])
+    accepted_options, ["infer z bins", "interpolation type", "limit z", "num z bins", "slope buffer bins"])
 
 defaults = update_default_options(defaults, {
     "infer z bins": False,
     "interpolation type": "1D",
     "limit z": (1.8, 5.),
     "num z bins": 3,
+    "slope buffer bins": 5,
 })
 
 ACCEPTED_INTERPOLATION_TYPES = ["1D", "2D"]
@@ -56,6 +57,10 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
     num_z_bins: int
     Number of redshift bins to use for the analysis.
 
+    slope_buffer_bins: int
+    Number of bins at the edges of the non-zero continuum region to ignore
+    when evaluating the slope.
+
     z_bin_edges: np.ndarray
     Bins in redshift used to compute the mean continuum.
     """
@@ -78,6 +83,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         self.interpolation_type = None
         self.limit_z = None
         self.num_z_bins = None
+        self.slope_buffer_bins = None
         self.z_bin_edges = None
         self.__parse_config(config)
 
@@ -157,6 +163,16 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 self.z_bin_edges = np.linspace(self.limit_z[0], self.limit_z[1],
                                             self.num_z_bins + 1)
 
+        slope_buffer_bins = config.getint("slope buffer bins")
+        if slope_buffer_bins is None:
+            self.slope_buffer_bins = defaults["slope buffer bins"]
+        elif slope_buffer_bins < 0:
+            raise ExpectedFluxError(
+                "Invalid argument 'slope buffer bins' required by MeanContinuumInterpExpectedFlux. "
+                "Must be non-negative.")
+        else:
+            self.slope_buffer_bins = slope_buffer_bins
+
     def _initialize_mean_continuum_arrays(self):
         """Initialize mean continuum arrays
         The initialized arrays are:
@@ -217,13 +233,85 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         super().compute_expected_flux(forests)
 
     @staticmethod
-    def _remove_mean_cont_slope(mean_cont):
+    def _remove_mean_cont_slope_1d(mean_cont, buffer_bins=0):
+        """Remove the slope of a 1D mean continuum by dividing by a normalized linear fit.
+
+        Zeros occur at at most one end of the spectrum (never at both).
+        Points with zero values (no coverage) and edge buffer points are excluded
+        when evaluating the slope. Points with value 0 remain 0 in the returned array.
+
+        Arguments
+        ---------
+        mean_cont: np.ndarray
+        1D mean continuum array along Forest.log_lambda_rest_frame_grid
+
+        buffer_bins: int - default=0
+        Number of bins to trim on each side of the contiguous non-zero region
+        when fitting the slope.
+
+        Returns
+        -------
+        np.ndarray
+        1D mean continuum array with slope removed and zero values preserved
+        """
+        if mean_cont.size < 2:
+            return mean_cont.copy()
+
+        if mean_cont[0] == 0:
+            if mean_cont[-1] == 0:
+                return mean_cont.copy()
+            start = int(np.argmax(mean_cont != 0))
+            end = mean_cont.size
+        elif mean_cont[-1] == 0:
+            start = 0
+            end = int(np.argmax(mean_cont == 0))
+        else:
+            start = 0
+            end = mean_cont.size
+
+        if end - start < 2:
+            return mean_cont.copy()
+
+        fit_start = start + buffer_bins
+        fit_end = end - buffer_bins
+
+        if fit_end - fit_start < 2:
+            fit_start = start
+            fit_end = end
+
+        grid_fit = Forest.log_lambda_rest_frame_grid[fit_start:fit_end]
+        cont_fit = mean_cont[fit_start:fit_end]
+
+        mean_x = np.mean(grid_fit)
+        mean_y = np.mean(cont_fit)
+        if mean_y == 0:
+            return mean_cont.copy()
+
+        dx = grid_fit - mean_x
+        denom = np.dot(dx, dx)
+        if denom == 0:
+            return mean_cont.copy()
+
+        slope = np.dot(dx, cont_fit) / denom
+
+        grid_active = Forest.log_lambda_rest_frame_grid[start:end]
+        norm_line = 1.0 + (slope / mean_y) * (grid_active - mean_x)
+
+        result = mean_cont.copy()
+        result[start:end] /= norm_line
+        return result
+
+    @classmethod
+    def _remove_mean_cont_slope(cls, mean_cont, buffer_bins=0):
         """Remove the slope of the mean continuum by dividing by a normalized linear fit.
 
         Arguments
         ---------
         mean_cont: np.ndarray
         Mean continuum array along Forest.log_lambda_rest_frame_grid (1D or 2D)
+
+        buffer_bins: int - default=0
+        Number of bins to trim on each side of the non-zero region when fitting the slope.
 
         Returns
         -------
@@ -235,18 +323,12 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         ExpectedFluxError if mean_cont does not have 1 or 2 dimensions
         """
         if mean_cont.ndim == 1:
-            poly = np.polyfit(Forest.log_lambda_rest_frame_grid, mean_cont, 1)
-            line = np.polyval(poly, Forest.log_lambda_rest_frame_grid)
-            norm_line = line / np.mean(line)
-            return mean_cont / norm_line
+            return cls._remove_mean_cont_slope_1d(mean_cont, buffer_bins)
 
         if mean_cont.ndim == 2:
             result = np.empty_like(mean_cont)
             for i in range(mean_cont.shape[0]):
-                poly = np.polyfit(Forest.log_lambda_rest_frame_grid, mean_cont[i], 1)
-                line = np.polyval(poly, Forest.log_lambda_rest_frame_grid)
-                norm_line = line / np.mean(line)
-                result[i] = mean_cont[i] / norm_line
+                result[i] = cls._remove_mean_cont_slope_1d(mean_cont[i], buffer_bins)
             return result
 
         raise ExpectedFluxError(
@@ -338,7 +420,8 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 "wavelengths.") from error
 
         # remove the slope of the mean continuum
-        self.mean_cont = self._remove_mean_cont_slope(self.mean_cont)
+        self.mean_cont = self._remove_mean_cont_slope(
+            self.mean_cont, buffer_bins=self.slope_buffer_bins)
 
         # update the interpolator with the mean continuum
         self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
@@ -519,7 +602,8 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             (Forest.log_lambda_rest_frame_grid.size, self.z_bin_edges.size)).T
 
         # remove the slope of the mean continuum for each redshift bin
-        self.mean_cont = self._remove_mean_cont_slope(self.mean_cont)
+        self.mean_cont = self._remove_mean_cont_slope(
+            self.mean_cont, buffer_bins=self.slope_buffer_bins)
 
         # update the interpolator with the mean continuum
         self.get_mean_cont = RegularGridInterpolator(
