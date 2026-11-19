@@ -52,8 +52,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     _initialize_get_eta
     _initialize_get_fudge
     _initialize_get_var_lss
-    _initialize_mean_continuum_arrays
-    _initialize_variance_wavelength_array
     _initialize_variance_functions
     __parse_config
     compute_delta_stack
