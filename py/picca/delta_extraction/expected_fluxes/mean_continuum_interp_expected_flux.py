@@ -295,7 +295,7 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         slope = np.dot(dx, cont_fit) / denom
 
         grid_active = Forest.log_lambda_rest_frame_grid[start:end]
-        norm_line = 1.0 + (slope / mean_y) * (grid_active - mean_x)
+        norm_line = mean_y + slope * (grid_active - mean_x)
 
         result = mean_cont.copy()
         result[start:end] /= norm_line
