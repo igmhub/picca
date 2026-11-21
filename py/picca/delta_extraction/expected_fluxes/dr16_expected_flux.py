@@ -485,6 +485,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
         weights[w] = 1.0/(
             eta * var_pipe + self.var_lss_mod*var_lss + fudge / var_pipe)
 
+        # Store weight components on the forest
+        forest.var_pipe = np.zeros_like(forest.log_lambda)
+        forest.var_pipe[w] = var_pipe
+        forest.var_lss = np.zeros_like(forest.log_lambda)
+        forest.var_lss[w] = var_lss
+        forest.eta = np.zeros_like(forest.log_lambda)
+        forest.eta[w] = eta
+        forest.fudge = np.zeros_like(forest.log_lambda)
+        forest.fudge[w] = fudge
+
         return weights
 
     # TODO: We should check if we can directly compute the mean continuum

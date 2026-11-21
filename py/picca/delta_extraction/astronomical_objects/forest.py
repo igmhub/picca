@@ -374,6 +374,20 @@ class Forest(AstronomicalObject):
         if kwargs.get("weights") is not None:
             del kwargs["weights"]
 
+        # weight components (populated during delta extraction)
+        self.var_lss = kwargs.get("var_lss")
+        if kwargs.get("var_lss") is not None:
+            del kwargs["var_lss"]
+        self.eta = kwargs.get("eta")
+        if kwargs.get("eta") is not None:
+            del kwargs["eta"]
+        self.fudge = kwargs.get("fudge")
+        if kwargs.get("fudge") is not None:
+            del kwargs["fudge"]
+        self.var_pipe = kwargs.get("var_pipe")
+        if kwargs.get("var_pipe") is not None:
+            del kwargs["var_pipe"]
+
         # call parent constructor
         super().__init__(**kwargs)
 
@@ -545,6 +559,30 @@ class Forest(AstronomicalObject):
         comments += ["Inverse variance. Check input "
                      "spectra for units"]
         units += [f"({Forest.flux_units})^-1"]
+
+        if self.var_lss is not None:
+            cols += [self.var_lss]
+            names += ["VAR_LSS"]
+            comments += ["Variance of the LSS"]
+            units += [""]
+
+        if self.eta is not None:
+            cols += [self.eta]
+            names += ["ETA"]
+            comments += ["Noise correction factor eta"]
+            units += [""]
+
+        if self.fudge is not None:
+            cols += [self.fudge]
+            names += ["FUDGE"]
+            comments += ["Fudge contribution to variance"]
+            units += [""]
+
+        if self.var_pipe is not None:
+            cols += [self.var_pipe]
+            names += ["VAR_PIPE"]
+            comments += ["Pipeline variance"]
+            units += [""]
 
         return cols, names, units, comments
 
