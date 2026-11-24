@@ -1853,8 +1853,8 @@ class ExpectedFluxTest(AbstractTest):
         fit_mask[5:-5] = True
         p_res = np.polyfit(grid[fit_mask], result_1d[fit_mask], 1)
         self.assertAlmostEqual(p_res[0], 0.0, places=10)
-        # check that mean over fitted region is preserved
-        self.assertAlmostEqual(np.mean(result_1d[fit_mask]), np.mean(mean_cont_1d[fit_mask]), places=10)
+        # check that mean over fitted region is normalized to 1.0
+        self.assertAlmostEqual(np.mean(result_1d[fit_mask]), 1.0, places=10)
 
         # 1D test with partial coverage: zeros only at blue end (beginning)
         mean_cont_blue_zeros = mean_cont_1d.copy()
