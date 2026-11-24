@@ -13,17 +13,27 @@ from picca.delta_extraction.utils import (update_accepted_options,
                                           update_default_options)
 
 accepted_options = update_accepted_options(
-    accepted_options, ["infer z bins", "interpolation type", "limit z", "num z bins", "slope buffer bins"])
+    accepted_options, ["infer z bins", "interpolation type", "limit z", "num z bins",
+                       "remove mean cont slope",
+                       "remove mean cont slope last iteration",
+                       "slope buffer bins"])
 
 defaults = update_default_options(defaults, {
     "infer z bins": False,
     "interpolation type": "1D",
     "limit z": (1.8, 5.),
     "num z bins": 3,
+    "remove mean cont slope": True,
+    "remove mean cont slope last iteration": True,
     "slope buffer bins": 5,
 })
 
 ACCEPTED_INTERPOLATION_TYPES = ["1D", "2D"]
+
+# When removing the slope of the mean continuum, the fitted line must stay
+# above this fraction of its mean over the covered region; otherwise the slope
+# is not removed (see _remove_mean_cont_slope_1d)
+MIN_NORM_LINE_FRACTION = 0.1
 
 
 class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
@@ -57,6 +67,16 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
     num_z_bins: int
     Number of redshift bins to use for the analysis.
 
+    remove_mean_cont_slope: bool
+    If True, remove the slope (and normalisation) of the mean continuum
+    after each computation of the mean continuum.
+
+    remove_mean_cont_slope_last_iteration: bool
+    If False (and remove_mean_cont_slope is True), do not remove the slope
+    of the mean continuum the last time it is computed (in iteration
+    num_iterations - 1; the last iteration only refits the quasar continua),
+    so that the final continuum fits use the mean continuum as solved.
+
     slope_buffer_bins: int
     Number of bins at the edges of the non-zero continuum region to ignore
     when evaluating the slope.
@@ -83,9 +103,16 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         self.interpolation_type = None
         self.limit_z = None
         self.num_z_bins = None
+        self.remove_mean_cont_slope = None
+        self.remove_mean_cont_slope_last_iteration = None
         self.slope_buffer_bins = None
         self.z_bin_edges = None
         self.__parse_config(config)
+
+        # number of times the mean continuum has been computed, and whether
+        # the slope is removed in the current computation
+        self.num_mean_cont_computations = 0
+        self.remove_slope_this_computation = self.remove_mean_cont_slope
 
         self.mean_cont = None
         super().__init__(config)
@@ -162,6 +189,21 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             else:
                 self.z_bin_edges = np.linspace(self.limit_z[0], self.limit_z[1],
                                             self.num_z_bins + 1)
+
+        remove_mean_cont_slope = config.getboolean("remove mean cont slope")
+        if remove_mean_cont_slope is None:
+            self.remove_mean_cont_slope = defaults["remove mean cont slope"]
+        else:
+            self.remove_mean_cont_slope = remove_mean_cont_slope
+
+        remove_mean_cont_slope_last_iteration = config.getboolean(
+            "remove mean cont slope last iteration")
+        if remove_mean_cont_slope_last_iteration is None:
+            self.remove_mean_cont_slope_last_iteration = defaults[
+                "remove mean cont slope last iteration"]
+        else:
+            self.remove_mean_cont_slope_last_iteration = (
+                remove_mean_cont_slope_last_iteration)
 
         slope_buffer_bins = config.getint("slope buffer bins")
         if slope_buffer_bins is None:
@@ -297,6 +339,19 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         grid_active = Forest.log_lambda_rest_frame_grid[start:end]
         norm_line = mean_y + slope * (grid_active - mean_x)
 
+        # Guard against badly constrained mean continua (e.g. a redshift bin
+        # edge with almost no quasars): if the fitted line is not positive, or
+        # gets close to zero, over the covered region, dividing by it would
+        # amplify the noise and can make the iterations diverge.
+        # Leave the mean continuum unchanged in that case.
+        if mean_y <= 0 or np.min(norm_line) <= MIN_NORM_LINE_FRACTION * mean_y:
+            logging.getLogger(__name__).warning(
+                "Mean continuum slope not removed: the fitted line is not "
+                "positive or too close to zero (mean %g, min %g, max %g). "
+                "This mean continuum is probably badly constrained.",
+                mean_y, np.min(norm_line), np.max(norm_line))
+            return mean_cont.copy()
+
         result = mean_cont.copy()
         result[start:end] /= norm_line
         return result
@@ -345,6 +400,20 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
         """
+        # the mean continuum is computed in all iterations but the last one
+        # (see Dr16ExpectedFlux.compute_expected_flux), so the last
+        # computation is number num_iterations - 1
+        self.num_mean_cont_computations += 1
+        is_last_computation = (self.num_mean_cont_computations ==
+                               self.num_iterations - 1)
+        self.remove_slope_this_computation = self.remove_mean_cont_slope and (
+            self.remove_mean_cont_slope_last_iteration or
+            not is_last_computation)
+        if self.remove_mean_cont_slope and not self.remove_slope_this_computation:
+            self.logger.progress(
+                "Last computation of the mean continuum: its slope is not "
+                "removed ('remove mean cont slope last iteration' = False)")
+
         if self.interpolation_type == "1D":
             self.compute_mean_cont_1d(forests)
         elif self.interpolation_type == "2D":
@@ -420,8 +489,9 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 "wavelengths.") from error
 
         # remove the slope of the mean continuum
-        self.mean_cont = self._remove_mean_cont_slope(
-            self.mean_cont, buffer_bins=self.slope_buffer_bins)
+        if self.remove_slope_this_computation:
+            self.mean_cont = self._remove_mean_cont_slope(
+                self.mean_cont, buffer_bins=self.slope_buffer_bins)
 
         # update the interpolator with the mean continuum
         self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
@@ -602,8 +672,9 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             (Forest.log_lambda_rest_frame_grid.size, self.z_bin_edges.size)).T
 
         # remove the slope of the mean continuum for each redshift bin
-        self.mean_cont = self._remove_mean_cont_slope(
-            self.mean_cont, buffer_bins=self.slope_buffer_bins)
+        if self.remove_slope_this_computation:
+            self.mean_cont = self._remove_mean_cont_slope(
+                self.mean_cont, buffer_bins=self.slope_buffer_bins)
 
         # update the interpolator with the mean continuum
         self.get_mean_cont = RegularGridInterpolator(
