@@ -283,6 +283,14 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
+        "--gpu",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Run the pair loop on a GPU (numba.cuda); CPU workers only find neighbours",
+    )
+
+    parser.add_argument(
         "--nspec",
         type=int,
         default=None,
@@ -336,6 +344,12 @@ def main(cmdargs=None):
     )
 
     args = parser.parse_args(cmdargs)
+
+    if args.gpu:
+        # fail at once if there is no GPU, before the (slow) reading of the deltas
+        from picca import cf_gpu
+
+        cf_gpu.require_cuda()
 
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -455,9 +469,52 @@ def main(cmdargs=None):
     cf.lock = Lock()
     cpu_data = {healpix: [healpix] for healpix in data}
     context = multiprocessing.get_context("fork")
-    pool = context.Pool(processes=args.nproc)
-    correlation_function_data = pool.map(corr_func, sorted(cpu_data.values()))
-    pool.close()
+    if args.gpu:
+        # flatten before forking the pool (workers need delta.gpu_idx) and
+        # create the pool before initialising CUDA (fork after CUDA init is unsafe)
+        from picca import cf_gpu
+
+        if cf.ang_correlation:
+            raise NotImplementedError("--gpu does not support angular correlations")
+        hps = sorted(cpu_data.keys())
+        flat1 = cf_gpu.FlatForests([d for h in hps for d in data[h]])
+        flat2 = flat1 if cf.data2 is None else cf_gpu.FlatForests(
+            [d for h in sorted(cf.data2) for d in cf.data2[h]]
+        )
+        if cf.remove_same_half_plate_close_pairs:
+            pairs_function = cf_gpu.pairs_for_healpixs
+        else:
+            # vectorised neighbour search; set before forking so that the workers see it
+            cf_gpu.set_flat_forests(flat1, flat2)
+            pairs_function = cf_gpu.pairs_for_healpixs_fast
+        pool = context.Pool(processes=args.nproc)
+        accumulator = cf_gpu.XiAccumulator(flat1, flat2, hps)
+        t_wait = t_add = 0.0
+        t_loop = time.time()
+        it = pool.imap_unordered(pairs_function, [[h] for h in hps])
+        while True:
+            ta = time.time()
+            try:
+                chunk = next(it)
+            except StopIteration:
+                break
+            tb = time.time()
+            for item in chunk:
+                accumulator.add(*item)
+            t_wait += tb - ta
+            t_add += time.time() - tb
+        pool.close()
+        tc = time.time()
+        correlation_function_data = accumulator.result(hps)
+        userprint(
+            f"picca_cf.py - GPU timing: waiting for CPU neighbours {t_wait:.1f}s, "
+            f"copy+launch {t_add:.1f}s, final GPU sync {time.time()-tc:.1f}s, "
+            f"loop {tc-t_loop:.1f}s"
+        )
+    else:
+        pool = context.Pool(processes=args.nproc)
+        correlation_function_data = pool.map(corr_func, sorted(cpu_data.values()))
+        pool.close()
 
     t2 = time.time()
     userprint(

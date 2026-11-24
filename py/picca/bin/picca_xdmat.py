@@ -10,6 +10,7 @@ import argparse
 import multiprocessing
 import sys
 import time
+from functools import partial
 from multiprocessing import Lock, Value, cpu_count
 
 import fitsio
@@ -51,6 +52,14 @@ def main(cmdargs=None):
 
     parser.add_argument(
         "--out", type=str, default=None, required=True, help="Output file name"
+    )
+
+    parser.add_argument(
+        "--gpu",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Run the pair loop on the GPUs (numba.cuda); CPU workers only find neighbours",
     )
 
     parser.add_argument(
@@ -286,6 +295,19 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
+        "--seed-per-healpix",
+        action="store_true",
+        default=False,
+        required=False,
+        help=(
+            "Seed the random pair rejection with the healpix number for each healpix, so "
+            "that the result does not depend on --nproc (the default seeds once per chunk "
+            "of healpixes, so it does; results then differ from the default by the "
+            "rejection noise)"
+        ),
+    )
+
+    parser.add_argument(
         "--rej",
         type=float,
         default=1.0,
@@ -338,6 +360,12 @@ def main(cmdargs=None):
     )
 
     args = parser.parse_args(cmdargs)
+
+    if args.gpu:
+        # fail at once if there is no GPU, before the (slow) reading of the deltas
+        from picca import cf_gpu
+
+        cf_gpu.require_cuda()
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -373,6 +401,7 @@ def main(cmdargs=None):
     xcf.alpha_obj = args.z_evol_obj
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.reject = args.rej
+    xcf.seed_per_healpix = args.seed_per_healpix
 
     if (args.zerr_cut_deg is None) != (args.zerr_cut_kms is None):
         raise ValueError(
@@ -459,7 +488,40 @@ def main(cmdargs=None):
         cpu_data[num_processor].append(healpix)
 
     # compute the distortion matrix
-    if args.nproc > 1:
+    if args.gpu:
+        # flatten before forking the pool (workers need gpu_idx) and create the pool
+        # before initialising CUDA (fork after CUDA init is unsafe)
+        from picca import dmat_gpu
+
+        flat1 = dmat_gpu.FlatForestsDmat([d for h in sorted(data) for d in data[h]])
+        flat2 = dmat_gpu.FlatObjects([o for h in sorted(objs) for o in objs[h]])
+        context = multiprocessing.get_context("fork")
+        pool = context.Pool(processes=max(args.nproc, 1))
+        accumulator = dmat_gpu.DmatAccumulator(flat1, flat2, mod=xcf)
+        t_wait = t_add = 0.0
+        t_loop = time.time()
+        it = pool.imap_unordered(
+            partial(dmat_gpu.pairs_for_chunk, kind="xcf"), sorted(cpu_data.values())
+        )
+        while True:
+            ta = time.time()
+            try:
+                chunk = next(it)
+            except StopIteration:
+                break
+            tb = time.time()
+            accumulator.add(*chunk)
+            t_wait += tb - ta
+            t_add += time.time() - tb
+        pool.close()
+        tc = time.time()
+        dmat_data = [accumulator.result()]
+        userprint(
+            f"picca_xdmat.py - GPU timing: waiting for CPU neighbours {t_wait:.1f}s, "
+            f"copy+launch {t_add:.1f}s, final GPU sync {time.time()-tc:.1f}s, "
+            f"loop {tc-t_loop:.1f}s"
+        )
+    elif args.nproc > 1:
         context = multiprocessing.get_context("fork")
         pool = context.Pool(processes=args.nproc)
         dmat_data = pool.map(calc_dmat, sorted(cpu_data.values()))

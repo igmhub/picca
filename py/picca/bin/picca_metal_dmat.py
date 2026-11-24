@@ -257,6 +257,19 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
+        "--seed-per-healpix",
+        action="store_true",
+        default=False,
+        required=False,
+        help=(
+            "Seed the random pair rejection with the healpix number for each healpix, so "
+            "that the result does not depend on --nproc (the default seeds once per chunk "
+            "of healpixes, so it does; results then differ from the default by the "
+            "rejection noise)"
+        ),
+    )
+
+    parser.add_argument(
         "--rej",
         type=float,
         default=1.0,
@@ -303,6 +316,14 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
+        "--gpu",
+        action="store_true",
+        default=False,
+        required=False,
+        help="Run the pair loop on the GPUs (numba.cuda); CPU workers only find neighbours",
+    )
+
+    parser.add_argument(
         "--fast-metals",
         action="store_true",
         required=False,
@@ -325,6 +346,12 @@ def main(cmdargs=None):
 
     args = parser.parse_args(cmdargs)
 
+    if args.gpu:
+        # fail at once if there is no GPU, before the (slow) reading of the deltas
+        from picca import cf_gpu
+
+        cf_gpu.require_cuda()
+
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -342,6 +369,7 @@ def main(cmdargs=None):
     cf.z_ref = args.z_ref
     cf.alpha = args.z_evol
     cf.reject = args.rej
+    cf.seed_per_healpix = args.seed_per_healpix
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
@@ -456,6 +484,29 @@ def main(cmdargs=None):
     if cf.x_correlation:
         userprint("abs_igm2 = {}".format(abs_igm_2))
 
+    gpu_acc = None
+    if args.gpu:
+        # The rejected pair list does not depend on the absorbers, so find the pairs once
+        # (CPU workers, same random stream as the CPU code) and reuse them for every combination.
+        # Flatten before forking the pool, and create the pool before initialising CUDA.
+        from picca import dmat_gpu
+
+        flat1 = dmat_gpu.FlatForestsMetal([d for h in sorted(data) for d in data[h]])
+        flat2 = flat1 if cf.data2 is None else dmat_gpu.FlatForestsMetal(
+            [d for h in sorted(cf.data2) for d in cf.data2[h]]
+        )
+        context = multiprocessing.get_context("fork")
+        pool = context.Pool(processes=max(args.nproc, 1))
+        gpu_acc = dmat_gpu.MetalAccumulator(flat1, flat2)
+        tg = time.time()
+        for chunk in pool.imap_unordered(
+            partial(dmat_gpu.pairs_for_chunk, require_order=False), sorted(cpu_data.values())
+        ):
+            gpu_acc.add(*chunk)
+        pool.close()
+        gpu_acc.finish_adding()
+        userprint(f"picca_metal_dmat.py - GPU: found the pairs in {time.time()-tg:.1f}s")
+
     # loop over metals
     for index1, abs_igm1 in enumerate(abs_igm):
         index0 = index1
@@ -476,7 +527,11 @@ def main(cmdargs=None):
             userprint("")
 
             # compute the distortion matrix
-            if args.nproc > 1:
+            if args.gpu:
+                tc = time.time()
+                dmat_data = [gpu_acc.combo(abs_igm1, abs_igm2)]
+                userprint(f"picca_metal_dmat.py - GPU {abs_igm1}_{abs_igm2}: {time.time()-tc:.1f}s")
+            elif args.nproc > 1:
                 context = multiprocessing.get_context("fork")
                 pool = context.Pool(processes=args.nproc)
                 dmat_data = pool.map(calc_metal_dmat_wrapper, sorted(cpu_data.values()))
