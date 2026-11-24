@@ -322,6 +322,11 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
 
         grid_fit = Forest.log_lambda_rest_frame_grid[fit_start:fit_end]
         cont_fit = mean_cont[fit_start:fit_end]
+        covered = cont_fit != 0
+        if np.count_nonzero(covered) < 2:
+            return mean_cont.copy()
+        grid_fit = grid_fit[covered]
+        cont_fit = cont_fit[covered]
 
         mean_x = np.mean(grid_fit)
         mean_y = np.mean(cont_fit)
