@@ -144,13 +144,11 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
 
         if self.interpolation_type == "2D":
             # this one constraints the redshift parameters, so we need to check it first
-            infer_z_bins = config.getboolean("infer z bins")
-            if infer_z_bins is None:
-                self.logger.info(
-                    "In MeanContinuumInterpExpectedFlux, Missing argument 'infer z bins'. "
-                    "Redshift bins will be linearly spaced between the limits of 'limit z'.")
-                infer_z_bins = False
-            self.infer_z_bins = infer_z_bins
+            self.infer_z_bins = config.getboolean("infer z bins")
+            if self.infer_z_bins is None:
+                raise ExpectedFluxError(
+                    "Missing argument 'infer z bins' required by MeanContinuumInterpExpectedFlux"
+                )
 
             if self.infer_z_bins:
                 self.logger.info(
@@ -177,12 +175,15 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                     z_max = float(limit_z[1])
                 self.limit_z = (z_min, z_max)
 
-            num_z_bins = config.getint("num z bins")
-            if num_z_bins is None or num_z_bins < 1:
+            self.num_z_bins = config.getint("num z bins")
+            if self.num_z_bins is None:
                 raise ExpectedFluxError(
                     "Missing argument 'num z bins' required by MeanContinuumInterpExpectedFlux"
                 )
-            self.num_z_bins = num_z_bins
+            if self.num_z_bins < 1:
+                raise ExpectedFluxError(
+                    "Invalid argument 'num z bins' required by MeanContinuumInterpExpectedFlux. "
+                    "It must be a positive integer.")
 
             if self.infer_z_bins:
                 self.z_bin_edges = None # this is redundant, but we set it to None to avoid confusion
@@ -190,30 +191,28 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
                 self.z_bin_edges = np.linspace(self.limit_z[0], self.limit_z[1],
                                             self.num_z_bins + 1)
 
-        remove_mean_cont_slope = config.getboolean("remove mean cont slope")
-        if remove_mean_cont_slope is None:
-            self.remove_mean_cont_slope = defaults["remove mean cont slope"]
-        else:
-            self.remove_mean_cont_slope = remove_mean_cont_slope
+        self.remove_mean_cont_slope = config.getboolean("remove mean cont slope")
+        if self.remove_mean_cont_slope is None:
+            raise ExpectedFluxError(
+                "Missing argument 'remove mean cont slope' required by MeanContinuumInterpExpectedFlux"
+            )
 
-        remove_mean_cont_slope_last_iteration = config.getboolean(
+        self.remove_mean_cont_slope_last_iteration = config.getboolean(
             "remove mean cont slope last iteration")
-        if remove_mean_cont_slope_last_iteration is None:
-            self.remove_mean_cont_slope_last_iteration = defaults[
-                "remove mean cont slope last iteration"]
-        else:
-            self.remove_mean_cont_slope_last_iteration = (
-                remove_mean_cont_slope_last_iteration)
+        if self.remove_mean_cont_slope_last_iteration is None:
+            raise ExpectedFluxError(
+                "Missing argument 'remove mean cont slope last iteration' required by MeanContinuumInterpExpectedFlux"
+            )
 
-        slope_buffer_bins = config.getint("slope buffer bins")
-        if slope_buffer_bins is None:
-            self.slope_buffer_bins = defaults["slope buffer bins"]
-        elif slope_buffer_bins < 0:
+        self.slope_buffer_bins = config.getint("slope buffer bins")
+        if self.slope_buffer_bins is None:
+            raise ExpectedFluxError(
+                "Missing argument 'slope buffer bins' required by MeanContinuumInterpExpectedFlux"
+            )
+        if self.slope_buffer_bins < 0:
             raise ExpectedFluxError(
                 "Invalid argument 'slope buffer bins' required by MeanContinuumInterpExpectedFlux. "
-                "Must be non-negative.")
-        else:
-            self.slope_buffer_bins = slope_buffer_bins
+                "It must be a non-negative integer.")
 
     def _initialize_mean_continuum_arrays(self):
         """Initialize mean continuum arrays
