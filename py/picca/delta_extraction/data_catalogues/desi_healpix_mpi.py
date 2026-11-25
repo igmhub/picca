@@ -98,6 +98,37 @@ class MpiDataMixin:
             self.rejection_log.file = os.path.join(
                 directory, f"{name}_rank{self.mpi_rank}{extension}")
 
+    def read_quasar_catalogue(self, config):
+        """Read the quasar catalogue on rank 0 and broadcast it.
+
+        Every rank needs the full catalogue (to build the list of files), but
+        letting all the ranks read the same, potentially large, file at the
+        same time is slow on a parallel filesystem. If rank 0 fails, the
+        error is broadcast and raised on every rank, so that the other ranks
+        do not wait forever.
+
+        Arguments
+        ---------
+        config: configparser.SectionProxy
+        Parsed options to initialize class
+
+        Return
+        ------
+        catalogue: astropy.table.Table
+        The quasar catalogue
+        """
+        catalogue = None
+        error = None
+        if self.mpi_rank == 0:
+            try:
+                catalogue = super().read_quasar_catalogue(config)
+            except Exception as rank0_error:  # pylint: disable=broad-exception-caught
+                error = rank0_error
+        catalogue, error = self.comm.bcast((catalogue, error), root=0)
+        if error is not None:
+            raise error
+        return catalogue
+
     def owns_healpix(self, healpix):
         """Return True if this rank reads the files of this reading healpix"""
         return int(healpix) % self.mpi_size == self.mpi_rank
