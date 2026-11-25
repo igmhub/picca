@@ -208,13 +208,24 @@ class BalMask(Mask):
             hdul.close()
 
         # compute info for each line of sight
+        # store only the catalogue rows of each line of sight (not the
+        # full catalogue arrays), so that the matching done in
+        # add_bal_rest_frame for each forest does not scan the whole
+        # catalogue (this was O(catalogue size) per forest)
+        sort_index = np.argsort(self.cat[los_id_name], kind="stable")
+        sorted_los_ids = self.cat[los_id_name][sort_index]
+        sorted_min_velocities = self.cat[self.velocity_list[0]][sort_index]
+        sorted_max_velocities = self.cat[self.velocity_list[1]][sort_index]
+        unique_los_ids, first_index, counts = np.unique(
+            sorted_los_ids, return_index=True, return_counts=True)
         self.los_ids = {
             los_id: (
                 los_id,
-                self.cat[los_id_name],
-                self.cat[self.velocity_list[0]],
-                self.cat[self.velocity_list[1]])
-            for los_id in np.unique(self.cat[los_id_name])
+                sorted_los_ids[start:start + count],
+                sorted_min_velocities[start:start + count],
+                sorted_max_velocities[start:start + count])
+            for los_id, start, count in zip(
+                unique_los_ids, first_index, counts)
         }
 
         num_bals = len(self.los_ids)
