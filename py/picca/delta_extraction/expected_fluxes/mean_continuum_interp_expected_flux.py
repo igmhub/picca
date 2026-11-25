@@ -277,8 +277,8 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
     def _remove_mean_cont_slope_1d(mean_cont, buffer_bins=0):
         """Remove the slope of a 1D mean continuum by dividing by a normalized linear fit.
 
-        Zeros occur at at most one end of the spectrum (never at both).
-        Points with zero values (no coverage) and edge buffer points are excluded
+        Zeros (no coverage) can occur at either or both ends of the spectrum and
+        in internal gaps. Points with zero values and edge buffer points are excluded
         when evaluating the slope. Points with value 0 remain 0 in the returned array.
 
         Arguments
@@ -287,8 +287,8 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         1D mean continuum array along Forest.log_lambda_rest_frame_grid
 
         buffer_bins: int - default=0
-        Number of bins to trim on each side of the contiguous non-zero region
-        when fitting the slope.
+        Number of bins to trim on each side of the region between the first and
+        last non-zero bins when fitting the slope.
 
         Returns
         -------
@@ -298,17 +298,15 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         if mean_cont.size < 2:
             return mean_cont.copy()
 
-        if mean_cont[0] == 0:
-            if mean_cont[-1] == 0:
-                return mean_cont.copy()
-            start = int(np.argmax(mean_cont != 0))
-            end = mean_cont.size
-        elif mean_cont[-1] == 0:
-            start = 0
-            end = int(np.argmax(mean_cont == 0))
-        else:
-            start = 0
-            end = mean_cont.size
+        # active region: from the first to the last covered (non-zero) bin.
+        # Uncovered bins can be at either or both ends (observed-frame limits)
+        # and inside the region (rest-frame masks); those inside are excluded
+        # from the fit below and stay 0 after the division.
+        nonzero = np.flatnonzero(mean_cont)
+        if nonzero.size == 0:
+            return mean_cont.copy()
+        start = int(nonzero[0])
+        end = int(nonzero[-1]) + 1
 
         if end - start < 2:
             return mean_cont.copy()

@@ -1888,6 +1888,19 @@ class ExpectedFluxTest(AbstractTest):
         p_res_red = np.polyfit(grid[effective_fit_red], result_red_zeros[effective_fit_red], 1)
         self.assertAlmostEqual(p_res_red[0], 0.0, places=10)
 
+        # 1D test with zeros at both ends and an internal gap
+        mean_cont_gaps = mean_cont_1d.copy()
+        mean_cont_gaps[:10] = 0.0
+        mean_cont_gaps[-15:] = 0.0
+        mean_cont_gaps[40:50] = 0.0
+        result_gaps = MeanContinuumInterpExpectedFlux._remove_mean_cont_slope(
+            mean_cont_gaps, buffer_bins=5)
+
+        # check that zero values are preserved and all covered bins are normalized
+        covered_gaps = mean_cont_gaps != 0
+        self.assertTrue(np.all(result_gaps[~covered_gaps] == 0.0))
+        np.testing.assert_allclose(result_gaps[covered_gaps], 1.0, rtol=1e-10)
+
         # 2D test: array of shape (num_z, num_lambda) with partial coverage at one end
         num_z = 3
         mean_cont_2d = np.zeros((num_z, grid.size))
