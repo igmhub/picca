@@ -12,7 +12,8 @@ import numpy as np
 
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue, accepted_options
-from picca.delta_extraction.utils import update_accepted_options
+from picca.delta_extraction.utils import (read_fits_table_columns,
+                                          update_accepted_options)
 
 accepted_options = update_accepted_options(
     accepted_options, ["catalogue", "in_nside", "keep surveys"])
@@ -206,7 +207,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
                 col for col in hdul[extension].get_colnames()
                 if col in CATALOGUE_COLUMNS
             ]
-            catalogue = Table(hdul[extension].read(columns=columns))
+            catalogue = Table(read_fits_table_columns(hdul[extension], columns))
 
         if 'TARGET_RA' in catalogue.colnames:
             catalogue.rename_column('TARGET_RA', 'RA')

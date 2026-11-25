@@ -7,6 +7,7 @@ import sys
 
 from numba import njit
 import numpy as np
+from numpy.lib.recfunctions import repack_fields
 from scipy.constants import speed_of_light as speed_light
 
 from picca.delta_extraction.errors import DeltaExtractionError
@@ -359,3 +360,57 @@ def update_default_options(default_options, new_options, force_overwrite=False):
             default_options[key] = value
 
     return default_options
+
+
+def read_fits_table_columns(hdu, columns, block_rows=50000):
+    """Read some columns of a FITS binary table.
+
+    fitsio's column-subset reads (``hdu.read(columns=...)``, ``hdu[col][:]``)
+    read the requested columns row by row, which is very slow for large tables
+    on a parallel filesystem (~80 s for 7 of the 74 columns of a 3.6M-row, 3.5
+    GB quasar catalogue on Perlmutter, against ~7 s to read all its rows). This
+    function instead reads whole rows in contiguous blocks and keeps only the
+    requested columns, so the memory used stays of the order of the requested
+    columns plus one block.
+
+    Arguments
+    ---------
+    hdu: fitsio.hdu.TableHDU
+    The table HDU
+
+    columns: list of str
+    Names of the columns to read
+
+    block_rows: int - default: 50000
+    Number of rows read at once
+
+    Return
+    ------
+    data: numpy.ndarray
+    Structured array with the requested columns (packed, in the order given,
+    named as given)
+
+    Raise
+    -----
+    ValueError if a column is not in the table (as fitsio does)
+    """
+    # match the column names case-insensitively, as fitsio does
+    file_columns = {name.upper(): name for name in hdu.get_colnames()}
+    missing = [col for col in columns if col.upper() not in file_columns]
+    if missing:
+        raise ValueError(f"columns {missing} not found in the table")
+    file_names = [file_columns[col.upper()] for col in columns]
+
+    num_rows = hdu.get_nrows()
+    if num_rows == 0:
+        data = hdu.read(columns=file_names)
+    else:
+        blocks = []
+        for start in range(0, num_rows, block_rows):
+            block = hdu[start:min(start + block_rows, num_rows)]
+            # multi-field selection is a view keeping the full row size:
+            # repack it so that only the requested columns stay in memory
+            blocks.append(repack_fields(block[file_names]))
+        data = np.concatenate(blocks)
+    data.dtype.names = list(columns)
+    return data
