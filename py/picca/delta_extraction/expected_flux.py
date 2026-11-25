@@ -211,6 +211,28 @@ class ExpectedFlux:
         """
         return array
 
+    def gather_concatenate(self, array):
+        """Concatenate a 1D array of per-forest values across parallel workers.
+
+        This is the hook used for sample-wide quantities that are not sums
+        (e.g. percentiles of the quasar redshifts). In the base (serial or
+        multiprocessing) implementation there is a single worker holding all
+        the forests, so the array is returned unchanged. MPI-enabled subclasses
+        override this method so that every rank obtains the concatenation of
+        the arrays of all ranks.
+
+        Arguments
+        ---------
+        array: numpy.ndarray
+        1D array of values computed from the local forests
+
+        Return
+        ------
+        array: numpy.ndarray
+        The concatenation over all workers (identity in the serial case).
+        """
+        return array
+
     def compute_delta_stack(self, forests, stack_from_deltas=False):
         """Compute a stack of the delta field as a function of wavelength
 
