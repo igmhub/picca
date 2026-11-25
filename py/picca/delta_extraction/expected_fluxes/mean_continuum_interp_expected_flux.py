@@ -474,6 +474,10 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             A_matrix[rf_wavelength_bin[w] + 1, rf_wavelength_bin[w] +
                      1] += weights[w] * (1 - coeffs[w]) * (1 - coeffs[w])
 
+        # sum the contributions of all the workers (identity if not using MPI)
+        A_matrix = self.reduce_sum(A_matrix)
+        B_matrix = self.reduce_sum(B_matrix)
+
         # Take care of unstable solutions
         # If the diagonal of A_matrix is zero, we set it to 1.0
         # This is a workaround for the case where there is no coverage
@@ -649,6 +653,10 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
             A_matrix[combined_bin_plus_z[w], combined_bin_plus_both[w]] += aux
             A_matrix[combined_bin_plus_both[w], combined_bin_plus_z[w]] += aux
 
+        # sum the contributions of all the workers (identity if not using MPI)
+        A_matrix = self.reduce_sum(A_matrix)
+        B_matrix = self.reduce_sum(B_matrix)
+
         # check that A is symmetric
         if not np.allclose(A_matrix, A_matrix.T):
             raise ExpectedFluxError(
@@ -698,7 +706,9 @@ class MeanContinuumInterpExpectedFlux(Dr16FixedFudgeExpectedFlux):
         self.logger.info(
             "Inferring redshift bins from the data in forests. "
         )
-        z_dist = [forest.z for forest in forests]
+        # gather the redshifts of all the workers (identity if not using MPI)
+        z_dist = self.gather_concatenate(
+            np.array([forest.z for forest in forests], dtype=float))
         percentiles = np.linspace(0, 100, self.num_z_bins + 1)
         self.z_bin_edges = np.percentile(z_dist, percentiles)
         if np.any(np.diff(self.z_bin_edges) <= 0):
