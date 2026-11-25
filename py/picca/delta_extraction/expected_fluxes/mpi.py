@@ -11,7 +11,8 @@ classes route every such accumulator through the ``ExpectedFlux.reduce_sum`` hoo
 (e.g. the redshift percentiles used by MeanContinuumInterpExpectedFlux to infer
 its redshift bins) go through the ``ExpectedFlux.gather_concatenate`` hook
 instead. Overriding these two hooks with an MPI Allreduce-sum and Allgather
-gives every estimator the correct sample-wide statistics with no further change; the per-bin minimisation then runs on identical inputs on every
+gives every estimator the correct sample-wide statistics with no further
+change; the per-bin minimisation then runs on identical inputs on every
 rank. The per-forest fit parameters (FIT_METADATA) are instead gathered on
 rank 0, which is the only rank that writes the ``delta_attributes`` log.
 
