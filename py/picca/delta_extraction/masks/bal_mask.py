@@ -10,7 +10,8 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.mask import Mask, accepted_options, defaults
 from picca.delta_extraction.utils import (
-    SPEED_LIGHT, update_accepted_options, update_default_options)
+    SPEED_LIGHT, read_fits_table_columns, update_accepted_options,
+    update_default_options)
 
 accepted_options = update_accepted_options(accepted_options, [
     "bal index type", "filename", "los_id name", "keep pixels"
@@ -205,9 +206,9 @@ class BalMask(Mask):
 
         try:
             hdul = fitsio.FITS(filename)
-            # read the required columns in a single pass over the table
-            # (reading them one at a time scans the whole file each time)
-            data = hdul[ext_name].read(columns=columns_list)
+            # read the required columns in contiguous blocks of rows (fitsio
+            # column reads are very slow for large catalogues)
+            data = read_fits_table_columns(hdul[ext_name], columns_list)
             los_ids = data[los_id_name].astype(np.int64)
             min_velocities = data[self.velocity_list[0]].astype(np.float64)
             max_velocities = data[self.velocity_list[1]].astype(np.float64)
