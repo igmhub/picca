@@ -25,6 +25,14 @@ defaults = {
 
 accepted_surveys = ["sv1", "sv2", "sv3", "main", "special", "all"]
 
+# columns of the quasar catalogue that DesiQuasarCatalogue.read_catalogue can
+# use; only those present in the file are read
+CATALOGUE_COLUMNS = [
+    "TARGET_RA", "TARGET_DEC", "RA", "DEC", "Z", "TARGETID", "TILEID",
+    "PETAL_LOC", "NIGHT", "SURVEY", "DESI_TARGET", "SV1_DESI_TARGET",
+    "SV3_DESI_TARGET", "COADD_LASTNIGHT", "LASTNIGHT",
+]
+
 
 class DesiQuasarCatalogue(QuasarCatalogue):
     """Reads the z_truth catalogue from DESI
@@ -131,12 +139,11 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
     def add_healpix(self):
         """Add healpix information to the catalogue"""
-        healpix = [
-            healpy.ang2pix(self.in_nside,
-                           np.pi / 2 - row["DEC"],
-                           row["RA"],
-                           nest=True) for row in self.catalogue
-        ]
+        # vectorised (a loop over the rows is slow for large catalogues)
+        healpix = healpy.ang2pix(self.in_nside,
+                                 np.pi / 2 - np.asarray(self.catalogue["DEC"]),
+                                 np.asarray(self.catalogue["RA"]),
+                                 nest=True)
         self.catalogue["HEALPIX"] = healpix
         self.catalogue.sort("HEALPIX")
 
@@ -179,18 +186,27 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         empty after the filters are applied
         """
         self.logger.progress(f'Reading catalogue from {self.filename}')
-        extnames = [ext.get_extname() for ext in fitsio.FITS(self.filename)]
-        if "QSO_CAT" in extnames:
-            extension = "QSO_CAT"
-        elif "ZCATALOG" in extnames:
-            extension = "ZCATALOG"
-        else:
-            # TODO: this is a patch that should be removed before merging with main
-            # The extension=1 line should be removed and the raise uncommented
-            extension = 1
-            #raise QuasarCatalogueError(
-            #    f"Could not find valid quasar catalog extension in fits file: {self.filename}")
-        catalogue = Table(fitsio.read(self.filename, ext=extension))
+        with fitsio.FITS(self.filename) as hdul:
+            extnames = [ext.get_extname() for ext in hdul]
+            if "QSO_CAT" in extnames:
+                extension = "QSO_CAT"
+            elif "ZCATALOG" in extnames:
+                extension = "ZCATALOG"
+            else:
+                # TODO: this is a patch that should be removed before merging with main
+                # The extension=1 line should be removed and the raise uncommented
+                extension = 1
+                #raise QuasarCatalogueError(
+                #    f"Could not find valid quasar catalog extension in fits file: {self.filename}")
+
+            # read only the columns that can be used below (in file order):
+            # quasar catalogues can have many more columns, and reading them
+            # all is slow and memory hungry
+            columns = [
+                col for col in hdul[extension].get_colnames()
+                if col in CATALOGUE_COLUMNS
+            ]
+            catalogue = Table(hdul[extension].read(columns=columns))
 
         if 'TARGET_RA' in catalogue.colnames:
             catalogue.rename_column('TARGET_RA', 'RA')

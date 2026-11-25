@@ -157,7 +157,7 @@ class DesiData(Data):
         # load z_truth catalogue
         t0 = time.time()
         self.logger.progress("Reading quasar catalogue")
-        self.catalogue = DesiQuasarCatalogue(config).catalogue
+        self.catalogue = self.read_quasar_catalogue(config)
         t1 = time.time()
         self.logger.progress(f"Time spent reading quasar catalogue: {t1-t0}")
 
@@ -207,6 +207,24 @@ class DesiData(Data):
             )
 
 
+
+    def read_quasar_catalogue(self, config):
+        """Read the quasar catalogue.
+
+        MPI readers override this method so that the catalogue is read once
+        and broadcast to every rank (see MpiDataMixin).
+
+        Arguments
+        ---------
+        config: configparser.SectionProxy
+        Parsed options to initialize class
+
+        Return
+        ------
+        catalogue: astropy.table.Table
+        The quasar catalogue
+        """
+        return DesiQuasarCatalogue(config).catalogue
 
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
