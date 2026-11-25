@@ -250,7 +250,7 @@ class MaskTest(AbstractTest):
         """
         in_file = f"{THIS_DIR}/data/baltestcat.fits.gz"
         out_file = f"{THIS_DIR}/results/bal_mask_print.txt"
-        test_file = f"{THIS_DIR}/data/bal_mask_print.txt"
+        test_file = f"{THIS_DIR}/data/bal_mask_bi_print.txt"
         test_file_forest1 = f"{THIS_DIR}/data/bal_mask_bi_forest1_remove.txt"
         test_file_forest2 = f"{THIS_DIR}/data/bal_mask_bi_forest2_remove.txt"
 
@@ -312,7 +312,7 @@ class MaskTest(AbstractTest):
         """
         in_file = f"{THIS_DIR}/data/baltestcat.fits.gz"
         out_file = f"{THIS_DIR}/results/bal_mask_print.txt"
-        test_file = f"{THIS_DIR}/data/bal_mask_print.txt"
+        test_file = f"{THIS_DIR}/data/bal_mask_bi_print.txt"
         test_file_forest1 = f"{THIS_DIR}/data/bal_mask_bi_forest1_set_ivar.txt"
         test_file_forest2 = f"{THIS_DIR}/data/bal_mask_bi_forest2_set_ivar.txt"
 

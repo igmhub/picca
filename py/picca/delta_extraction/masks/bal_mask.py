@@ -114,8 +114,25 @@ class BalMask(Mask):
     velocity_list: list of str
     List of column names for minimum and maximum velocities respectively.
 
-    cat: dict
-    Dictionary with the BAL catalogue
+    bal_los_ids: np.ndarray
+    Sorted unique line-of-sight ids of the quasars with at least one valid
+    (positive) BAL velocity pair
+
+    bal_first_row: np.ndarray
+    For each entry of bal_los_ids, index of its first row in the bal_row_*
+    and bal_*_velocities arrays
+
+    bal_num_rows: np.ndarray
+    For each entry of bal_los_ids, number of catalogue rows
+
+    bal_row_los_ids: np.ndarray
+    Line-of-sight ids of the BAL catalogue rows, sorted
+
+    bal_min_velocities: np.ndarray
+    Minimum velocities of the BAL catalogue rows (same order as bal_row_los_ids)
+
+    bal_max_velocities: np.ndarray
+    Maximum velocities of the BAL catalogue rows (same order as bal_row_los_ids)
 
     logger: logging.Logger
     Logger object
@@ -188,11 +205,13 @@ class BalMask(Mask):
 
         try:
             hdul = fitsio.FITS(filename)
-            self.cat = {
-                col: (hdul[ext_name][col][:].astype(np.int64)
-                    if col == los_id_name else
-                    hdul[ext_name][col][:].astype(np.float64))
-                for col in columns_list}
+            # read the required columns in a single pass over the table
+            # (reading them one at a time scans the whole file each time)
+            data = hdul[ext_name].read(columns=columns_list)
+            los_ids = data[los_id_name].astype(np.int64)
+            min_velocities = data[self.velocity_list[0]].astype(np.float64)
+            max_velocities = data[self.velocity_list[1]].astype(np.float64)
+            del data
         except OSError as error:
             raise MaskError(
                 f"Error loading BalMask. File {filename} does "
@@ -207,28 +226,31 @@ class BalMask(Mask):
         finally:
             hdul.close()
 
-        # compute info for each line of sight
-        # store only the catalogue rows of each line of sight (not the
-        # full catalogue arrays), so that the matching done in
-        # add_bal_rest_frame for each forest does not scan the whole
-        # catalogue (this was O(catalogue size) per forest)
-        sort_index = np.argsort(self.cat[los_id_name], kind="stable")
-        sorted_los_ids = self.cat[los_id_name][sort_index]
-        sorted_min_velocities = self.cat[self.velocity_list[0]][sort_index]
-        sorted_max_velocities = self.cat[self.velocity_list[1]][sort_index]
-        unique_los_ids, first_index, counts = np.unique(
-            sorted_los_ids, return_index=True, return_counts=True)
-        self.los_ids = {
-            los_id: (
-                los_id,
-                sorted_los_ids[start:start + count],
-                sorted_min_velocities[start:start + count],
-                sorted_max_velocities[start:start + count])
-            for los_id, start, count in zip(
-                unique_los_ids, first_index, counts)
-        }
+        # keep only the rows with at least one valid (positive) velocity pair:
+        # the other rows never mask anything (see add_bal_rest_frame), and
+        # they are the vast majority of a quasar catalogue
+        num_rows = los_ids.size
+        if num_rows > 0:
+            has_bal = np.any(
+                (min_velocities.reshape(num_rows, -1) > 0) &
+                (max_velocities.reshape(num_rows, -1) > 0), axis=1)
+        else:
+            has_bal = np.zeros(0, dtype=bool)
 
-        num_bals = len(self.los_ids)
+        # sort the BAL rows by line-of-sight id (stable, to keep the
+        # catalogue order of repeated ids) and store them as compact arrays
+        # searched with np.searchsorted. Compared to a dictionary with one
+        # entry per line of sight, this is fast to build, has a small memory
+        # footprint and is cheap to pickle (masks are broadcast under MPI)
+        sort_index = np.flatnonzero(has_bal)
+        sort_index = sort_index[np.argsort(los_ids[sort_index], kind="stable")]
+        self.bal_row_los_ids = los_ids[sort_index]
+        self.bal_min_velocities = min_velocities[sort_index]
+        self.bal_max_velocities = max_velocities[sort_index]
+        self.bal_los_ids, self.bal_first_row, self.bal_num_rows = np.unique(
+            self.bal_row_los_ids, return_index=True, return_counts=True)
+
+        num_bals = self.bal_los_ids.size
         self.logger.progress(f'In catalog: {num_bals} BAL quasars')
 
     def apply_mask(self, forest):
@@ -244,11 +266,18 @@ class BalMask(Mask):
         -----
         MaskError if Forest.wave_solution is not 'log'
         """
-        if self.los_ids.get(forest.los_id) is None:
+        index = np.searchsorted(self.bal_los_ids, forest.los_id)
+        if (index == self.bal_los_ids.size or
+                self.bal_los_ids[index] != forest.los_id):
             return
 
+        start = self.bal_first_row[index]
+        end = start + self.bal_num_rows[index]
         log_lambda_min, log_lambda_max = add_bal_rest_frame(
-            *self.los_ids.get(forest.los_id))
+            self.bal_los_ids[index],
+            self.bal_row_los_ids[start:end],
+            self.bal_min_velocities[start:end],
+            self.bal_max_velocities[start:end])
 
         if len(log_lambda_min) == 0:
             return
