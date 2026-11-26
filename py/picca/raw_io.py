@@ -50,6 +50,8 @@ def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lam
             Variation of the wavelength between two pixels
         lin_spaced: float - default: False
             Whether to use linear spacing for the wavelength binning
+    Each output pixel is labelled with the mean (log) wavelength of the native
+    pixels it contains, not with the nominal grid point.
     Returns:
         deltas:
             Dictionary containing delta objects for all the skewers (flux not
@@ -103,8 +105,14 @@ def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lam
     if trans.shape[0] != num_obj:
         trans = trans.transpose()
 
-    bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
-    aux_lambda = x_min + bins * delta_x
+    # Output-bin index of each native pixel. The same index is used for the
+    # wavelength cuts below and for the rebinning of the fluxes, so a native pixel
+    # passes the cuts if and only if the bin it is added to does. The rounding
+    # to 3 decimals puts native pixels that lie on a bin edge (up to float32
+    # precision) in the upper bin, as in write_delta_from_transmission.
+    native_bins = np.floor(np.around((lambda_array - x_min) / delta_x + 0.5,
+                                     decimals=3)).astype(int)
+    aux_lambda = x_min + native_bins * delta_x
     if not lin_spaced:
         aux_lambda = 10**aux_lambda
     lambda_obs_frame = aux_lambda * np.ones(num_obj)[:, None]
@@ -134,13 +142,7 @@ def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lam
     for index2 in range(num_obj):
         aux_lambda = lambda_array[valid_pixels[index2, :] > 0]
         aux_trans = trans[index2, :][valid_pixels[index2, :] > 0]
-
-        norm_lambda = (aux_lambda - x_min) / delta_x + 0.5
-        bins = np.floor(np.around(norm_lambda, decimals=3)).astype(int)
-        # bins = np.floor((aux_lambda - x_min) / delta_x + 0.5).astype(int)
-        rebin_log_lambda = (x_min + np.arange(num_bins) * delta_x)
-        if lin_spaced:
-            rebin_log_lambda = np.log10(rebin_log_lambda)
+        bins = native_bins[valid_pixels[index2, :] > 0]
         rebin_flux = np.bincount(bins, weights=aux_trans, minlength=num_bins)
         rebin_ivar = np.bincount(bins, minlength=num_bins).astype(float)
 
@@ -149,7 +151,16 @@ def read_transmission_file(filename, num_bins, objs_thingid, tracer='F_LYA', lam
             continue
         stack_flux += rebin_flux
         stack_weight += rebin_ivar
-        rebin_log_lambda = rebin_log_lambda[w]
+        # Label each output pixel with the mean (log) wavelength of the native pixels
+        # it contains. The nearest-grid assignment puts the native pixels
+        # asymmetrically around the grid point (e.g. at -0.4, -0.2, 0, +0.2 A for
+        # 0.2 A native pixels in 0.8 A bins), so the nominal grid point would be
+        # offset from their mean wavelength. The mean stays inside the bin, so the
+        # bin index recomputed from it downstream is unchanged.
+        rebin_x_sum = np.bincount(bins, weights=aux_lambda.astype(np.float64),
+                                  minlength=num_bins)
+        rebin_x_mean = rebin_x_sum[w] / rebin_ivar[w]
+        rebin_log_lambda = np.log10(rebin_x_mean) if lin_spaced else rebin_x_mean
         rebin_flux = rebin_flux[w] / rebin_ivar[w]
         rebin_ivar = rebin_ivar[w]
         deltas[healpix].append(
