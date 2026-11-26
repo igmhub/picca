@@ -351,6 +351,32 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
+        "--varlss-mod-factor",
+        type=float,
+        default=None,
+        required=False,
+        help=(
+            "Recompute the delta weights as if the delta extraction had used this "
+            "value of var lss mod, using var lss and the var lss mod actually used "
+            "(keyword VARLSSMD) from the delta attributes file. If None, the "
+            "weights are unchanged"
+        ),
+    )
+
+    parser.add_argument(
+        "--in-attributes2",
+        type=str,
+        default=None,
+        required=False,
+        help=(
+            "Filename for the delta attributes file of the second set of deltas. "
+            "If None, use --in-attributes (or the standard location if that is "
+            "None too). Required with --varlss-mod-factor, --in-dir2 and "
+            "--in-attributes"
+        ),
+    )
+
+    parser.add_argument(
         "--gpu",
         action="store_true",
         default=False,
@@ -452,6 +478,7 @@ def main(cmdargs=None):
         z_min_qso=args.z_min_sources,
         z_max_qso=args.z_max_sources,
         delta_attributes=args.in_attributes,
+        varlss_mod_factor=args.varlss_mod_factor,
     )
     del z_max
     cf.data = data
@@ -465,6 +492,9 @@ def main(cmdargs=None):
         if args.lambda_abs2 or args.unfold_cf:
             cf.x_correlation = True
         cf.alpha2 = args.z_evol2
+        in_attributes2 = io.second_delta_attributes(
+            args.in_attributes, args.in_attributes2, args.in_dir2,
+            args.varlss_mod_factor)
         if args.in_dir2 is None:
             args.in_dir2 = args.in_dir
         if args.lambda_abs2:
@@ -484,7 +514,8 @@ def main(cmdargs=None):
             rebin_factor=args.rebin_factor,
             z_min_qso=args.z_min_sources,
             z_max_qso=args.z_max_sources,
-            delta_attributes=args.in_attributes,
+            delta_attributes=in_attributes2,
+            varlss_mod_factor=args.varlss_mod_factor,
         )
         del z_max2
         cf.data2 = data2

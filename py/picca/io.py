@@ -124,6 +124,41 @@ def update_weights_var_lss_mod(deltas, log_lambda_grid, var_lss_grid,
         delta.weights[w] = 1. / (1. / delta.weights[w] + delta_var_lss_mod * var_lss)
 
 
+def second_delta_attributes(in_attributes, in_attributes2, in_dir2,
+                            varlss_mod_factor):
+    """Returns the delta attributes file of the second set of deltas
+
+    Args:
+        in_attributes: str or None
+            Delta attributes file of the first set of deltas
+        in_attributes2: str or None
+            Delta attributes file of the second set of deltas, if given
+        in_dir2: str or None
+            Directory of the second set of deltas, if different from the first
+        varlss_mod_factor: float or None
+            New var lss mod of the weights (see read_deltas)
+
+    Returns:
+        delta_attributes: str or None
+            in_attributes2 if given, otherwise in_attributes (None meaning the
+            standard location relative to the deltas)
+
+    Raises:
+        ValueError: if the weights are recomputed, the second set of deltas
+            is in another directory and only in_attributes is given, since
+            the var lss of the first set would be used for the second one
+    """
+    if in_attributes2 is not None:
+        return in_attributes2
+    if (varlss_mod_factor is not None and in_dir2 is not None
+            and in_attributes is not None):
+        raise ValueError(
+            "With --varlss-mod-factor, --in-dir2 and --in-attributes, the delta "
+            "attributes file of the second set of deltas must be given with "
+            "--in-attributes2 (its var lss differs from the first one)")
+    return in_attributes
+
+
 def find_order(in_dir, delta_attributes):
     """Finds the order of the polynomial used for the continuum fitting from the delta_attributes file
 
