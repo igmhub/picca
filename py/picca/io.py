@@ -19,6 +19,7 @@ import numpy as np
 import healpy
 import fitsio
 from astropy.table import Table
+from scipy.interpolate import interp1d
 import warnings
 from multiprocessing import Pool
 
@@ -30,6 +31,132 @@ from .pk1d.prep_pk1d import spectral_resolution_desi
 
 # Blinding strategy of the current DESI data release
 CURRENT_DESI_BLINDING = "desi_dr3"
+
+
+def default_delta_attributes(in_dir):
+    """Returns the standard location of the delta attributes file
+
+    Args:
+        in_dir: str
+            Directory to spectra files
+
+    Returns:
+        delta_attributes: str
+            First existing file among in_dir/../Log/delta_attributes.fits.gz
+            and in_dir/attributes.fits, or the former if neither exists
+    """
+    expected_fnames = [
+        in_dir + "/../Log/delta_attributes.fits.gz",
+        in_dir + "/attributes.fits"
+    ]
+    return next(
+        (x for x in expected_fnames if os.path.exists(x)),
+        expected_fnames[0]
+    )
+
+
+def read_var_lss(delta_attributes):
+    """Reads the var lss function used in the delta weights
+
+    The delta extraction computes the weights as
+        1/w = eta * var_pipe + var_lss_mod * var_lss + fudge / var_pipe
+    and stores var_lss and var_lss_mod (keyword VARLSSMD) in the VAR_FUNC
+    extension of the delta attributes file.
+
+    Args:
+        delta_attributes: str
+            Filename of the delta attributes file
+
+    Returns:
+        log_lambda: array of float
+            log10 of the observed wavelength of the var lss grid
+        var_lss: array of float
+            Values of var lss on the grid
+        var_lss_mod: float
+            var lss mod used to compute the delta weights
+
+    Raises:
+        KeyError: if the VAR_FUNC header has no VARLSSMD keyword, i.e. the
+            deltas were produced by a version of picca that did not record it
+    """
+    with fitsio.FITS(delta_attributes) as hdul:
+        header = hdul["VAR_FUNC"].read_header()
+        var_func = hdul["VAR_FUNC"].read()
+    if "VARLSSMD" not in header:
+        raise KeyError(
+            f"No VARLSSMD keyword in the VAR_FUNC header of {delta_attributes}: "
+            "the var lss mod used in the delta weights is unknown. Rerun the delta "
+            "extraction with a version of picca that records it.")
+    names = var_func.dtype.names
+    if "LOGLAM" in names:
+        log_lambda = var_func["LOGLAM"].astype(float)
+    else:
+        log_lambda = np.log10(var_func["LAMBDA"].astype(float))
+    return log_lambda, var_func["VAR_LSS"].astype(float), float(header["VARLSSMD"])
+
+
+def update_weights_var_lss_mod(deltas, log_lambda_grid, var_lss_grid,
+                               delta_var_lss_mod):
+    """Recomputes the delta weights with another var lss mod, in place
+
+    The weights of the delta extraction are 1/w = ... + var_lss_mod * var_lss,
+    so changing var_lss_mod to var_lss_mod + delta_var_lss_mod gives
+        1/w' = 1/w + delta_var_lss_mod * var_lss
+    Pixels with zero weight keep a zero weight.
+
+    Args:
+        deltas: list of Delta
+            Deltas as read from the delta files, before any rebinning or
+            redshift evolution of the weights
+        log_lambda_grid: array of float
+            log10 of the observed wavelength of the var lss grid
+        var_lss_grid: array of float
+            Values of var lss on the grid
+        delta_var_lss_mod: float
+            New var lss mod minus the one used in the delta extraction
+    """
+    # same interpolation as in the delta extraction
+    get_var_lss = interp1d(log_lambda_grid, var_lss_grid,
+                           fill_value="extrapolate", kind="cubic")
+    for delta in deltas:
+        w = delta.weights > 0
+        var_lss = get_var_lss(delta.log_lambda[w])
+        delta.weights[w] = 1. / (1. / delta.weights[w] + delta_var_lss_mod * var_lss)
+
+
+def second_delta_attributes(in_attributes, in_attributes2, in_dir2,
+                            varlss_mod_factor):
+    """Returns the delta attributes file of the second set of deltas
+
+    Args:
+        in_attributes: str or None
+            Delta attributes file of the first set of deltas
+        in_attributes2: str or None
+            Delta attributes file of the second set of deltas, if given
+        in_dir2: str or None
+            Directory of the second set of deltas, if different from the first
+        varlss_mod_factor: float or None
+            New var lss mod of the weights (see read_deltas)
+
+    Returns:
+        delta_attributes: str or None
+            in_attributes2 if given, otherwise in_attributes (None meaning the
+            standard location relative to the deltas)
+
+    Raises:
+        ValueError: if the weights are recomputed, the second set of deltas
+            is in another directory and only in_attributes is given, since
+            the var lss of the first set would be used for the second one
+    """
+    if in_attributes2 is not None:
+        return in_attributes2
+    if (varlss_mod_factor is not None and in_dir2 is not None
+            and in_attributes is not None):
+        raise ValueError(
+            "With --varlss-mod-factor, --in-dir2 and --in-attributes, the delta "
+            "attributes file of the second set of deltas must be given with "
+            "--in-attributes2 (its var lss differs from the first one)")
+    return in_attributes
 
 
 def find_order(in_dir, delta_attributes):
@@ -52,14 +179,7 @@ def find_order(in_dir, delta_attributes):
             matrix is computed
     """
     if delta_attributes is None:
-        expected_fnames = [
-            in_dir + "/../Log/delta_attributes.fits.gz",
-            in_dir + "/attributes.fits"
-        ]
-        delta_attributes = next(
-            (x for x in expected_fnames if os.path.exists(x)),
-            expected_fnames[0]
-        )
+        delta_attributes = default_delta_attributes(in_dir)
         userprint(f"WARNING: delta_attributes file not given, setting to {delta_attributes}")
     userprint(f"Reading delta attributes from {delta_attributes}")
     try:
@@ -481,7 +601,8 @@ def read_blinding(in_dir, lambda_abs=None, lambda_abs2=None, in_dir2=None):
     return blinding
 
 
-def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None, order=None):
+def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None, order=None,
+                    var_lss_update=None):
     """Extracts deltas from a single file.
     Args:
         filename: str
@@ -496,6 +617,10 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None, orde
             Order of the log10(lambda) polynomial for the continuum fit
             None will result in the code crashing if the deltas are projected
             or if they are used to compute the distortion matrix
+        var_lss_update: tuple or None - default: None
+            (log_lambda_grid, var_lss_grid, delta_var_lss_mod) to recompute the
+            weights with another var lss mod before rebinning (see
+            update_weights_var_lss_mod). If None, the weights are unchanged.
     Returns:
         deltas:
             A dictionary with the data. Keys are the healpix numbers of each
@@ -509,6 +634,10 @@ def read_delta_file(filename, z_min_qso=0, z_max_qso=10, rebin_factor=None, orde
     else:
         deltas = [Delta.from_fitsio(hdu, order=order) 
                   for hdu in hdul[1:] if z_min_qso<hdu.read_header()['Z']<z_max_qso]
+
+    # Update the weights with another var lss mod, before rebinning
+    if var_lss_update is not None:
+        update_weights_var_lss_mod(deltas, *var_lss_update)
 
     # Rebin
     if rebin_factor is not None:
@@ -543,7 +672,8 @@ def read_deltas(in_dir,
                 rebin_factor=None,
                 z_min_qso=0,
                 z_max_qso=10,
-                delta_attributes=None):
+                delta_attributes=None,
+                varlss_mod_factor=None):
     """Reads deltas and computes their redshifts.
 
     Fills the fields delta.z and multiplies the weights by
@@ -581,8 +711,15 @@ def read_deltas(in_dir,
         delta_attributes: str or None - default: None
             Filename for the delta attributes file. This will be used to read the
             order of the polynomial used for the continuum fitting, which is needed
-            for the projection of the delta field. If None, the code will look for it 
-            at the standard position. 
+            for the projection of the delta field. If None, the code will look for it
+            at the standard position.
+        varlss_mod_factor: float or None - default: None
+            If not None, recompute the weights as if the delta extraction had
+            used this value of var lss mod, using var lss and the var lss mod
+            actually used (keyword VARLSSMD) from the VAR_FUNC extension of the
+            delta attributes file:
+                1/w' = 1/w + (varlss_mod_factor - VARLSSMD) * var_lss
+            Not valid for deltas extracted with constant weights.
 
     Returns:
         The following variables:
@@ -610,9 +747,24 @@ def read_deltas(in_dir,
     if rebin_factor is not None:
         userprint(f"Rebinning deltas by a factor of {rebin_factor}\n")
 
+    var_lss_update = None
+    if varlss_mod_factor is not None:
+        if varlss_mod_factor < 0:
+            raise ValueError(
+                f"varlss_mod_factor must be non-negative, got {varlss_mod_factor}")
+        if delta_attributes is None:
+            delta_attributes = default_delta_attributes(in_dir)
+            userprint(f"WARNING: delta_attributes file not given, setting to {delta_attributes}")
+        log_lambda_grid, var_lss_grid, var_lss_mod = read_var_lss(delta_attributes)
+        userprint(f"Recomputing the weights with var lss mod = {varlss_mod_factor} "
+                  f"instead of {var_lss_mod}\n")
+        var_lss_update = (log_lambda_grid, var_lss_grid,
+                          varlss_mod_factor - var_lss_mod)
+
     order = find_order(in_dir, delta_attributes)
 
-    arguments = [(f, z_min_qso, z_max_qso, rebin_factor, order) for f in files]
+    arguments = [(f, z_min_qso, z_max_qso, rebin_factor, order, var_lss_update)
+                 for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_delta_file, arguments)
     pool.close()

@@ -354,6 +354,19 @@ def main(cmdargs=None):
     )
 
     parser.add_argument(
+        "--varlss-mod-factor",
+        type=float,
+        default=None,
+        required=False,
+        help=(
+            "Recompute the delta weights as if the delta extraction had used this "
+            "value of var lss mod, using var lss and the var lss mod actually used "
+            "(keyword VARLSSMD) from the delta attributes file. If None, the "
+            "weights are unchanged"
+        ),
+    )
+
+    parser.add_argument(
         "--no-redshift-evolution",
         action="store_true",
         help="Ignore redshift evolution when computing distortion matrix",
@@ -440,6 +453,7 @@ def main(cmdargs=None):
         z_min_qso=args.z_min_sources,
         z_max_qso=args.z_max_sources,
         delta_attributes=args.in_attributes,
+        varlss_mod_factor=args.varlss_mod_factor,
     )
     xcf.data = data
     xcf.num_data = num_data
