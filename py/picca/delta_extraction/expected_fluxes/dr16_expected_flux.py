@@ -700,7 +700,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ]
         units = ["log(Angstrom)", "", "", "", "", ""]
 
-        results.write(values, names=names, units=units, extname='VAR_FUNC')
+        # var lss mod is not part of the stored VAR_LSS: record it so that
+        # the weights can be recomputed with another value downstream
+        # (see picca.io.read_deltas, option varlss_mod_factor)
+        header = [{
+            "name": "VARLSSMD",
+            "value": self.var_lss_mod,
+            "comment": "var lss mod used in the weights",
+        }]
+        results.write(values, names=names, units=units, extname='VAR_FUNC',
+                      header=header)
         results["VAR_FUNC"].write_comment("Variance fitted functions")
         results["VAR_FUNC"].write_checksum()
 
